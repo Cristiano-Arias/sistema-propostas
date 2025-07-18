@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de Propostas</title>
+    <script>
+        // Configuração da API
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000' 
+            : window.location.origin;
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .container {
+            display: flex;
+            min-height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 260px;
+            background: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            transition: all 0.3s;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Novo estilo para cards de processo */
+        .processo-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .processo-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .processo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .processo-info {
+            flex: 1;
+        }
+
+        .processo-titulo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .processo-numero {
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .processo-status {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-ativo {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-encerrado {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .processo-detalhes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detalhe-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detalhe-label {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .detalhe-valor {
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .processo-acoes {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .processo-stats {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-item-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-item-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        /* Filtros */
+        .filtros-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filtro-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filtro-item label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .filtro-item select,
+        .filtro-item input {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        /* Tabela de propostas dentro do processo */
+        .propostas-processo {
+            margin-top: 20px;
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .propostas-processo.active {
+            display: block;
+        }
+
+        .propostas-table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .propostas-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #6c757d;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .propostas-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f3f5;
+            font-size: 14px;
+        }
+
+        .propostas-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state img {
+            width: 100px;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .modal-close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .copy-link-container {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .copy-link-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .sync-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sync-status {
+            font-weight: bold;
+        }
+
+        /* Gráficos do Dashboard */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .chart-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .mini-chart {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 10px;
+        }
+
+        .chart-bar {
+            width: 30px;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+
+        .chart-bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .chart-bar-value {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* Lista de atividades */
+        .activity-list {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background: #f8f9fa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 3px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        /* Notificações */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            min-width: 300px;
+            display: none;
+            z-index: 2000;
+        }
+
+        .notification.success {
+            border-left: 5px solid #28a745;
+        }
+
+        .notification.error {
+            border-left: 5px solid #dc3545;
+        }
+
+        .notification.info {
+            border-left: 5px solid #17a2b8;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .notification-message {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        /* Correção para tabela de todas as propostas */
+        .all-proposals-table {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            overflow: visible;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            table-layout: fixed;
+        }
+
+        .all-proposals-table th {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .all-proposals-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f3f5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Definir larguras específicas para cada coluna */
+        .all-proposals-table th:nth-child(1),
+        .all-proposals-table td:nth-child(1) { width: 12%; }
+        
+        .all-proposals-table th:nth-child(2),
+        .all-proposals-table td:nth-child(2) { width: 12%; }
+        
+        .all-proposals-table th:nth-child(3),
+        .all-proposals-table td:nth-child(3) { 
+            width: 20%; 
+            min-width: 150px;
+        }
+        
+        .all-proposals-table th:nth-child(4),
+        .all-proposals-table td:nth-child(4) { width: 12%; }
+        
+        .all-proposals-table th:nth-child(5),
+        .all-proposals-table td:nth-child(5) { width: 12%; }
+        
+        .all-proposals-table th:nth-child(6),
+        .all-proposals-table td:nth-child(6) { width: 12%; }
+        
+        .all-proposals-table th:nth-child(7),
+        .all-proposals-table td:nth-child(7) { width: 8%; }
+        
+        .all-proposals-table th:nth-child(8),
+        .all-proposals-table td:nth-child(8) { 
+            width: 12%; 
+            white-space: normal;
+        }
+
+        .all-proposals-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Hover especial para mostrar texto completo */
+        .all-proposals-table td:hover {
+            overflow: visible;
+            white-space: normal;
+            position: relative;
+            z-index: 100;
+            background: #f0f0f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Lista de usuários */
+        .user-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .user-info p {
+            color: #6c757d;
+            font-size: 14px;
+            margin: 2px 0;
+        }
+
+        .user-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-admin {
+            background: #6f42c1;
+            color: white;
+        }
+
+        .badge-comprador {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-fornecedor {
+            background: #28a745;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                display: flex;
+                overflow-x: auto;
+                padding: 10px;
+            }
+            
+            .nav-item {
+                min-width: 120px;
+                margin-right: 10px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .processo-acoes {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Responsividade da tabela */
+            .all-proposals-table {
+                font-size: 12px;
+            }
+            
+            .all-proposals-table th,
+            .all-proposals-table td {
+                padding: 10px 8px;
+            }
+            
+            /* Esconder CNPJ em telas muito pequenas */
+            .all-proposals-table th:nth-child(4),
+            .all-proposals-table td:nth-child(4) {
+                display: none;
+            }
+            
+            .btn {
+                padding: 4px 10px !important;
+                font-size: 11px !important;
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script src="auth.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1>🏢 Sistema de Gestão de Propostas</h1>
+                <p>Gerencie processos licitatórios e propostas de forma integrada</p>
+            </div>
+            <div id="infoUsuario" style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 8px; position: relative;">
+                <div id="nivelBadge" style="position: absolute; top: -10px; right: -10px; background: #ffc107; color: #000; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <nav id="menuNavegacao">
+                <!-- Menu será gerado dinamicamente -->
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <!-- Dashboard -->
+            <div id="dashboard" class="page active">
+                <h2>📊 Dashboard</h2>
+                
+                <div class="sync-info">
+                    <span>🔄</span>
+                    <span>Status da Sincronização: <span class="sync-status" id="syncStatus">Conectado</span></span>
+                    <span>| Última atualização: <span id="lastSync">Agora</span></span>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalProcessos">0</div>
+                        <div class="stat-label">Processos Ativos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalPropostas">0</div>
+                        <div class="stat-label">Propostas Recebidas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="processosHoje">0</div>
+                        <div class="stat-label">Vence Hoje</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="valorTotal">R$ 0</div>
+                        <div class="stat-label">Valor Total em Propostas</div>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <h3 class="chart-title">📊 Propostas por Processo</h3>
+                        <div class="mini-chart" id="chartPropostas"></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3 class="chart-title">📈 Processos por Status</h3>
+                        <div class="mini-chart" id="chartStatus"></div>
+                    </div>
+                </div>
+
+                <div class="recent-activities" style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 20px;">📅 Atividades Recentes</h3>
+                    <div class="activity-list" id="atividadesRecentes"></div>
+                </div>
+            </div>
+
+            <!-- Processos -->
+            <div id="processos" class="page">
+                <h2>📋 Processos Cadastrados</h2>
+                
+                <div class="filtros-container">
+                    <div class="filtro-item">
+                        <label>Status</label>
+                        <select id="filtroStatus" onchange="filtrarProcessos()">
+                            <option value="todos">Todos</option>
+                            <option value="ativo">Ativos</option>
+                            <option value="encerrado">Encerrados</option>
+                        </select>
+                    </div>
+                    <div class="filtro-item">
+                        <label>Modalidade</label>
+                        <select id="filtroModalidade" onchange="filtrarProcessos()">
+                            <option value="todos">Todas</option>
+                            <option value="Pregão">Pregão</option>
+                            <option value="Concorrência">Concorrência</option>
+                            <option value="Tomada de Preços">Tomada de Preços</option>
+                            <option value="Convite">Convite</option>
+                        </select>
+                    </div>
+                    <div class="filtro-item">
+                        <label>Buscar</label>
+                        <input type="text" id="filtroBusca" placeholder="Número ou objeto..." onkeyup="filtrarProcessos()">
+                    </div>
+                </div>
+                
+                <div id="listaProcessos"></div>
+            </div>
+
+            <!-- Cadastrar -->
+            <div id="cadastrar" class="page">
+                <h2>➕ Cadastrar Novo Processo</h2>
+                
+                <form id="formProcesso">
+                    <div class="form-group">
+                        <label>Número do Processo *</label>
+                        <input type="text" id="numeroProc" required placeholder="Ex: LIC-2025-001">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Objeto *</label>
+                        <textarea id="objetoProc" rows="3" required placeholder="Descreva o objeto da licitação"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Modalidade *</label>
+                        <select id="modalidade" required>
+                            <option value="">Selecione...</option>
+                            <option value="Pregão">Pregão</option>
+                            <option value="Concorrência">Concorrência</option>
+                            <option value="Tomada de Preços">Tomada de Preços</option>
+                            <option value="Convite">Convite</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Data e Hora Limite *</label>
+                        <input type="datetime-local" id="prazoProc" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="notificarFornecedores" style="width: auto; margin-right: 10px;">
+                            Notificar fornecedores cadastrados por e-mail
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Cadastrar Processo</button>
+                </form>
+            </div>
+
+            <!-- Todas as Propostas -->
+            <div id="propostas" class="page">
+                <h2>📝 Todas as Propostas Recebidas</h2>
+                <div id="todasPropostas"></div>
+            </div>
+
+            <!-- Relatórios -->
+            <div id="relatorios" class="page">
+                <h2>📈 Relatórios</h2>
+                
+                <div class="alert alert-info" style="background: #d1ecf1; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <strong>Relatórios Disponíveis:</strong>
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li>Propostas por Processo</li>
+                        <li>Análise de Valores</li>
+                        <li>Histórico de Fornecedores</li>
+                        <li>Estatísticas Gerais</li>
+                    </ul>
+                </div>
+                
+                <button class="btn btn-primary" onclick="gerarRelatorioGeral()">
+                    📊 Gerar Relatório Geral
+                </button>
+                
+                <div id="conteudoRelatorio" style="margin-top: 30px;"></div>
+            </div>
+            
+            <!-- Gerenciar Usuários (Admin Only) -->
+            <div id="usuarios" class="page">
+                <h2>👥 Gerenciar Usuários</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="window.location.href='cadastro-comprador.html'">
+                        ➕ Cadastrar Novo Comprador
+                    </button>
+                    <button class="btn btn-success" onclick="window.location.href='cadastro-fornecedor.html'">
+                        ➕ Cadastrar Novo Fornecedor
+                    </button>
+                </div>
+                
+                <div id="listaUsuarios">
+                    <!-- Lista será preenchida dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal do Processo -->
+    <div id="modalProcesso" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitulo">Detalhes do Processo</h3>
+                <button class="modal-close" onclick="fecharModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalConteudo">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Sistema de Notificações -->
+    <div id="notification" class="notification">
+        <div class="notification-title" id="notificationTitle"></div>
+        <div class="notification-message" id="notificationMessage"></div>
+    </div>
+
+    <script>
+        // Variável global para o usuário
+        let usuarioAtual = null;
+        
+        // Dados do sistema
+        let processos = [];
+        let propostas = [];
+        let usuarios = [];
+        
+        // Verificar autenticação e inicializar
+        window.addEventListener('DOMContentLoaded', function() {
+            usuarioAtual = Auth.verificarAutenticacao(['admin', 'comprador']);
+
+            // Mostrar badge do nível
+            if (usuarioAtual.tipo === 'comprador' && usuarioAtual.nivelAcesso) {
+                const badge = document.getElementById('nivelBadge');
+                const niveis = {
+                    'comprador': { texto: 'BÁSICO', cor: '#6c757d' },
+                    'comprador_senior': { texto: 'SÊNIOR', cor: '#28a745' },
+                    'gerente': { texto: 'GERENTE', cor: '#ffc107' }
+                };
+    
+                const nivel = niveis[usuarioAtual.nivelAcesso];
+                if (nivel) {
+                    badge.textContent = nivel.texto;
+                    badge.style.background = nivel.cor;
+                    badge.style.display = 'block';
+                }
+            }   
+            
+            if (usuarioAtual) {
+                Auth.exibirInfoUsuario();
+                Auth.protegerElementos();
+                gerarMenuDinamico();
+                
+                // Carregar dados iniciais
+                carregarDados();
+                
+                // Sincronizar com API ao iniciar
+                sincronizarPropostas();
+                
+                // Configurar formulário
+                document.getElementById('formProcesso').addEventListener('submit', cadastrarProcesso);
+                
+                // Atualizar a cada 30 segundos
+                setInterval(() => {
+                    sincronizarPropostas();
+                    verificarNovasPropostas();
+                }, 30000);
+            }
+        });
+        
+        // Função para gerar menu dinâmico baseado no tipo de usuário
+        function gerarMenuDinamico() {
+            const menu = document.getElementById('menuNavegacao');
+            menu.innerHTML = '';
+            
+            // Itens do menu baseados no tipo de usuário
+            const menuItems = [
+                { id: 'dashboard', icon: '📊', label: 'Dashboard', permissao: null },
+                { id: 'processos', icon: '📋', label: 'Processos', permissao: null },
+                { id: 'cadastrar', icon: '➕', label: 'Cadastrar Processo', permissao: 'criar_processo' },
+                { id: 'propostas', icon: '📝', label: 'Propostas', permissao: null },
+                { id: 'relatorios', icon: '📈', label: 'Relatórios', permissao: 'gerar_relatorios' },
+                { id: 'usuarios', icon: '👥', label: 'Usuários', permissao: 'gerenciar_usuarios' }
+            ];
+            
+            menuItems.forEach(item => {
+                // Verificar permissão
+                if (item.permissao && !Auth.temPermissao(item.permissao)) {
+                    return; // Pular este item
+                }
+                
+                const navItem = document.createElement('button');
+                navItem.className = 'nav-item';
+                navItem.innerHTML = `${item.icon} ${item.label}`;
+                navItem.onclick = () => mostrarPagina(item.id);
+                
+                if (item.id === 'dashboard') {
+                    navItem.classList.add('active');
+                }
+                
+                menu.appendChild(navItem);
+            });
+        }
+        
+        // Mostrar página específica
+        function mostrarPagina(paginaId) {
+            // Esconder todas as páginas
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Remover active de todos os itens do menu
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Mostrar página selecionada
+            document.getElementById(paginaId).classList.add('active');
+            
+            // Marcar item do menu como ativo
+            const menuItems = document.querySelectorAll('.nav-item');
+            menuItems.forEach((item, index) => {
+                if (item.textContent.toLowerCase().includes(paginaId) || 
+                    (paginaId === 'dashboard' && index === 0)) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Carregar conteúdo específico da página
+            if (paginaId === 'usuarios') {
+                carregarUsuarios();
+            }
+        }
+        
+        // Carregar dados do sistema
+        function carregarDados() {
+            // Carregar do localStorage
+            processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            propostas = normalizarPropostas();  // <--
+            usuarios = JSON.parse(localStorage.getItem('usuarios_sistema') || '[]');
+            
+            // Filtrar dados baseado nas permissões do usuário
+            processos = Auth.filtrarDadosPorPermissao(processos, 'processos');
+            propostas = Auth.filtrarDadosPorPermissao(propostas, 'propostas');
+            
+            // Atualizar interface
+            atualizarDashboard();
+            carregarProcessos();
+            carregarTodasPropostas();
+        }
+        // Função para normalizar dados de propostas
+        function normalizarPropostas() {
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const propostasNormalizadas = propostas.map(proposta => {
+                // Se já está no formato correto, retorna como está
+                if (proposta.empresa && proposta.cnpj && proposta.protocolo) {
+                    return proposta;
+                }
+                
+                // Se está no formato do portal de propostas, converte
+                if (proposta.dados || proposta.data_envio) {
+                    // Extrair dados do formato do portal
+                    let empresa = 'N/A';
+                    let cnpj = 'N/A';
+                    let valor = 'R$ 0,00';
+                    
+                    // Buscar empresa - pode estar em vários lugares
+                    if (proposta.dados?.dados?.razaoSocial) {
+                        empresa = proposta.dados.dados.razaoSocial;
+                    } else if (proposta.dados?.razaoSocial) {
+                        empresa = proposta.dados.razaoSocial;
+                    } else if (proposta.empresa) {
+                        empresa = proposta.empresa;
+                    }
+                    
+                    // Buscar CNPJ
+                    if (proposta.dados?.dados?.cnpj) {
+                        cnpj = proposta.dados.dados.cnpj;
+                    } else if (proposta.dados?.cnpj) {
+                        cnpj = proposta.dados.cnpj;
+                    } else if (proposta.cnpj) {
+                        cnpj = proposta.cnpj;
+                    }
+                    
+                    // Buscar valor
+                    if (proposta.dados?.comercial?.valorTotal) {
+                        valor = `R$ ${proposta.dados.comercial.valorTotal}`;
+                    } else if (proposta.dados?.valorTotal) {
+                        valor = `R$ ${proposta.dados.valorTotal}`;
+                    } else if (proposta.valor) {
+                        valor = proposta.valor;
+                    }
+                    
+                    return {
+                        protocolo: proposta.protocolo || 'N/A',
+                        processo: proposta.processo || 'N/A',
+                        empresa: empresa,
+                        cnpj: cnpj,
+                        data: proposta.data || proposta.data_envio || new Date().toISOString(),
+                        valor: valor,
+                        dados: proposta.dados || proposta // Mantém os dados originais
+                    };
+                }
+                
+                // Formato desconhecido, retorna como está
+                return proposta;
+            });
+            
+            // Salva as propostas normalizadas
+            localStorage.setItem('propostas', JSON.stringify(propostasNormalizadas));
+            return propostasNormalizadas;
+        }
+        
+        // Sincronizar com a API
+        async function sincronizarPropostas() {
+            try {
+                document.getElementById('syncStatus').textContent = 'Sincronizando...';
+                
+                const response = await fetch(`${API_URL}/api/propostas/listar`);
+                const data = await response.json();
+                
+                if (data.propostas) {
+                    // Mesclar com propostas locais
+                    const propostasAPI = data.propostas;
+                    const propostasLocais = JSON.parse(localStorage.getItem('propostas') || '[]');
+                    
+                    // Adicionar novas propostas
+                    propostasAPI.forEach(propostaAPI => {
+                        const existe = propostasLocais.find(p => p.protocolo === propostaAPI.protocolo);
+                        if (!existe) {
+                            propostasLocais.push(propostaAPI);
+                        }
+                    });
+                    
+                    // Salvar e atualizar
+                    localStorage.setItem('propostas', JSON.stringify(propostasLocais));
+                    propostas = Auth.filtrarDadosPorPermissao(propostasLocais, 'propostas');
+                    
+                    // Atualizar interface
+                    atualizarDashboard();
+                    carregarProcessos();
+                    carregarTodasPropostas();
+                    
+                    document.getElementById('syncStatus').textContent = 'Conectado';
+                    document.getElementById('lastSync').textContent = new Date().toLocaleTimeString('pt-BR');
+                }
+            } catch (error) {
+                console.log('Usando apenas dados locais:', error);
+                document.getElementById('syncStatus').textContent = 'Offline';
+            }
+        }
+        
+        // Atualizar dashboard com estatísticas
+        function atualizarDashboard() {
+            const agora = new Date();
+    
+            // Filtrar baseado no nível do usuário
+            let processosVisiveis = processos;
+            let propostasVisiveis = propostas;
+    
+            // Se for comprador básico, mostrar apenas seus dados
+            if (usuarioAtual.tipo === 'comprador' && usuarioAtual.nivelAcesso === 'comprador') {
+                processosVisiveis = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
+        
+                // Filtrar propostas apenas dos seus processos
+                const meusProcessosIds = processosVisiveis.map(p => p.numero);
+                propostasVisiveis = propostas.filter(p => meusProcessosIds.includes(p.processo));
+            }
+    
+            // Processos ativos
+            const processosAtivos = processosVisiveis.filter(p => new Date(p.prazo) > agora);
+            document.getElementById('totalProcessos').textContent = processosAtivos.length;
+    
+            // Total de propostas
+            document.getElementById('totalPropostas').textContent = propostasVisiveis.length;
+    
+            // Processos que vencem hoje
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const amanha = new Date(hoje);
+            amanha.setDate(amanha.getDate() + 1);
+    
+            const processosHoje = processosVisiveis.filter(p => {
+                const prazo = new Date(p.prazo);
+                return prazo >= hoje && prazo < amanha;
+            });
+            document.getElementById('processosHoje').textContent = processosHoje.length;
+    
+            // Valor total em propostas
+            let valorTotal = 0;
+            propostasVisiveis.forEach(p => {
+                if (p.valor) {
+                    let valorStr = p.valor.toString().replace(/[^\d,.-]/g, '');
+                    valorStr = valorStr.replace('.', '').replace(',', '.');
+                    valorTotal += parseFloat(valorStr) || 0;
+                }
+            });
+            document.getElementById('valorTotal').textContent = valorTotal.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+    
+            // Gerar gráficos
+            gerarGraficoDashboard();
+    
+            // Carregar atividades recentes
+            carregarAtividadesRecentes();
+        }
+                    
+        // Gerar gráficos do dashboard
+        function gerarGraficoDashboard() {
+            // Gráfico de propostas por processo
+            const chartPropostas = document.getElementById('chartPropostas');
+            chartPropostas.innerHTML = '';
+            
+            // Contar propostas por processo
+            const propostasPorProcesso = {};
+            propostas.forEach(p => {
+                if (!propostasPorProcesso[p.processo]) {
+                    propostasPorProcesso[p.processo] = 0;
+                }
+                propostasPorProcesso[p.processo]++;
+            });
+            
+            // Pegar top 5 processos com mais propostas
+            const topProcessos = Object.entries(propostasPorProcesso)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            const maxPropostas = topProcessos.length > 0 ? topProcessos[0][1] : 1;
+            
+            topProcessos.forEach(([processo, count]) => {
+                const altura = (count / maxPropostas) * 150;
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = altura + 'px';
+                bar.innerHTML = `
+                    <div class="chart-bar-value">${count}</div>
+                    <div class="chart-bar-label">${processo.substring(0, 10)}</div>
+                `;
+                chartPropostas.appendChild(bar);
+            });
+            
+            // Gráfico de status
+            const chartStatus = document.getElementById('chartStatus');
+            chartStatus.innerHTML = '';
+            
+            const agora = new Date();
+            const ativos = processos.filter(p => new Date(p.prazo) > agora).length;
+            const encerrados = processos.length - ativos;
+            
+            const statusData = [
+                { label: 'Ativos', value: ativos, color: '#28a745' },
+                { label: 'Encerrados', value: encerrados, color: '#dc3545' }
+            ];
+            
+            const maxStatus = Math.max(ativos, encerrados, 1);
+            
+            statusData.forEach(item => {
+                const altura = (item.value / maxStatus) * 150;
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = altura + 'px';
+                bar.style.background = item.color;
+                bar.innerHTML = `
+                    <div class="chart-bar-value">${item.value}</div>
+                    <div class="chart-bar-label">${item.label}</div>
+                `;
+                chartStatus.appendChild(bar);
+            });
+        }
+        
+        // Carregar atividades recentes
+        function carregarAtividadesRecentes() {
+            const container = document.getElementById('atividadesRecentes');
+            const atividades = [];
+            
+            // Processos recentes
+            processos.slice(-3).forEach(p => {
+                atividades.push({
+                    icon: '📋',
+                    titulo: `Processo ${p.numero} cadastrado`,
+                    tempo: new Date(p.dataCadastro || Date.now()).toLocaleString('pt-BR'),
+                    tipo: 'processo'
+                });
+            });
+            
+            // Propostas recentes
+            propostas.slice(-3).forEach(p => {
+                atividades.push({
+                    icon: '📝',
+                    titulo: `Nova proposta de ${p.empresa}`,
+                    tempo: new Date(p.data).toLocaleString('pt-BR'),
+                    tipo: 'proposta'
+                });
+            });
+            
+            // Ordenar por data
+            atividades.sort((a, b) => new Date(b.tempo) - new Date(a.tempo));
+            
+            // Exibir atividades
+            container.innerHTML = atividades.slice(0, 5).map(ativ => `
+                <div class="activity-item">
+                    <div class="activity-icon">${ativ.icon}</div>
+                    <div class="activity-content">
+                        <div class="activity-title">${ativ.titulo}</div>
+                        <div class="activity-time">${ativ.tempo}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (atividades.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #6c757d;">Nenhuma atividade recente</p>';
+            }
+        }
+        
+        // Carregar processos
+        function carregarProcessos() {
+            const container = document.getElementById('listaProcessos');
+            
+            if (processos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>Nenhum processo cadastrado</h3>
+                        <p>Clique em "Cadastrar Processo" para começar</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const agora = new Date();
+            container.innerHTML = processos.map(processo => {
+                const prazo = new Date(processo.prazo);
+                const status = prazo > agora ? 'ativo' : 'encerrado';
+                const diasRestantes = Math.ceil((prazo - agora) / (1000 * 60 * 60 * 24));
+                
+                // Contar propostas deste processo
+                const propostasProcesso = propostas.filter(p => p.processo === processo.numero);
+                
+                return `
+                    <div class="processo-card" data-status="${status}" data-modalidade="${processo.modalidade}" data-numero="${processo.numero}">
+                        <div class="processo-header">
+                            <div class="processo-info">
+                                <div class="processo-titulo">${processo.objeto}</div>
+                                <div class="processo-numero">Processo: ${processo.numero}</div>
+                            </div>
+                            <div class="processo-status status-${status}">
+                                ${status === 'ativo' ? 'Ativo' : 'Encerrado'}
+                            </div>
+                        </div>
+                        
+                        <div class="processo-detalhes">
+                            <div class="detalhe-item">
+                                <span class="detalhe-label">Modalidade:</span>
+                                <span class="detalhe-valor">${processo.modalidade}</span>
+                            </div>
+                            <div class="detalhe-item">
+                                <span class="detalhe-label">Prazo:</span>
+                                <span class="detalhe-valor">${prazo.toLocaleString('pt-BR')}</span>
+                            </div>
+                            <div class="detalhe-item">
+                                <span class="detalhe-label">Dias restantes:</span>
+                                <span class="detalhe-valor">${status === 'ativo' ? diasRestantes + ' dias' : 'Encerrado'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="processo-stats">
+                            <div class="stat-item">
+                                <div class="stat-item-value">${propostasProcesso.length}</div>
+                                <div class="stat-item-label">Propostas</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-item-value">${calcularMenorValor(propostasProcesso)}</div>
+                                <div class="stat-item-label">Menor Valor</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-item-value">${calcularAmplitude(propostasProcesso)}%</div>
+                                <div class="stat-item-label">Amplitude</div>
+                            </div>
+                        </div>
+                        
+                        <div class="processo-acoes">
+                            <button class="btn btn-primary" onclick="verPropostasProcesso('${processo.numero}')">
+                                📋 Ver Propostas (${propostasProcesso.length})
+                            </button>
+                            <button class="btn btn-secondary" onclick="abrirModal('${processo.numero}')">
+                                👁️ Detalhes
+                            </button>
+                            ${propostasProcesso.length >= 2 ? `
+                                <button class="btn btn-info" onclick="abrirRelatorioComparativo('${processo.numero}')">
+                                    📊 Análise Comparativa
+                                </button>
+                            ` : ''}
+                            ${Auth.podeEditarProcesso(processo) && status === 'ativo' ? `
+                                <button class="btn btn-warning" onclick="editarProcesso('${processo.numero}')">
+                                    ✏️ Editar
+                                </button>
+                            ` : ''}
+                            ${usuarioAtual.tipo === 'comprador' && usuarioAtual.nivelAcesso === 'gerente' && status === 'ativo' && processo.criadoPor !== usuarioAtual.usuarioId ? `
+                                <button class="btn btn-warning" onclick="editarProcesso('${processo.numero}')">
+                                    ✏️ Editar (Gerente)
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-success" onclick="copiarLinkProcesso('${processo.numero}')">
+                                🔗 Link Portal
+                            </button>
+                        </div>
+                        
+                        <div class="propostas-processo" id="propostas-${processo.numero}">
+                            <!-- Propostas serão carregadas aqui -->
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Filtrar processos
+        function filtrarProcessos() {
+            const status = document.getElementById('filtroStatus').value;
+            const modalidade = document.getElementById('filtroModalidade').value;
+            const busca = document.getElementById('filtroBusca').value.toLowerCase();
+            
+            const cards = document.querySelectorAll('.processo-card');
+            
+            cards.forEach(card => {
+                let mostrar = true;
+                
+                // Filtro de status
+                if (status !== 'todos' && card.dataset.status !== status) {
+                    mostrar = false;
+                }
+                
+                // Filtro de modalidade
+                if (modalidade !== 'todos' && card.dataset.modalidade !== modalidade) {
+                    mostrar = false;
+                }
+                
+                // Filtro de busca
+                if (busca) {
+                    const numero = card.dataset.numero.toLowerCase();
+                    const titulo = card.querySelector('.processo-titulo').textContent.toLowerCase();
+                    if (!numero.includes(busca) && !titulo.includes(busca)) {
+                        mostrar = false;
+                    }
+                }
+                
+                card.style.display = mostrar ? 'block' : 'none';
+            });
+        }
+        
+        // Ver propostas de um processo específico
+        function verPropostasProcesso(numeroProcesso) {
+            const container = document.getElementById(`propostas-${numeroProcesso}`);
+            const propostasProcesso = propostas.filter(p => p.processo === numeroProcesso);
+            
+            if (container.classList.contains('active')) {
+                container.classList.remove('active');
+                return;
+            }
+            
+            // Fechar outras propostas abertas
+            document.querySelectorAll('.propostas-processo').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            if (propostasProcesso.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 20px;">Nenhuma proposta recebida ainda.</p>';
+            } else {
+                container.innerHTML = `
+                    <h4 style="margin-bottom: 15px;">Propostas Recebidas:</h4>
+                    <table class="propostas-table">
+                        <thead>
+                            <tr>
+                                <th>Protocolo</th>
+                                <th>Empresa</th>
+                                <th>CNPJ</th>
+                                <th>Data</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${propostasProcesso.map(proposta => `
+                                <tr>
+                                    <td>${proposta.protocolo}</td>
+                                    <td>${proposta.empresa}</td>
+                                    <td>${proposta.cnpj}</td>
+                                    <td>${new Date(proposta.data).toLocaleDateString('pt-BR')}</td>
+                                    <td><strong>${proposta.valor || 'R$ 0,00'}</strong></td>
+                                    <td>
+                                        <button class="btn btn-info" style="padding: 5px 10px; font-size: 12px;" 
+                                                onclick="verDetalheProposta('${proposta.protocolo}')">
+                                            Ver Detalhes
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            container.classList.add('active');
+        }
+        
+        // Carregar todas as propostas
+        function carregarTodasPropostas() {
+            const container = document.getElementById('todasPropostas');
+    
+            // Primeiro, garantir que temos as propostas carregadas
+            // A variável 'propostas' deve estar no escopo global
+            if (typeof propostas === 'undefined' || !propostas) {
+                // Se não existir, tentar carregar do localStorage
+                window.propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            }
+    
+            // Filtrar propostas baseado nas permissões do usuário
+            const propostasVisiveis = Auth.filtrarDadosPorPermissao(propostas, 'propostas');
+    
+            if (propostasVisiveis.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <h3>Nenhuma proposta recebida</h3>
+                        <p>As propostas enviadas pelos fornecedores aparecerão aqui</p>
+                    </div>
+                `;
+                return;
+            }
+    
+            // Buscar processos para verificar status
+            const processosLocal = JSON.parse(localStorage.getItem('processos') || '[]');
+    
+            container.innerHTML = `
+                <table class="all-proposals-table">
+                    <thead>
+                        <tr>
+                            <th>Protocolo</th>
+                            <th>Processo</th>
+                            <th>Empresa</th>
+                            <th>CNPJ</th>
+                            <th>Data de Envio</th>
+                            <th>Valor Total</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${propostasVisiveis.map(proposta => {
+                            // Todos os dados já foram normalizados
+                            const protocolo = proposta.protocolo || '<span style="color: #999;">Sem protocolo</span>';
+                            const numeroProcesso = proposta.processo || '<span style="color: #999;">Não informado</span>';
+                            const nomeEmpresa = proposta.empresa || '<span style="color: #999;">Não identificada</span>';
+                            const cnpj = proposta.cnpj || '<span style="color: #999;">Não informado</span>';
+                            
+                            // Formatar data
+                            let dataFormatada = '<span style="color: #999;">Não informada</span>';
+                            if (proposta.data) {
+                                try {
+                                    const data = new Date(proposta.data);
+                                    if (!isNaN(data.getTime())) {
+                                        dataFormatada = data.toLocaleString('pt-BR');
+                                    }
+                                } catch (e) {
+                                    console.error('Erro ao formatar data:', e);
+                                }
+                            }
+                            
+                            // Usar valor já formatado
+                            const valorFormatado = proposta.valor || '<span style="color: #999;">Não informado</span>';
+                            
+                            // Verificar status do processo
+                            const processo = processosLocal.find(p => p.numero === numeroProcesso);
+                            const prazoPassou = processo ? new Date(processo.prazo) < new Date() : false;
+                            
+                            return `
+                                <tr>
+                                    <td><strong>${protocolo}</strong></td>
+                                    <td>${numeroProcesso}</td>
+                                    <td title="${nomeEmpresa}">${nomeEmpresa}</td>
+                                    <td>${cnpj}</td>
+                                    <td>${dataFormatada}</td>
+                                    <td><strong style="color: #28a745;">${valorFormatado}</strong></td>
+                                    <td>
+                                        <span class="status-${prazoPassou ? 'encerrado' : 'enviada'}" style="
+                                            background: ${prazoPassou ? '#f8d7da' : '#d4edda'};
+                                            color: ${prazoPassou ? '#721c24' : '#155724'};
+                                            padding: 5px 10px;
+                                            border-radius: 20px;
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                        ">
+                                            ${prazoPassou ? 'Processo Encerrado' : 'Em Análise'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-info" style="padding: 5px 15px; font-size: 12px;" 
+                                                onclick="verDetalheProposta('${protocolo}')">
+                                            Ver Detalhes
+                                        </button>
+                                        <button class="btn btn-success" style="padding: 5px 15px; font-size: 12px;" 
+                                                onclick="downloadProposta('${protocolo}')">
+                                            📥 Download
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
