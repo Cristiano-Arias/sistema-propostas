@@ -782,6 +782,65 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Adicionar antes do </style> no head */
+
+/* Animação de loading */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Melhorias na tabela de propostas */
+.all-proposals-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.all-proposals-table th {
+    background: #34495e !important;
+    position: sticky;
+    top: 0;
+}
+
+/* Hover na linha com empresa longa */
+.all-proposals-table td:nth-child(3):hover {
+    overflow: visible !important;
+    white-space: normal !important;
+    word-break: break-word;
+    background: #f0f0f0;
+    position: relative;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 12px;
+}
+
+/* Responsividade da tabela */
+@media (max-width: 1024px) {
+    .all-proposals-table {
+        font-size: 12px;
+    }
+    
+    .all-proposals-table th,
+    .all-proposals-table td {
+        padding: 10px 8px;
+    }
+}
+
+/* Esconder CNPJ em telas muito pequenas */
+@media (max-width: 768px) {
+    .all-proposals-table th:nth-child(4),
+    .all-proposals-table td:nth-child(4) {
+        display: none;
+    }
+    
+    .btn {
+        padding: 4px 10px !important;
+        font-size: 11px !important;
+    }
+}
+	    
     </style>
     <script src="auth.js"></script>
 </head>
@@ -1549,92 +1608,173 @@
         }
         
         // Carregar todas as propostas
-        function carregarTodasPropostas() {
+        // Função corrigida para carregar todas as propostas
+function carregarTodasPropostas() {
     const container = document.getElementById('todasPropostas');
     
-    if (propostas.length === 0) {
+    // Estado de carregamento
+    container.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+            <p>Carregando propostas...</p>
+        </div>
+    `;
+    
+    // Pequeno delay para mostrar carregamento
+    setTimeout(() => {
+        if (propostas.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📄</div>
+                    <h3>Nenhuma proposta recebida</h3>
+                    <p>As propostas enviadas pelos fornecedores aparecerão aqui</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Construir tabela com todas as validações
         container.innerHTML = `
-            <div class="empty-state">
-                <h3>Nenhuma proposta recebida</h3>
-                <p>As propostas enviadas pelos fornecedores aparecerão aqui</p>
+            <div style="width: 100%; overflow-x: auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <table class="all-proposals-table" style="width: 100%; min-width: 1200px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%; min-width: 150px;">Protocolo</th>
+                            <th style="width: 12%; min-width: 120px;">Processo</th>
+                            <th style="width: 20%; min-width: 200px;">Empresa</th>
+                            <th style="width: 15%; min-width: 150px;">CNPJ</th>
+                            <th style="width: 12%; min-width: 140px;">Data de Envio</th>
+                            <th style="width: 12%; min-width: 120px;">Valor Total</th>
+                            <th style="width: 8%; min-width: 100px;">Status</th>
+                            <th style="width: 16%; min-width: 180px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${propostas.map(proposta => {
+                            // Validar e extrair dados com segurança
+                            const protocolo = proposta.protocolo || '<span style="color: #999; font-style: italic;">Sem protocolo</span>';
+                            const processoNum = proposta.processo || '<span style="color: #999; font-style: italic;">Não informado</span>';
+                            
+                            // Buscar empresa em diferentes locais possíveis
+                            let empresa = proposta.empresa || 
+                                         proposta.dados?.dados?.razaoSocial || 
+                                         proposta.dados?.razaoSocial ||
+                                         '<span style="color: #999; font-style: italic;">Empresa não identificada</span>';
+                            
+                            // Buscar CNPJ em diferentes locais
+                            let cnpj = proposta.cnpj || 
+                                      proposta.dados?.dados?.cnpj || 
+                                      proposta.dados?.cnpj || 
+                                      '';
+                            
+                            // Formatar CNPJ se existir
+                            if (cnpj && cnpj.length > 0) {
+                                const cnpjNumeros = cnpj.replace(/\D/g, '');
+                                if (cnpjNumeros.length === 14) {
+                                    cnpj = cnpjNumeros.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                                }
+                            } else {
+                                cnpj = '<span style="color: #999; font-style: italic;">Não informado</span>';
+                            }
+                            
+                            // Formatar data
+                            let dataFormatada = '<span style="color: #999; font-style: italic;">Data não informada</span>';
+                            if (proposta.data) {
+                                try {
+                                    const dataObj = new Date(proposta.data);
+                                    if (!isNaN(dataObj.getTime())) {
+                                        dataFormatada = dataObj.toLocaleString('pt-BR', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        });
+                                    }
+                                } catch (e) {
+                                    console.error('Erro ao formatar data:', e);
+                                }
+                            }
+                            
+                            // Buscar e formatar valor
+                            let valorFormatado = '<span style="color: #999; font-style: italic;">Valor não informado</span>';
+                            let valorOriginal = proposta.valor || 
+                                               proposta.dados?.comercial?.valorTotal || 
+                                               proposta.dados?.valorTotal ||
+                                               null;
+                            
+                            if (valorOriginal) {
+                                try {
+                                    let valorNumerico = valorOriginal;
+                                    if (typeof valorOriginal === 'string') {
+                                        // Remove tudo exceto números, vírgula e ponto
+                                        valorNumerico = valorOriginal.replace(/[^\d,.-]/g, '');
+                                        // Substitui vírgula por ponto se for decimal
+                                        if (valorNumerico.includes(',') && !valorNumerico.includes('.')) {
+                                            valorNumerico = valorNumerico.replace(',', '.');
+                                        } else if (valorNumerico.includes('.') && valorNumerico.includes(',')) {
+                                            // Remove pontos de milhar e substitui vírgula decimal
+                                            valorNumerico = valorNumerico.replace(/\./g, '').replace(',', '.');
+                                        }
+                                        valorNumerico = parseFloat(valorNumerico);
+                                    }
+                                    
+                                    if (!isNaN(valorNumerico) && valorNumerico > 0) {
+                                        valorFormatado = valorNumerico.toLocaleString('pt-BR', {
+                                            style: 'currency',
+                                            currency: 'BRL'
+                                        });
+                                    }
+                                } catch (e) {
+                                    console.error('Erro ao formatar valor:', e);
+                                }
+                            }
+                            
+                            // Determinar status
+                            const processo = processos.find(p => p.numero === proposta.processo);
+                            const prazoPassou = processo ? new Date(processo.prazo) < new Date() : false;
+                            
+                            return `
+                                <tr>
+                                    <td><strong>${protocolo}</strong></td>
+                                    <td>${processoNum}</td>
+                                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${empresa}">${empresa}</td>
+                                    <td>${cnpj}</td>
+                                    <td>${dataFormatada}</td>
+                                    <td><strong style="color: #28a745;">${valorFormatado}</strong></td>
+                                    <td>
+                                        <span class="status-${prazoPassou ? 'encerrado' : 'enviada'}" style="
+                                            background: ${prazoPassou ? '#f8d7da' : '#d4edda'};
+                                            color: ${prazoPassou ? '#721c24' : '#155724'};
+                                            padding: 5px 10px;
+                                            border-radius: 20px;
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            display: inline-block;
+                                        ">
+                                            ${prazoPassou ? 'Processo Encerrado' : 'Em Análise'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                            <button class="btn btn-info" style="padding: 5px 15px; font-size: 12px;" 
+                                                    onclick="verDetalheProposta('${protocolo}')">
+                                                Ver Detalhes
+                                            </button>
+                                            <button class="btn btn-success" style="padding: 5px 15px; font-size: 12px;" 
+                                                    onclick="downloadProposta('${protocolo}')">
+                                                📥 Download
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
             </div>
         `;
-        return;
-    }
-    
-    container.innerHTML = `
-        <table class="all-proposals-table">
-            <thead>
-                <tr>
-                    <th>Protocolo</th>
-                    <th>Processo</th>
-                    <th>Empresa</th>
-                    <th>CNPJ</th>
-                    <th>Data de Envio</th>
-                    <th>Valor Total</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${propostas.map(proposta => {
-                    // Extrair dados do formato do portal
-                    let protocolo = proposta.protocolo || 'N/A';
-                    let processo = proposta.processo || 'N/A';
-                    let empresa = 'N/A';
-                    let cnpj = 'N/A';
-                    let data = proposta.data || proposta.data_envio || new Date().toISOString();
-                    let valor = 'R$ 0,00';
-                    
-                    // Se tem a estrutura dados.dados
-                    if (proposta.dados && proposta.dados.dados) {
-                        empresa = proposta.dados.dados.razaoSocial || empresa;
-                        cnpj = proposta.dados.dados.cnpj || cnpj;
-                    } else {
-                        // Formato direto
-                        empresa = proposta.empresa || empresa;
-                        cnpj = proposta.cnpj || cnpj;
-                    }
-                    
-                    // Extrair valor
-                    if (proposta.dados && proposta.dados.comercial && proposta.dados.comercial.valorTotal) {
-                        valor = `R$ ${proposta.dados.comercial.valorTotal}`;
-                    } else if (proposta.valor) {
-                        valor = proposta.valor;
-                    }
-                    
-                    const processoObj = processos.find(p => p.numero === processo);
-                    const prazoPassou = processoObj ? new Date(processoObj.prazo) < new Date() : false;
-                    
-                    return `
-                        <tr>
-                            <td><strong>${protocolo}</strong></td>
-                            <td>${processo}</td>
-                            <td>${empresa}</td>
-                            <td>${cnpj}</td>
-                            <td>${new Date(data).toLocaleString('pt-BR')}</td>
-                            <td><strong style="color: #28a745;">${valor}</strong></td>
-                            <td>
-                                <span class="processo-status ${prazoPassou ? 'status-encerrado' : 'status-ativo'}">
-                                    ${prazoPassou ? 'Processo Encerrado' : 'Em Análise'}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn btn-info" style="padding: 5px 15px; font-size: 12px;" 
-                                        onclick="verDetalheProposta('${protocolo}')">
-                                    Ver Detalhes
-                                </button>
-                                <button class="btn btn-success" style="padding: 5px 15px; font-size: 12px;" 
-                                        onclick="downloadProposta('${protocolo}')">
-                                    📥 Download
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('')}
-            </tbody>
-        </table>
-    `;
+    }, 300);
 }
         
         // Cadastrar novo processo
