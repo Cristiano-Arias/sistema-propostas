@@ -1550,67 +1550,92 @@
         
         // Carregar todas as propostas
         function carregarTodasPropostas() {
-            const container = document.getElementById('todasPropostas');
-            
-            if (propostas.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>Nenhuma proposta recebida</h3>
-                        <p>As propostas enviadas pelos fornecedores aparecerão aqui</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = `
-                <table class="all-proposals-table">
-                    <thead>
+    const container = document.getElementById('todasPropostas');
+    
+    if (propostas.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>Nenhuma proposta recebida</h3>
+                <p>As propostas enviadas pelos fornecedores aparecerão aqui</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = `
+        <table class="all-proposals-table">
+            <thead>
+                <tr>
+                    <th>Protocolo</th>
+                    <th>Processo</th>
+                    <th>Empresa</th>
+                    <th>CNPJ</th>
+                    <th>Data de Envio</th>
+                    <th>Valor Total</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${propostas.map(proposta => {
+                    // Extrair dados do formato do portal
+                    let protocolo = proposta.protocolo || 'N/A';
+                    let processo = proposta.processo || 'N/A';
+                    let empresa = 'N/A';
+                    let cnpj = 'N/A';
+                    let data = proposta.data || proposta.data_envio || new Date().toISOString();
+                    let valor = 'R$ 0,00';
+                    
+                    // Se tem a estrutura dados.dados
+                    if (proposta.dados && proposta.dados.dados) {
+                        empresa = proposta.dados.dados.razaoSocial || empresa;
+                        cnpj = proposta.dados.dados.cnpj || cnpj;
+                    } else {
+                        // Formato direto
+                        empresa = proposta.empresa || empresa;
+                        cnpj = proposta.cnpj || cnpj;
+                    }
+                    
+                    // Extrair valor
+                    if (proposta.dados && proposta.dados.comercial && proposta.dados.comercial.valorTotal) {
+                        valor = `R$ ${proposta.dados.comercial.valorTotal}`;
+                    } else if (proposta.valor) {
+                        valor = proposta.valor;
+                    }
+                    
+                    const processoObj = processos.find(p => p.numero === processo);
+                    const prazoPassou = processoObj ? new Date(processoObj.prazo) < new Date() : false;
+                    
+                    return `
                         <tr>
-                            <th>Protocolo</th>
-                            <th>Processo</th>
-                            <th>Empresa</th>
-                            <th>CNPJ</th>
-                            <th>Data de Envio</th>
-                            <th>Valor Total</th>
-                            <th>Status</th>
-                            <th>Ações</th>
+                            <td><strong>${protocolo}</strong></td>
+                            <td>${processo}</td>
+                            <td>${empresa}</td>
+                            <td>${cnpj}</td>
+                            <td>${new Date(data).toLocaleString('pt-BR')}</td>
+                            <td><strong style="color: #28a745;">${valor}</strong></td>
+                            <td>
+                                <span class="processo-status ${prazoPassou ? 'status-encerrado' : 'status-ativo'}">
+                                    ${prazoPassou ? 'Processo Encerrado' : 'Em Análise'}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-info" style="padding: 5px 15px; font-size: 12px;" 
+                                        onclick="verDetalheProposta('${protocolo}')">
+                                    Ver Detalhes
+                                </button>
+                                <button class="btn btn-success" style="padding: 5px 15px; font-size: 12px;" 
+                                        onclick="downloadProposta('${protocolo}')">
+                                    📥 Download
+                                </button>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${propostas.map(proposta => {
-                            const processo = processos.find(p => p.numero === proposta.processo);
-                            const prazoPassou = processo ? new Date(processo.prazo) < new Date() : false;
-                            
-                            return `
-                                <tr>
-                                    <td><strong>${proposta.protocolo}</strong></td>
-                                    <td>${proposta.processo}</td>
-                                    <td>${proposta.empresa}</td>
-                                    <td>${proposta.cnpj}</td>
-                                    <td>${new Date(proposta.data).toLocaleString('pt-BR')}</td>
-                                    <td><strong style="color: #28a745;">${proposta.valor || 'R$ 0,00'}</strong></td>
-                                    <td>
-                                        <span class="processo-status ${prazoPassou ? 'status-encerrado' : 'status-ativo'}">
-                                            ${prazoPassou ? 'Processo Encerrado' : 'Em Análise'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-info" style="padding: 5px 15px; font-size: 12px;" 
-                                                onclick="verDetalheProposta('${proposta.protocolo}')">
-                                            Ver Detalhes
-                                        </button>
-                                        <button class="btn btn-success" style="padding: 5px 15px; font-size: 12px;" 
-                                                onclick="downloadProposta('${proposta.protocolo}')">
-                                            📥 Download
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+}
         
         // Cadastrar novo processo
         async function cadastrarProcesso(event) {
