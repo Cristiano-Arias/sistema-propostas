@@ -784,6 +784,37 @@
         }
     </style>
     <script src="auth.js"></script>
+    <script>
+    // Inicializar usuários padrão se não existirem
+    if (!localStorage.getItem('usuarios_sistema')) {
+    	const usuariosPadrao = [
+            {
+            	id: 'admin001',
+            	nome: 'Administrador',
+            	email: 'admin@sistema.com',
+            	senha: btoa('admin123'),
+            	tipo: 'admin',
+            	ativo: true,
+            	dataCriacao: new Date().toISOString()
+            }
+    	];
+    	localStorage.setItem('usuarios_sistema', JSON.stringify(usuariosPadrao));
+    }
+
+    // Criar sessão temporária para teste
+    if (!sessionStorage.getItem('sessao_ativa')) {
+    	const sessaoTeste = {
+            usuarioId: 'admin001',
+            nome: 'Administrador',
+            email: 'admin@sistema.com',
+            tipo: 'admin',
+            inicio: new Date().toISOString(),
+            token: 'tk_' + Date.now()
+    	};
+    	sessionStorage.setItem('sessao_ativa', JSON.stringify(sessaoTeste));
+    }
+    </script>	
+	
 </head>
 <body>
     <div class="header">
