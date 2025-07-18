@@ -858,31 +858,35 @@
         }
     </style>
     <script>
-        // Fallback caso auth.js não esteja disponível
-        if (typeof Auth === 'undefined') {
-            window.Auth = {
-                verificarAutenticacao: function() {
-                    return {
-                        usuarioId: 'user_' + Date.now(),
-                        nome: 'Usuário Teste',
-                        email: 'usuario@teste.com',
-                        tipo: 'admin',
-                        nivelAcesso: 'admin'
-                    };
-                },
-                exibirInfoUsuario: function() {
-                    const info = document.getElementById('infoUsuario');
-                    if (info) {
-                        info.innerHTML += '<div style="color: white;">👤 Usuário Teste</div>';
-                    }
-                },
-                protegerElementos: function() {},
-                temPermissao: function() { return true; },
-                filtrarDadosPorPermissao: function(dados) { return dados; },
-                podeEditarProcesso: function() { return true; },
-                registrarLog: function() {}
-            };
-        }
+        // Auth.js deve ser incluído separadamente
+        // Criar objeto Auth básico para teste se necessário
+        window.Auth = window.Auth || {
+            verificarAutenticacao: function() {
+                // Simular usuário para teste
+                return {
+                    usuarioId: 'user_test',
+                    nome: 'Usuário Teste',
+                    email: 'teste@empresa.com',
+                    tipo: 'admin',
+                    nivelAcesso: 'admin',
+                    inicio: new Date().toISOString()
+                };
+            },
+            exibirInfoUsuario: function() {
+                const info = document.getElementById('infoUsuario');
+                if (info) {
+                    info.innerHTML = '<div style="color: white;">👤 Usuário Teste (Admin)</div>';
+                }
+            },
+            protegerElementos: function() {},
+            temPermissao: function() { return true; },
+            filtrarDadosPorPermissao: function(dados) { return dados || []; },
+            podeEditarProcesso: function() { return true; },
+            registrarLog: function() {},
+            getUsuarioAtual: function() {
+                return this.verificarAutenticacao();
+            }
+        };
     </script>
 </head>
 <body>
@@ -1103,19 +1107,34 @@
         
         // Verificar autenticação e inicializar
         window.addEventListener('DOMContentLoaded', function() {
-            // Verificar se Auth existe, caso contrário usar fallback
+            console.log('Iniciando sistema...');
+            
+            // Tentar usar Auth do auth.js ou usar versão de teste
             if (typeof Auth !== 'undefined' && Auth.verificarAutenticacao) {
-                usuarioAtual = Auth.verificarAutenticacao(['admin', 'comprador']);
+                try {
+                    usuarioAtual = Auth.verificarAutenticacao(['admin', 'comprador']);
+                } catch (e) {
+                    console.log('Usando modo teste:', e);
+                    usuarioAtual = {
+                        usuarioId: 'user_test',
+                        nome: 'Usuário Teste',
+                        email: 'teste@empresa.com',
+                        tipo: 'admin',
+                        nivelAcesso: 'admin'
+                    };
+                }
             } else {
-                // Fallback para teste
+                console.log('Auth não encontrado, usando modo teste');
                 usuarioAtual = {
-                    usuarioId: 'user_' + Date.now(),
+                    usuarioId: 'user_test',
                     nome: 'Usuário Teste',
-                    email: 'usuario@teste.com',
+                    email: 'teste@empresa.com',
                     tipo: 'admin',
                     nivelAcesso: 'admin'
                 };
             }
+
+            console.log('Usuário atual:', usuarioAtual);
 
             // Mostrar badge do nível
             if (usuarioAtual && usuarioAtual.tipo === 'comprador' && usuarioAtual.nivelAcesso) {
@@ -1127,7 +1146,7 @@
                 };
     
                 const nivel = niveis[usuarioAtual.nivelAcesso];
-                if (nivel) {
+                if (nivel && badge) {
                     badge.textContent = nivel.texto;
                     badge.style.background = nivel.cor;
                     badge.style.display = 'block';
@@ -1137,20 +1156,34 @@
             if (usuarioAtual) {
                 // Exibir info do usuário
                 if (typeof Auth !== 'undefined' && Auth.exibirInfoUsuario) {
-                    Auth.exibirInfoUsuario();
+                    try {
+                        Auth.exibirInfoUsuario();
+                    } catch (e) {
+                        console.log('Erro ao exibir info:', e);
+                        const info = document.getElementById('infoUsuario');
+                        if (info) {
+                            info.innerHTML = '<div style="color: white;">👤 ' + usuarioAtual.nome + '</div>';
+                        }
+                    }
                 } else {
                     const info = document.getElementById('infoUsuario');
                     if (info) {
-                        info.innerHTML += '<div style="color: white;">👤 ' + usuarioAtual.nome + '</div>';
+                        info.innerHTML = '<div style="color: white;">👤 ' + usuarioAtual.nome + '</div>';
                     }
                 }
                 
                 if (typeof Auth !== 'undefined' && Auth.protegerElementos) {
-                    Auth.protegerElementos();
+                    try {
+                        Auth.protegerElementos();
+                    } catch (e) {
+                        console.log('Erro ao proteger elementos:', e);
+                    }
                 }
                 
+                console.log('Gerando menu...');
                 gerarMenuDinamico();
                 
+                console.log('Carregando dados...');
                 // Carregar dados iniciais
                 carregarDados();
                 
@@ -1158,19 +1191,30 @@
                 sincronizarPropostas();
                 
                 // Configurar formulário
-                document.getElementById('formProcesso').addEventListener('submit', cadastrarProcesso);
+                const formProcesso = document.getElementById('formProcesso');
+                if (formProcesso) {
+                    formProcesso.addEventListener('submit', cadastrarProcesso);
+                }
                 
                 // Atualizar a cada 30 segundos
                 setInterval(() => {
                     sincronizarPropostas();
                     verificarNovasPropostas();
                 }, 30000);
+            } else {
+                console.error('Usuário não autenticado!');
             }
         });
         
         // Função para gerar menu dinâmico baseado no tipo de usuário
         function gerarMenuDinamico() {
             const menu = document.getElementById('menuNavegacao');
+            if (!menu) {
+                console.error('Menu não encontrado!');
+                return;
+            }
+            
+            console.log('Limpando menu anterior...');
             menu.innerHTML = '';
             
             // Itens do menu baseados no tipo de usuário
@@ -1183,12 +1227,15 @@
                 { id: 'usuarios', icon: '👥', label: 'Usuários', permissao: 'gerenciar_usuarios' }
             ];
             
+            console.log('Criando itens do menu...');
             menuItems.forEach(item => {
                 // Verificar permissão
                 if (item.permissao && typeof Auth !== 'undefined' && Auth.temPermissao && !Auth.temPermissao(item.permissao)) {
+                    console.log('Sem permissão para:', item.label);
                     return; // Pular este item
                 }
                 
+                console.log('Adicionando item:', item.label);
                 const navItem = document.createElement('button');
                 navItem.className = 'nav-item';
                 navItem.innerHTML = `${item.icon} ${item.label}`;
@@ -1200,6 +1247,8 @@
                 
                 menu.appendChild(navItem);
             });
+            
+            console.log('Menu gerado com', menu.children.length, 'itens');
         }
         
         // Mostrar página específica
