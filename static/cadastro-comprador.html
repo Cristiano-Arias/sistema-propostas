@@ -344,7 +344,21 @@
 	// Cadastrar comprador
         function cadastrarComprador(event) {
             event.preventDefault();
-            
+
+            // DEBUG - Verificar se a função está sendo chamada
+    	    console.log('Função cadastrarComprador foi chamada!');
+    
+            // Verificar se o localStorage está funcionando
+            try {
+                localStorage.setItem('teste', 'funcionando');
+                console.log('LocalStorage está funcionando:', localStorage.getItem('teste'));
+                localStorage.removeItem('teste');
+            } catch (e) {
+                console.error('Erro no localStorage:', e);
+                mostrarAlerta('error', 'Erro ao acessar o armazenamento local!');
+                return;
+            }
+		
             const nome = document.getElementById('nome').value;
             const cpf = document.getElementById('cpf').value;
 	    // Validar CPF
