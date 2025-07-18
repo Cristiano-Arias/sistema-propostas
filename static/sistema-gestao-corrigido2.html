@@ -1702,8 +1702,7 @@
                     const valorFormatado = proposta.valor || '<span style="color: #999;">Não informado</span>';
                     
                     // Verificar status do processo
-                    const processo = processosLocal.find(p => p.numero ===
-		   const processo = processosLocal.find(p => p.numero === numeroProcesso);
+                   const processo = processosLocal.find(p => p.numero === numeroProcesso);
                    const prazoPassou = processo ? new Date(processo.prazo) < new Date() : false;
                    
                    return `
@@ -2440,4 +2439,3 @@
    </script>
 </body>
 </html>
-			    
