@@ -311,42 +311,43 @@
                 requirements.style.background = '#f8f9fa';
                 requirements.style.color = '#6c757d';
             }
+        }
         
         // Função para validar CPF
-    function validarCPF(cpf) {
-        cpf = cpf.replace(/[^\d]+/g, '');
-        if (cpf.length !== 11) return false;
+        function validarCPF(cpf) {
+            cpf = cpf.replace(/[^\d]+/g, '');
+            if (cpf.length !== 11) return false;
 
-        // Elimina CPFs invalidos conhecidos
-        if (/^(\d)\1+$/.test(cpf)) return false;
+            // Elimina CPFs invalidos conhecidos
+            if (/^(\d)\1+$/.test(cpf)) return false;
 
-        // Valida 1o digito
-        let add = 0;
-        for (let i = 0; i < 9; i++) {
-            add += parseInt(cpf.charAt(i)) * (10 - i);
+            // Valida 1o digito
+            let add = 0;
+            for (let i = 0; i < 9; i++) {
+                add += parseInt(cpf.charAt(i)) * (10 - i);
+            }
+            let rev = 11 - (add % 11);
+            if (rev === 10 || rev === 11) rev = 0;
+            if (rev !== parseInt(cpf.charAt(9))) return false;
+
+            // Valida 2o digito
+            add = 0;
+            for (let i = 0; i < 10; i++) {
+                add += parseInt(cpf.charAt(i)) * (11 - i);
+            }
+            rev = 11 - (add % 11);
+            if (rev === 10 || rev === 11) rev = 0;
+            if (rev !== parseInt(cpf.charAt(10))) return false;
+
+            return true;
         }
-        let rev = 11 - (add % 11);
-        if (rev === 10 || rev === 11) rev = 0;
-        if (rev !== parseInt(cpf.charAt(9))) return false;
 
-        // Valida 2o digito
-        add = 0;
-        for (let i = 0; i < 10; i++) {
-            add += parseInt(cpf.charAt(i)) * (11 - i);
-        }
-        rev = 11 - (add % 11);
-        if (rev === 10 || rev === 11) rev = 0;
-        if (rev !== parseInt(cpf.charAt(10))) return false;
-
-        return true;
-    }
-
-	// Cadastrar comprador
+        // Cadastrar comprador
         function cadastrarComprador(event) {
             event.preventDefault();
 
             // DEBUG - Verificar se a função está sendo chamada
-    	    console.log('Função cadastrarComprador foi chamada!');
+            console.log('Função cadastrarComprador foi chamada!');
     
             // Verificar se o localStorage está funcionando
             try {
@@ -358,26 +359,30 @@
                 mostrarAlerta('error', 'Erro ao acessar o armazenamento local!');
                 return;
             }
-		
+            
             const nome = document.getElementById('nome').value;
             const cpf = document.getElementById('cpf').value;
-	    // Validar CPF
-            if (!validarCPF(cpf)) {
-            	mostrarAlerta('error', 'CPF inválido!');
-            	return;
-            }
-
-            // Verificar CPF duplicado
-            if (usuarios.find(u => u.cpf === cpf)) {
-    		mostrarAlerta('error', 'Este CPF já está cadastrado!');
-    		return;
-	    }
             const departamento = document.getElementById('departamento').value;
             const telefone = document.getElementById('telefone').value;
             const email = document.getElementById('email').value;
             const senha = document.getElementById('senha').value;
             const confirmarSenha = document.getElementById('confirmarSenha').value;
             const nivelAcesso = document.getElementById('nivelAcesso').value;
+            
+            // Validar CPF
+            if (!validarCPF(cpf)) {
+                mostrarAlerta('error', 'CPF inválido!');
+                return;
+            }
+            
+            // Verificar se email já existe
+            const usuarios = JSON.parse(localStorage.getItem('usuarios_sistema') || '[]');
+            
+            // Verificar CPF duplicado
+            if (usuarios.find(u => u.cpf === cpf)) {
+                mostrarAlerta('error', 'Este CPF já está cadastrado!');
+                return;
+            }
             
             // Validações
             if (senha !== confirmarSenha) {
@@ -390,8 +395,6 @@
                 return;
             }
             
-            // Verificar se email já existe
-            const usuarios = JSON.parse(localStorage.getItem('usuarios_sistema') || '[]');
             if (usuarios.find(u => u.email === email)) {
                 mostrarAlerta('error', 'Este e-mail já está cadastrado!');
                 return;
@@ -417,6 +420,11 @@
             usuarios.push(novoComprador);
             localStorage.setItem('usuarios_sistema', JSON.stringify(usuarios));
             
+            // DEBUG - Verificar se salvou
+            console.log('Novo comprador:', novoComprador);
+            console.log('Total de usuários após salvar:', usuarios.length);
+            console.log('Usuários salvos:', JSON.parse(localStorage.getItem('usuarios_sistema')));
+            
             mostrarAlerta('success', 'Comprador cadastrado com sucesso! Redirecionando...');
             
             // Limpar formulário
@@ -424,7 +432,7 @@
             
             // Redirecionar após 2 segundos
             setTimeout(() => {
-                window.location.href = 'login.html';
+                window.location.href = 'index.html';
             }, 2000);
         }
 
@@ -444,7 +452,7 @@
 
         // Voltar
         function voltar() {
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
 
         // Verificar se é admin
@@ -453,5 +461,3 @@
             // Por enquanto, qualquer um pode acessar para testes
         });
     </script>
-</body>
-</html>
