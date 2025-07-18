@@ -1,10 +1,7 @@
 // ========================================
-// SISTEMA DE AUTENTICAÇÃO - ATUALIZADO PARA MULTI-COMPRADOR
+// SISTEMA DE AUTENTICAÇÃO - CORRIGIDO
 // Arquivo: auth.js
 // ========================================
-
-// Salve este arquivo como auth.js e inclua em todas as páginas protegidas:
-// <script src="auth.js"></script>
 
 const Auth = {
     // Verificar se usuário está autenticado
@@ -199,7 +196,8 @@ const Auth = {
                 'aprovar_processo',
                 'ver_todos_processos',
                 'ver_todas_propostas',
-                'gerar_relatorios'
+                'gerar_relatorios',
+                'gerenciar_usuarios'
             ],
             fornecedor: [
                 'ver_processos_ativos',
@@ -215,12 +213,12 @@ const Auth = {
         };
         
         // Para compradores, usar o nível de acesso específico
-	let tipoPermissao = usuario.tipo;
-	if (usuario.tipo === 'comprador' && usuario.nivelAcesso) {
-    	    tipoPermissao = usuario.nivelAcesso;
-	} else if (usuario.tipo === 'admin') {
-    	    tipoPermissao = 'admin';
-	}
+        let tipoPermissao = usuario.tipo;
+        if (usuario.tipo === 'comprador' && usuario.nivelAcesso) {
+            tipoPermissao = usuario.nivelAcesso;
+        } else if (usuario.tipo === 'admin') {
+            tipoPermissao = 'admin';
+        }
         
         const permissoesUsuario = permissoes[tipoPermissao] || [];
         return permissoesUsuario.includes(permissao);
@@ -283,25 +281,25 @@ const Auth = {
     
     // Verificar se pode editar processo
     podeEditarProcesso: function(processo) {
-    	const usuario = this.getUsuarioAtual();
-    	if (!usuario) return false;
+        const usuario = this.getUsuarioAtual();
+        if (!usuario) return false;
     
-    	// Admin pode editar qualquer processo
-    	if (usuario.tipo === 'admin') {
-        return true;
-    	}
+        // Admin pode editar qualquer processo
+        if (usuario.tipo === 'admin') {
+            return true;
+        }
     
-    	// Gerente pode editar qualquer processo
-    	if (usuario.tipo === 'comprador' && usuario.nivelAcesso === 'gerente') {
-        return true;
-    	}
+        // Gerente pode editar qualquer processo
+        if (usuario.tipo === 'comprador' && usuario.nivelAcesso === 'gerente') {
+            return true;
+        }
     
-    	// Comprador e Comprador Sênior só podem editar seus próprios processos
-    	if (usuario.tipo === 'comprador' && processo.criadoPor === usuario.usuarioId) {
-        return true;
-    	}
+        // Comprador e Comprador Sênior só podem editar seus próprios processos
+        if (usuario.tipo === 'comprador' && processo.criadoPor === usuario.usuarioId) {
+            return true;
+        }
     
-    	return false;
+        return false;
     },
     
     // Proteger elementos da página baseado em permissões
@@ -330,38 +328,3 @@ const Auth = {
         }
     }
 };
-
-// ========================================
-// COMO USAR ESTE SISTEMA ATUALIZADO
-// ========================================
-
-// 1. Para páginas que admin e compradores podem acessar:
-/*
-window.addEventListener('DOMContentLoaded', function() {
-    const usuario = Auth.verificarAutenticacao(['admin', 'comprador']);
-    if (usuario) {
-        Auth.exibirInfoUsuario();
-        Auth.protegerElementos();
-        
-        // Filtrar dados baseado no usuário
-        const processos = Auth.filtrarDadosPorPermissao(todosProcessos, 'processos');
-        const propostas = Auth.filtrarDadosPorPermissao(todasPropostas, 'propostas');
-    }
-});
-*/
-
-// 2. Para verificar se pode editar um processo:
-/*
-if (Auth.podeEditarProcesso(processo)) {
-    // Mostrar botões de edição
-}
-*/
-
-// 3. Para criar processo com rastreamento de proprietário:
-/*
-const novoProcesso = {
-    // ... outros campos ...
-    criadoPor: usuario.usuarioId,
-    criadoEm: new Date().toISOString()
-};
-*/
