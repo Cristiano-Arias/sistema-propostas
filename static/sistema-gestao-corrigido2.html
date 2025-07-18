@@ -1111,7 +1111,7 @@
         function carregarDados() {
             // Carregar do localStorage
             processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            propostas = normalizarPropostas();  // <--
             usuarios = JSON.parse(localStorage.getItem('usuarios_sistema') || '[]');
             
             // Filtrar dados baseado nas permissões do usuário
@@ -1123,8 +1123,40 @@
             carregarProcessos();
             carregarTodasPropostas();
         }
+        // Função para normalizar dados de propostas
+        function normalizarPropostas() {
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const propostasNormalizadas = propostas.map(proposta => {
+                // Se já está no formato correto, retorna como está
+                if (proposta.empresa && proposta.cnpj && proposta.protocolo) {
+                    return proposta;
+                }
+                
+                // Se está no formato do portal de propostas, converte
+                if (proposta.dados) {
+                    return {
+                        protocolo: proposta.protocolo,
+                        processo: proposta.processo,
+                        empresa: proposta.dados?.dados?.razaoSocial || proposta.empresa || 'N/A',
+                        cnpj: proposta.dados?.dados?.cnpj || proposta.cnpj || 'N/A',
+                        data: proposta.data || proposta.data_envio || new Date().toISOString(),
+                        valor: proposta.dados?.comercial?.valorTotal ? 
+                            `R$ ${proposta.dados.comercial.valorTotal}` : 
+                            (proposta.valor || 'R$ 0,00'),
+                        dados: proposta.dados // Mantém os dados originais
+                    };
+                }
+                
+                // Formato desconhecido
+                return proposta;
+            });
+            
+            // Salva as propostas normalizadas
+            localStorage.setItem('propostas', JSON.stringify(propostasNormalizadas));
+            return propostasNormalizadas;
+        }
         
-        // Sincronizar com a API
+	// Sincronizar com a API
         async function sincronizarPropostas() {
             try {
                 document.getElementById('syncStatus').textContent = 'Sincronizando...';
