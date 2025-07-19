@@ -460,7 +460,7 @@ def index():
     """Página inicial com informações da API"""
     return jsonify({
         'api': 'Sistema de Gestão de Propostas',
-        'versao': '1.0',
+        'versao': '2.0.0',
         'status': 'online',
         'endpoints': {
             'POST /api/enviar-proposta': 'Enviar nova proposta',
