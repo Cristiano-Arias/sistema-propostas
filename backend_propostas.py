@@ -110,7 +110,7 @@ def index():
     """Página inicial com informações da API"""
     return jsonify({
         'api': 'Sistema de Gestão de Propostas',
-        'versao': '1.0',
+        'versao': '2.0.0',
         'status': 'online',
         'endpoints': {
             'POST /api/enviar-proposta': 'Enviar nova proposta',
@@ -227,7 +227,7 @@ def status():
         'total_processos': len(processos_db),
         'total_fornecedores': len(fornecedores_db),
         'email_configurado': bool(app.config['MAIL_USERNAME']),
-        'versao': '2.0.0',
+        'versao': '2.0',
         'encoding': 'UTF-8',
         'diretorios': {
             'propostas': os.path.exists(PROPOSTAS_DIR),
