@@ -1,144 +1,246 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# backend_propostas_corrigido.py
+# Versão corrigida para deploy no Render
 
-from flask import Flask, request, jsonify, send_from_directory, render_template_string
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 from flask_mail import Mail, Message
-from datetime import datetime, timedelta
-import json
+from datetime import datetime
 import os
-import uuid
-import logging
-from docx import Document
-from docx.shared import Inches, Pt, RGBColor, Cm
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_PARAGRAPH_ALIGNMENT
-from docx.enum.style import WD_STYLE_TYPE
-from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from openpyxl import Workbook
-from openpyxl.styles import Font, Fill, PatternFill, Alignment, Border, Side, NamedStyle
-from openpyxl.utils import get_column_letter
-from openpyxl.drawing.image import Image as XLImage
-from openpyxl.worksheet.page import PageMargins
+import json
 import io
-import base64
-import re
-from decimal import Decimal
+import logging
+from werkzeug.exceptions import RequestEntityTooLarge
 
-# Configuração do Flask
-app = Flask(__name__)
-app.config['JSON_AS_ASCII'] = False
-app.config['JSONIFY_MIMETYPE'] = 'application/json; charset=utf-8'
-CORS(app)
+# Imports para Excel
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, NamedStyle, Border, Side
+from openpyxl.utils import get_column_letter
 
-# Configuração de Email CORRIGIDA
-app.config['MAIL_SERVER'] = os.environ.get('EMAIL_SERVER', 'smtp.gmail.com')
-app.config['MAIL_PORT'] = int(os.environ.get('EMAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('EMAIL_USER')
+# Imports para Word
+from docx import Document
+from docx.shared import Pt, Inches, RGBColor, Cm
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 
-# IMPORTANTE: Para Gmail, use App Password, não a senha normal
-# 1. Ative verificação em duas etapas
-# 2. Gere uma senha de app em: https://myaccount.google.com/apppasswords
+# Imports para email com fallback
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from email.utils import formataddr
+from email.header import Header
 
-mail = Mail(app)
-
-# Configuração de logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Diretórios
-PROPOSTAS_DIR = 'propostas'
-STATIC_DIR = 'static'
+app = Flask(__name__)
+CORS(app, origins=["*"])  # Permitir todas as origens em produção
 
-# Criar diretórios se não existirem
-for dir_name in [PROPOSTAS_DIR, STATIC_DIR]:
-    try:
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-            logger.info(f"Diretório {dir_name} criado")
-    except Exception as e:
-        logger.error(f"Erro ao criar diretório {dir_name}: {e}")
+# Configurações do Flask
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
-# Base de dados em memória
+# Configuração do servidor de e-mail usando variáveis de ambiente
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', '')
+
+# Configurar Flask-Mail apenas se houver credenciais
+if app.config['MAIL_USERNAME'] and app.config['MAIL_PASSWORD']:
+    mail = Mail(app)
+    logger.info("Flask-Mail configurado com sucesso")
+else:
+    mail = None
+    logger.warning("Flask-Mail não configurado - variáveis de ambiente ausentes")
+
+# E-mail do setor de suprimentos
+EMAIL_SUPRIMENTOS = os.environ.get('EMAIL_SUPRIMENTOS', 'suprimentos@empresa.com')
+
+# Diretório para salvar propostas
+PROPOSTAS_DIR = os.path.join(os.path.dirname(__file__), 'propostas')
+os.makedirs(PROPOSTAS_DIR, exist_ok=True)
+
+# Bases de dados em memória
 propostas_db = {}
 processos_db = {}
-fornecedores_db = {}
 
-# Configurações de email - MÚLTIPLOS DESTINATÁRIOS
-EMAIL_CONFIG = {
-    'destinatario_principal': os.environ.get('EMAIL_SUPRIMENTOS', 'suprimentos@empresa.com'),
-    'destinatarios_copia': os.environ.get('EMAIL_CC', '').split(',') if os.environ.get('EMAIL_CC') else [],
-    'administradores': os.environ.get('EMAIL_ADMINS', 'admin@empresa.com').split(',')
-}
+# Template HTML para e-mail do elaborador
+EMAIL_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 10px 10px; }
+        .info-box { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        h1 { margin: 0; }
+        strong { color: #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Proposta Enviada com Sucesso!</h1>
+        </div>
+        <div class="content">
+            <p>Prezado(a) <strong>{{ responsavel }}</strong>,</p>
+            <p>Confirmamos o recebimento de sua proposta comercial.</p>
+            
+            <div class="info-box">
+                <h3>📋 Detalhes da Proposta:</h3>
+                <p><strong>Protocolo:</strong> {{ protocolo }}<br>
+                <strong>Empresa:</strong> {{ empresa }}<br>
+                <strong>CNPJ:</strong> {{ cnpj }}<br>
+                <strong>Processo:</strong> {{ processo }}<br>
+                <strong>Valor Total:</strong> R$ {{ valor_total }}<br>
+                <strong>Data/Hora:</strong> {{ data_envio }}</p>
+            </div>
+            
+            <p>Sua proposta foi encaminhada para análise. Você receberá atualizações sobre o andamento do processo.</p>
+            
+            <div class="footer">
+                <p>Este é um e-mail automático. Por favor, não responda.</p>
+                <p>Em caso de dúvidas, entre em contato com o setor de suprimentos.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+"""
 
-def limpar_valor_monetario(valor):
-    """Limpa e converte valores monetários para float"""
-    if not valor:
-        return 0.0
-    
-    # Remove tudo exceto números, vírgula e ponto
-    valor_str = re.sub(r'[^\d,.-]', '', str(valor))
-    
-    # Trata formato brasileiro (1.234,56) ou americano (1,234.56)
-    if ',' in valor_str and '.' in valor_str:
-        # Determina qual é o separador decimal
-        if valor_str.rindex(',') > valor_str.rindex('.'):
-            # Formato brasileiro: ponto é milhar, vírgula é decimal
-            valor_str = valor_str.replace('.', '').replace(',', '.')
-        else:
-            # Formato americano: vírgula é milhar, ponto é decimal
-            valor_str = valor_str.replace(',', '')
-    elif ',' in valor_str:
-        # Apenas vírgula, assume decimal
-        valor_str = valor_str.replace(',', '.')
+# Template HTML para e-mail de suprimentos
+EMAIL_SUPRIMENTOS_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #f5a623 0%, #f76b1c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 10px 10px; }
+        .alert { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; font-weight: bold; color: #495057; }
+        .attachments { background: #e9ecef; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        h1 { margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Nova Proposta Recebida</h1>
+        </div>
+        <div class="content">
+            <div class="alert">
+                <strong>⚠️ ATENÇÃO:</strong> Nova proposta comercial recebida para análise.
+            </div>
+            
+            <h2>Informações da Proposta</h2>
+            <table>
+                <tr><th>Protocolo:</th><td><strong>{{ protocolo }}</strong></td></tr>
+                <tr><th>Processo:</th><td>{{ processo }}</td></tr>
+                <tr><th>Empresa:</th><td>{{ empresa }}</td></tr>
+                <tr><th>CNPJ:</th><td>{{ cnpj }}</td></tr>
+                <tr><th>Responsável:</th><td>{{ responsavel }}</td></tr>
+                <tr><th>E-mail:</th><td>{{ email }}</td></tr>
+                <tr><th>Telefone:</th><td>{{ telefone }}</td></tr>
+            </table>
+            
+            <h2>Resumo Financeiro</h2>
+            <table>
+                <tr><th>Valor Total:</th><td><strong>R$ {{ valor_total }}</strong></td></tr>
+                <tr><th>Prazo de Execução:</th><td>{{ prazo }}</td></tr>
+                <tr><th>Condição de Pagamento:</th><td>{{ pagamento }}</td></tr>
+                <tr><th>Validade da Proposta:</th><td>{{ validade }}</td></tr>
+            </table>
+            
+            <div class="attachments">
+                <strong>📎 ANEXOS:</strong><br>
+                ✓ Proposta Comercial (Excel)<br>
+                ✓ Proposta Técnica (Word)<br>
+                ✓ Dados Completos (JSON)
+            </div>
+            
+            <p><strong>Ação Necessária:</strong> Analisar a proposta e incluir no processo licitatório.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+def enviar_email_com_anexos(destinatario, assunto, corpo_html, anexos=None):
+    """Função robusta para envio de email com fallback"""
+    if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
+        logger.warning("Credenciais de email não configuradas")
+        return False
     
     try:
-        return float(valor_str)
-    except:
-        return 0.0
-
-def formatar_moeda(valor):
-    """Formata valor para moeda brasileira"""
-    try:
-        valor_num = float(valor) if not isinstance(valor, (int, float)) else valor
-        return f"R$ {valor_num:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-    except:
-        return "R$ 0,00"
-
-def set_cell_border(cell, **kwargs):
-    """Define bordas para célula do Word"""
-    tc = cell._tc
-    tcPr = tc.get_or_add_tcPr()
-    
-    # Remove bordas existentes
-    tcBorders = tcPr.first_child_found_in("w:tcBorders")
-    if tcBorders is not None:
-        tcPr.remove(tcBorders)
-    
-    # Adiciona novas bordas
-    tcBorders = OxmlElement('w:tcBorders')
-    
-    for edge in ['top', 'left', 'bottom', 'right']:
-        if edge in kwargs:
-            edge_element = OxmlElement(f'w:{edge}')
-            edge_element.set(qn('w:val'), kwargs[edge].get('val', 'single'))
-            edge_element.set(qn('w:sz'), str(kwargs[edge].get('sz', 4)))
-            edge_element.set(qn('w:space'), str(kwargs[edge].get('space', 0)))
-            edge_element.set(qn('w:color'), kwargs[edge].get('color', '000000'))
-            tcBorders.append(edge_element)
-    
-    tcPr.append(tcBorders)
+        if mail:
+            # Tentar com Flask-Mail
+            msg = Message(
+                subject=assunto,
+                recipients=[destinatario],
+                html=corpo_html
+            )
+            
+            if anexos:
+                for nome_arquivo, tipo_mime, conteudo in anexos:
+                    msg.attach(nome_arquivo, tipo_mime, conteudo)
+            
+            mail.send(msg)
+            logger.info(f"Email enviado com sucesso via Flask-Mail para {destinatario}")
+            return True
+            
+    except Exception as e:
+        logger.error(f"Erro Flask-Mail: {e}")
+        
+        # Fallback para SMTP direto
+        try:
+            msg = MIMEMultipart('alternative')
+            msg['From'] = formataddr(('Sistema de Propostas', app.config['MAIL_USERNAME']))
+            msg['To'] = destinatario
+            msg['Subject'] = Header(assunto, 'utf-8')
+            
+            msg.attach(MIMEText(corpo_html, 'html', 'utf-8'))
+            
+            if anexos:
+                for nome_arquivo, tipo_mime, conteudo in anexos:
+                    part = MIMEBase('application', 'octet-stream')
+                    part.set_payload(conteudo)
+                    encoders.encode_base64(part)
+                    part.add_header(
+                        'Content-Disposition',
+                        f'attachment; filename="{nome_arquivo}"'
+                    )
+                    msg.attach(part)
+            
+            server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'])
+            server.starttls()
+            server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info(f"Email enviado com sucesso via SMTP direto para {destinatario}")
+            return True
+            
+        except Exception as e2:
+            logger.error(f"Erro SMTP direto: {e2}")
+            return False
 
 def gerar_excel_proposta_profissional(dados_proposta):
-    """Gera arquivo Excel profissional com a proposta comercial - CONTINUAÇÃO"""
+    """Gera arquivo Excel profissional com a proposta comercial"""
     wb = Workbook()
     
     # Remove planilha padrão
@@ -151,201 +253,91 @@ def gerar_excel_proposta_profissional(dados_proposta):
     
     title_font = Font(name='Arial', size=16, bold=True, color="1F497D")
     subtitle_font = Font(name='Arial', size=12, bold=True, color="1F497D")
-    label_font = Font(name='Arial', size=10, bold=True)
-    normal_font = Font(name='Arial', size=10)
     
-    currency_style = NamedStyle(name='currency_style')
-    currency_style.number_format = 'R$ #,##0.00'
-    currency_style.font = Font(name='Arial', size=10)
-    currency_style.alignment = Alignment(horizontal='right')
+    # Criar abas
+    ws_resumo = wb.create_sheet("Resumo Executivo")
+    ws_servicos = wb.create_sheet("Tabela de Serviços")
+    ws_mao_obra = wb.create_sheet("Mão de Obra")
+    ws_materiais = wb.create_sheet("Materiais")
+    ws_equipamentos = wb.create_sheet("Equipamentos")
+    ws_bdi = wb.create_sheet("Composição BDI")
     
-    percent_style = NamedStyle(name='percent_style')
-    percent_style.number_format = '0.00%'
-    percent_style.font = Font(name='Arial', size=10)
-    percent_style.alignment = Alignment(horizontal='center')
-    
-    # Adiciona estilos ao workbook
-    wb.add_named_style(currency_style)
-    wb.add_named_style(percent_style)
-    
-    # Bordas
-    thin_border = Border(
-        left=Side(style='thin', color='000000'),
-        right=Side(style='thin', color='000000'),
-        top=Side(style='thin', color='000000'),
-        bottom=Side(style='thin', color='000000')
-    )
-    
-    thick_border = Border(
-        left=Side(style='thick', color='000000'),
-        right=Side(style='thick', color='000000'),
-        top=Side(style='thick', color='000000'),
-        bottom=Side(style='thick', color='000000')
-    )
-    
-    # =================================
-    # ABA 1: RESUMO EXECUTIVO
-    # =================================
-    ws_resumo = wb.create_sheet("Resumo Executivo", 0)
-    ws_resumo.sheet_properties.tabColor = "1F497D"
-    
-    # Configurar página
-    ws_resumo.page_margins = PageMargins(left=0.7, right=0.7, top=0.75, bottom=0.75)
-    ws_resumo.page_setup.orientation = ws_resumo.ORIENTATION_PORTRAIT
-    ws_resumo.page_setup.paperSize = ws_resumo.PAPERSIZE_A4
-    
-    # Largura das colunas
-    ws_resumo.column_dimensions['A'].width = 5
-    ws_resumo.column_dimensions['B'].width = 25
-    ws_resumo.column_dimensions['C'].width = 35
-    ws_resumo.column_dimensions['D'].width = 20
-    ws_resumo.column_dimensions['E'].width = 20
-    
-    # Cabeçalho principal
-    ws_resumo.merge_cells('A1:E2')
-    ws_resumo['A1'] = 'PROPOSTA TÉCNICA E COMERCIAL'
-    ws_resumo['A1'].font = Font(name='Arial', size=20, bold=True, color="FFFFFF")
-    ws_resumo['A1'].fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
-    ws_resumo['A1'].alignment = Alignment(horizontal="center", vertical="center")
-    ws_resumo.row_dimensions[1].height = 30
-    ws_resumo.row_dimensions[2].height = 30
-    
-    # Informações do processo
-    ws_resumo.merge_cells('A4:E4')
-    ws_resumo['A4'] = f"Processo: {dados_proposta.get('processo', 'N/A')}"
-    ws_resumo['A4'].font = subtitle_font
-    ws_resumo['A4'].alignment = Alignment(horizontal="center")
+    # ABA 1 - RESUMO EXECUTIVO
+    ws_resumo['A1'] = 'PROPOSTA COMERCIAL'
+    ws_resumo['A1'].font = Font(size=20, bold=True, color="1F497D")
+    ws_resumo['A1'].alignment = Alignment(horizontal="center")
+    ws_resumo.merge_cells('A1:F1')
     
     # Dados da empresa
-    ws_resumo['B6'] = 'DADOS DA EMPRESA'
-    ws_resumo['B6'].font = subtitle_font
-    ws_resumo.merge_cells('B6:E6')
+    ws_resumo['A3'] = 'DADOS DA EMPRESA'
+    ws_resumo['A3'].font = subtitle_font
+    ws_resumo.merge_cells('A3:C3')
     
     dados_empresa = [
         ('Razão Social:', dados_proposta.get('dados', {}).get('razaoSocial', '')),
         ('CNPJ:', dados_proposta.get('dados', {}).get('cnpj', '')),
         ('Endereço:', dados_proposta.get('dados', {}).get('endereco', '')),
-        ('Cidade/UF:', dados_proposta.get('dados', {}).get('cidade', '')),
         ('Telefone:', dados_proposta.get('dados', {}).get('telefone', '')),
-        ('E-mail:', dados_proposta.get('dados', {}).get('email', '')),
-        ('Responsável Técnico:', dados_proposta.get('dados', {}).get('respTecnico', '')),
-        ('CREA/CAU:', dados_proposta.get('dados', {}).get('crea', ''))
+        ('E-mail:', dados_proposta.get('dados', {}).get('email', ''))
     ]
     
-    row = 8
+    row = 4
     for label, value in dados_empresa:
-        ws_resumo[f'B{row}'] = label
-        ws_resumo[f'B{row}'].font = label_font
-        ws_resumo[f'B{row}'].fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
-        ws_resumo[f'C{row}'] = value
-        ws_resumo[f'C{row}'].font = normal_font
-        ws_resumo.merge_cells(f'C{row}:E{row}')
-        
-        # Aplicar bordas
-        for col in ['B', 'C', 'D', 'E']:
-            ws_resumo[f'{col}{row}'].border = thin_border
-        
+        ws_resumo[f'A{row}'] = label
+        ws_resumo[f'A{row}'].font = Font(bold=True)
+        ws_resumo[f'B{row}'] = value
+        ws_resumo.merge_cells(f'B{row}:D{row}')
         row += 1
     
     # Resumo financeiro
-    row += 2
-    ws_resumo[f'B{row}'] = 'RESUMO FINANCEIRO'
-    ws_resumo[f'B{row}'].font = subtitle_font
-    ws_resumo.merge_cells(f'B{row}:E{row}')
+    ws_resumo[f'A{row+1}'] = 'RESUMO FINANCEIRO'
+    ws_resumo[f'A{row+1}'].font = subtitle_font
+    ws_resumo.merge_cells(f'A{row+1}:C{row+1}')
     
-    row += 2
+    # Calcular totais
+    valor_total = dados_proposta.get('comercial', {}).get('valorTotal', 'R$ 0,00')
+    prazo = dados_proposta.get('resumo', {}).get('prazoExecucao', 'N/A')
+    validade = dados_proposta.get('comercial', {}).get('validadeProposta', '60 dias')
     
-    # Cabeçalho da tabela financeira
-    headers = ['Componente', 'Valor', '%']
-    ws_resumo[f'B{row}'] = headers[0]
-    ws_resumo[f'C{row}'] = headers[1]
-    ws_resumo[f'D{row}'] = headers[2]
+    ws_resumo[f'A{row+3}'] = 'Valor Total da Proposta:'
+    ws_resumo[f'A{row+3}'].font = Font(bold=True, size=14)
+    ws_resumo[f'C{row+3}'] = valor_total
+    ws_resumo[f'C{row+3}'].font = Font(bold=True, size=14, color="28a745")
     
-    for col in ['B', 'C', 'D']:
-        ws_resumo[f'{col}{row}'].font = header_font
-        ws_resumo[f'{col}{row}'].fill = header_fill
-        ws_resumo[f'{col}{row}'].alignment = header_alignment
-        ws_resumo[f'{col}{row}'].border = thin_border
+    # ABA 2 - TABELA DE SERVIÇOS
+    # Cabeçalho
+    headers_servicos = ['Item', 'Descrição', 'Unidade', 'Quantidade', 'Valor Unitário', 'Valor Total']
+    for col, header in enumerate(headers_servicos, 1):
+        cell = ws_servicos.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
     
-    row += 1
-    
-    # Valores
-    total_mo = limpar_valor_monetario(dados_proposta.get('comercial', {}).get('totalMaoObra', 0))
-    total_mat = limpar_valor_monetario(dados_proposta.get('comercial', {}).get('totalMateriais', 0))
-    total_equip = limpar_valor_monetario(dados_proposta.get('comercial', {}).get('totalEquipamentos', 0))
-    total_servicos = limpar_valor_monetario(dados_proposta.get('comercial', {}).get('totalServicos', 0))
-    
-    custo_direto = total_mo + total_mat + total_equip + total_servicos
-    
-    bdi_percentual = float(dados_proposta.get('comercial', {}).get('bdiPercentual', 0))
-    bdi_valor = limpar_valor_monetario(dados_proposta.get('comercial', {}).get('bdiValor', 0))
-    valor_total = limpar_valor_monetario(dados_proposta.get('comercial', {}).get('valorTotal', 0))
-    
-    if valor_total == 0:
-        valor_total = custo_direto + bdi_valor
-    
-    componentes_financeiros = [
-        ('Serviços', total_servicos, total_servicos/valor_total if valor_total > 0 else 0),
-        ('Mão de Obra', total_mo, total_mo/valor_total if valor_total > 0 else 0),
-        ('Materiais', total_mat, total_mat/valor_total if valor_total > 0 else 0),
-        ('Equipamentos', total_equip, total_equip/valor_total if valor_total > 0 else 0),
-        ('Custo Direto', custo_direto, custo_direto/valor_total if valor_total > 0 else 0),
-        ('BDI', bdi_valor, bdi_percentual/100),
-    ]
-    
-    for componente, valor, percentual in componentes_financeiros:
-        ws_resumo[f'B{row}'] = componente
-        ws_resumo[f'C{row}'] = valor
-        ws_resumo[f'C{row}'].style = 'currency_style'
-        ws_resumo[f'D{row}'] = percentual
-        ws_resumo[f'D{row}'].style = 'percent_style'
-        
-        for col in ['B', 'C', 'D']:
-            ws_resumo[f'{col}{row}'].border = thin_border
-            
-        if componente == 'Custo Direto':
-            for col in ['B', 'C', 'D']:
-                ws_resumo[f'{col}{row}'].font = Font(bold=True, italic=True)
-                ws_resumo[f'{col}{row}'].fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
-        
+    # Dados dos serviços
+    servicos = dados_proposta.get('comercial', {}).get('servicos', [])
+    row = 2
+    for servico in servicos:
+        ws_servicos.cell(row=row, column=1, value=row-1)
+        ws_servicos.cell(row=row, column=2, value=servico.get('descricao', ''))
+        ws_servicos.cell(row=row, column=3, value=servico.get('unidade', ''))
+        ws_servicos.cell(row=row, column=4, value=servico.get('quantidade', 0))
+        ws_servicos.cell(row=row, column=5, value=servico.get('valorUnitario', 'R$ 0,00'))
+        ws_servicos.cell(row=row, column=6, value=servico.get('valorTotal', 'R$ 0,00'))
         row += 1
     
-    # Valor Total
-    ws_resumo[f'B{row}'] = 'VALOR TOTAL'
-    ws_resumo[f'C{row}'] = valor_total
-    ws_resumo[f'C{row}'].style = 'currency_style'
-    ws_resumo[f'D{row}'] = 1.0
-    ws_resumo[f'D{row}'].style = 'percent_style'
-    
-    for col in ['B', 'C', 'D']:
-        ws_resumo[f'{col}{row}'].font = Font(name='Arial', size=12, bold=True, color="FFFFFF")
-        ws_resumo[f'{col}{row}'].fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-        ws_resumo[f'{col}{row}'].border = thick_border
-    
-    # Informações adicionais
-    row += 3
-    ws_resumo[f'B{row}'] = 'CONDIÇÕES COMERCIAIS'
-    ws_resumo[f'B{row}'].font = subtitle_font
-    ws_resumo.merge_cells(f'B{row}:E{row}')
-    
-    row += 2
-    condicoes = [
-        ('Prazo de Execução:', dados_proposta.get('tecnica', {}).get('prazoExecucao', 'N/A')),
-        ('Validade da Proposta:', dados_proposta.get('comercial', {}).get('validadeProposta', '60 dias')),
-        ('Condições de Pagamento:', dados_proposta.get('resumo', {}).get('formaPagamento', 'A definir')),
-        ('Data da Proposta:', datetime.now().strftime('%d/%m/%Y'))
-    ]
-    
-    for label, value in condicoes:
-        ws_resumo[f'B{row}'] = label
-        ws_resumo[f'B{row}'].font = label_font
-        ws_resumo[f'C{row}'] = value
-        ws_resumo[f'C{row}'].font = normal_font
-        ws_resumo.merge_cells(f'C{row}:D{row}')
-        row += 1
-    
-    # Continuação das outras abas (Serviços, Mão de Obra, etc.)
-    # ... [código das outras abas do Excel]
+    # Ajustar largura das colunas
+    for ws in [ws_resumo, ws_servicos, ws_mao_obra, ws_materiais, ws_equipamentos, ws_bdi]:
+        for column in ws.columns:
+            max_length = 0
+            column_letter = get_column_letter(column[0].column)
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
     
     # Salvar em memória
     excel_buffer = io.BytesIO()
@@ -355,7 +347,7 @@ def gerar_excel_proposta_profissional(dados_proposta):
     return excel_buffer
 
 def gerar_word_proposta_profissional(dados_proposta):
-    """Gera arquivo Word profissional com a proposta técnica - CONTINUAÇÃO"""
+    """Gera arquivo Word profissional com a proposta técnica"""
     doc = Document()
     
     # Configurar margens
@@ -366,14 +358,10 @@ def gerar_word_proposta_profissional(dados_proposta):
         section.left_margin = Cm(2.5)
         section.right_margin = Cm(2.5)
     
-    # =================================
     # CAPA
-    # =================================
-    # Espaço superior
     for _ in range(5):
         doc.add_paragraph()
     
-    # Título principal
     titulo = doc.add_paragraph()
     titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = titulo.add_run('PROPOSTA TÉCNICA')
@@ -384,35 +372,6 @@ def gerar_word_proposta_profissional(dados_proposta):
     
     doc.add_paragraph()
     
-    # Subtítulo
-    subtitulo = doc.add_paragraph()
-    subtitulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = subtitulo.add_run('E')
-    run.font.name = 'Arial'
-    run.font.size = Pt(16)
-    run.font.color.rgb = RGBColor(31, 73, 125)
-    
-    doc.add_paragraph()
-    
-    titulo2 = doc.add_paragraph()
-    titulo2.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = titulo2.add_run('COMERCIAL')
-    run.font.name = 'Arial'
-    run.font.size = Pt(28)
-    run.font.bold = True
-    run.font.color.rgb = RGBColor(31, 73, 125)
-    
-    # Linha decorativa
-    for _ in range(3):
-        doc.add_paragraph()
-    
-    p = doc.add_paragraph('_' * 50)
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    
-    # Processo
-    for _ in range(3):
-        doc.add_paragraph()
-    
     processo_p = doc.add_paragraph()
     processo_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = processo_p.add_run(f"PROCESSO: {dados_proposta.get('processo', 'N/A')}")
@@ -420,8 +379,8 @@ def gerar_word_proposta_profissional(dados_proposta):
     run.font.size = Pt(18)
     run.font.bold = True
     
-    # Empresa
     doc.add_paragraph()
+    
     empresa_p = doc.add_paragraph()
     empresa_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = empresa_p.add_run(dados_proposta.get('dados', {}).get('razaoSocial', '').upper())
@@ -430,7 +389,6 @@ def gerar_word_proposta_profissional(dados_proposta):
     run.font.bold = True
     run.font.color.rgb = RGBColor(68, 114, 196)
     
-    # Data
     for _ in range(5):
         doc.add_paragraph()
     
@@ -440,11 +398,41 @@ def gerar_word_proposta_profissional(dados_proposta):
     run.font.name = 'Arial'
     run.font.size = Pt(14)
     
-    # Quebra de página
     doc.add_page_break()
     
-    # Continuação do documento...
-    # [código continua com índice, seções, etc.]
+    # CONTEÚDO
+    doc.add_heading('1. DADOS DA EMPRESA', level=1)
+    
+    table = doc.add_table(rows=8, cols=2)
+    table.style = 'Light Grid Accent 1'
+    
+    dados_empresa = [
+        ('Razão Social:', dados_proposta.get('dados', {}).get('razaoSocial', '')),
+        ('CNPJ:', dados_proposta.get('dados', {}).get('cnpj', '')),
+        ('Endereço:', dados_proposta.get('dados', {}).get('endereco', '')),
+        ('Cidade:', dados_proposta.get('dados', {}).get('cidade', '')),
+        ('Telefone:', dados_proposta.get('dados', {}).get('telefone', '')),
+        ('E-mail:', dados_proposta.get('dados', {}).get('email', '')),
+        ('Responsável Técnico:', dados_proposta.get('dados', {}).get('respTecnico', '')),
+        ('CREA/CAU:', dados_proposta.get('dados', {}).get('crea', ''))
+    ]
+    
+    for i, (label, value) in enumerate(dados_empresa):
+        table.cell(i, 0).text = label
+        table.cell(i, 1).text = value or 'Não informado'
+        table.cell(i, 0).paragraphs[0].runs[0].font.bold = True
+    
+    doc.add_paragraph()
+    
+    # Seções técnicas
+    doc.add_heading('2. OBJETO DA PROPOSTA', level=1)
+    doc.add_paragraph(dados_proposta.get('resumo', {}).get('objetoConcorrencia', ''))
+    
+    doc.add_heading('3. METODOLOGIA DE EXECUÇÃO', level=1)
+    doc.add_paragraph(dados_proposta.get('tecnica', {}).get('metodologia', ''))
+    
+    doc.add_heading('4. EQUIPE TÉCNICA', level=1)
+    doc.add_paragraph(dados_proposta.get('tecnica', {}).get('equipeTecnica', ''))
     
     # Salvar em memória
     docx_buffer = io.BytesIO()
@@ -453,14 +441,14 @@ def gerar_word_proposta_profissional(dados_proposta):
     
     return docx_buffer
 
-# ===== ROTAS DA API =====
+# ROTAS DA API
 
 @app.route('/')
 def index():
-    """Página inicial com informações da API"""
+    """Rota principal - retorna informações da API"""
     return jsonify({
         'api': 'Sistema de Gestão de Propostas',
-        'versao': '2.0',
+        'versao': '2.0.0',
         'status': 'online',
         'endpoints': {
             'POST /api/enviar-proposta': 'Enviar nova proposta',
@@ -468,7 +456,8 @@ def index():
             'GET /api/proposta/<protocolo>': 'Buscar proposta específica',
             'POST /api/criar-processo': 'Criar novo processo',
             'GET /api/processos/<numero>': 'Buscar processo',
-            'GET /api/status': 'Status da API'
+            'GET /api/status': 'Status da API',
+            'GET /api/download/proposta/<protocolo>/<tipo>': 'Download de proposta'
         }
     })
 
@@ -479,7 +468,8 @@ def status():
         'status': 'online',
         'timestamp': datetime.now().isoformat(),
         'total_propostas': len(propostas_db),
-        'total_processos': len(processos_db)
+        'total_processos': len(processos_db),
+        'email_configurado': bool(app.config['MAIL_USERNAME'])
     })
 
 @app.route('/api/enviar-proposta', methods=['POST'])
@@ -521,7 +511,7 @@ def enviar_proposta():
             excel_buffer = gerar_excel_proposta_profissional(dados)
             word_buffer = gerar_word_proposta_profissional(dados)
             
-            # Salvar arquivos
+            # Salvar arquivos localmente
             excel_path = os.path.join(PROPOSTAS_DIR, f'{protocolo}_proposta.xlsx')
             word_path = os.path.join(PROPOSTAS_DIR, f'{protocolo}_proposta.docx')
             
@@ -531,77 +521,76 @@ def enviar_proposta():
             with open(word_path, 'wb') as f:
                 f.write(word_buffer.getvalue())
             
-            # Enviar email com anexos
+            # Reset buffers para email
+            excel_buffer.seek(0)
+            word_buffer.seek(0)
+            
+            # Preparar dados para email
+            template_data = {
+                'protocolo': protocolo,
+                'processo': processo,
+                'empresa': dados.get('dados', {}).get('razaoSocial', ''),
+                'cnpj': dados.get('dados', {}).get('cnpj', ''),
+                'responsavel': dados.get('dados', {}).get('respTecnico', ''),
+                'email': dados.get('dados', {}).get('email', ''),
+                'telefone': dados.get('dados', {}).get('telefone', ''),
+                'valor_total': dados.get('comercial', {}).get('valorTotal', 'R$ 0,00'),
+                'prazo': dados.get('resumo', {}).get('prazoExecucao', 'N/A'),
+                'pagamento': dados.get('resumo', {}).get('formaPagamento', 'N/A'),
+                'validade': dados.get('comercial', {}).get('validadeProposta', '60 dias'),
+                'data_envio': datetime.now().strftime('%d/%m/%Y às %H:%M')
+            }
+            
+            # Enviar emails
             email_enviado = False
-            if app.config['MAIL_USERNAME'] and app.config['MAIL_PASSWORD']:
-                try:
-                    msg = Message(
-                        subject=f'Nova Proposta - Processo {processo} - {dados.get("dados", {}).get("razaoSocial", "")}',
-                        recipients=[EMAIL_CONFIG['destinatario_principal']] + EMAIL_CONFIG['destinatarios_copia'],
-                        body=f'''
-Nova proposta recebida:
-
-Protocolo: {protocolo}
-Processo: {processo}
-Empresa: {dados.get('dados', {}).get('razaoSocial', '')}
-CNPJ: {dados.get('dados', {}).get('cnpj', '')}
-Valor Total: {dados.get('comercial', {}).get('valorTotal', 'N/A')}
-Data/Hora: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
-
-Os arquivos Excel e Word estão anexados.
-
-Atenciosamente,
-Sistema de Gestão de Propostas
-                        '''
-                    )
-                    
-                    # Anexar arquivos
-                    excel_buffer.seek(0)
-                    word_buffer.seek(0)
-                    
-                    msg.attach(
-                        f'{protocolo}_proposta.xlsx',
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                        excel_buffer.read()
-                    )
-                    
-                    msg.attach(
-                        f'{protocolo}_proposta.docx',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                        word_buffer.read()
-                    )
-                    
-                    mail.send(msg)
-                    email_enviado = True
-                    logger.info(f"Email enviado para proposta {protocolo}")
-                    
-                except Exception as e:
-                    logger.error(f"Erro ao enviar email: {e}")
+            if app.config['MAIL_USERNAME']:
+                # Email para o elaborador
+                html_elaborador = EMAIL_TEMPLATE.replace('{{ protocolo }}', template_data['protocolo'])
+                for key, value in template_data.items():
+                    html_elaborador = html_elaborador.replace('{{ ' + key + ' }}', str(value))
+                
+                enviar_email_com_anexos(
+                    template_data['email'],
+                    f'Confirmação - Proposta {protocolo}',
+                    html_elaborador
+                )
+                
+                # Email para suprimentos com anexos
+                html_suprimentos = EMAIL_SUPRIMENTOS_TEMPLATE
+                for key, value in template_data.items():
+                    html_suprimentos = html_suprimentos.replace('{{ ' + key + ' }}', str(value))
+                
+                anexos = [
+                    (f'{protocolo}_proposta_comercial.xlsx', 
+                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                     excel_buffer.read()),
+                    (f'{protocolo}_proposta_tecnica.docx',
+                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                     word_buffer.read()),
+                    (f'{protocolo}_dados_completos.json',
+                     'application/json',
+                     json.dumps(dados, ensure_ascii=False, indent=2).encode('utf-8'))
+                ]
+                
+                email_enviado = enviar_email_com_anexos(
+                    EMAIL_SUPRIMENTOS,
+                    f'NOVA PROPOSTA - {protocolo} - {template_data["empresa"]}',
+                    html_suprimentos,
+                    anexos
+                )
             
         except Exception as e:
             logger.error(f"Erro ao gerar arquivos: {e}")
-        
-        # Criar resumo para o sistema de gestão
-        proposta_resumo = {
-            'protocolo': protocolo,
-            'processo': processo,
-            'empresa': dados.get('dados', {}).get('razaoSocial', ''),
-            'cnpj': dados.get('dados', {}).get('cnpj', ''),
-            'data': datetime.now().isoformat(),
-            'valor': dados.get('comercial', {}).get('valorTotal', 'R$ 0,00'),
-            'dados': dados  # Dados completos para visualização detalhada
-        }
         
         return jsonify({
             'success': True,
             'protocolo': protocolo,
             'mensagem': 'Proposta enviada com sucesso',
-            'email_enviado': email_enviado,
-            'proposta_resumo': proposta_resumo
+            'email_enviado': email_enviado
         })
         
     except Exception as e:
-        logger.error(f"Erro ao processar proposta: {e}")
+        logger.error(f"Erro ao enviar proposta: {e}")
         return jsonify({
             'success': False,
             'erro': str(e)
@@ -611,27 +600,12 @@ Sistema de Gestão de Propostas
 def listar_propostas():
     """Listar todas as propostas"""
     try:
-        propostas_lista = []
-        
-        for protocolo, proposta in propostas_db.items():
-            propostas_lista.append({
-                'protocolo': protocolo,
-                'processo': proposta.get('processo'),
-                'empresa': proposta.get('dados', {}).get('razaoSocial', ''),
-                'cnpj': proposta.get('dados', {}).get('cnpj', ''),
-                'data': proposta.get('data'),
-                'valor': proposta.get('comercial', {}).get('valorTotal', 'R$ 0,00')
-            })
-        
-        # Ordenar por data (mais recente primeiro)
-        propostas_lista.sort(key=lambda x: x['data'], reverse=True)
-        
+        propostas_lista = list(propostas_db.values())
         return jsonify({
             'success': True,
-            'total': len(propostas_lista),
-            'propostas': propostas_lista
+            'propostas': propostas_lista,
+            'total': len(propostas_lista)
         })
-        
     except Exception as e:
         logger.error(f"Erro ao listar propostas: {e}")
         return jsonify({
@@ -665,7 +639,7 @@ def buscar_proposta(protocolo):
 
 @app.route('/api/criar-processo', methods=['POST'])
 def criar_processo():
-    """Criar novo processo e notificar fornecedores"""
+    """Criar novo processo"""
     try:
         dados = request.json
         numero = dados.get('numero')
@@ -679,25 +653,17 @@ def criar_processo():
         # Salvar processo
         processos_db[numero] = {
             'numero': numero,
-            'objeto': dados.get('objeto'),
-            'modalidade': dados.get('modalidade'),
-            'prazo': dados.get('prazo'),
+            'objeto': dados.get('objeto', ''),
+            'modalidade': dados.get('modalidade', ''),
+            'prazo': dados.get('prazo', ''),
+            'valorEstimado': dados.get('valorEstimado', ''),
             'dataCadastro': datetime.now().isoformat(),
-            'criadoPor': dados.get('criadoPor')
+            'criadoPor': dados.get('criadoPor', 'sistema')
         }
-        
-        # Notificar fornecedores se solicitado
-        fornecedores_notificados = 0
-        if dados.get('notificarFornecedores'):
-            # Aqui você poderia implementar a notificação real
-            # Por enquanto, apenas simular
-            fornecedores_notificados = len(fornecedores_db)
-            logger.info(f"Notificando {fornecedores_notificados} fornecedores sobre processo {numero}")
         
         return jsonify({
             'success': True,
-            'processo': numero,
-            'fornecedores_notificados': fornecedores_notificados
+            'processo': processos_db[numero]
         })
         
     except Exception as e:
@@ -755,9 +721,16 @@ def download_proposta(protocolo, tipo):
                 'erro': 'Tipo inválido. Use excel ou word'
             }), 400
         
-        return send_from_directory(
-            PROPOSTAS_DIR,
-            arquivo,
+        caminho_arquivo = os.path.join(PROPOSTAS_DIR, arquivo)
+        
+        if not os.path.exists(caminho_arquivo):
+            return jsonify({
+                'success': False,
+                'erro': 'Arquivo não encontrado'
+            }), 404
+        
+        return send_file(
+            caminho_arquivo,
             mimetype=mimetype,
             as_attachment=True,
             download_name=arquivo
@@ -770,22 +743,6 @@ def download_proposta(protocolo, tipo):
             'erro': str(e)
         }), 500
 
-# Servir arquivos estáticos (HTML)
-@app.route('/portal-propostas-novo.html')
-def portal_propostas():
-    """Servir página do portal de propostas"""
-    return send_from_directory('static', 'portal-propostas-novo.html')
-
-@app.route('/sistema-gestao-corrigido2.html')
-def sistema_gestao():
-    """Servir página do sistema de gestão"""
-    return send_from_directory('static', 'sistema-gestao-corrigido2.html')
-
-@app.route('/auth.js')
-def auth_js():
-    """Servir arquivo de autenticação"""
-    return send_from_directory('.', 'auth.js')
-
 # Tratamento de erros
 @app.errorhandler(404)
 def not_found(error):
@@ -796,23 +753,35 @@ def not_found(error):
 
 @app.errorhandler(500)
 def internal_error(error):
+    logger.error(f"Erro interno: {error}")
     return jsonify({
         'success': False,
         'erro': 'Erro interno do servidor'
     }), 500
 
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(e):
+    return jsonify({
+        'success': False,
+        'erro': 'Arquivo muito grande. Máximo permitido: 16MB'
+    }), 413
+
+# Health check para o Render
+@app.route('/health')
+def health_check():
+    return jsonify({'status': 'healthy'}), 200
+
 if __name__ == '__main__':
-    # Configurações para desenvolvimento
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('DEBUG', 'True').lower() == 'true'
+    # Configurações para produção no Render
+    port = int(os.environ.get('PORT', 10000))
+    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
     
     logger.info(f"Iniciando servidor na porta {port}")
     logger.info(f"Debug mode: {debug}")
     logger.info(f"Email configurado: {bool(app.config['MAIL_USERNAME'])}")
     
-    # Criar alguns dados de exemplo
+    # Criar processo de exemplo se estiver em debug
     if debug:
-        # Processo de exemplo
         processos_db['LIC-2025-001'] = {
             'numero': 'LIC-2025-001',
             'objeto': 'Construção de Complexo Comercial - 5.000m²',
@@ -821,9 +790,9 @@ if __name__ == '__main__':
             'dataCadastro': datetime.now().isoformat(),
             'criadoPor': 'admin'
         }
-        
-        logger.info("Dados de exemplo criados")
+        logger.info("Processo de exemplo criado")
     
+    # Iniciar servidor
     app.run(
         host='0.0.0.0',
         port=port,
