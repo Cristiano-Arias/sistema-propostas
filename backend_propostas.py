@@ -27,7 +27,7 @@ import re
 from decimal import Decimal
 
 # Configuração do Flask
-app = Flask(__name__, static_folder='static', static_url_path='/static'))
+app = Flask(__name__, static_folder='static', static_url_path='/static')    
 app.config['JSON_AS_ASCII'] = False
 app.config['JSONIFY_MIMETYPE'] = 'application/json; charset=utf-8'
 CORS(app)
