@@ -1,7 +1,7 @@
-# backend_propostas_corrigido.py
-# Versão corrigida para deploy no Render
+# backend_propostas.py
+# Versão completa com API + Servir HTMLs
 
-from flask import Flask, request, jsonify, send_from_directory, send_file
+from flask import Flask, request, jsonify, send_from_directory, send_file, render_template_string
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from datetime import datetime
@@ -37,21 +37,21 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app, origins=["*"])  # Permitir todas as origens em produção
+CORS(app, origins=["*"])
 
 # Configurações do Flask
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
-# Configuração do servidor de e-mail usando variáveis de ambiente
+# Configuração do servidor de e-mail
 app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASS', '')  # Nota: MAIL_PASS em vez de MAIL_PASSWORD
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', '')
 
-# Configurar Flask-Mail apenas se houver credenciais
+# Configurar Flask-Mail
 if app.config['MAIL_USERNAME'] and app.config['MAIL_PASSWORD']:
     mail = Mail(app)
     logger.info("Flask-Mail configurado com sucesso")
@@ -59,7 +59,7 @@ else:
     mail = None
     logger.warning("Flask-Mail não configurado - variáveis de ambiente ausentes")
 
-# E-mail do setor de suprimentos
+# E-mail do setor de suprimentos - suporta EMAIL_CC também
 EMAIL_SUPRIMENTOS = os.environ.get('EMAIL_SUPRIMENTOS', os.environ.get('EMAIL_CC', 'suprimentos@empresa.com'))
 
 # Diretório para salvar propostas
@@ -70,7 +70,7 @@ os.makedirs(PROPOSTAS_DIR, exist_ok=True)
 propostas_db = {}
 processos_db = {}
 
-# Template HTML para e-mail do elaborador
+# Templates de email
 EMAIL_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -118,7 +118,6 @@ EMAIL_TEMPLATE = """
 </html>
 """
 
-# Template HTML para e-mail de suprimentos
 EMAIL_SUPRIMENTOS_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -188,7 +187,6 @@ def enviar_email_com_anexos(destinatario, assunto, corpo_html, anexos=None):
     
     try:
         if mail:
-            # Tentar com Flask-Mail
             msg = Message(
                 subject=assunto,
                 recipients=[destinatario],
@@ -206,7 +204,6 @@ def enviar_email_com_anexos(destinatario, assunto, corpo_html, anexos=None):
     except Exception as e:
         logger.error(f"Erro Flask-Mail: {e}")
         
-        # Fallback para SMTP direto
         try:
             msg = MIMEMultipart('alternative')
             msg['From'] = formataddr(('Sistema de Propostas', app.config['MAIL_USERNAME']))
@@ -441,25 +438,7 @@ def gerar_word_proposta_profissional(dados_proposta):
     
     return docx_buffer
 
-# ROTAS DA API
-
-@app.route('/')
-def index():
-    """Rota principal - retorna informações da API"""
-    return jsonify({
-        'api': 'Sistema de Gestão de Propostas',
-        'versao': '2.0.0',
-        'status': 'online',
-        'endpoints': {
-            'POST /api/enviar-proposta': 'Enviar nova proposta',
-            'GET /api/propostas/listar': 'Listar todas as propostas',
-            'GET /api/proposta/<protocolo>': 'Buscar proposta específica',
-            'POST /api/criar-processo': 'Criar novo processo',
-            'GET /api/processos/<numero>': 'Buscar processo',
-            'GET /api/status': 'Status da API',
-            'GET /api/download/proposta/<protocolo>/<tipo>': 'Download de proposta'
-        }
-    })
+# ========== ROTAS DA API ==========
 
 @app.route('/api/status')
 def status():
@@ -545,7 +524,7 @@ def enviar_proposta():
             email_enviado = False
             if app.config['MAIL_USERNAME']:
                 # Email para o elaborador
-                html_elaborador = EMAIL_TEMPLATE.replace('{{ protocolo }}', template_data['protocolo'])
+                html_elaborador = EMAIL_TEMPLATE
                 for key, value in template_data.items():
                     html_elaborador = html_elaborador.replace('{{ ' + key + ' }}', str(value))
                 
@@ -743,12 +722,210 @@ def download_proposta(protocolo, tipo):
             'erro': str(e)
         }), 500
 
-# Tratamento de erros
+# ========== ROTAS PARA SERVIR ARQUIVOS HTML ==========
+
+@app.route('/portal')
+@app.route('/portal-propostas')
+def portal_propostas_page():
+    """Servir página do portal de propostas"""
+    return send_from_directory('.', 'portal-propostas-novo.html')
+
+@app.route('/sistema')
+@app.route('/sistema-gestao')
+def sistema_gestao_page():
+    """Servir página do sistema de gestão"""
+    return send_from_directory('.', 'sistema-gestao-corrigido2.html')
+
+@app.route('/index')
+@app.route('/login')
+def index_page():
+    """Servir página de login"""
+    return send_from_directory('.', 'index.html')
+
+@app.route('/dashboard-fornecedor')
+def dashboard_fornecedor_page():
+    """Servir dashboard do fornecedor"""
+    return send_from_directory('.', 'dashboard-fornecedor-completo.html')
+
+@app.route('/dashboard-auditor')
+def dashboard_auditor_page():
+    """Servir dashboard do auditor"""
+    return send_from_directory('.', 'dashboard-auditor.html')
+
+@app.route('/cadastro-fornecedor')
+def cadastro_fornecedor_page():
+    """Servir página de cadastro de fornecedor"""
+    return send_from_directory('.', 'cadastro-fornecedor.html')
+
+@app.route('/cadastro-comprador')
+def cadastro_comprador_page():
+    """Servir página de cadastro de comprador"""
+    return send_from_directory('.', 'cadastro-comprador.html')
+
+@app.route('/relatorios')
+def relatorios_page():
+    """Servir módulo de relatórios"""
+    return send_from_directory('.', 'modulo-relatorios.html')
+
+# Servir arquivos estáticos (CSS, JS, imagens)
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    """Servir arquivos estáticos"""
+    return send_from_directory('static', filename)
+
+# Servir auth.js se existir
+@app.route('/auth.js')
+def auth_js():
+    """Servir arquivo de autenticação"""
+    try:
+        return send_from_directory('.', 'auth.js')
+    except:
+        return "// auth.js não encontrado", 404
+
+# Rota principal com página de boas-vindas
+@app.route('/')
+def home():
+    """Página inicial com links para o sistema"""
+    return '''
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sistema de Gestão de Propostas</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 20px;
+            }
+            .container {
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                text-align: center;
+                max-width: 600px;
+                width: 100%;
+            }
+            h1 {
+                color: #333;
+                margin-bottom: 20px;
+            }
+            p {
+                color: #666;
+                margin-bottom: 30px;
+            }
+            .links {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-top: 30px;
+            }
+            a {
+                background: #667eea;
+                color: white;
+                padding: 15px 20px;
+                text-decoration: none;
+                border-radius: 5px;
+                transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+            }
+            a:hover {
+                background: #764ba2;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            }
+            .api-status {
+                margin-top: 30px;
+                padding: 15px;
+                background: #f0f0f0;
+                border-radius: 5px;
+                font-size: 14px;
+                color: #666;
+            }
+            .status-online {
+                color: #28a745;
+                font-weight: bold;
+            }
+            .section-title {
+                margin-top: 30px;
+                margin-bottom: 15px;
+                color: #555;
+                font-weight: bold;
+                text-transform: uppercase;
+                font-size: 12px;
+                letter-spacing: 1px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🏢 Sistema de Gestão de Propostas</h1>
+            <p>Sistema integrado para gestão de processos licitatórios e propostas comerciais</p>
+            
+            <div class="section-title">Acesso Rápido</div>
+            <div class="links">
+                <a href="/portal">
+                    <span>🌐</span>
+                    <span>Portal do Fornecedor</span>
+                </a>
+                <a href="/sistema">
+                    <span>📊</span>
+                    <span>Sistema de Gestão</span>
+                </a>
+                <a href="/login">
+                    <span>🔐</span>
+                    <span>Login</span>
+                </a>
+                <a href="/cadastro-fornecedor">
+                    <span>📝</span>
+                    <span>Cadastro Fornecedor</span>
+                </a>
+            </div>
+            
+            <div class="section-title">Dashboards</div>
+            <div class="links">
+                <a href="/dashboard-fornecedor">
+                    <span>📈</span>
+                    <span>Dashboard Fornecedor</span>
+                </a>
+                <a href="/dashboard-auditor">
+                    <span>🔍</span>
+                    <span>Dashboard Auditor</span>
+                </a>
+            </div>
+            
+            <div class="api-status">
+                <div class="status-online">✅ Sistema Online</div>
+                <div>API: v2.0.0</div>
+                <div style="margin-top: 10px;">
+                    <a href="/api/status" target="_blank" style="background: #6c757d; padding: 8px 15px; font-size: 12px;">
+                        Ver Status Detalhado
+                    </a>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    '''
+
+# ========== TRATAMENTO DE ERROS ==========
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({
         'success': False,
-        'erro': 'Endpoint não encontrado'
+        'erro': 'Endpoint não encontrado',
+        'dica': 'Acesse / para ver os links disponíveis'
     }), 404
 
 @app.errorhandler(500)
@@ -771,6 +948,8 @@ def handle_file_too_large(e):
 def health_check():
     return jsonify({'status': 'healthy'}), 200
 
+# ========== INICIALIZAÇÃO ==========
+
 if __name__ == '__main__':
     # Configurações para produção no Render
     port = int(os.environ.get('PORT', 10000))
@@ -779,6 +958,7 @@ if __name__ == '__main__':
     logger.info(f"Iniciando servidor na porta {port}")
     logger.info(f"Debug mode: {debug}")
     logger.info(f"Email configurado: {bool(app.config['MAIL_USERNAME'])}")
+    logger.info(f"Email suprimentos: {EMAIL_SUPRIMENTOS}")
     
     # Criar processo de exemplo se estiver em debug
     if debug:
