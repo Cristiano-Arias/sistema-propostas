@@ -459,7 +459,7 @@ def gerar_word_proposta_profissional(dados_proposta):
 @app.route('/')
 def index():
     """Servir página de login"""
-    return send_from_directory('.', 'index.html')
+    return send_from_directory('static', 'index.html')
 
 # ROTA PARA INFORMAÇÕES DA API
 @app.route('/api')
@@ -781,52 +781,47 @@ def download_proposta(protocolo, tipo):
 @app.route('/index.html')
 def login_page():
     """Servir página de login"""
-    return send_from_directory('.', 'index.html')
+    return send_from_directory('static', 'index.html')
 
 @app.route('/portal-propostas-novo.html')
 def portal_propostas():
     """Servir página do portal de propostas"""
-    return send_from_directory('.', 'portal-propostas-novo.html')
+    return send_from_directory('static', 'portal-propostas-novo.html')
 
 @app.route('/sistema-gestao-corrigido2.html')
 def sistema_gestao():
     """Servir página do sistema de gestão"""
-    return send_from_directory('.', 'sistema-gestao-corrigido2.html')
+    return send_from_directory('static', 'sistema-gestao-corrigido2.html')
 
 @app.route('/dashboard-fornecedor.html')
 def dashboard_fornecedor():
     """Servir página do dashboard do fornecedor"""
-    if os.path.exists('dashboard-fornecedor-completo.html'):
-        return send_from_directory('.', 'dashboard-fornecedor-completo.html')
-    elif os.path.exists('dashboard-fornecedor.html'):
-        return send_from_directory('.', 'dashboard-fornecedor.html')
-    else:
-        return jsonify({'erro': 'Dashboard do fornecedor não encontrado'}), 404
+    return send_from_directory('static', 'dashboard-fornecedor-completo.html')
 
 @app.route('/dashboard-auditor.html')
 def dashboard_auditor():
     """Servir página do dashboard do auditor"""
-    return send_from_directory('.', 'dashboard-auditor.html')
+    return send_from_directory('static', 'dashboard-auditor.html')
 
 @app.route('/cadastro-fornecedor.html')
 def cadastro_fornecedor():
     """Servir página de cadastro de fornecedor"""
-    return send_from_directory('.', 'cadastro-fornecedor.html')
+    return send_from_directory('static', 'cadastro-fornecedor.html')
 
 @app.route('/cadastro-comprador.html')
 def cadastro_comprador():
     """Servir página de cadastro de comprador"""
-    return send_from_directory('.', 'cadastro-comprador.html')
+    return send_from_directory('static', 'cadastro-comprador.html')
 
 @app.route('/modulo-relatorios.html')
 def modulo_relatorios():
     """Servir módulo de relatórios"""
-    return send_from_directory('.', 'modulo-relatorios.html')
+    return send_from_directory('static', 'modulo-relatorios.html')
 
 @app.route('/auth.js')
 def auth_js():
     """Servir arquivo de autenticação"""
-    return send_from_directory('.', 'auth.js')
+    return send_from_directory('static', 'auth.js')
 
 # Tratamento de erros
 @app.errorhandler(404)
