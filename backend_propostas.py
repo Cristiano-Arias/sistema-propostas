@@ -949,7 +949,83 @@ def health_check():
     return jsonify({'status': 'healthy'}), 200
 
 # ========== INICIALIZAÇÃO ==========
+# ========== ADICIONE ESTAS ROTAS NO SEU backend_propostas.py ==========
+# Coloque este código ANTES da linha: if __name__ == '__main__':
 
+# ROTAS PARA SERVIR OS ARQUIVOS HTML
+@app.route('/')
+def home():
+    """Redireciona para o portal de propostas"""
+    return send_from_directory('.', 'portal-propostas-novo.html')
+
+@app.route('/portal')
+@app.route('/portal-propostas')
+@app.route('/portal-propostas-novo.html')
+def portal_propostas_page():
+    """Servir página do portal de propostas"""
+    return send_from_directory('.', 'portal-propostas-novo.html')
+
+@app.route('/sistema')
+@app.route('/sistema-gestao')
+@app.route('/sistema-gestao-corrigido2.html')
+def sistema_gestao_page():
+    """Servir página do sistema de gestão"""
+    return send_from_directory('.', 'sistema-gestao-corrigido2.html')
+
+@app.route('/index.html')
+def index_page():
+    """Servir página de login"""
+    return send_from_directory('.', 'index.html')
+
+@app.route('/dashboard-fornecedor')
+@app.route('/dashboard-fornecedor-completo.html')
+def dashboard_fornecedor_page():
+    """Servir dashboard do fornecedor"""
+    return send_from_directory('.', 'dashboard-fornecedor-completo.html')
+
+@app.route('/dashboard-auditor')
+@app.route('/dashboard-auditor.html')
+def dashboard_auditor_page():
+    """Servir dashboard do auditor"""
+    return send_from_directory('.', 'dashboard-auditor.html')
+
+@app.route('/cadastro-fornecedor')
+@app.route('/cadastro-fornecedor.html')
+def cadastro_fornecedor_page():
+    """Servir página de cadastro de fornecedor"""
+    return send_from_directory('.', 'cadastro-fornecedor.html')
+
+@app.route('/cadastro-comprador')
+@app.route('/cadastro-comprador.html')
+def cadastro_comprador_page():
+    """Servir página de cadastro de comprador"""
+    return send_from_directory('.', 'cadastro-comprador.html')
+
+@app.route('/modulo-relatorios')
+@app.route('/modulo-relatorios.html')
+def relatorios_page():
+    """Servir módulo de relatórios"""
+    return send_from_directory('.', 'modulo-relatorios.html')
+
+# Servir arquivos da pasta static
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    """Servir arquivos estáticos"""
+    return send_from_directory('static', filename)
+
+# Servir auth.js
+@app.route('/auth.js')
+def auth_js():
+    """Servir arquivo de autenticação"""
+    try:
+        return send_from_directory('.', 'auth.js')
+    except:
+        return "// auth.js não encontrado", 404
+
+# Health check para o Render
+@app.route('/health')
+def health_check():
+    return jsonify({'status': 'healthy'}), 200
 if __name__ == '__main__':
     # Configurações para produção no Render
     port = int(os.environ.get('PORT', 10000))
