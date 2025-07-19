@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask import Flask, request, jsonify, send_from_directory, render_template_string
+from flask import Flask, request, jsonify, send_from_directory, render_template_string, redirect
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta
@@ -138,7 +138,7 @@ def set_cell_border(cell, **kwargs):
     tcPr.append(tcBorders)
 
 def gerar_excel_proposta_profissional(dados_proposta):
-    """Gera arquivo Excel profissional com a proposta comercial - CONTINUAÇÃO"""
+    """Gera arquivo Excel profissional com a proposta comercial"""
     wb = Workbook()
     
     # Remove planilha padrão
@@ -355,7 +355,7 @@ def gerar_excel_proposta_profissional(dados_proposta):
     return excel_buffer
 
 def gerar_word_proposta_profissional(dados_proposta):
-    """Gera arquivo Word profissional com a proposta técnica - CONTINUAÇÃO"""
+    """Gera arquivo Word profissional com a proposta técnica"""
     doc = Document()
     
     # Configurar margens
@@ -455,9 +455,16 @@ def gerar_word_proposta_profissional(dados_proposta):
 
 # ===== ROTAS DA API =====
 
+# ROTA PRINCIPAL - CORRIGIDA
 @app.route('/')
 def index():
-    """Página inicial com informações da API"""
+    """Servir página de login"""
+    return send_from_directory('.', 'index.html')
+
+# ROTA PARA INFORMAÇÕES DA API
+@app.route('/api')
+def api_info():
+    """Informações da API"""
     return jsonify({
         'api': 'Sistema de Gestão de Propostas',
         'versao': '2.0.0',
@@ -771,6 +778,11 @@ def download_proposta(protocolo, tipo):
         }), 500
 
 # Servir arquivos estáticos (HTML)
+@app.route('/index.html')
+def login_page():
+    """Servir página de login"""
+    return send_from_directory('.', 'index.html')
+
 @app.route('/portal-propostas-novo.html')
 def portal_propostas():
     """Servir página do portal de propostas"""
@@ -780,6 +792,31 @@ def portal_propostas():
 def sistema_gestao():
     """Servir página do sistema de gestão"""
     return send_from_directory('.', 'sistema-gestao-corrigido2.html')
+
+@app.route('/dashboard-fornecedor.html')
+def dashboard_fornecedor():
+    """Servir página do dashboard do fornecedor"""
+    return send_from_directory('.', 'dashboard-fornecedor-completo.html')
+
+@app.route('/dashboard-auditor.html')
+def dashboard_auditor():
+    """Servir página do dashboard do auditor"""
+    return send_from_directory('.', 'dashboard-auditor.html')
+
+@app.route('/cadastro-fornecedor.html')
+def cadastro_fornecedor():
+    """Servir página de cadastro de fornecedor"""
+    return send_from_directory('.', 'cadastro-fornecedor.html')
+
+@app.route('/cadastro-comprador.html')
+def cadastro_comprador():
+    """Servir página de cadastro de comprador"""
+    return send_from_directory('.', 'cadastro-comprador.html')
+
+@app.route('/modulo-relatorios.html')
+def modulo_relatorios():
+    """Servir módulo de relatórios"""
+    return send_from_directory('.', 'modulo-relatorios.html')
 
 @app.route('/auth.js')
 def auth_js():
