@@ -1,38 +1,37 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-env/
-ENV/
-
-# Distribuição
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Arquivos locais
+# Arquivos de ambiente e configuração
 .env
 .env.local
+.env.production
+
+# Arquivos Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Backups
+*_backup*
+*.bak
+*.backup
+
+# Logs
 *.log
+logs/
+
+# Diretório de propostas geradas
 propostas/
-*.xlsx
-*.docx
-*.pdf
+propostas_backup/
+
+# Arquivos temporários
+*.tmp
+*.temp
+~*
+.~*
 
 # IDEs
 .vscode/
@@ -43,14 +42,10 @@ propostas/
 
 # Sistema
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Temporários
-*.tmp
-*.temp
-*.bak
+# Arquivos de teste locais
+test_local/
+testes/
+rascunho*
