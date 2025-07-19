@@ -2,32 +2,28 @@
 
 Sistema completo para gerenciamento de processos licitatórios e propostas comerciais.
 
-## 🚀 Demonstração
-
-- **Sistema de Gestão**: https://portal-proposta.onrender.com/sistema-gestao-corrigido2.html
-- **Portal de Propostas**: https://portal-proposta.onrender.com/portal-propostas-novo.html
-- **API Status**: https://portal-proposta.onrender.com/api/status
+## 🚀 Demo
+- **Produção**: https://portal-proposta.onrender.com
+- **Sistema**: https://portal-proposta.onrender.com/sistema-gestao-corrigido2.html
+- **Portal**: https://portal-proposta.onrender.com/portal-propostas-novo.html
 
 ## 📋 Funcionalidades
-
-- ✅ Portal para envio de propostas técnicas e comerciais
+- ✅ Portal para envio de propostas
 - ✅ Geração automática de Excel e Word
 - ✅ Envio de emails com anexos
-- ✅ Sistema de gestão para compradores
-- ✅ Autenticação multi-nível
-- ✅ Dashboard com estatísticas
+- ✅ Dashboard de gestão
+- ✅ Sistema de autenticação
 
 ## 🛠️ Tecnologias
-
 - Backend: Python/Flask
 - Frontend: HTML/CSS/JavaScript
-- Documentos: python-docx, openpyxl
-- Email: Flask-Mail
 - Deploy: Render.com
 
 ## 📦 Instalação Local
-
-1. Clone o repositório:
 ```bash
-git clone https://github.com/seu-usuario/sistema-propostas.git
+git clone https://github.com/Cristiano-Arias/sistema-propostas.git
 cd sistema-propostas
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python backend_propostas.py
