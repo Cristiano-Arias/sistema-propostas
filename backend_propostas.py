@@ -27,7 +27,7 @@ import re
 from decimal import Decimal
 
 # Configuração do Flask
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static'))
 app.config['JSON_AS_ASCII'] = False
 app.config['JSONIFY_MIMETYPE'] = 'application/json; charset=utf-8'
 CORS(app)
@@ -469,7 +469,13 @@ def internal_error(error):
         'success': False,
         'erro': 'Erro interno do servidor'
     }), 500
-
+# Rota para servir arquivos da pasta static sem /static/ na URL
+@app.route('/<path:filename>')
+def serve_static_files(filename):
+    """Servir arquivos HTML da pasta static"""
+    if filename.endswith('.html') or filename.endswith('.js'):
+        return send_from_directory('static', filename)
+    return "Arquivo não encontrado", 404
 if __name__ == '__main__':
     # Configurações para desenvolvimento
     port = int(os.environ.get('PORT', 5000))
@@ -497,4 +503,5 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=port,
         debug=debug
+        # Rota para servir arquivos da pasta static sem /static/ na URL
     )
