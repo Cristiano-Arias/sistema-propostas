@@ -459,7 +459,89 @@ def gerar_word_proposta_profissional(dados_proposta):
 @app.route('/')
 def index():
     """Servir página de login"""
-    return send_from_directory('.', 'index.html')
+    try:
+        # Primeiro tenta servir o arquivo index.html
+        if os.path.exists('index.html'):
+            return send_from_directory('.', 'index.html')
+        else:
+            # Se não encontrar, cria uma página de redirecionamento temporária
+            return '''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Sistema de Gestão de Propostas</title>
+                <meta charset="UTF-8">
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        height: 100vh;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0;
+                    }
+                    .container {
+                        background: white;
+                        padding: 40px;
+                        border-radius: 10px;
+                        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                        text-align: center;
+                        max-width: 400px;
+                    }
+                    h1 { color: #2c3e50; margin-bottom: 20px; }
+                    p { color: #666; margin-bottom: 30px; }
+                    .links {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 15px;
+                    }
+                    a {
+                        display: block;
+                        padding: 15px 30px;
+                        background: #667eea;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 8px;
+                        font-weight: bold;
+                        transition: all 0.3s;
+                    }
+                    a:hover {
+                        background: #764ba2;
+                        transform: translateY(-2px);
+                    }
+                    .api-link {
+                        background: #95a5a6;
+                        font-size: 14px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🏢 Sistema de Gestão de Propostas</h1>
+                    <p>Escolha uma opção para continuar:</p>
+                    <div class="links">
+                        <a href="/sistema-gestao-corrigido2.html">Sistema de Gestão</a>
+                        <a href="/portal-propostas-novo.html">Portal de Propostas</a>
+                        <a href="/cadastro-fornecedor.html">Cadastro de Fornecedor</a>
+                        <a href="/api" class="api-link">Ver Status da API</a>
+                    </div>
+                </div>
+            </body>
+            </html>
+            '''
+    except Exception as e:
+        logger.error(f"Erro ao servir página inicial: {e}")
+        return jsonify({
+            'erro': 'Erro ao carregar página inicial',
+            'detalhes': str(e),
+            'arquivos_disponiveis': [
+                '/sistema-gestao-corrigido2.html',
+                '/portal-propostas-novo.html',
+                '/cadastro-fornecedor.html',
+                '/api'
+            ]
+        }), 500
 
 # ROTA PARA INFORMAÇÕES DA API
 @app.route('/api')
@@ -860,6 +942,10 @@ if __name__ == '__main__':
         }
         
         logger.info("Dados de exemplo criados")
+        logger.info("Arquivos disponíveis no diretório:")
+        for arquivo in os.listdir('.'):
+            if arquivo.endswith('.html') or arquivo.endswith('.js'):
+                logger.info(f"  - {arquivo}")
     
     app.run(
         host='0.0.0.0',
