@@ -774,12 +774,12 @@ def download_proposta(protocolo, tipo):
 @app.route('/portal-propostas-novo.html')
 def portal_propostas():
     """Servir página do portal de propostas"""
-    return send_from_directory('.', 'portal-propostas-novo.html')
+    return send_from_directory('static', 'portal-propostas-novo.html')
 
 @app.route('/sistema-gestao-corrigido2.html')
 def sistema_gestao():
     """Servir página do sistema de gestão"""
-    return send_from_directory('.', 'sistema-gestao-corrigido2.html')
+    return send_from_directory('static', 'sistema-gestao-corrigido2.html')
 
 @app.route('/auth.js')
 def auth_js():
