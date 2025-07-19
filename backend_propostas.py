@@ -60,7 +60,7 @@ else:
     logger.warning("Flask-Mail não configurado - variáveis de ambiente ausentes")
 
 # E-mail do setor de suprimentos
-EMAIL_SUPRIMENTOS = os.environ.get('EMAIL_SUPRIMENTOS', 'suprimentos@empresa.com')
+EMAIL_SUPRIMENTOS = os.environ.get('EMAIL_SUPRIMENTOS', os.environ.get('EMAIL_CC', 'suprimentos@empresa.com'))
 
 # Diretório para salvar propostas
 PROPOSTAS_DIR = os.path.join(os.path.dirname(__file__), 'propostas')
