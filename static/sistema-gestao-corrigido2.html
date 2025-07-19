@@ -1531,10 +1531,18 @@
                                                 onclick="verDetalheProposta('${proposta.protocolo}')">
                                             Ver Detalhes
                                         </button>
-                                        <button class="btn btn-success" style="padding: 5px 15px; font-size: 12px;" 
-                                                onclick="downloadProposta('${proposta.protocolo}')">
-                                            📥 Download
-                                        </button>
+                                        <div class="btn-group" style="display: inline-block; margin-left: 5px;">
+                                            <button class="btn btn-success" style="padding: 5px 10px; font-size: 12px;" 
+                                                    onclick="downloadPropostaExcel('${proposta.protocolo}')" 
+                                                    title="Download Excel">
+                                                📊
+                                            </button>
+                                            <button class="btn btn-info" style="padding: 5px 10px; font-size: 12px;" 
+                                                    onclick="downloadPropostaWord('${proposta.protocolo}')"
+                                                    title="Download Word">
+                                                📝
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             `;
@@ -1725,15 +1733,20 @@
                         <p><strong>Data de Envio:</strong> ${new Date(proposta.data).toLocaleString('pt-BR')}</p>
                     </div>
                     
-                    <div style="display: flex; gap: 10px; justify-content: center;">
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                         <button class="btn btn-primary" onclick="visualizarPropostaCompleta('${protocolo}')">
                             📄 Visualizar Completa
                         </button>
-                        <button class="btn btn-success" onclick="downloadProposta('${protocolo}')">
-                            📥 Download Excel/Word
+                        <button class="btn btn-success" onclick="downloadPropostaExcel('${protocolo}')">
+                            📊 Excel Profissional
+                        </button>
+                        <button class="btn btn-info" onclick="downloadPropostaWord('${protocolo}')">
+                            📝 Word Profissional
+                        </button>
+                        <button class="btn btn-warning" onclick="downloadPropostaJSON('${protocolo}')">
+                            🔧 JSON (Backup)
                         </button>
                     </div>
-                </div>
             `;
             
             modal.style.display = 'block';
@@ -1849,6 +1862,86 @@
             
             mostrarNotificacao('success', 'Download iniciado', 'O arquivo está sendo baixado');
         }
+
+        // Download proposta em Excel profissional
+        async function downloadPropostaExcel(protocolo) {
+            try {
+                mostrarNotificacao('info', 'Processando', 'Gerando arquivo Excel profissional...');
+        
+                const response = await fetch(`${API_URL}/api/download/proposta/${protocolo}/excel`);
+        
+                if (!response.ok) {
+                    throw new Error('Erro ao gerar arquivo');
+                }
+        
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `proposta_${protocolo}_completa.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+        
+                mostrarNotificacao('success', '✅ Excel Gerado', 'Download do Excel profissional iniciado');
+        
+            } catch (error) {
+                console.error('Erro:', error);
+                mostrarNotificacao('error', 'Erro', 'Não foi possível gerar o Excel');
+            }
+        }
+
+        // Download proposta em Word profissional
+        async function downloadPropostaWord(protocolo) {
+            try {
+                mostrarNotificacao('info', 'Processando', 'Gerando documento Word profissional...');
+        
+                const response = await fetch(`${API_URL}/api/download/proposta/${protocolo}/word`);
+        
+                if (!response.ok) {
+                    throw new Error('Erro ao gerar arquivo');
+                }
+        
+                const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `proposta_${protocolo}_tecnica.docx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        
+            mostrarNotificacao('success', '✅ Word Gerado', 'Download do documento Word iniciado');
+        
+        } catch (error) {
+            console.error('Erro:', error);
+            mostrarNotificacao('error', 'Erro', 'Não foi possível gerar o Word');
+        }
+    }
+
+    // Download proposta em JSON (backup completo)
+    function downloadPropostaJSON(protocolo) {
+        const proposta = propostas.find(p => p.protocolo === protocolo);
+        if (!proposta) {
+            mostrarNotificacao('error', 'Erro', 'Proposta não encontrada');
+            return;
+        }
+    
+        // Formatar JSON com indentação
+        const dataStr = JSON.stringify(proposta, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+        const link = document.createElement('a');
+        link.setAttribute('href', dataUri);
+        link.setAttribute('download', `proposta_${protocolo}_backup.json`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    
+        mostrarNotificacao('success', '✅ JSON Gerado', 'Backup completo da proposta baixado');
+    }
         
         // Abrir relatório comparativo
         function abrirRelatorioComparativo(numeroProcesso) {
