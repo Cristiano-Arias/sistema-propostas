@@ -484,7 +484,7 @@ def status():
 
 @app.route('/api/enviar-proposta', methods=['POST'])
 def enviar_proposta():
-    """Receber e processar nova proposta com envio de e-mail melhorado"""
+    """Receber e processar nova proposta"""
     try:
         dados = request.json
         protocolo = dados.get('protocolo')
@@ -496,7 +496,7 @@ def enviar_proposta():
                 'erro': 'Protocolo e processo são obrigatórios'
             }), 400
         
-        # Verificar se a empresa já enviou proposta
+        # Verificar se a empresa já enviou proposta para este processo
         cnpj = dados.get('dados', {}).get('cnpj', '')
         for prop_id, prop in propostas_db.items():
             if prop.get('processo') == processo and prop.get('dados', {}).get('cnpj') == cnpj:
@@ -516,26 +516,14 @@ def enviar_proposta():
             'comercial': dados.get('comercial', {})
         }
         
-        # Gerar arquivos
-        arquivos_gerados = False
-        email_enviado = False
-        mensagem_erro = ""
-        
+        # Gerar arquivos Excel e Word
         try:
-            logger.info(f"Gerando arquivos para proposta {protocolo}")
-            
-            # Gerar Excel
             excel_buffer = gerar_excel_proposta_profissional(dados)
-            excel_buffer.seek(0)
-            
-            # Gerar Word
             word_buffer = gerar_word_proposta_profissional(dados)
-            word_buffer.seek(0)
             
-            # Salvar localmente
-            excel_path = os.path.join(PROPOSTAS_DIR, f'{protocolo}_comercial.xlsx')
-            word_path = os.path.join(PROPOSTAS_DIR, f'{protocolo}_tecnica.docx')
-            json_path = os.path.join(PROPOSTAS_DIR, f'{protocolo}_completa.json')
+            # Salvar arquivos
+            excel_path = os.path.join(PROPOSTAS_DIR, f'{protocolo}_proposta.xlsx')
+            word_path = os.path.join(PROPOSTAS_DIR, f'{protocolo}_proposta.docx')
             
             with open(excel_path, 'wb') as f:
                 f.write(excel_buffer.getvalue())
@@ -543,63 +531,74 @@ def enviar_proposta():
             with open(word_path, 'wb') as f:
                 f.write(word_buffer.getvalue())
             
-            with open(json_path, 'w', encoding='utf-8') as f:
-                json.dump(dados, f, ensure_ascii=False, indent=2)
-            
-            arquivos_gerados = True
-            logger.info("Arquivos gerados com sucesso")
-            
-            # Enviar e-mails
+            # Enviar email com anexos
+            email_enviado = False
             if app.config['MAIL_USERNAME'] and app.config['MAIL_PASSWORD']:
                 try:
-                    # 1. E-mail para o fornecedor
-                    email_fornecedor = dados.get('dados', {}).get('email', '')
-                    if email_fornecedor:
-                        enviar_email_fornecedor(email_fornecedor, protocolo, processo, dados)
+                    msg = Message(
+                        subject=f'Nova Proposta - Processo {processo} - {dados.get("dados", {}).get("razaoSocial", "")}',
+                        recipients=[EMAIL_CONFIG['destinatario_principal']] + EMAIL_CONFIG['destinatarios_copia'],
+                        body=f'''
+Nova proposta recebida:
+
+Protocolo: {protocolo}
+Processo: {processo}
+Empresa: {dados.get('dados', {}).get('razaoSocial', '')}
+CNPJ: {dados.get('dados', {}).get('cnpj', '')}
+Valor Total: {dados.get('comercial', {}).get('valorTotal', 'N/A')}
+Data/Hora: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
+
+Os arquivos Excel e Word estão anexados.
+
+Atenciosamente,
+Sistema de Gestão de Propostas
+                        '''
+                    )
                     
-                    # 2. E-mail para suprimentos com anexos
+                    # Anexar arquivos
                     excel_buffer.seek(0)
                     word_buffer.seek(0)
                     
-                    enviar_email_suprimentos(protocolo, processo, dados, excel_buffer, word_buffer)
+                    msg.attach(
+                        f'{protocolo}_proposta.xlsx',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        excel_buffer.read()
+                    )
                     
+                    msg.attach(
+                        f'{protocolo}_proposta.docx',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        word_buffer.read()
+                    )
+                    
+                    mail.send(msg)
                     email_enviado = True
-                    logger.info("E-mails enviados com sucesso")
+                    logger.info(f"Email enviado para proposta {protocolo}")
                     
                 except Exception as e:
-                    logger.error(f"Erro ao enviar e-mail: {e}")
-                    mensagem_erro = str(e)
+                    logger.error(f"Erro ao enviar email: {e}")
             
         except Exception as e:
             logger.error(f"Erro ao gerar arquivos: {e}")
-            mensagem_erro = str(e)
         
-        # Resposta
+        # Criar resumo para o sistema de gestão
         proposta_resumo = {
             'protocolo': protocolo,
             'processo': processo,
             'empresa': dados.get('dados', {}).get('razaoSocial', ''),
-            'cnpj': cnpj,
+            'cnpj': dados.get('dados', {}).get('cnpj', ''),
             'data': datetime.now().isoformat(),
             'valor': dados.get('comercial', {}).get('valorTotal', 'R$ 0,00'),
-            'prazo': dados.get('tecnica', {}).get('prazoExecucao', 'N/A'),
-            'arquivos_gerados': arquivos_gerados,
-            'email_enviado': email_enviado
+            'dados': dados  # Dados completos para visualização detalhada
         }
         
-        resposta = {
+        return jsonify({
             'success': True,
             'protocolo': protocolo,
             'mensagem': 'Proposta enviada com sucesso',
             'email_enviado': email_enviado,
-            'arquivos_gerados': arquivos_gerados,
             'proposta_resumo': proposta_resumo
-        }
-        
-        if mensagem_erro:
-            resposta['aviso'] = f'Alguns serviços falharam: {mensagem_erro}'
-        
-        return jsonify(resposta)
+        })
         
     except Exception as e:
         logger.error(f"Erro ao processar proposta: {e}")
@@ -608,127 +607,225 @@ def enviar_proposta():
             'erro': str(e)
         }), 500
 
-def enviar_email_fornecedor(email, protocolo, processo, dados):
-    """Envia e-mail de confirmação para o fornecedor"""
-    msg = Message(
-        subject=f'Confirmação - Proposta {protocolo}',
-        recipients=[email],
-        html=f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{ font-family: Arial, sans-serif; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background: #3498db; color: white; padding: 20px; text-align: center; }}
-                .content {{ background: #f8f9fa; padding: 20px; }}
-                .success {{ color: #27ae60; font-weight: bold; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>✅ Proposta Enviada com Sucesso!</h1>
-                </div>
-                <div class="content">
-                    <p>Prezado(a) {dados.get('dados', {}).get('razaoSocial', 'Fornecedor')},</p>
-                    
-                    <p>Sua proposta foi recebida com sucesso em nosso sistema.</p>
-                    
-                    <h3>Dados da Proposta:</h3>
-                    <ul>
-                        <li><strong>Protocolo:</strong> {protocolo}</li>
-                        <li><strong>Processo:</strong> {processo}</li>
-                        <li><strong>Data/Hora:</strong> {datetime.now().strftime('%d/%m/%Y às %H:%M')}</li>
-                        <li><strong>Valor Total:</strong> R$ {dados.get('comercial', {}).get('valorTotal', 'N/A')}</li>
-                        <li><strong>Prazo:</strong> {dados.get('tecnica', {}).get('prazoExecucao', 'N/A')}</li>
-                    </ul>
-                    
-                    <p>Você será notificado sobre o andamento do processo.</p>
-                    
-                    <p>Atenciosamente,<br>
-                    Setor de Suprimentos</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-    )
-    mail.send(msg)
+@app.route('/api/propostas/listar', methods=['GET'])
+def listar_propostas():
+    """Listar todas as propostas"""
+    try:
+        propostas_lista = []
+        
+        for protocolo, proposta in propostas_db.items():
+            propostas_lista.append({
+                'protocolo': protocolo,
+                'processo': proposta.get('processo'),
+                'empresa': proposta.get('dados', {}).get('razaoSocial', ''),
+                'cnpj': proposta.get('dados', {}).get('cnpj', ''),
+                'data': proposta.get('data'),
+                'valor': proposta.get('comercial', {}).get('valorTotal', 'R$ 0,00')
+            })
+        
+        # Ordenar por data (mais recente primeiro)
+        propostas_lista.sort(key=lambda x: x['data'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'total': len(propostas_lista),
+            'propostas': propostas_lista
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar propostas: {e}")
+        return jsonify({
+            'success': False,
+            'erro': str(e)
+        }), 500
 
-def enviar_email_suprimentos(protocolo, processo, dados, excel_buffer, word_buffer):
-    """Envia e-mail para suprimentos com os anexos"""
-    msg = Message(
-        subject=f'Nova Proposta - {processo} - {dados.get("dados", {}).get("razaoSocial", "")}',
-        recipients=[EMAIL_CONFIG['destinatario_principal']] + EMAIL_CONFIG['destinatarios_copia']
+@app.route('/api/proposta/<protocolo>', methods=['GET'])
+def buscar_proposta(protocolo):
+    """Buscar proposta específica"""
+    try:
+        proposta = propostas_db.get(protocolo)
+        
+        if not proposta:
+            return jsonify({
+                'success': False,
+                'erro': 'Proposta não encontrada'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'proposta': proposta
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao buscar proposta: {e}")
+        return jsonify({
+            'success': False,
+            'erro': str(e)
+        }), 500
+
+@app.route('/api/criar-processo', methods=['POST'])
+def criar_processo():
+    """Criar novo processo e notificar fornecedores"""
+    try:
+        dados = request.json
+        numero = dados.get('numero')
+        
+        if not numero:
+            return jsonify({
+                'success': False,
+                'erro': 'Número do processo é obrigatório'
+            }), 400
+        
+        # Salvar processo
+        processos_db[numero] = {
+            'numero': numero,
+            'objeto': dados.get('objeto'),
+            'modalidade': dados.get('modalidade'),
+            'prazo': dados.get('prazo'),
+            'dataCadastro': datetime.now().isoformat(),
+            'criadoPor': dados.get('criadoPor')
+        }
+        
+        # Notificar fornecedores se solicitado
+        fornecedores_notificados = 0
+        if dados.get('notificarFornecedores'):
+            # Aqui você poderia implementar a notificação real
+            # Por enquanto, apenas simular
+            fornecedores_notificados = len(fornecedores_db)
+            logger.info(f"Notificando {fornecedores_notificados} fornecedores sobre processo {numero}")
+        
+        return jsonify({
+            'success': True,
+            'processo': numero,
+            'fornecedores_notificados': fornecedores_notificados
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao criar processo: {e}")
+        return jsonify({
+            'success': False,
+            'erro': str(e)
+        }), 500
+
+@app.route('/api/processos/<numero>', methods=['GET'])
+def buscar_processo(numero):
+    """Buscar processo específico"""
+    try:
+        processo = processos_db.get(numero)
+        
+        if not processo:
+            return jsonify({
+                'success': False,
+                'erro': 'Processo não encontrado'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'processo': processo
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao buscar processo: {e}")
+        return jsonify({
+            'success': False,
+            'erro': str(e)
+        }), 500
+
+@app.route('/api/download/proposta/<protocolo>/<tipo>', methods=['GET'])
+def download_proposta(protocolo, tipo):
+    """Download de proposta em Excel ou Word"""
+    try:
+        proposta = propostas_db.get(protocolo)
+        
+        if not proposta:
+            return jsonify({
+                'success': False,
+                'erro': 'Proposta não encontrada'
+            }), 404
+        
+        if tipo == 'excel':
+            arquivo = f'{protocolo}_proposta.xlsx'
+            mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        elif tipo == 'word':
+            arquivo = f'{protocolo}_proposta.docx'
+            mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        else:
+            return jsonify({
+                'success': False,
+                'erro': 'Tipo inválido. Use excel ou word'
+            }), 400
+        
+        return send_from_directory(
+            PROPOSTAS_DIR,
+            arquivo,
+            mimetype=mimetype,
+            as_attachment=True,
+            download_name=arquivo
+        )
+        
+    except Exception as e:
+        logger.error(f"Erro ao fazer download: {e}")
+        return jsonify({
+            'success': False,
+            'erro': str(e)
+        }), 500
+
+# Servir arquivos estáticos (HTML)
+@app.route('/portal-propostas-novo.html')
+def portal_propostas():
+    """Servir página do portal de propostas"""
+    return send_from_directory('.', 'portal-propostas-novo.html')
+
+@app.route('/sistema-gestao-corrigido2.html')
+def sistema_gestao():
+    """Servir página do sistema de gestão"""
+    return send_from_directory('.', 'sistema-gestao-corrigido2.html')
+
+@app.route('/auth.js')
+def auth_js():
+    """Servir arquivo de autenticação"""
+    return send_from_directory('.', 'auth.js')
+
+# Tratamento de erros
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'success': False,
+        'erro': 'Endpoint não encontrado'
+    }), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({
+        'success': False,
+        'erro': 'Erro interno do servidor'
+    }), 500
+
+if __name__ == '__main__':
+    # Configurações para desenvolvimento
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('DEBUG', 'True').lower() == 'true'
+    
+    logger.info(f"Iniciando servidor na porta {port}")
+    logger.info(f"Debug mode: {debug}")
+    logger.info(f"Email configurado: {bool(app.config['MAIL_USERNAME'])}")
+    
+    # Criar alguns dados de exemplo
+    if debug:
+        # Processo de exemplo
+        processos_db['LIC-2025-001'] = {
+            'numero': 'LIC-2025-001',
+            'objeto': 'Construção de Complexo Comercial - 5.000m²',
+            'modalidade': 'Concorrência',
+            'prazo': '2025-08-30T17:00:00',
+            'dataCadastro': datetime.now().isoformat(),
+            'criadoPor': 'admin'
+        }
+        
+        logger.info("Dados de exemplo criados")
+    
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=debug
     )
-    
-    # HTML do e-mail
-    msg.html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; }}
-            .header {{ background: #2c3e50; color: white; padding: 20px; }}
-            .content {{ padding: 20px; }}
-            table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
-            th, td {{ padding: 10px; border: 1px solid #ddd; text-align: left; }}
-            th {{ background: #3498db; color: white; }}
-            .valor {{ font-size: 24px; color: #27ae60; font-weight: bold; }}
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>📋 Nova Proposta Recebida</h1>
-        </div>
-        <div class="content">
-            <table>
-                <tr><th>Protocolo</th><td>{protocolo}</td></tr>
-                <tr><th>Processo</th><td>{processo}</td></tr>
-                <tr><th>Empresa</th><td>{dados.get('dados', {}).get('razaoSocial', '')}</td></tr>
-                <tr><th>CNPJ</th><td>{dados.get('dados', {}).get('cnpj', '')}</td></tr>
-                <tr><th>Responsável</th><td>{dados.get('dados', {}).get('respTecnico', '')}</td></tr>
-                <tr><th>E-mail</th><td>{dados.get('dados', {}).get('email', '')}</td></tr>
-                <tr><th>Telefone</th><td>{dados.get('dados', {}).get('telefone', '')}</td></tr>
-            </table>
-            
-            <h2>Resumo Financeiro</h2>
-            <p class="valor">Valor Total: R$ {dados.get('comercial', {}).get('valorTotal', 'N/A')}</p>
-            <p><strong>Prazo de Execução:</strong> {dados.get('tecnica', {}).get('prazoExecucao', 'N/A')}</p>
-            
-            <h3>📎 Anexos:</h3>
-            <ul>
-                <li>Proposta Comercial Detalhada (Excel)</li>
-                <li>Proposta Técnica Completa (Word)</li>
-                <li>Dados Completos (JSON)</li>
-            </ul>
-            
-            <p><em>Recebido em: {datetime.now().strftime('%d/%m/%Y às %H:%M:%S')}</em></p>
-        </div>
-    </body>
-    </html>
-    """
-    
-    # Anexar arquivos
-    msg.attach(
-        f'{protocolo}_proposta_comercial.xlsx',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        excel_buffer.read()
-    )
-    
-    msg.attach(
-        f'{protocolo}_proposta_tecnica.docx',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        word_buffer.read()
-    )
-    
-    # Anexar JSON
-    json_data = json.dumps(dados, ensure_ascii=False, indent=2)
-    msg.attach(
-        f'{protocolo}_dados_completos.json',
-        'application/json',
-        json_data.encode('utf-8')
-    )
-    
-    mail.send(msg)
