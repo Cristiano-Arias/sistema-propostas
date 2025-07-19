@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask import Flask, request, jsonify, send_from_directory, render_template_string
+from flask import Flask, request, jsonify, send_from_directory, render_template_string, send_fileg
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta
@@ -1130,6 +1130,61 @@ def nao_encontrado(e):
 @app.errorhandler(500)
 def erro_interno(e):
     return jsonify({"erro": "Erro interno do servidor"}), 500
+@app.route('/api/download/proposta/<protocolo>/<tipo>', methods=['GET'])
+def download_proposta(protocolo, tipo):
+    """Download de proposta em Excel ou Word usando as mesmas funções dos anexos de e-mail"""
+    try:
+        # Buscar proposta
+        proposta = None
+        for p in propostas_db.values():
+            if p.get('protocolo') == protocolo:
+                proposta = p
+                break
+        
+        if not proposta:
+            return jsonify({
+                "success": False,
+                "erro": "Proposta não encontrada"
+            }), 404
+        
+        if tipo == 'excel':
+            # Gerar Excel usando a mesma função do e-mail
+            excel_buffer = gerar_excel_proposta(proposta)
+            
+            # Configurar response
+            response = send_file(
+                excel_buffer,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name=f'proposta_{protocolo}_completa.xlsx'
+            )
+            return response
+            
+        elif tipo == 'word':
+            # Gerar Word usando a mesma função do e-mail
+            word_buffer = gerar_word_proposta(proposta)
+            
+            # Configurar response
+            response = send_file(
+                word_buffer,
+                mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                as_attachment=True,
+                download_name=f'proposta_{protocolo}_tecnica.docx'
+            )
+            return response
+            
+        else:
+            return jsonify({
+                "success": False,
+                "erro": "Tipo inválido. Use 'excel' ou 'word'"
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"Erro ao fazer download: {str(e)}")
+        return jsonify({
+            "success": False,
+            "erro": f"Erro ao gerar arquivo: {str(e)}"
+        }), 500
 
 if __name__ == '__main__':
     logger.info("Iniciando servidor de propostas v2.0.0...")
