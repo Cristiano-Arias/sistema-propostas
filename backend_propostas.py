@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask import Flask, request, jsonify, send_from_directory, render_template_string, send_fileg
+from flask import Flask, request, jsonify, send_from_directory, render_template_string, send_file
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta
