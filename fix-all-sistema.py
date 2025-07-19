@@ -43,7 +43,7 @@ def corrigir_backend():
         print("✅ Backup criado")
     
     # Ler o arquivo original
-    with open('backend_propostas (2).py', 'r', encoding='utf-8') as f:
+    with open('backend_propostas.py', 'r', encoding='utf-8') as f:
         conteudo = f.read()
     
     # Correção 1: Importações necessárias
