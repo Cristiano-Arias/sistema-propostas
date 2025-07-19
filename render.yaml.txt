@@ -1,17 +1,16 @@
 services:
   - type: web
-    name: sistema-propostas
-    env: python
+    name: portal-propostas
+    runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn backend_propostas:app
+    startCommand: gunicorn backend_propostas_corrigido:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.16
-      - key: EMAIL_USER
-        value: # deixe vazio por enquanto
-      - key: EMAIL_PASS
-        value: # deixe vazio por enquanto
-      - key: EMAIL_SERVER
-        value: smtp.gmail.com
-      - key: EMAIL_PORT
-        value: 587
+        value: 3.11.0
+      - key: PORT
+        value: 10000
+      - key: DEBUG
+        value: False
+    healthCheckPath: /health
+    numInstances: 1
+    region: oregon
