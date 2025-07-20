@@ -1622,11 +1622,8 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=port,
         debug=debug_mode
-    ) False,
-            "erro": "Erro interno ao processar proposta",
-            "detalhes": str(e)
-        }), 500
-
+    ) 
+    
 @app.route('/api/propostas/listar', methods=['GET'])
 def listar_propostas():
     """Lista todas as propostas com formato compatível com o frontend"""
