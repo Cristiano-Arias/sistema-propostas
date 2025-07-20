@@ -65,6 +65,63 @@ EMAIL_CONFIG = {
     'destinatario_principal': os.environ.get('EMAIL_SUPRIMENTOS', 'portaldofornecedor.arias@gmail.com')
 }
 
+def inicializar_dados_exemplo():
+    """Inicializa dados de exemplo para demonstração"""
+    global processos_db, fornecedores_db
+    
+    # Dados de exemplo de processos
+    agora = datetime.now()
+    processos_exemplo = [
+        {
+            "numero": "001/2025",
+            "objeto": "Construção de Escola Municipal",
+            "modalidade": "Concorrência",
+            "prazo": (agora + timedelta(days=15)).isoformat(),
+            "valor_estimado": "R$ 2.500.000,00",
+            "status": "ativo"
+        },
+        {
+            "numero": "002/2025", 
+            "objeto": "Reforma do Centro de Saúde",
+            "modalidade": "Tomada de Preços",
+            "prazo": (agora + timedelta(days=10)).isoformat(),
+            "valor_estimado": "R$ 850.000,00",
+            "status": "ativo"
+        },
+        {
+            "numero": "003/2025",
+            "objeto": "Pavimentação de Ruas",
+            "modalidade": "Concorrência", 
+            "prazo": (agora + timedelta(days=20)).isoformat(),
+            "valor_estimado": "R$ 1.200.000,00",
+            "status": "ativo"
+        }
+    ]
+    
+    # Adicionar aos processos_db
+    for processo in processos_exemplo:
+        processos_db[processo["numero"]] = processo
+    
+    # Dados de exemplo de fornecedores
+    fornecedores_exemplo = [
+        {
+            "cnpj": "12.345.678/0001-90",
+            "razaoSocial": "Construtora Exemplo LTDA",
+            "email": "contato@exemplo.com.br",
+            "telefone": "(11) 99999-9999",
+            "status": "ativo"
+        }
+    ]
+    
+    # Adicionar aos fornecedores_db
+    for fornecedor in fornecedores_exemplo:
+        fornecedores_db[fornecedor["cnpj"]] = fornecedor
+    
+    logger.info(f"Dados de exemplo inicializados: {len(processos_db)} processos, {len(fornecedores_db)} fornecedores")
+
+# Inicializar dados de exemplo
+inicializar_dados_exemplo()
+
 def gerar_excel_proposta(dados_proposta):
     """Gera arquivo Excel com a proposta comercial"""
     wb = Workbook()
@@ -1272,27 +1329,7 @@ def cadastrar_fornecedor():
             "erro": "Erro ao cadastrar fornecedor"
         }), 500
 
-# Endpoints para arquivos estáticos
-@app.route('/<path:filename>')
-def serve_static(filename):
-    """Serve arquivos estáticos com tratamento de erro"""
-    try:
-        # Não interceptar rotas da API
-        if filename.startswith('api/'):
-            return jsonify({"erro": "Endpoint não encontrado"}), 404
-            
-        # Previne path traversal
-        if '..' in filename or filename.startswith('/'):
-            return jsonify({"erro": "Caminho inválido"}), 400
-            
-        file_path = os.path.join(STATIC_DIR, filename)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return send_from_directory(STATIC_DIR, filename)
-        else:
-            return jsonify({"erro": "Arquivo não encontrado"}), 404
-    except Exception as e:
-        logger.error(f"Erro ao servir arquivo {filename}: {e}")
-        return jsonify({"erro": "Erro ao acessar arquivo"}), 500
+# Endpoints para arquivos estáticos movidos para o final
 
 @app.errorhandler(404)
 def nao_encontrado(e):
@@ -1356,6 +1393,24 @@ def download_proposta(protocolo, tipo):
             "success": False,
             "erro": f"Erro ao gerar arquivo: {str(e)}"
         }), 500
+
+# ===== ENDPOINT CATCH-ALL (DEVE SER O ÚLTIMO) =====
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Serve arquivos estáticos com tratamento de erro"""
+    try:
+        # Previne path traversal
+        if '..' in filename or filename.startswith('/'):
+            return jsonify({"erro": "Caminho inválido"}), 400
+            
+        file_path = os.path.join(STATIC_DIR, filename)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return send_from_directory(STATIC_DIR, filename)
+        else:
+            return jsonify({"erro": "Arquivo não encontrado"}), 404
+    except Exception as e:
+        logger.error(f"Erro ao servir arquivo {filename}: {e}")
+        return jsonify({"erro": "Erro ao acessar arquivo"}), 500
 
 if __name__ == '__main__':
     logger.info("Iniciando servidor de propostas v2.0.0...")
