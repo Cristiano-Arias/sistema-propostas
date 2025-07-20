@@ -1,4 +1,11 @@
-#!/usr/bin/env python3
+# ===== EXTENSÃO DO BACKEND - NOVOS ENDPOINTS =====
+# Este arquivo contém apenas os novos endpoints para os módulos TR
+# Para integrar: copiar e colar no FINAL do backend_propostas.py
+
+import os
+import json
+from datetime import datetime
+from flask import jsonify, request#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 from flask import Flask, request, jsonify, send_from_directory, render_template_string, send_file
@@ -1448,15 +1455,6 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=port,
         debug=debug_mode
-
-# ===== EXTENSÃO DO BACKEND - NOVOS ENDPOINTS =====
-# Este arquivo contém apenas os novos endpoints para os módulos TR
-# Para integrar: copiar e colar no FINAL do backend_propostas.py
-
-import os
-import json
-from datetime import datetime
-from flask import jsonify, request
 
 # ===== NOVOS ENDPOINTS PARA MÓDULOS ADICIONAIS =====
 
