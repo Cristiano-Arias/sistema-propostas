@@ -1625,7 +1625,7 @@ if __name__ == '__main__':
     ) False,
             "erro": "Erro interno ao processar proposta",
             "detalhes": str(e)
-        }), 500
+        }, 500
 
 @app.route('/api/propostas/listar', methods=['GET'])
 def listar_propostas():
