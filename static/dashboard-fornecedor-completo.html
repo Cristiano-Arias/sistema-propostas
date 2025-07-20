@@ -5,14 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Área do Fornecedor</title>
     
-    <!-- Configuração da API -->
-    <script>
-        // Detecta automaticamente se está local ou em produção
-        const API_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:5000' 
-            : window.location.origin;
-    </script>
-    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -142,6 +134,44 @@
             min-height: 300px;
         }
         
+        .processo-card {
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .processo-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .processo-numero {
+            color: #5a67d8;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .processo-info {
+            margin-bottom: 0.5rem;
+        }
+        
+        .processo-info strong {
+            color: #333;
+        }
+        
+        .dias-restantes {
+            font-weight: bold;
+        }
+        
+        .dias-restantes.urgente {
+            color: #dc3545;
+        }
+        
+        .dias-restantes.normal {
+            color: #28a745;
+        }
+        
         .empty-state {
             text-align: center;
             padding: 3rem;
@@ -157,6 +187,14 @@
         .error {
             background: #fee;
             color: #c33;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .success {
+            background: #efe;
+            color: #363;
             padding: 1rem;
             border-radius: 8px;
             margin: 1rem 0;
@@ -200,7 +238,7 @@
             <p>Aguarde...</p>
         </div>
         
-        <div id="error" class="error" style="display: none;"></div>
+        <div id="message" style="display: none;"></div>
         
         <div class="stats-grid">
             <div class="stat-card">
@@ -232,9 +270,9 @@
             <h2>Área de Trabalho</h2>
             
             <div class="tabs">
-                <button class="tab active" onclick="showTab('processos')">Processos Disponíveis</button>
-                <button class="tab" onclick="showTab('propostas')">Minhas Propostas</button>
-                <button class="tab" onclick="showTab('historico')">Histórico</button>
+                <button class="tab active" onclick="showTab('processos', this)">Processos Disponíveis</button>
+                <button class="tab" onclick="showTab('propostas', this)">Minhas Propostas</button>
+                <button class="tab" onclick="showTab('historico', this)">Histórico</button>
             </div>
             
             <div id="processos" class="tab-content">
@@ -261,37 +299,40 @@
     </div>
     
     <script>
+        // Configuração da API - Detecta automaticamente o ambiente
+        const API_URL = window.location.origin;
+        
         // CNPJ do fornecedor (em produção viria do login)
         const CNPJ_FORNECEDOR = '12.345.678/0001-90';
-        const CNPJ_LIMPO = CNPJ_FORNECEDOR.replace(/[.\-\/]/g, '');
         
-        // Função para fazer requisições com fallback
-        async function fetchWithFallback(primaryUrl, fallbackUrl) {
-            try {
-                console.log('Tentando URL primária:', primaryUrl);
-                const response = await fetch(primaryUrl);
-                const data = await response.json();
-                
-                if (response.ok && data.success !== false) {
-                    return data;
-                }
-                
-                console.log('URL primária falhou, tentando fallback:', fallbackUrl);
-                throw new Error('Primary URL failed');
-            } catch (error) {
-                console.log('Usando fallback:', fallbackUrl);
-                const response = await fetch(fallbackUrl);
-                return await response.json();
-            }
+        console.log('API_URL:', API_URL);
+        console.log('CNPJ:', CNPJ_FORNECEDOR);
+        
+        // Função para mostrar mensagens
+        function showMessage(text, type = 'error') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = type;
+            messageDiv.textContent = text;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
         }
         
         // Função para carregar estatísticas
         async function carregarEstatisticas() {
             try {
-                const primaryUrl = `${API_URL}/api/fornecedor/estatisticas/${encodeURIComponent(CNPJ_FORNECEDOR)}`;
-                const fallbackUrl = `${API_URL}/api/fornecedor/estatisticas?cnpj=${encodeURIComponent(CNPJ_FORNECEDOR)}`;
+                console.log('Carregando estatísticas...');
                 
-                const data = await fetchWithFallback(primaryUrl, fallbackUrl);
+                const url = `${API_URL}/api/fornecedor/estatisticas?cnpj=${encodeURIComponent(CNPJ_FORNECEDOR)}`;
+                console.log('URL estatísticas:', url);
+                
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
                 
                 if (data.success && data.estatisticas) {
                     const stats = data.estatisticas;
@@ -299,30 +340,36 @@
                     document.getElementById('propostas-enviadas').textContent = stats.propostas_enviadas || 0;
                     document.getElementById('prazos-proximos').textContent = stats.prazos_proximos || 0;
                     document.getElementById('valor-total').textContent = `R$ ${stats.valor_total || '0,00'}`;
+                    
+                    showMessage('Estatísticas carregadas com sucesso!', 'success');
                 } else {
                     throw new Error(data.erro || 'Erro ao carregar estatísticas');
                 }
             } catch (error) {
                 console.error('Erro ao carregar estatísticas:', error);
-                showError('Erro ao carregar estatísticas: ' + error.message);
+                showMessage('Erro ao carregar estatísticas: ' + error.message);
                 
-                // Fallback para localStorage
-                const dadosLocal = localStorage.getItem('estatisticas_fornecedor');
-                if (dadosLocal) {
-                    const stats = JSON.parse(dadosLocal);
-                    document.getElementById('processos-ativos').textContent = stats.processos_ativos || 0;
-                    document.getElementById('propostas-enviadas').textContent = stats.propostas_enviadas || 0;
-                    document.getElementById('prazos-proximos').textContent = stats.prazos_proximos || 0;
-                    document.getElementById('valor-total').textContent = `R$ ${stats.valor_total || '0,00'}`;
-                }
+                // Valores padrão em caso de erro
+                document.getElementById('processos-ativos').textContent = '0';
+                document.getElementById('propostas-enviadas').textContent = '0';
+                document.getElementById('prazos-proximos').textContent = '0';
+                document.getElementById('valor-total').textContent = 'R$ 0,00';
             }
         }
         
         // Função para carregar processos
         async function carregarProcessos() {
             try {
-                const response = await fetch(`${API_URL}/api/processos/ativos`);
+                console.log('Carregando processos...');
+                
+                const url = `${API_URL}/api/processos/ativos`;
+                console.log('URL processos:', url);
+                
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+                
                 const data = await response.json();
+                console.log('Response data:', data);
                 
                 if (data.success && data.processos) {
                     const processosDiv = document.getElementById('processos');
@@ -335,23 +382,24 @@
                             </div>
                         `;
                     } else {
-                        let html = '<div style="display: grid; gap: 1rem;">';
+                        let html = '';
                         
                         data.processos.forEach(processo => {
+                            const diasClass = processo.dias_restantes <= 3 ? 'urgente' : 'normal';
+                            
                             html += `
-                                <div style="border: 1px solid #e9ecef; border-radius: 8px; padding: 1rem;">
-                                    <h4 style="color: #5a67d8; margin-bottom: 0.5rem;">${processo.numero}</h4>
-                                    <p style="margin-bottom: 0.5rem;"><strong>Objeto:</strong> ${processo.objeto}</p>
-                                    <p style="margin-bottom: 0.5rem;"><strong>Modalidade:</strong> ${processo.modalidade}</p>
-                                    <p style="margin-bottom: 0.5rem;"><strong>Prazo:</strong> ${processo.prazo_formatado}</p>
-                                    <p style="color: ${processo.dias_restantes <= 3 ? '#dc3545' : '#28a745'};">
-                                        <strong>${processo.dias_restantes} dias restantes</strong>
-                                    </p>
+                                <div class="processo-card">
+                                    <div class="processo-numero">${processo.numero}</div>
+                                    <div class="processo-info"><strong>Objeto:</strong> ${processo.objeto}</div>
+                                    <div class="processo-info"><strong>Modalidade:</strong> ${processo.modalidade}</div>
+                                    <div class="processo-info"><strong>Prazo:</strong> ${processo.prazo_formatado}</div>
+                                    <div class="dias-restantes ${diasClass}">
+                                        ${processo.dias_restantes} dias restantes
+                                    </div>
                                 </div>
                             `;
                         });
                         
-                        html += '</div>';
                         processosDiv.innerHTML = html;
                     }
                 } else {
@@ -368,18 +416,8 @@
             }
         }
         
-        // Função para mostrar erro
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
-        
         // Função para trocar abas
-        function showTab(tabName) {
+        function showTab(tabName, element) {
             // Esconder todas as abas
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.style.display = 'none';
@@ -394,24 +432,41 @@
             document.getElementById(tabName).style.display = 'block';
             
             // Adicionar classe active na aba clicada
-            event.target.classList.add('active');
+            element.classList.add('active');
         }
         
         // Função principal de inicialização
         async function inicializar() {
             try {
-                await Promise.all([
-                    carregarEstatisticas(),
-                    carregarProcessos()
-                ]);
+                console.log('Inicializando dashboard...');
+                
+                // Testar conectividade primeiro
+                const statusResponse = await fetch(`${API_URL}/api/status`);
+                const statusData = await statusResponse.json();
+                console.log('Status da API:', statusData);
+                
+                if (statusData.status === 'online') {
+                    showMessage('Conectado ao servidor!', 'success');
+                    
+                    // Carregar dados
+                    await Promise.all([
+                        carregarEstatisticas(),
+                        carregarProcessos()
+                    ]);
+                } else {
+                    throw new Error('Servidor não está online');
+                }
                 
                 document.getElementById('loading').style.display = 'none';
+                
             } catch (error) {
                 console.error('Erro na inicialização:', error);
                 document.getElementById('loading').innerHTML = `
-                    <h3>Erro ao carregar dados</h3>
+                    <h3>Erro ao conectar</h3>
                     <p>${error.message}</p>
+                    <p>Verifique se o servidor está funcionando.</p>
                 `;
+                showMessage('Erro ao conectar com o servidor: ' + error.message);
             }
         }
         
@@ -419,8 +474,11 @@
         document.addEventListener('DOMContentLoaded', inicializar);
         
         // Auto-refresh a cada 2 minutos
-        setInterval(inicializar, 120000);
+        setInterval(() => {
+            console.log('Auto-refresh...');
+            carregarEstatisticas();
+            carregarProcessos();
+        }, 120000);
     </script>
 </body>
 </html>
-
