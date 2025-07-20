@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Área do Fornecedor</title>
     
-    <!-- Configuração da API (ÚNICA ADIÇÃO) -->
+    <!-- Configuração da API -->
     <script>
         // Detecta automaticamente se está local ou em produção
         const API_URL = window.location.hostname === 'localhost' 
@@ -18,717 +18,409 @@
         
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f5f5f5;
-            min-height: 100vh;
-        }
-
-        .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 100vh;
+            color: #333;
         }
-
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 1rem;
         }
-
+        
         .header h1 {
-            font-size: 24px;
+            color: #5a67d8;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
-
-        #infoUsuario {
-            background: rgba(255,255,255,0.1);
-            padding: 10px 20px;
-            border-radius: 8px;
-        }
-
+        
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 30px 20px;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
         }
-
-        .welcome-section {
+        
+        .loading {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 2rem;
         }
-
-        .welcome-section h2 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
+        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
-
+        
         .stat-card {
             background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             text-align: center;
-            transition: transform 0.3s;
+            transition: transform 0.3s ease;
         }
-
+        
         .stat-card:hover {
             transform: translateY(-5px);
         }
-
+        
         .stat-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
+            font-size: 3rem;
+            margin-bottom: 1rem;
         }
-
+        
         .stat-number {
-            font-size: 36px;
+            font-size: 2rem;
             font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
+            color: #5a67d8;
+            margin-bottom: 0.5rem;
         }
-
+        
         .stat-label {
-            color: #7f8c8d;
-            font-size: 14px;
+            color: #666;
+            font-size: 0.9rem;
         }
-
-        .section {
+        
+        .work-area {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
+        
+        .work-area h2 {
+            padding: 1.5rem;
+            background: #f8f9fa;
+            margin: 0;
+            color: #333;
+            border-bottom: 1px solid #e9ecef;
         }
-
-        .section-title {
-            color: #2c3e50;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
+        
         .tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
         }
-
+        
         .tab {
-            padding: 10px 20px;
+            padding: 1rem 1.5rem;
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            color: #7f8c8d;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
+            font-size: 0.9rem;
+            color: #666;
+            transition: all 0.3s ease;
+            position: relative;
         }
-
+        
         .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
+            color: #5a67d8;
+            background: white;
         }
-
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #5a67d8;
+        }
+        
         .tab-content {
-            display: none;
+            padding: 2rem;
+            min-height: 300px;
         }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .processo-card {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border-left: 5px solid #667eea;
-            transition: all 0.3s;
-        }
-
-        .processo-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .processo-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-        }
-
-        .processo-titulo {
-            font-size: 18px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .processo-numero {
-            color: #667eea;
-            font-size: 14px;
-        }
-
-        .processo-prazo {
-            background: #fff3cd;
-            color: #856404;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .processo-detalhes {
-            color: #7f8c8d;
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-
-        .processo-acoes {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .proposta-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .proposta-table th,
-        .proposta-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .proposta-table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .status-enviada {
-            background: #d4edda;
-            color: #155724;
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
+        
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: #7f8c8d;
+            padding: 3rem;
+            color: #666;
         }
-
+        
         .empty-state-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
+            font-size: 4rem;
+            margin-bottom: 1rem;
             opacity: 0.5;
         }
-
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
         @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+            
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 1rem;
             }
             
-            .processo-header {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .processo-acoes {
+            .tabs {
                 flex-wrap: wrap;
             }
             
-            .proposta-table {
-                font-size: 12px;
+            .tab {
+                flex: 1;
+                min-width: 120px;
             }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="header-content">
-            <h1>🏢 Portal do Fornecedor</h1>
-            <div id="infoUsuario"></div>
-        </div>
+        <span style="font-size: 1.5rem;">🏢</span>
+        <h1>Portal do Fornecedor</h1>
     </div>
-
+    
     <div class="container">
-        <div class="welcome-section">
-            <h2 id="welcomeMessage">Carregando...</h2>
-            <p id="empresaInfo">Aguarde...</p>
+        <div id="loading" class="loading">
+            <h3>Carregando...</h3>
+            <p>Aguarde...</p>
         </div>
-
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon">📋</div>
-                <div class="stat-number" id="processosAtivos">-</div>
+                <div class="stat-number" id="processos-ativos">-</div>
                 <div class="stat-label">Processos Ativos</div>
             </div>
+            
             <div class="stat-card">
                 <div class="stat-icon">📄</div>
-                <div class="stat-number" id="propostasEnviadas">-</div>
+                <div class="stat-number" id="propostas-enviadas">-</div>
                 <div class="stat-label">Propostas Enviadas</div>
             </div>
+            
             <div class="stat-card">
                 <div class="stat-icon">⏰</div>
-                <div class="stat-number" id="prazosProximos">-</div>
+                <div class="stat-number" id="prazos-proximos">-</div>
                 <div class="stat-label">Prazos Próximos</div>
             </div>
+            
             <div class="stat-card">
                 <div class="stat-icon">💰</div>
-                <div class="stat-number" id="valorTotal">-</div>
+                <div class="stat-number" id="valor-total">-</div>
                 <div class="stat-label">Valor Total</div>
             </div>
         </div>
-
-        <div class="section">
-            <div class="section-header">
-                <h3 class="section-title">Área de Trabalho</h3>
-            </div>
-
+        
+        <div class="work-area">
+            <h2>Área de Trabalho</h2>
+            
             <div class="tabs">
-                <button class="tab active" onclick="mostrarTab('disponiveis')">Processos Disponíveis</button>
-                <button class="tab" onclick="mostrarTab('propostas')">Minhas Propostas</button>
-                <button class="tab" onclick="mostrarTab('historico')">Histórico</button>
+                <button class="tab active" onclick="showTab('processos')">Processos Disponíveis</button>
+                <button class="tab" onclick="showTab('propostas')">Minhas Propostas</button>
+                <button class="tab" onclick="showTab('historico')">Histórico</button>
             </div>
-
-            <div id="tab-disponiveis" class="tab-content active">
-                <div id="processosDisponiveis">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
-                        <p>Carregando processos disponíveis...</p>
-                    </div>
+            
+            <div id="processos" class="tab-content">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <p>Carregando processos disponíveis...</p>
                 </div>
             </div>
-
-            <div id="tab-propostas" class="tab-content">
-                <div id="minhasPropostas">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📄</div>
-                        <p>Carregando suas propostas...</p>
-                    </div>
+            
+            <div id="propostas" class="tab-content" style="display: none;">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📄</div>
+                    <p>Nenhuma proposta encontrada</p>
                 </div>
             </div>
-
-            <div id="tab-historico" class="tab-content">
-                <div id="historico">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📚</div>
-                        <p>Carregando histórico...</p>
-                    </div>
+            
+            <div id="historico" class="tab-content" style="display: none;">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📚</div>
+                    <p>Histórico vazio</p>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Incluir auth.js -->
-    <script src="auth.js"></script>
-
+    
     <script>
-        let usuarioAtual = null;
-        let processos = [];
-        let propostas = [];
-
-        // Verificar autenticação
-        window.addEventListener('DOMContentLoaded', function() {
-            usuarioAtual = Auth.verificarAutenticacao('fornecedor');
-            
-            if (usuarioAtual) {
-                Auth.exibirInfoUsuario();
-                carregarDados();
-            }
-        });
-
-        // Carregar dados - MODIFICADO para usar API quando disponível, localStorage como fallback
-        async function carregarDados() {
-            // Informações do usuário
-            document.getElementById('welcomeMessage').textContent = `Bem-vindo, ${usuarioAtual.nome}!`;
-            document.getElementById('empresaInfo').textContent = `CNPJ: ${usuarioAtual.cnpj || 'Não informado'}`;
-            
+        // CNPJ do fornecedor (em produção viria do login)
+        const CNPJ_FORNECEDOR = '12.345.678/0001-90';
+        const CNPJ_LIMPO = CNPJ_FORNECEDOR.replace(/[.\-\/]/g, '');
+        
+        // Função para fazer requisições com fallback
+        async function fetchWithFallback(primaryUrl, fallbackUrl) {
             try {
-                // Tentar carregar do backend primeiro
-                await carregarDadosBackend();
-            } catch (error) {
-                console.log('Backend não disponível, usando localStorage:', error);
-                // Fallback para localStorage (comportamento original)
-                carregarDadosLocalStorage();
-            }
-        }
-
-        // NOVA FUNÇÃO: Carregar dados do backend
-        async function carregarDadosBackend() {
-            // Carregar processos ativos
-            const responseProcessos = await fetch(`${API_URL}/api/processos/ativos`);
-            if (responseProcessos.ok) {
-                const dataProcessos = await responseProcessos.json();
-                if (dataProcessos.success) {
-                    processos = dataProcessos.processos.map(p => ({
-                        numero: p.numero,
-                        objeto: p.objeto,
-                        modalidade: p.modalidade,
-                        prazo: p.prazo
-                    }));
-                }
-            }
-
-            // Carregar propostas do fornecedor
-            const responsePropostas = await fetch(`${API_URL}/api/propostas/fornecedor/${encodeURIComponent(usuarioAtual.cnpj)}`);
-            if (responsePropostas.ok) {
-                const dataPropostas = await responsePropostas.json();
-                if (dataPropostas.success) {
-                    propostas = dataPropostas.propostas.map(p => ({
-                        protocolo: p.protocolo,
-                        processo: p.processo,
-                        cnpj: usuarioAtual.cnpj,
-                        data: p.data_envio,
-                        valor: p.valor_total
-                    }));
-                }
-            }
-
-            // Atualizar interface
-            atualizarEstatisticas();
-            carregarProcessosDisponiveis();
-            carregarMinhasPropostas();
-            carregarHistorico();
-        }
-
-        // FUNÇÃO ORIGINAL: Carregar dados do localStorage (fallback)
-        function carregarDadosLocalStorage() {
-            // Carregar processos e propostas do localStorage (comportamento original)
-            const processosLocal = JSON.parse(localStorage.getItem('processos') || '[]');
-            const propostasLocal = JSON.parse(localStorage.getItem('propostas') || '[]');
-            
-            processos = processosLocal;
-            propostas = propostasLocal;
-            
-            // Filtrar propostas do usuário
-            const minhasPropostasLocal = propostas.filter(p => p.cnpj === usuarioAtual.cnpj);
-            
-            // Atualizar estatísticas
-            atualizarEstatisticas(minhasPropostasLocal);
-            
-            // Carregar conteúdo das abas
-            carregarProcessosDisponiveis();
-            carregarMinhasPropostas(minhasPropostasLocal);
-            carregarHistorico(minhasPropostasLocal);
-        }
-
-        // Atualizar estatísticas - MODIFICADO para funcionar com ambas as fontes
-        function atualizarEstatisticas(minhasPropostasParam) {
-            const agora = new Date();
-            const umaSemana = new Date();
-            umaSemana.setDate(umaSemana.getDate() + 7);
-            
-            // Usar parâmetro se fornecido (localStorage) ou calcular (backend)
-            const minhasPropostas = minhasPropostasParam || propostas.filter(p => p.cnpj === usuarioAtual.cnpj);
-            
-            // Processos ativos
-            const processosAtivos = processos.filter(p => {
-                const prazo = new Date(p.prazo);
-                return prazo > agora;
-            });
-            document.getElementById('processosAtivos').textContent = processosAtivos.length;
-            
-            // Propostas enviadas
-            document.getElementById('propostasEnviadas').textContent = minhasPropostas.length;
-            
-            // Prazos próximos
-            const prazosProximos = processosAtivos.filter(p => {
-                const prazo = new Date(p.prazo);
-                return prazo > agora && prazo <= umaSemana;
-            });
-            document.getElementById('prazosProximos').textContent = prazosProximos.length;
-            
-            // Valor total
-            let valorTotal = 0;
-            minhasPropostas.forEach(p => {
-                if (p.valor) {
-                    let valorStr = p.valor.toString().replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
-                    valorTotal += parseFloat(valorStr) || 0;
-                }
-            });
-            document.getElementById('valorTotal').textContent = 'R$ ' + valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-        }
-
-        // Carregar processos disponíveis - MANTIDO ORIGINAL
-        function carregarProcessosDisponiveis() {
-            const container = document.getElementById('processosDisponiveis');
-            const agora = new Date();
-            
-            // Filtrar processos ativos
-            const processosAtivos = processos.filter(p => new Date(p.prazo) > agora);
-            
-            // Verificar quais já tem proposta enviada
-            const processosComProposta = propostas
-                .filter(p => p.cnpj === usuarioAtual.cnpj)
-                .map(p => p.processo);
-            
-            if (processosAtivos.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
-                        <p>Nenhum processo disponível no momento.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = processosAtivos.map(processo => {
-                const jaEnviouProposta = processosComProposta.includes(processo.numero);
-                const prazo = new Date(processo.prazo);
-                const diasRestantes = Math.ceil((prazo - agora) / (1000 * 60 * 60 * 24));
+                console.log('Tentando URL primária:', primaryUrl);
+                const response = await fetch(primaryUrl);
+                const data = await response.json();
                 
-                return `
-                    <div class="processo-card">
-                        <div class="processo-header">
-                            <div>
-                                <div class="processo-titulo">${processo.objeto}</div>
-                                <div class="processo-numero">Processo: ${processo.numero}</div>
-                            </div>
-                            <div class="processo-prazo">
-                                ⏰ ${diasRestantes} dias restantes
-                            </div>
-                        </div>
-                        <div class="processo-detalhes">
-                            <strong>Modalidade:</strong> ${processo.modalidade}<br>
-                            <strong>Prazo:</strong> ${prazo.toLocaleString('pt-BR')}
-                        </div>
-                        <div class="processo-acoes">
-                            ${jaEnviouProposta ? `
-                                <button class="btn btn-secondary" disabled>
-                                    ✅ Proposta Enviada
-                                </button>
-                            ` : `
-                                <button class="btn btn-primary" onclick="enviarProposta('${processo.numero}')">
-                                    📝 Enviar Proposta
-                                </button>
-                            `}
-                            <button class="btn btn-secondary" onclick="verDetalhes('${processo.numero}')">
-                                👁️ Ver Detalhes
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Carregar minhas propostas - MANTIDO ORIGINAL
-        function carregarMinhasPropostas(minhasPropostasParam) {
-            const container = document.getElementById('minhasPropostas');
-            const minhasPropostas = minhasPropostasParam || propostas.filter(p => p.cnpj === usuarioAtual.cnpj);
-            
-            if (minhasPropostas.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📄</div>
-                        <p>Você ainda não enviou nenhuma proposta.</p>
-                    </div>
-                `;
-                return;
+                if (response.ok && data.success !== false) {
+                    return data;
+                }
+                
+                console.log('URL primária falhou, tentando fallback:', fallbackUrl);
+                throw new Error('Primary URL failed');
+            } catch (error) {
+                console.log('Usando fallback:', fallbackUrl);
+                const response = await fetch(fallbackUrl);
+                return await response.json();
             }
-            
-            container.innerHTML = `
-                <table class="proposta-table">
-                    <thead>
-                        <tr>
-                            <th>Processo</th>
-                            <th>Protocolo</th>
-                            <th>Data Envio</th>
-                            <th>Valor</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${minhasPropostas.map(proposta => {
-                            const processo = processos.find(p => p.numero === proposta.processo);
-                            const prazoPassou = processo && new Date(processo.prazo) < new Date();
-                            
-                            return `
-                                <tr>
-                                    <td>${proposta.processo}</td>
-                                    <td>${proposta.protocolo}</td>
-                                    <td>${new Date(proposta.data).toLocaleDateString('pt-BR')}</td>
-                                    <td>R$ ${proposta.valor || '0,00'}</td>
-                                    <td>
-                                        <span class="status-enviada">Enviada</span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-secondary" style="padding: 5px 15px; font-size: 12px;" 
-                                                onclick="verProposta('${proposta.protocolo}')">
-                                            Ver Detalhes
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
         }
-
-        // Carregar histórico - MANTIDO ORIGINAL
-        function carregarHistorico(minhasPropostasParam) {
-            const container = document.getElementById('historico');
-            const minhasPropostas = minhasPropostasParam || propostas.filter(p => p.cnpj === usuarioAtual.cnpj);
-            
-            // Filtrar apenas propostas de processos encerrados
-            const propostasHistorico = minhasPropostas.filter(proposta => {
-                const processo = processos.find(p => p.numero === proposta.processo);
-                return processo && new Date(processo.prazo) < new Date();
+        
+        // Função para carregar estatísticas
+        async function carregarEstatisticas() {
+            try {
+                const primaryUrl = `${API_URL}/api/fornecedor/estatisticas/${encodeURIComponent(CNPJ_FORNECEDOR)}`;
+                const fallbackUrl = `${API_URL}/api/fornecedor/estatisticas?cnpj=${encodeURIComponent(CNPJ_FORNECEDOR)}`;
+                
+                const data = await fetchWithFallback(primaryUrl, fallbackUrl);
+                
+                if (data.success && data.estatisticas) {
+                    const stats = data.estatisticas;
+                    document.getElementById('processos-ativos').textContent = stats.processos_ativos || 0;
+                    document.getElementById('propostas-enviadas').textContent = stats.propostas_enviadas || 0;
+                    document.getElementById('prazos-proximos').textContent = stats.prazos_proximos || 0;
+                    document.getElementById('valor-total').textContent = `R$ ${stats.valor_total || '0,00'}`;
+                } else {
+                    throw new Error(data.erro || 'Erro ao carregar estatísticas');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+                showError('Erro ao carregar estatísticas: ' + error.message);
+                
+                // Fallback para localStorage
+                const dadosLocal = localStorage.getItem('estatisticas_fornecedor');
+                if (dadosLocal) {
+                    const stats = JSON.parse(dadosLocal);
+                    document.getElementById('processos-ativos').textContent = stats.processos_ativos || 0;
+                    document.getElementById('propostas-enviadas').textContent = stats.propostas_enviadas || 0;
+                    document.getElementById('prazos-proximos').textContent = stats.prazos_proximos || 0;
+                    document.getElementById('valor-total').textContent = `R$ ${stats.valor_total || '0,00'}`;
+                }
+            }
+        }
+        
+        // Função para carregar processos
+        async function carregarProcessos() {
+            try {
+                const response = await fetch(`${API_URL}/api/processos/ativos`);
+                const data = await response.json();
+                
+                if (data.success && data.processos) {
+                    const processosDiv = document.getElementById('processos');
+                    
+                    if (data.processos.length === 0) {
+                        processosDiv.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📊</div>
+                                <p>Nenhum processo ativo no momento</p>
+                            </div>
+                        `;
+                    } else {
+                        let html = '<div style="display: grid; gap: 1rem;">';
+                        
+                        data.processos.forEach(processo => {
+                            html += `
+                                <div style="border: 1px solid #e9ecef; border-radius: 8px; padding: 1rem;">
+                                    <h4 style="color: #5a67d8; margin-bottom: 0.5rem;">${processo.numero}</h4>
+                                    <p style="margin-bottom: 0.5rem;"><strong>Objeto:</strong> ${processo.objeto}</p>
+                                    <p style="margin-bottom: 0.5rem;"><strong>Modalidade:</strong> ${processo.modalidade}</p>
+                                    <p style="margin-bottom: 0.5rem;"><strong>Prazo:</strong> ${processo.prazo_formatado}</p>
+                                    <p style="color: ${processo.dias_restantes <= 3 ? '#dc3545' : '#28a745'};">
+                                        <strong>${processo.dias_restantes} dias restantes</strong>
+                                    </p>
+                                </div>
+                            `;
+                        });
+                        
+                        html += '</div>';
+                        processosDiv.innerHTML = html;
+                    }
+                } else {
+                    throw new Error(data.erro || 'Erro ao carregar processos');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar processos:', error);
+                document.getElementById('processos').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <p>Erro ao carregar processos: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Função para mostrar erro
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Função para trocar abas
+        function showTab(tabName) {
+            // Esconder todas as abas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
             });
             
-            if (propostasHistorico.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📚</div>
-                        <p>Nenhum processo encerrado ainda.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = `
-                <h3 style="margin-bottom: 20px;">Processos Encerrados</h3>
-                ${propostasHistorico.map(proposta => {
-                    const processo = processos.find(p => p.numero === proposta.processo);
-                    
-                    return `
-                        <div class="processo-card" style="opacity: 0.8;">
-                            <div class="processo-header">
-                                <div>
-                                    <div class="processo-titulo">${processo.objeto}</div>
-                                    <div class="processo-numero">Processo: ${processo.numero}</div>
-                                </div>
-                                <div style="background: #f8d7da; color: #721c24;" class="processo-prazo">
-                                    Encerrado
-                                </div>
-                            </div>
-                            <div class="processo-detalhes">
-                                <strong>Protocolo:</strong> ${proposta.protocolo}<br>
-                                <strong>Valor Proposto:</strong> R$ ${proposta.valor || '0,00'}<br>
-                                <strong>Data de Envio:</strong> ${new Date(proposta.data).toLocaleDateString('pt-BR')}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            `;
-        }
-
-        // TODAS AS DEMAIS FUNÇÕES MANTIDAS ORIGINAIS
-        function mostrarTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
+            // Remover classe active de todas as abas
+            document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('active');
             });
-            document.querySelectorAll('.tab').forEach(btn => {
-                btn.classList.remove('active');
-            });
             
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+            // Mostrar aba selecionada
+            document.getElementById(tabName).style.display = 'block';
+            
+            // Adicionar classe active na aba clicada
             event.target.classList.add('active');
         }
-
-        function enviarProposta(numeroProcesso) {
-            Auth.registrarLog(usuarioAtual.usuarioId, 'acessar_portal_proposta', numeroProcesso);
-            window.location.href = `portal-propostas-novo.html?processo=${encodeURIComponent(numeroProcesso)}`;
-        }
-
-        function verDetalhes(numeroProcesso) {
-            const processo = processos.find(p => p.numero === numeroProcesso);
-            if (!processo) return;
-            
-            alert(`
-                DETALHES DO PROCESSO
+        
+        // Função principal de inicialização
+        async function inicializar() {
+            try {
+                await Promise.all([
+                    carregarEstatisticas(),
+                    carregarProcessos()
+                ]);
                 
-                Número: ${processo.numero}
-                Objeto: ${processo.objeto}
-                Modalidade: ${processo.modalidade}
-                Prazo: ${new Date(processo.prazo).toLocaleString('pt-BR')}
-                
-                Status: ${new Date(processo.prazo) > new Date() ? 'Ativo' : 'Encerrado'}
-            `);
-        }
-
-        function verProposta(protocolo) {
-            const proposta = propostas.find(p => p.protocolo === protocolo);
-            if (!proposta) return;
-            
-            alert(`
-                DETALHES DA PROPOSTA
-                
-                Protocolo: ${proposta.protocolo}
-                Processo: ${proposta.processo}
-                Data de Envio: ${new Date(proposta.data).toLocaleString('pt-BR')}
-                Valor Total: R$ ${proposta.valor || '0,00'}
-                
-                Status: Enviada com sucesso
-            `);
-        }
-
-        // Auto-refresh a cada 30 segundos
-        setInterval(() => {
-            if (Auth.getUsuarioAtual()) {
-                carregarDados();
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                console.error('Erro na inicialização:', error);
+                document.getElementById('loading').innerHTML = `
+                    <h3>Erro ao carregar dados</h3>
+                    <p>${error.message}</p>
+                `;
             }
-        }, 30000);
+        }
+        
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', inicializar);
+        
+        // Auto-refresh a cada 2 minutos
+        setInterval(inicializar, 120000);
     </script>
 </body>
 </html>
+
