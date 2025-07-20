@@ -1000,7 +1000,7 @@ def enviar_proposta():
         return jsonify({
             "success": False,
             "erro": "Erro ao calcular estatísticas"
-        }), 500
+        }, 500
 
 # Endpoint alternativo com query parameter para evitar problemas de codificação
 @app.route('/api/fornecedor/estatisticas', methods=['GET'])
