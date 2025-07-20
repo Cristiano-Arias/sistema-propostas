@@ -1448,7 +1448,7 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=port,
         debug=debug_mode
-    )
+
 # ===== EXTENSÃO DO BACKEND - NOVOS ENDPOINTS =====
 # Este arquivo contém apenas os novos endpoints para os módulos TR
 # Para integrar: copiar e colar no FINAL do backend_propostas.py
@@ -1869,3 +1869,4 @@ def inicializar_dados_exemplo():
         return jsonify({'success': False, 'error': str(e)})
 
 # ===== FIM DOS NOVOS ENDPOINTS =====
+)
