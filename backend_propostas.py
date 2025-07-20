@@ -1860,4 +1860,6 @@ def estatisticas_fornecedor(cnpj):
     except Exception as e:
         logger.error(f"Erro ao calcular estatísticas do fornecedor {cnpj}: {str(e)}")
         return jsonify({
-            "success":
+            "success": False,
+            "erro": "Erro ao calcular estatísticas"
+        }), 500
