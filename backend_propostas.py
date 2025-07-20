@@ -1168,6 +1168,16 @@ def listar_propostas_fornecedor(cnpj):
             "erro": "Erro ao listar propostas do fornecedor"
         }), 500
 
+# Endpoint alternativo com query parameter para evitar problemas de codificação
+@app.route('/api/propostas/fornecedor', methods=['GET'])
+def listar_propostas_fornecedor_query():
+    """Lista propostas de um fornecedor específico via query parameter"""
+    from flask import request
+    cnpj = request.args.get('cnpj', '')
+    if not cnpj:
+        return jsonify({"success": False, "erro": "CNPJ não fornecido"}), 400
+    return listar_propostas_fornecedor(cnpj)
+
 @app.route('/api/fornecedor/estatisticas/<cnpj>', methods=['GET'])
 def estatisticas_fornecedor(cnpj):
     """Retorna estatísticas específicas do fornecedor"""
@@ -1233,6 +1243,16 @@ def estatisticas_fornecedor(cnpj):
             "success": False,
             "erro": "Erro ao calcular estatísticas"
         }), 500
+
+# Endpoint alternativo com query parameter para evitar problemas de codificação
+@app.route('/api/fornecedor/estatisticas', methods=['GET'])
+def estatisticas_fornecedor_query():
+    """Retorna estatísticas específicas do fornecedor via query parameter"""
+    from flask import request
+    cnpj = request.args.get('cnpj', '')
+    if not cnpj:
+        return jsonify({"success": False, "erro": "CNPJ não fornecido"}), 400
+    return estatisticas_fornecedor(cnpj)
 
 # ===== FIM DOS NOVOS ENDPOINTS =====
 
