@@ -1,11 +1,4 @@
-# ===== EXTENSÃO DO BACKEND - NOVOS ENDPOINTS =====
-# Este arquivo contém apenas os novos endpoints para os módulos TR
-# Para integrar: copiar e colar no FINAL do backend_propostas.py
-
-import os
-import json
-from datetime import datetime
-from flask import jsonify, request#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 from flask import Flask, request, jsonify, send_from_directory, render_template_string, send_file
@@ -1006,248 +999,6 @@ def enviar_proposta():
         logger.error(f"Erro ao processar proposta: {str(e)}")
         return jsonify({
             "success": False,
-            "erro": "Erro interno ao processar proposta",
-            "detalhes": str(e)
-        }), 500
-
-@app.route('/api/propostas/listar', methods=['GET'])
-def listar_propostas():
-    """Lista todas as propostas com formato compatível com o frontend"""
-    try:
-        # Filtros opcionais
-        processo = request.args.get('processo')
-        cnpj = request.args.get('cnpj')
-        
-        propostas_lista = []
-        
-        for proposta in propostas_db.values():
-            # Aplicar filtros se especificados
-            if processo and proposta.get('processo') != processo:
-                continue
-            if cnpj and proposta.get('dados', {}).get('cnpj') != cnpj:
-                continue
-            
-            # Formatar proposta para o frontend
-            proposta_formatada = {
-                "protocolo": proposta.get('protocolo', ''),
-                "processo": proposta.get('processo', ''),
-                "empresa": proposta.get('dados', {}).get('razaoSocial', 'N/A'),
-                "cnpj": proposta.get('dados', {}).get('cnpj', ''),
-                "valor": f"R$ {proposta.get('comercial', {}).get('valorTotal', '0,00')}",
-                "data": proposta.get('data_envio', ''),
-                "dados": proposta
-            }
-            
-            propostas_lista.append(proposta_formatada)
-        
-        # Ordena por data
-        propostas_lista.sort(key=lambda x: x.get('data', ''), reverse=True)
-        
-        return jsonify({
-            "propostas": propostas_lista,
-            "total": len(propostas_lista)
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro ao listar propostas: {str(e)}")
-        return jsonify({
-            "erro": "Erro ao listar propostas"
-        }), 500
-
-@app.route('/api/processos/<numero>', methods=['GET'])
-def obter_processo(numero):
-    """Obtém informações de um processo específico"""
-    if numero in processos_db:
-        return jsonify(processos_db[numero]), 200
-    else:
-        # Retorna dados padrão se não encontrar
-        return jsonify({
-            "numero": numero,
-            "objeto": "Processo não cadastrado",
-            "modalidade": "Não informada",
-            "prazo": datetime.now().isoformat()
-        }), 200
-
-@app.route('/api/processos/listar', methods=['GET'])
-def listar_processos():
-    """Lista todos os processos"""
-    return jsonify({
-        "processos": list(processos_db.values()),
-        "total": len(processos_db)
-    }), 200
-
-# ===== NOVOS ENDPOINTS PARA ÁREA DO FORNECEDOR =====
-
-@app.route('/api/processos/ativos', methods=['GET'])
-def listar_processos_ativos():
-    """Lista apenas processos com prazo não vencido"""
-    try:
-        agora = datetime.now()
-        processos_ativos = []
-        
-        for processo in processos_db.values():
-            try:
-                # Converter prazo para datetime
-                prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
-                
-                # Verificar se ainda está ativo
-                if prazo > agora:
-                    # Calcular dias restantes
-                    dias_restantes = (prazo - agora).days
-                    
-                    processo_ativo = {
-                        "numero": processo['numero'],
-                        "objeto": processo['objeto'],
-                        "modalidade": processo['modalidade'],
-                        "prazo": processo['prazo'],
-                        "prazo_formatado": prazo.strftime('%d/%m/%Y %H:%M'),
-                        "dias_restantes": dias_restantes,
-                        "status": "ativo"
-                    }
-                    processos_ativos.append(processo_ativo)
-                    
-            except Exception as e:
-                logger.error(f"Erro ao processar processo {processo.get('numero', 'N/A')}: {e}")
-                continue
-        
-        # Ordenar por prazo (mais próximos primeiro)
-        processos_ativos.sort(key=lambda x: x['prazo'])
-        
-        return jsonify({
-            "success": True,
-            "processos": processos_ativos,
-            "total": len(processos_ativos)
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro ao listar processos ativos: {str(e)}")
-        return jsonify({
-            "success": False,
-            "erro": "Erro ao listar processos ativos"
-        }), 500
-
-@app.route('/api/propostas/fornecedor/<cnpj>', methods=['GET'])
-def listar_propostas_fornecedor(cnpj):
-    """Lista propostas de um fornecedor específico"""
-    try:
-        # Remover formatação do CNPJ para comparação
-        cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
-        
-        propostas_fornecedor = []
-        
-        for proposta in propostas_db.values():
-            proposta_cnpj = proposta.get('dados', {}).get('cnpj', '')
-            proposta_cnpj_limpo = proposta_cnpj.replace('.', '').replace('/', '').replace('-', '')
-            
-            if proposta_cnpj_limpo == cnpj_limpo:
-                # Buscar informações do processo
-                processo = processos_db.get(proposta.get('processo', ''), {})
-                
-                proposta_formatada = {
-                    "protocolo": proposta.get('protocolo', ''),
-                    "processo": proposta.get('processo', ''),
-                    "processo_objeto": processo.get('objeto', 'N/A'),
-                    "data_envio": proposta.get('data_envio', ''),
-                    "data_envio_formatada": datetime.fromisoformat(proposta.get('data_envio', '')).strftime('%d/%m/%Y %H:%M') if proposta.get('data_envio') else '',
-                    "valor_total": proposta.get('comercial', {}).get('valorTotal', '0,00'),
-                    "status": proposta.get('status', 'enviada'),
-                    "empresa": proposta.get('dados', {}).get('razaoSocial', ''),
-                    "processo_prazo": processo.get('prazo', ''),
-                    "processo_encerrado": datetime.fromisoformat(processo.get('prazo', '').replace('Z', '+00:00')) < datetime.now() if processo.get('prazo') else False
-                }
-                
-                propostas_fornecedor.append(proposta_formatada)
-        
-        # Ordenar por data de envio (mais recentes primeiro)
-        propostas_fornecedor.sort(key=lambda x: x.get('data_envio', ''), reverse=True)
-        
-        return jsonify({
-            "success": True,
-            "propostas": propostas_fornecedor,
-            "total": len(propostas_fornecedor),
-            "cnpj": cnpj
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro ao listar propostas do fornecedor {cnpj}: {str(e)}")
-        return jsonify({
-            "success": False,
-            "erro": "Erro ao listar propostas do fornecedor"
-        }), 500
-
-# Endpoint alternativo com query parameter para evitar problemas de codificação
-@app.route('/api/propostas/fornecedor', methods=['GET'])
-def listar_propostas_fornecedor_query():
-    """Lista propostas de um fornecedor específico via query parameter"""
-    from flask import request
-    cnpj = request.args.get('cnpj', '')
-    if not cnpj:
-        return jsonify({"success": False, "erro": "CNPJ não fornecido"}), 400
-    return listar_propostas_fornecedor(cnpj)
-
-@app.route('/api/fornecedor/estatisticas/<cnpj>', methods=['GET'])
-def estatisticas_fornecedor(cnpj):
-    """Retorna estatísticas específicas do fornecedor"""
-    try:
-        # Remover formatação do CNPJ
-        cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
-        
-        # Contar propostas do fornecedor
-        propostas_fornecedor = []
-        for proposta in propostas_db.values():
-            proposta_cnpj = proposta.get('dados', {}).get('cnpj', '')
-            proposta_cnpj_limpo = proposta_cnpj.replace('.', '').replace('/', '').replace('-', '')
-            
-            if proposta_cnpj_limpo == cnpj_limpo:
-                propostas_fornecedor.append(proposta)
-        
-        # Contar processos ativos
-        agora = datetime.now()
-        processos_ativos = 0
-        for processo in processos_db.values():
-            try:
-                prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
-                if prazo > agora:
-                    processos_ativos += 1
-            except:
-                continue
-        
-        # Contar prazos próximos (próximos 7 dias)
-        uma_semana = agora + timedelta(days=7)
-        prazos_proximos = 0
-        for processo in processos_db.values():
-            try:
-                prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
-                if agora < prazo <= uma_semana:
-                    prazos_proximos += 1
-            except:
-                continue
-        
-        # Calcular valor total das propostas
-        valor_total = 0
-        for proposta in propostas_fornecedor:
-            valor_str = proposta.get('comercial', {}).get('valorTotal', '0,00')
-            try:
-                # Remover formatação e converter para float
-                valor_limpo = valor_str.replace('R$', '').replace('.', '').replace(',', '.').strip()
-                valor_total += float(valor_limpo)
-            except:
-                continue
-        
-        return jsonify({
-            "success": True,
-            "estatisticas": {
-                "processos_ativos": processos_ativos,
-                "propostas_enviadas": len(propostas_fornecedor),
-                "prazos_proximos": prazos_proximos,
-                "valor_total": f"{valor_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-            }
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro ao calcular estatísticas do fornecedor {cnpj}: {str(e)}")
-        return jsonify({
-            "success": False,
             "erro": "Erro ao calcular estatísticas"
         }), 500
 
@@ -1255,7 +1006,6 @@ def estatisticas_fornecedor(cnpj):
 @app.route('/api/fornecedor/estatisticas', methods=['GET'])
 def estatisticas_fornecedor_query():
     """Retorna estatísticas específicas do fornecedor via query parameter"""
-    from flask import request
     cnpj = request.args.get('cnpj', '')
     if not cnpj:
         return jsonify({"success": False, "erro": "CNPJ não fornecido"}), 400
@@ -1365,6 +1115,7 @@ def nao_encontrado(e):
 @app.errorhandler(500)
 def erro_interno(e):
     return jsonify({"erro": "Erro interno do servidor"}), 500
+
 @app.route('/api/download/proposta/<protocolo>/<tipo>', methods=['GET'])
 def download_proposta(protocolo, tipo):
     """Download de proposta em Excel ou Word usando as mesmas funções dos anexos de e-mail"""
@@ -1421,40 +1172,9 @@ def download_proposta(protocolo, tipo):
             "erro": f"Erro ao gerar arquivo: {str(e)}"
         }), 500
 
-# ===== ENDPOINT CATCH-ALL (DEVE SER O ÚLTIMO) =====
-@app.route('/<path:filename>')
-def serve_static(filename):
-    """Serve arquivos estáticos com tratamento de erro"""
-    try:
-        # Previne path traversal
-        if '..' in filename or filename.startswith('/'):
-            return jsonify({"erro": "Caminho inválido"}), 400
-            
-        file_path = os.path.join(STATIC_DIR, filename)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return send_from_directory(STATIC_DIR, filename)
-        else:
-            return jsonify({"erro": "Arquivo não encontrado"}), 404
-    except Exception as e:
-        logger.error(f"Erro ao servir arquivo {filename}: {e}")
-        return jsonify({"erro": "Erro ao acessar arquivo"}), 500
-
-if __name__ == '__main__':
-    logger.info("Iniciando servidor de propostas v2.0.0...")
-    logger.info(f"Diretório de trabalho: {os.getcwd()}")
-    logger.info(f"Email configurado: {bool(app.config['MAIL_USERNAME'])}")
-    logger.info(f"Destinatário principal: {EMAIL_CONFIG['destinatario_principal']}")
-    
-    # Verificar prazos periodicamente (em produção usar scheduler apropriado)
-    # verificar_prazos_proximos()
-    
-    port = int(os.environ.get('PORT', 5000))
-    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
-    
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=debug_mode
+# ===== EXTENSÃO DO BACKEND - NOVOS ENDPOINTS =====
+# Este arquivo contém apenas os novos endpoints para os módulos TR
+# Para integrar: copiar e colar no FINAL do backend_propostas.py
 
 # ===== NOVOS ENDPOINTS PARA MÓDULOS ADICIONAIS =====
 
@@ -1813,7 +1533,7 @@ def listar_concorrencias():
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/inicializar-dados', methods=['POST'])
-def inicializar_dados_exemplo():
+def inicializar_dados_exemplo_api():
     """Inicializar dados de exemplo para demonstração"""
     try:
         # Criar diretório de dados
@@ -1867,4 +1587,280 @@ def inicializar_dados_exemplo():
         return jsonify({'success': False, 'error': str(e)})
 
 # ===== FIM DOS NOVOS ENDPOINTS =====
-)
+
+# ===== ENDPOINT CATCH-ALL (DEVE SER O ÚLTIMO) =====
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Serve arquivos estáticos com tratamento de erro"""
+    try:
+        # Previne path traversal
+        if '..' in filename or filename.startswith('/'):
+            return jsonify({"erro": "Caminho inválido"}), 400
+            
+        file_path = os.path.join(STATIC_DIR, filename)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return send_from_directory(STATIC_DIR, filename)
+        else:
+            return jsonify({"erro": "Arquivo não encontrado"}), 404
+    except Exception as e:
+        logger.error(f"Erro ao servir arquivo {filename}: {e}")
+        return jsonify({"erro": "Erro ao acessar arquivo"}), 500
+
+if __name__ == '__main__':
+    logger.info("Iniciando servidor de propostas v2.0.0...")
+    logger.info(f"Diretório de trabalho: {os.getcwd()}")
+    logger.info(f"Email configurado: {bool(app.config['MAIL_USERNAME'])}")
+    logger.info(f"Destinatário principal: {EMAIL_CONFIG['destinatario_principal']}")
+    
+    # Verificar prazos periodicamente (em produção usar scheduler apropriado)
+    # verificar_prazos_proximos()
+    
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=debug_mode
+    ) False,
+            "erro": "Erro interno ao processar proposta",
+            "detalhes": str(e)
+        }), 500
+
+@app.route('/api/propostas/listar', methods=['GET'])
+def listar_propostas():
+    """Lista todas as propostas com formato compatível com o frontend"""
+    try:
+        # Filtros opcionais
+        processo = request.args.get('processo')
+        cnpj = request.args.get('cnpj')
+        
+        propostas_lista = []
+        
+        for proposta in propostas_db.values():
+            # Aplicar filtros se especificados
+            if processo and proposta.get('processo') != processo:
+                continue
+            if cnpj and proposta.get('dados', {}).get('cnpj') != cnpj:
+                continue
+            
+            # Formatar proposta para o frontend
+            proposta_formatada = {
+                "protocolo": proposta.get('protocolo', ''),
+                "processo": proposta.get('processo', ''),
+                "empresa": proposta.get('dados', {}).get('razaoSocial', 'N/A'),
+                "cnpj": proposta.get('dados', {}).get('cnpj', ''),
+                "valor": f"R$ {proposta.get('comercial', {}).get('valorTotal', '0,00')}",
+                "data": proposta.get('data_envio', ''),
+                "dados": proposta
+            }
+            
+            propostas_lista.append(proposta_formatada)
+        
+        # Ordena por data
+        propostas_lista.sort(key=lambda x: x.get('data', ''), reverse=True)
+        
+        return jsonify({
+            "propostas": propostas_lista,
+            "total": len(propostas_lista)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar propostas: {str(e)}")
+        return jsonify({
+            "erro": "Erro ao listar propostas"
+        }), 500
+
+@app.route('/api/processos/<numero>', methods=['GET'])
+def obter_processo(numero):
+    """Obtém informações de um processo específico"""
+    if numero in processos_db:
+        return jsonify(processos_db[numero]), 200
+    else:
+        # Retorna dados padrão se não encontrar
+        return jsonify({
+            "numero": numero,
+            "objeto": "Processo não cadastrado",
+            "modalidade": "Não informada",
+            "prazo": datetime.now().isoformat()
+        }), 200
+
+@app.route('/api/processos/listar', methods=['GET'])
+def listar_processos():
+    """Lista todos os processos"""
+    return jsonify({
+        "processos": list(processos_db.values()),
+        "total": len(processos_db)
+    }), 200
+
+# ===== NOVOS ENDPOINTS PARA ÁREA DO FORNECEDOR =====
+
+@app.route('/api/processos/ativos', methods=['GET'])
+def listar_processos_ativos():
+    """Lista apenas processos com prazo não vencido"""
+    try:
+        agora = datetime.now()
+        processos_ativos = []
+        
+        for processo in processos_db.values():
+            try:
+                # Converter prazo para datetime
+                prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
+                
+                # Verificar se ainda está ativo
+                if prazo > agora:
+                    # Calcular dias restantes
+                    dias_restantes = (prazo - agora).days
+                    
+                    processo_ativo = {
+                        "numero": processo['numero'],
+                        "objeto": processo['objeto'],
+                        "modalidade": processo['modalidade'],
+                        "prazo": processo['prazo'],
+                        "prazo_formatado": prazo.strftime('%d/%m/%Y %H:%M'),
+                        "dias_restantes": dias_restantes,
+                        "status": "ativo"
+                    }
+                    processos_ativos.append(processo_ativo)
+                    
+            except Exception as e:
+                logger.error(f"Erro ao processar processo {processo.get('numero', 'N/A')}: {e}")
+                continue
+        
+        # Ordenar por prazo (mais próximos primeiro)
+        processos_ativos.sort(key=lambda x: x['prazo'])
+        
+        return jsonify({
+            "success": True,
+            "processos": processos_ativos,
+            "total": len(processos_ativos)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar processos ativos: {str(e)}")
+        return jsonify({
+            "success": False,
+            "erro": "Erro ao listar processos ativos"
+        }), 500
+
+@app.route('/api/propostas/fornecedor/<cnpj>', methods=['GET'])
+def listar_propostas_fornecedor(cnpj):
+    """Lista propostas de um fornecedor específico"""
+    try:
+        # Remover formatação do CNPJ para comparação
+        cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
+        
+        propostas_fornecedor = []
+        
+        for proposta in propostas_db.values():
+            proposta_cnpj = proposta.get('dados', {}).get('cnpj', '')
+            proposta_cnpj_limpo = proposta_cnpj.replace('.', '').replace('/', '').replace('-', '')
+            
+            if proposta_cnpj_limpo == cnpj_limpo:
+                # Buscar informações do processo
+                processo = processos_db.get(proposta.get('processo', ''), {})
+                
+                proposta_formatada = {
+                    "protocolo": proposta.get('protocolo', ''),
+                    "processo": proposta.get('processo', ''),
+                    "processo_objeto": processo.get('objeto', 'N/A'),
+                    "data_envio": proposta.get('data_envio', ''),
+                    "data_envio_formatada": datetime.fromisoformat(proposta.get('data_envio', '')).strftime('%d/%m/%Y %H:%M') if proposta.get('data_envio') else '',
+                    "valor_total": proposta.get('comercial', {}).get('valorTotal', '0,00'),
+                    "status": proposta.get('status', 'enviada'),
+                    "empresa": proposta.get('dados', {}).get('razaoSocial', ''),
+                    "processo_prazo": processo.get('prazo', ''),
+                    "processo_encerrado": datetime.fromisoformat(processo.get('prazo', '').replace('Z', '+00:00')) < datetime.now() if processo.get('prazo') else False
+                }
+                
+                propostas_fornecedor.append(proposta_formatada)
+        
+        # Ordenar por data de envio (mais recentes primeiro)
+        propostas_fornecedor.sort(key=lambda x: x.get('data_envio', ''), reverse=True)
+        
+        return jsonify({
+            "success": True,
+            "propostas": propostas_fornecedor,
+            "total": len(propostas_fornecedor),
+            "cnpj": cnpj
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar propostas do fornecedor {cnpj}: {str(e)}")
+        return jsonify({
+            "success": False,
+            "erro": "Erro ao listar propostas do fornecedor"
+        }), 500
+
+# Endpoint alternativo com query parameter para evitar problemas de codificação
+@app.route('/api/propostas/fornecedor', methods=['GET'])
+def listar_propostas_fornecedor_query():
+    """Lista propostas de um fornecedor específico via query parameter"""
+    cnpj = request.args.get('cnpj', '')
+    if not cnpj:
+        return jsonify({"success": False, "erro": "CNPJ não fornecido"}), 400
+    return listar_propostas_fornecedor(cnpj)
+
+@app.route('/api/fornecedor/estatisticas/<cnpj>', methods=['GET'])
+def estatisticas_fornecedor(cnpj):
+    """Retorna estatísticas específicas do fornecedor"""
+    try:
+        # Remover formatação do CNPJ
+        cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
+        
+        # Contar propostas do fornecedor
+        propostas_fornecedor = []
+        for proposta in propostas_db.values():
+            proposta_cnpj = proposta.get('dados', {}).get('cnpj', '')
+            proposta_cnpj_limpo = proposta_cnpj.replace('.', '').replace('/', '').replace('-', '')
+            
+            if proposta_cnpj_limpo == cnpj_limpo:
+                propostas_fornecedor.append(proposta)
+        
+        # Contar processos ativos
+        agora = datetime.now()
+        processos_ativos = 0
+        for processo in processos_db.values():
+            try:
+                prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
+                if prazo > agora:
+                    processos_ativos += 1
+            except:
+                continue
+        
+        # Contar prazos próximos (próximos 7 dias)
+        uma_semana = agora + timedelta(days=7)
+        prazos_proximos = 0
+        for processo in processos_db.values():
+            try:
+                prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
+                if agora < prazo <= uma_semana:
+                    prazos_proximos += 1
+            except:
+                continue
+        
+        # Calcular valor total das propostas
+        valor_total = 0
+        for proposta in propostas_fornecedor:
+            valor_str = proposta.get('comercial', {}).get('valorTotal', '0,00')
+            try:
+                # Remover formatação e converter para float
+                valor_limpo = valor_str.replace('R$', '').replace('.', '').replace(',', '.').strip()
+                valor_total += float(valor_limpo)
+            except:
+                continue
+        
+        return jsonify({
+            "success": True,
+            "estatisticas": {
+                "processos_ativos": processos_ativos,
+                "propostas_enviadas": len(propostas_fornecedor),
+                "prazos_proximos": prazos_proximos,
+                "valor_total": f"{valor_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao calcular estatísticas do fornecedor {cnpj}: {str(e)}")
+        return jsonify({
+            "success":
