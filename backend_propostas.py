@@ -25,13 +25,13 @@ app.config['JSON_AS_ASCII'] = False
 app.config['JSONIFY_MIMETYPE'] = 'application/json; charset=utf-8'
 CORS(app)
 
-# Configuração de Email
+# Configuração de Email (compatível com suas variáveis)
 app.config['MAIL_SERVER'] = os.environ.get('EMAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT'] = int(os.environ.get('EMAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', '')
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS', '')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('EMAIL_USER', '')
+app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', os.environ.get('MAIL_USERNAME', ''))
+app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS', os.environ.get('MAIL_PASSWORD', ''))
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('EMAIL_USER', os.environ.get('MAIL_USERNAME', ''))
 
 mail = Mail(app)
 
