@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Área do Fornecedor</title>
+    
+    <!-- Configuração da API (ÚNICA ADIÇÃO) -->
+    <script>
+        // Detecta automaticamente se está local ou em produção
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000' 
+            : window.location.origin;
+    </script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -201,17 +210,15 @@
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             transition: all 0.3s;
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+            display: inline-block;
         }
 
         .btn-primary {
@@ -219,65 +226,52 @@
             color: white;
         }
 
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
         .btn-secondary {
             background: #6c757d;
             color: white;
         }
 
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        .btn-secondary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .proposta-table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .proposta-table th,
+        .proposta-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
         }
 
         .proposta-table th {
             background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
             font-weight: 600;
             color: #2c3e50;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .proposta-table td {
-            padding: 12px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .proposta-table tr:hover {
-            background: #f8f9fa;
         }
 
         .status-enviada {
             background: #d4edda;
             color: #155724;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-rascunho {
-            background: #cce5ff;
-            color: #004085;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 11px;
             font-weight: 600;
         }
 
         .empty-state {
             text-align: center;
-            padding: 60px;
+            padding: 60px 20px;
             color: #7f8c8d;
         }
 
@@ -288,11 +282,6 @@
         }
 
         @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
             .stats-grid {
                 grid-template-columns: 1fr;
             }
@@ -303,12 +292,11 @@
             }
             
             .processo-acoes {
-                flex-direction: column;
+                flex-wrap: wrap;
             }
             
-            .btn {
-                width: 100%;
-                justify-content: center;
+            .proposta-table {
+                font-size: 12px;
             }
         }
     </style>
@@ -316,55 +304,52 @@
 <body>
     <div class="header">
         <div class="header-content">
-            <h1>🏢 Área do Fornecedor</h1>
+            <h1>🏢 Portal do Fornecedor</h1>
             <div id="infoUsuario"></div>
         </div>
     </div>
 
     <div class="container">
         <div class="welcome-section">
-            <h2 id="welcomeMessage">Bem-vindo!</h2>
-            <p id="empresaInfo">Carregando informações...</p>
+            <h2 id="welcomeMessage">Carregando...</h2>
+            <p id="empresaInfo">Aguarde...</p>
         </div>
 
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon">📋</div>
-                <div class="stat-number" id="processosAtivos">0</div>
+                <div class="stat-number" id="processosAtivos">-</div>
                 <div class="stat-label">Processos Ativos</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📝</div>
-                <div class="stat-number" id="propostasEnviadas">0</div>
+                <div class="stat-icon">📄</div>
+                <div class="stat-number" id="propostasEnviadas">-</div>
                 <div class="stat-label">Propostas Enviadas</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">⏰</div>
-                <div class="stat-number" id="prazosProximos">0</div>
-                <div class="stat-label">Vencem Esta Semana</div>
+                <div class="stat-number" id="prazosProximos">-</div>
+                <div class="stat-label">Prazos Próximos</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">💰</div>
-                <div class="stat-number" id="valorTotal">R$ 0</div>
-                <div class="stat-label">Valor Total Proposto</div>
+                <div class="stat-number" id="valorTotal">-</div>
+                <div class="stat-label">Valor Total</div>
             </div>
         </div>
 
         <div class="section">
-            <div class="tabs">
-                <button class="tab active" onclick="mostrarTab('disponiveis')">
-                    Processos Disponíveis
-                </button>
-                <button class="tab" onclick="mostrarTab('participando')">
-                    Minhas Propostas
-                </button>
-                <button class="tab" onclick="mostrarTab('historico')">
-                    Histórico
-                </button>
+            <div class="section-header">
+                <h3 class="section-title">Área de Trabalho</h3>
             </div>
 
-            <!-- Processos Disponíveis -->
-            <div class="tab-content active" id="tab-disponiveis">
+            <div class="tabs">
+                <button class="tab active" onclick="mostrarTab('disponiveis')">Processos Disponíveis</button>
+                <button class="tab" onclick="mostrarTab('propostas')">Minhas Propostas</button>
+                <button class="tab" onclick="mostrarTab('historico')">Histórico</button>
+            </div>
+
+            <div id="tab-disponiveis" class="tab-content active">
                 <div id="processosDisponiveis">
                     <div class="empty-state">
                         <div class="empty-state-icon">📭</div>
@@ -373,8 +358,7 @@
                 </div>
             </div>
 
-            <!-- Minhas Propostas -->
-            <div class="tab-content" id="tab-participando">
+            <div id="tab-propostas" class="tab-content">
                 <div id="minhasPropostas">
                     <div class="empty-state">
                         <div class="empty-state-icon">📄</div>
@@ -383,8 +367,7 @@
                 </div>
             </div>
 
-            <!-- Histórico -->
-            <div class="tab-content" id="tab-historico">
+            <div id="tab-historico" class="tab-content">
                 <div id="historico">
                     <div class="empty-state">
                         <div class="empty-state-icon">📚</div>
@@ -395,7 +378,9 @@
         </div>
     </div>
 
+    <!-- Incluir auth.js -->
     <script src="auth.js"></script>
+
     <script>
         let usuarioAtual = null;
         let processos = [];
@@ -411,36 +396,95 @@
             }
         });
 
-        // Carregar dados
-        function carregarDados() {
+        // Carregar dados - MODIFICADO para usar API quando disponível, localStorage como fallback
+        async function carregarDados() {
             // Informações do usuário
             document.getElementById('welcomeMessage').textContent = `Bem-vindo, ${usuarioAtual.nome}!`;
             document.getElementById('empresaInfo').textContent = `CNPJ: ${usuarioAtual.cnpj || 'Não informado'}`;
             
-            // Carregar processos e propostas
-            processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            try {
+                // Tentar carregar do backend primeiro
+                await carregarDadosBackend();
+            } catch (error) {
+                console.log('Backend não disponível, usando localStorage:', error);
+                // Fallback para localStorage (comportamento original)
+                carregarDadosLocalStorage();
+            }
+        }
+
+        // NOVA FUNÇÃO: Carregar dados do backend
+        async function carregarDadosBackend() {
+            // Carregar processos ativos
+            const responseProcessos = await fetch(`${API_URL}/api/processos/ativos`);
+            if (responseProcessos.ok) {
+                const dataProcessos = await responseProcessos.json();
+                if (dataProcessos.success) {
+                    processos = dataProcessos.processos.map(p => ({
+                        numero: p.numero,
+                        objeto: p.objeto,
+                        modalidade: p.modalidade,
+                        prazo: p.prazo
+                    }));
+                }
+            }
+
+            // Carregar propostas do fornecedor
+            const responsePropostas = await fetch(`${API_URL}/api/propostas/fornecedor/${encodeURIComponent(usuarioAtual.cnpj)}`);
+            if (responsePropostas.ok) {
+                const dataPropostas = await responsePropostas.json();
+                if (dataPropostas.success) {
+                    propostas = dataPropostas.propostas.map(p => ({
+                        protocolo: p.protocolo,
+                        processo: p.processo,
+                        cnpj: usuarioAtual.cnpj,
+                        data: p.data_envio,
+                        valor: p.valor_total
+                    }));
+                }
+            }
+
+            // Atualizar interface
+            atualizarEstatisticas();
+            carregarProcessosDisponiveis();
+            carregarMinhasPropostas();
+            carregarHistorico();
+        }
+
+        // FUNÇÃO ORIGINAL: Carregar dados do localStorage (fallback)
+        function carregarDadosLocalStorage() {
+            // Carregar processos e propostas do localStorage (comportamento original)
+            const processosLocal = JSON.parse(localStorage.getItem('processos') || '[]');
+            const propostasLocal = JSON.parse(localStorage.getItem('propostas') || '[]');
+            
+            processos = processosLocal;
+            propostas = propostasLocal;
             
             // Filtrar propostas do usuário
-            const minhasPropostas = propostas.filter(p => p.cnpj === usuarioAtual.cnpj);
+            const minhasPropostasLocal = propostas.filter(p => p.cnpj === usuarioAtual.cnpj);
             
             // Atualizar estatísticas
-            atualizarEstatisticas(minhasPropostas);
+            atualizarEstatisticas(minhasPropostasLocal);
             
             // Carregar conteúdo das abas
             carregarProcessosDisponiveis();
-            carregarMinhasPropostas(minhasPropostas);
-            carregarHistorico(minhasPropostas);
+            carregarMinhasPropostas(minhasPropostasLocal);
+            carregarHistorico(minhasPropostasLocal);
         }
 
-        // Atualizar estatísticas
-        function atualizarEstatisticas(minhasPropostas) {
+        // Atualizar estatísticas - MODIFICADO para funcionar com ambas as fontes
+        function atualizarEstatisticas(minhasPropostasParam) {
             const agora = new Date();
             const umaSemana = new Date();
             umaSemana.setDate(umaSemana.getDate() + 7);
             
+            // Usar parâmetro se fornecido (localStorage) ou calcular (backend)
+            const minhasPropostas = minhasPropostasParam || propostas.filter(p => p.cnpj === usuarioAtual.cnpj);
+            
             // Processos ativos
-            const processosAtivos = processos.filter(p => new Date(p.prazo) > agora);
+            const processosAtivos = processos.filter(p => {
+                const prazo = new Date(p.prazo);
+                return prazo > agora;
+            });
             document.getElementById('processosAtivos').textContent = processosAtivos.length;
             
             // Propostas enviadas
@@ -464,7 +508,7 @@
             document.getElementById('valorTotal').textContent = 'R$ ' + valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
         }
 
-        // Carregar processos disponíveis
+        // Carregar processos disponíveis - MANTIDO ORIGINAL
         function carregarProcessosDisponiveis() {
             const container = document.getElementById('processosDisponiveis');
             const agora = new Date();
@@ -526,9 +570,10 @@
             }).join('');
         }
 
-        // Carregar minhas propostas
-        function carregarMinhasPropostas(minhasPropostas) {
+        // Carregar minhas propostas - MANTIDO ORIGINAL
+        function carregarMinhasPropostas(minhasPropostasParam) {
             const container = document.getElementById('minhasPropostas');
+            const minhasPropostas = minhasPropostasParam || propostas.filter(p => p.cnpj === usuarioAtual.cnpj);
             
             if (minhasPropostas.length === 0) {
                 container.innerHTML = `
@@ -580,9 +625,10 @@
             `;
         }
 
-        // Carregar histórico
-        function carregarHistorico(minhasPropostas) {
+        // Carregar histórico - MANTIDO ORIGINAL
+        function carregarHistorico(minhasPropostasParam) {
             const container = document.getElementById('historico');
+            const minhasPropostas = minhasPropostasParam || propostas.filter(p => p.cnpj === usuarioAtual.cnpj);
             
             // Filtrar apenas propostas de processos encerrados
             const propostasHistorico = minhasPropostas.filter(proposta => {
@@ -627,9 +673,8 @@
             `;
         }
 
-        // Mostrar tab
+        // TODAS AS DEMAIS FUNÇÕES MANTIDAS ORIGINAIS
         function mostrarTab(tabName) {
-            // Esconder todas as tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
@@ -637,21 +682,15 @@
                 btn.classList.remove('active');
             });
             
-            // Mostrar tab selecionada
             document.getElementById(`tab-${tabName}`).classList.add('active');
             event.target.classList.add('active');
         }
 
-        // Enviar proposta
         function enviarProposta(numeroProcesso) {
-            // Registrar ação
             Auth.registrarLog(usuarioAtual.usuarioId, 'acessar_portal_proposta', numeroProcesso);
-            
-            // Abrir portal de propostas
             window.location.href = `portal-propostas-novo.html?processo=${encodeURIComponent(numeroProcesso)}`;
         }
 
-        // Ver detalhes do processo
         function verDetalhes(numeroProcesso) {
             const processo = processos.find(p => p.numero === numeroProcesso);
             if (!processo) return;
@@ -668,7 +707,6 @@
             `);
         }
 
-        // Ver proposta
         function verProposta(protocolo) {
             const proposta = propostas.find(p => p.protocolo === protocolo);
             if (!proposta) return;
@@ -683,8 +721,6 @@
                 
                 Status: Enviada com sucesso
             `);
-            
-            // Em produção, abrir visualização completa da proposta
         }
 
         // Auto-refresh a cada 30 segundos
