@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Área do Fornecedor</title>
+    <title>Dashboard - Portal do Fornecedor</title>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,6 +21,13 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
             gap: 1rem;
         }
         
@@ -30,8 +37,29 @@
             font-weight: 600;
         }
         
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .refresh-btn {
+            background: #5a67d8;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: #4c51bf;
+        }
+        
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 2rem auto;
             padding: 0 1rem;
         }
@@ -59,6 +87,7 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             text-align: center;
             transition: transform 0.3s ease;
+            cursor: pointer;
         }
         
         .stat-card:hover {
@@ -89,12 +118,74 @@
             overflow: hidden;
         }
         
-        .work-area h2 {
+        .work-area-header {
             padding: 1.5rem;
             background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .work-area h2 {
             margin: 0;
             color: #333;
+        }
+        
+        .view-toggle {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .view-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .view-btn.active {
+            background: #5a67d8;
+            color: white;
+            border-color: #5a67d8;
+        }
+        
+        .filters-section {
+            padding: 1.5rem;
+            background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .filter-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .filter-input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .filter-input:focus {
+            outline: none;
+            border-color: #5a67d8;
+            box-shadow: 0 0 0 2px rgba(90, 103, 216, 0.1);
         }
         
         .tabs {
@@ -112,6 +203,9 @@
             color: #666;
             transition: all 0.3s ease;
             position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
         .tab.active {
@@ -129,47 +223,164 @@
             background: #5a67d8;
         }
         
+        .tab-badge {
+            background: #5a67d8;
+            color: white;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+        
         .tab-content {
             padding: 2rem;
-            min-height: 300px;
+            min-height: 400px;
+        }
+        
+        .processos-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .processos-grid.grid-view {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+        
+        .processos-grid.list-view {
+            grid-template-columns: 1fr;
         }
         
         .processo-card {
             border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            transition: box-shadow 0.3s ease;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+            overflow: hidden;
         }
         
         .processo-card:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .processo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
         }
         
         .processo-numero {
             color: #5a67d8;
             font-weight: bold;
-            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .processo-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-urgente {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .status-atencao {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .status-normal {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .processo-titulo {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+            line-height: 1.4;
         }
         
         .processo-info {
-            margin-bottom: 0.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
         }
         
-        .processo-info strong {
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        
+        .info-label {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            font-size: 0.9rem;
             color: #333;
+            font-weight: 500;
         }
         
-        .dias-restantes {
-            font-weight: bold;
+        .processo-actions {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
         }
         
-        .dias-restantes.urgente {
-            color: #dc3545;
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
         }
         
-        .dias-restantes.normal {
-            color: #28a745;
+        .btn-primary {
+            background: #5a67d8;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #4c51bf;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
         }
         
         .empty-state {
@@ -184,25 +395,108 @@
             opacity: 0.5;
         }
         
-        .error {
-            background: #fee;
-            color: #c33;
+        .message {
             padding: 1rem;
             border-radius: 8px;
             margin: 1rem 0;
         }
         
-        .success {
-            background: #efe;
-            color: #363;
-            padding: 1rem;
+        .message.error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .message.success {
+            background: #dcfce7;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .message.info {
+            background: #dbeafe;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
             border-radius: 8px;
-            margin: 1rem 0;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: #10b981;
+        }
+        
+        .notification.error {
+            background: #ef4444;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
         }
         
         @media (max-width: 768px) {
             .header {
                 padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
             }
             
             .container {
@@ -215,6 +509,10 @@
                 gap: 1rem;
             }
             
+            .filters-section {
+                grid-template-columns: 1fr;
+            }
+            
             .tabs {
                 flex-wrap: wrap;
             }
@@ -223,13 +521,32 @@
                 flex: 1;
                 min-width: 120px;
             }
+            
+            .processos-grid.grid-view {
+                grid-template-columns: 1fr;
+            }
+            
+            .processo-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <span style="font-size: 1.5rem;">🏢</span>
-        <h1>Portal do Fornecedor</h1>
+        <div class="header-left">
+            <span style="font-size: 1.5rem;">🏢</span>
+            <h1>Portal do Fornecedor</h1>
+        </div>
+        <div class="header-right">
+            <button class="refresh-btn" onclick="atualizarDados()">
+                🔄 Atualizar
+            </button>
+        </div>
     </div>
     
     <div class="container">
@@ -241,25 +558,25 @@
         <div id="message" style="display: none;"></div>
         
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card" onclick="filtrarPorStatus('ativos')">
                 <div class="stat-icon">📋</div>
                 <div class="stat-number" id="processos-ativos">-</div>
                 <div class="stat-label">Processos Ativos</div>
             </div>
             
-            <div class="stat-card">
+            <div class="stat-card" onclick="mostrarTab('propostas')">
                 <div class="stat-icon">📄</div>
                 <div class="stat-number" id="propostas-enviadas">-</div>
                 <div class="stat-label">Propostas Enviadas</div>
             </div>
             
-            <div class="stat-card">
+            <div class="stat-card" onclick="filtrarPorUrgencia()">
                 <div class="stat-icon">⏰</div>
                 <div class="stat-number" id="prazos-proximos">-</div>
                 <div class="stat-label">Prazos Próximos</div>
             </div>
             
-            <div class="stat-card">
+            <div class="stat-card" onclick="mostrarTab('historico')">
                 <div class="stat-icon">💰</div>
                 <div class="stat-number" id="valor-total">-</div>
                 <div class="stat-label">Valor Total</div>
@@ -267,18 +584,77 @@
         </div>
         
         <div class="work-area">
-            <h2>Área de Trabalho</h2>
+            <div class="work-area-header">
+                <h2>Área de Trabalho</h2>
+                <div class="view-toggle">
+                    <button class="view-btn active" onclick="alterarVisualizacao('grid')">
+                        📱 Grade
+                    </button>
+                    <button class="view-btn" onclick="alterarVisualizacao('list')">
+                        📋 Lista
+                    </button>
+                </div>
+            </div>
+            
+            <div class="filters-section">
+                <div class="filter-group">
+                    <label for="busca">Buscar:</label>
+                    <input type="text" id="busca" class="filter-input" placeholder="Digite para buscar..." onkeyup="aplicarFiltros()">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filtro-modalidade">Modalidade:</label>
+                    <select id="filtro-modalidade" class="filter-input" onchange="aplicarFiltros()">
+                        <option value="">Todas</option>
+                        <option value="Concorrência">Concorrência</option>
+                        <option value="Tomada de Preços">Tomada de Preços</option>
+                        <option value="Convite">Convite</option>
+                        <option value="Pregão">Pregão</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filtro-prazo">Prazo:</label>
+                    <select id="filtro-prazo" class="filter-input" onchange="aplicarFiltros()">
+                        <option value="">Todos</option>
+                        <option value="urgente">Até 3 dias</option>
+                        <option value="atencao">Até 7 dias</option>
+                        <option value="normal">Mais de 7 dias</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filtro-ordenacao">Ordenar por:</label>
+                    <select id="filtro-ordenacao" class="filter-input" onchange="aplicarFiltros()">
+                        <option value="prazo">Prazo (mais próximo)</option>
+                        <option value="numero">Número do processo</option>
+                        <option value="valor">Valor estimado</option>
+                        <option value="modalidade">Modalidade</option>
+                    </select>
+                </div>
+            </div>
             
             <div class="tabs">
-                <button class="tab active" onclick="showTab('processos', this)">Processos Disponíveis</button>
-                <button class="tab" onclick="showTab('propostas', this)">Minhas Propostas</button>
-                <button class="tab" onclick="showTab('historico', this)">Histórico</button>
+                <button class="tab active" onclick="mostrarTab('processos', this)">
+                    📋 Processos Disponíveis
+                    <span class="tab-badge" id="badge-processos">0</span>
+                </button>
+                <button class="tab" onclick="mostrarTab('propostas', this)">
+                    📄 Minhas Propostas
+                    <span class="tab-badge" id="badge-propostas">0</span>
+                </button>
+                <button class="tab" onclick="mostrarTab('historico', this)">
+                    📚 Histórico
+                    <span class="tab-badge" id="badge-historico">0</span>
+                </button>
             </div>
             
             <div id="processos" class="tab-content">
-                <div class="empty-state">
-                    <div class="empty-state-icon">📊</div>
-                    <p>Carregando processos disponíveis...</p>
+                <div class="processos-grid grid-view" id="processos-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <p>Carregando processos disponíveis...</p>
+                    </div>
                 </div>
             </div>
             
@@ -286,6 +662,7 @@
                 <div class="empty-state">
                     <div class="empty-state-icon">📄</div>
                     <p>Nenhuma proposta encontrada</p>
+                    <small>Suas propostas enviadas aparecerão aqui</small>
                 </div>
             </div>
             
@@ -293,26 +670,62 @@
                 <div class="empty-state">
                     <div class="empty-state-icon">📚</div>
                     <p>Histórico vazio</p>
+                    <small>Suas atividades anteriores aparecerão aqui</small>
                 </div>
             </div>
         </div>
     </div>
     
+    <!-- Modal para detalhes do processo -->
+    <div id="modal-detalhes" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Detalhes do Processo</h3>
+                <button class="close-btn" onclick="fecharModal()">&times;</button>
+            </div>
+            <div id="modal-body">
+                <!-- Conteúdo será inserido dinamicamente -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notificação -->
+    <div id="notification" class="notification">
+        <span id="notification-text"></span>
+    </div>
+    
     <script>
-        // Configuração da API - Detecta automaticamente o ambiente
+        // Configuração da API
         const API_URL = window.location.origin;
-        
-        // CNPJ do fornecedor (em produção viria do login)
         const CNPJ_FORNECEDOR = '12.345.678/0001-90';
+        
+        // Variáveis globais
+        let processosOriginais = [];
+        let processosFiltrados = [];
+        let visualizacaoAtual = 'grid';
         
         console.log('API_URL:', API_URL);
         console.log('CNPJ:', CNPJ_FORNECEDOR);
         
-        // Função para mostrar mensagens
-        function showMessage(text, type = 'error') {
+        // Função para mostrar notificação
+        function mostrarNotificacao(texto, tipo = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notification-text');
+            
+            notificationText.textContent = texto;
+            notification.className = `notification ${tipo}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Função para mostrar mensagem
+        function mostrarMensagem(texto, tipo = 'error') {
             const messageDiv = document.getElementById('message');
-            messageDiv.className = type;
-            messageDiv.textContent = text;
+            messageDiv.className = `message ${tipo}`;
+            messageDiv.textContent = texto;
             messageDiv.style.display = 'block';
             
             setTimeout(() => {
@@ -323,16 +736,9 @@
         // Função para carregar estatísticas
         async function carregarEstatisticas() {
             try {
-                console.log('Carregando estatísticas...');
-                
                 const url = `${API_URL}/api/fornecedor/estatisticas?cnpj=${encodeURIComponent(CNPJ_FORNECEDOR)}`;
-                console.log('URL estatísticas:', url);
-                
                 const response = await fetch(url);
-                console.log('Response status:', response.status);
-                
                 const data = await response.json();
-                console.log('Response data:', data);
                 
                 if (data.success && data.estatisticas) {
                     const stats = data.estatisticas;
@@ -341,15 +747,18 @@
                     document.getElementById('prazos-proximos').textContent = stats.prazos_proximos || 0;
                     document.getElementById('valor-total').textContent = `R$ ${stats.valor_total || '0,00'}`;
                     
-                    showMessage('Estatísticas carregadas com sucesso!', 'success');
+                    // Atualizar badges das abas
+                    document.getElementById('badge-processos').textContent = stats.processos_ativos || 0;
+                    document.getElementById('badge-propostas').textContent = stats.propostas_enviadas || 0;
+                    
                 } else {
                     throw new Error(data.erro || 'Erro ao carregar estatísticas');
                 }
             } catch (error) {
                 console.error('Erro ao carregar estatísticas:', error);
-                showMessage('Erro ao carregar estatísticas: ' + error.message);
+                mostrarMensagem('Erro ao carregar estatísticas: ' + error.message);
                 
-                // Valores padrão em caso de erro
+                // Valores padrão
                 document.getElementById('processos-ativos').textContent = '0';
                 document.getElementById('propostas-enviadas').textContent = '0';
                 document.getElementById('prazos-proximos').textContent = '0';
@@ -360,54 +769,28 @@
         // Função para carregar processos
         async function carregarProcessos() {
             try {
-                console.log('Carregando processos...');
-                
                 const url = `${API_URL}/api/processos/ativos`;
-                console.log('URL processos:', url);
-                
                 const response = await fetch(url);
-                console.log('Response status:', response.status);
-                
                 const data = await response.json();
-                console.log('Response data:', data);
                 
                 if (data.success && data.processos) {
-                    const processosDiv = document.getElementById('processos');
+                    processosOriginais = data.processos.map(processo => ({
+                        ...processo,
+                        valor_estimado: processo.valor_estimado || 'Não informado',
+                        categoria: processo.categoria || 'Geral',
+                        pode_participar: processo.pode_participar !== false,
+                        proposta_enviada: processo.proposta_enviada || false
+                    }));
                     
-                    if (data.processos.length === 0) {
-                        processosDiv.innerHTML = `
-                            <div class="empty-state">
-                                <div class="empty-state-icon">📊</div>
-                                <p>Nenhum processo ativo no momento</p>
-                            </div>
-                        `;
-                    } else {
-                        let html = '';
-                        
-                        data.processos.forEach(processo => {
-                            const diasClass = processo.dias_restantes <= 3 ? 'urgente' : 'normal';
-                            
-                            html += `
-                                <div class="processo-card">
-                                    <div class="processo-numero">${processo.numero}</div>
-                                    <div class="processo-info"><strong>Objeto:</strong> ${processo.objeto}</div>
-                                    <div class="processo-info"><strong>Modalidade:</strong> ${processo.modalidade}</div>
-                                    <div class="processo-info"><strong>Prazo:</strong> ${processo.prazo_formatado}</div>
-                                    <div class="dias-restantes ${diasClass}">
-                                        ${processo.dias_restantes} dias restantes
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        
-                        processosDiv.innerHTML = html;
-                    }
+                    processosFiltrados = [...processosOriginais];
+                    renderizarProcessos();
+                    
                 } else {
                     throw new Error(data.erro || 'Erro ao carregar processos');
                 }
             } catch (error) {
                 console.error('Erro ao carregar processos:', error);
-                document.getElementById('processos').innerHTML = `
+                document.getElementById('processos-container').innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">❌</div>
                         <p>Erro ao carregar processos: ${error.message}</p>
@@ -416,8 +799,234 @@
             }
         }
         
-        // Função para trocar abas
-        function showTab(tabName, element) {
+        // Função para renderizar processos
+        function renderizarProcessos() {
+            const container = document.getElementById('processos-container');
+            
+            if (processosFiltrados.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <p>Nenhum processo encontrado</p>
+                        <small>Tente ajustar os filtros de busca</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            processosFiltrados.forEach(processo => {
+                const diasRestantes = processo.dias_restantes;
+                let statusClass = 'status-normal';
+                let statusText = `${diasRestantes} dias restantes`;
+                
+                if (diasRestantes <= 3) {
+                    statusClass = 'status-urgente';
+                    statusText = `⚠️ ${diasRestantes} dias restantes`;
+                } else if (diasRestantes <= 7) {
+                    statusClass = 'status-atencao';
+                    statusText = `⏰ ${diasRestantes} dias restantes`;
+                }
+                
+                const valorFormatado = processo.valor_estimado !== 'Não informado' 
+                    ? `R$ ${parseFloat(processo.valor_estimado).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` 
+                    : 'Não informado';
+                
+                html += `
+                    <div class="processo-card">
+                        <div class="processo-header">
+                            <div class="processo-numero">${processo.numero}</div>
+                            <div class="processo-status ${statusClass}">${statusText}</div>
+                        </div>
+                        
+                        <div class="processo-titulo">${processo.objeto}</div>
+                        
+                        <div class="processo-info">
+                            <div class="info-item">
+                                <div class="info-label">Modalidade</div>
+                                <div class="info-value">${processo.modalidade}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Valor Estimado</div>
+                                <div class="info-value">${valorFormatado}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Categoria</div>
+                                <div class="info-value">${processo.categoria}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Prazo Final</div>
+                                <div class="info-value">${processo.prazo_formatado}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="processo-actions">
+                            ${processo.pode_participar && !processo.proposta_enviada ? 
+                                `<button class="btn btn-primary" onclick="enviarProposta('${processo.numero}')">
+                                    📄 Enviar Proposta
+                                </button>` : 
+                                processo.proposta_enviada ?
+                                `<button class="btn btn-success" disabled>
+                                    ✅ Proposta Enviada
+                                </button>` :
+                                `<button class="btn btn-secondary" disabled>
+                                    ❌ Não Pode Participar
+                                </button>`
+                            }
+                            <button class="btn btn-secondary" onclick="verDetalhes('${processo.numero}')">
+                                📋 Ver Detalhes
+                            </button>
+                            <button class="btn btn-secondary" onclick="baixarEdital('${processo.numero}')">
+                                📎 Baixar Edital
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Função para aplicar filtros
+        function aplicarFiltros() {
+            const busca = document.getElementById('busca').value.toLowerCase();
+            const modalidade = document.getElementById('filtro-modalidade').value;
+            const prazo = document.getElementById('filtro-prazo').value;
+            const ordenacao = document.getElementById('filtro-ordenacao').value;
+            
+            // Filtrar
+            processosFiltrados = processosOriginais.filter(processo => {
+                const matchBusca = !busca || 
+                    processo.numero.toLowerCase().includes(busca) ||
+                    processo.objeto.toLowerCase().includes(busca) ||
+                    processo.modalidade.toLowerCase().includes(busca);
+                
+                const matchModalidade = !modalidade || processo.modalidade === modalidade;
+                
+                let matchPrazo = true;
+                if (prazo === 'urgente') {
+                    matchPrazo = processo.dias_restantes <= 3;
+                } else if (prazo === 'atencao') {
+                    matchPrazo = processo.dias_restantes <= 7;
+                } else if (prazo === 'normal') {
+                    matchPrazo = processo.dias_restantes > 7;
+                }
+                
+                return matchBusca && matchModalidade && matchPrazo;
+            });
+            
+            // Ordenar
+            processosFiltrados.sort((a, b) => {
+                switch (ordenacao) {
+                    case 'prazo':
+                        return a.dias_restantes - b.dias_restantes;
+                    case 'numero':
+                        return a.numero.localeCompare(b.numero);
+                    case 'valor':
+                        const valorA = parseFloat(a.valor_estimado) || 0;
+                        const valorB = parseFloat(b.valor_estimado) || 0;
+                        return valorB - valorA;
+                    case 'modalidade':
+                        return a.modalidade.localeCompare(b.modalidade);
+                    default:
+                        return 0;
+                }
+            });
+            
+            renderizarProcessos();
+        }
+        
+        // Função para alterar visualização
+        function alterarVisualizacao(tipo) {
+            visualizacaoAtual = tipo;
+            const container = document.getElementById('processos-container');
+            const botoes = document.querySelectorAll('.view-btn');
+            
+            // Atualizar botões
+            botoes.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Atualizar classe do container
+            container.className = `processos-grid ${tipo}-view`;
+        }
+        
+        // Função para enviar proposta
+        function enviarProposta(numeroProcesso) {
+            const processo = processosOriginais.find(p => p.numero === numeroProcesso);
+            if (!processo) return;
+            
+            // Construir URL com parâmetros
+            const params = new URLSearchParams({
+                processo: numeroProcesso,
+                objeto: processo.objeto,
+                modalidade: processo.modalidade,
+                prazo: processo.prazo_formatado,
+                origem: 'dashboard'
+            });
+            
+            const url = `portal-propostas-novo.html?${params.toString()}`;
+            
+            // Abrir em nova aba
+            window.open(url, '_blank');
+            
+            mostrarNotificacao(`Redirecionando para envio de proposta do processo ${numeroProcesso}`);
+        }
+        
+        // Função para ver detalhes
+        function verDetalhes(numeroProcesso) {
+            const processo = processosOriginais.find(p => p.numero === numeroProcesso);
+            if (!processo) return;
+            
+            const modalBody = document.getElementById('modal-body');
+            const valorFormatado = processo.valor_estimado !== 'Não informado' 
+                ? `R$ ${parseFloat(processo.valor_estimado).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` 
+                : 'Não informado';
+            
+            modalBody.innerHTML = `
+                <div style="display: grid; gap: 1rem;">
+                    <div><strong>Número:</strong> ${processo.numero}</div>
+                    <div><strong>Objeto:</strong> ${processo.objeto}</div>
+                    <div><strong>Modalidade:</strong> ${processo.modalidade}</div>
+                    <div><strong>Valor Estimado:</strong> ${valorFormatado}</div>
+                    <div><strong>Categoria:</strong> ${processo.categoria}</div>
+                    <div><strong>Prazo Final:</strong> ${processo.prazo_formatado}</div>
+                    <div><strong>Dias Restantes:</strong> ${processo.dias_restantes} dias</div>
+                    <div><strong>Status:</strong> ${processo.pode_participar ? 'Pode participar' : 'Não pode participar'}</div>
+                    ${processo.proposta_enviada ? '<div><strong>Proposta:</strong> ✅ Já enviada</div>' : ''}
+                </div>
+                
+                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                    ${processo.pode_participar && !processo.proposta_enviada ? 
+                        `<button class="btn btn-primary" onclick="enviarProposta('${processo.numero}'); fecharModal();">
+                            📄 Enviar Proposta
+                        </button>` : ''
+                    }
+                    <button class="btn btn-secondary" onclick="baixarEdital('${processo.numero}')">
+                        📎 Baixar Edital
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('modal-detalhes').classList.add('show');
+        }
+        
+        // Função para baixar edital
+        function baixarEdital(numeroProcesso) {
+            mostrarNotificacao(`Baixando edital do processo ${numeroProcesso}...`);
+            // Aqui você implementaria o download real
+            setTimeout(() => {
+                mostrarNotificacao(`Edital do processo ${numeroProcesso} baixado com sucesso!`);
+            }, 1500);
+        }
+        
+        // Função para fechar modal
+        function fecharModal() {
+            document.getElementById('modal-detalhes').classList.remove('show');
+        }
+        
+        // Função para mostrar aba
+        function mostrarTab(tabName, element) {
             // Esconder todas as abas
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.style.display = 'none';
@@ -432,7 +1041,35 @@
             document.getElementById(tabName).style.display = 'block';
             
             // Adicionar classe active na aba clicada
-            element.classList.add('active');
+            if (element) {
+                element.classList.add('active');
+            }
+        }
+        
+        // Função para filtrar por status
+        function filtrarPorStatus(status) {
+            mostrarTab('processos');
+            if (status === 'ativos') {
+                document.getElementById('filtro-prazo').value = '';
+                aplicarFiltros();
+            }
+        }
+        
+        // Função para filtrar por urgência
+        function filtrarPorUrgencia() {
+            mostrarTab('processos');
+            document.getElementById('filtro-prazo').value = 'urgente';
+            aplicarFiltros();
+        }
+        
+        // Função para atualizar dados
+        async function atualizarDados() {
+            mostrarNotificacao('Atualizando dados...', 'info');
+            await Promise.all([
+                carregarEstatisticas(),
+                carregarProcessos()
+            ]);
+            mostrarNotificacao('Dados atualizados com sucesso!');
         }
         
         // Função principal de inicialização
@@ -440,13 +1077,13 @@
             try {
                 console.log('Inicializando dashboard...');
                 
-                // Testar conectividade primeiro
+                // Testar conectividade
                 const statusResponse = await fetch(`${API_URL}/api/status`);
                 const statusData = await statusResponse.json();
                 console.log('Status da API:', statusData);
                 
                 if (statusData.status === 'online') {
-                    showMessage('Conectado ao servidor!', 'success');
+                    mostrarNotificacao('Conectado ao servidor!');
                     
                     // Carregar dados
                     await Promise.all([
@@ -464,21 +1101,40 @@
                 document.getElementById('loading').innerHTML = `
                     <h3>Erro ao conectar</h3>
                     <p>${error.message}</p>
-                    <p>Verifique se o servidor está funcionando.</p>
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        🔄 Tentar Novamente
+                    </button>
                 `;
-                showMessage('Erro ao conectar com o servidor: ' + error.message);
+                mostrarMensagem('Erro ao conectar com o servidor: ' + error.message);
             }
         }
         
-        // Inicializar quando a página carregar
+        // Event listeners
         document.addEventListener('DOMContentLoaded', inicializar);
         
-        // Auto-refresh a cada 2 minutos
+        // Fechar modal ao clicar fora
+        document.getElementById('modal-detalhes').addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModal();
+            }
+        });
+        
+        // Auto-refresh a cada 5 minutos
         setInterval(() => {
             console.log('Auto-refresh...');
-            carregarEstatisticas();
-            carregarProcessos();
-        }, 120000);
+            atualizarDados();
+        }, 300000);
+        
+        // Atalhos de teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                fecharModal();
+            }
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                atualizarDados();
+            }
+        });
     </script>
 </body>
 </html>
