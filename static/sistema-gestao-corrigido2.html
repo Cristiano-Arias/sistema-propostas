@@ -1052,7 +1052,11 @@
                 const navItem = document.createElement('button');
                 navItem.className = 'nav-item';
                 navItem.innerHTML = `${item.icon} ${item.label}`;
+                if (item.url) {
+                navItem.onclick = () => window.location.href = item.url;
+                } else {
                 navItem.onclick = () => mostrarPagina(item.id);
+                }
                 
                 if (item.id === 'dashboard') {
                     navItem.classList.add('active');
