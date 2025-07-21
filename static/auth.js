@@ -1,11 +1,8 @@
 // ========================================
-// SISTEMA DE AUTENTICAÇÃO - ATUALIZADO PARA MULTI-COMPRADOR E NOVOS MÓDULOS
-// Arquivo: auth.js
-// VERSÃO: 2.0 - INCLUI SISTEMA DE NOTIFICAÇÕES
+// SISTEMA DE AUTENTICAÇÃO - VERSÃO ATUALIZADA
+// Arquivo: auth-atualizado.js
+// VERSÃO: 3.0 - ESTRUTURA REVISADA E CONFIRMADA
 // ========================================
-
-// Salve este arquivo como auth.js e inclua em todas as páginas protegidas:
-// <script src="auth.js"></script>
 
 const Auth = {
     // Verificar se usuário está autenticado
@@ -13,7 +10,6 @@ const Auth = {
         const sessao = sessionStorage.getItem('sessao_ativa');
         
         if (!sessao) {
-            // Não autenticado
             window.location.href = 'index.html';
             return false;
         }
@@ -27,7 +23,6 @@ const Auth = {
             const minutos = (agora - inicio) / 60000;
             
             if (minutos > 30) {
-                // Sessão expirada
                 this.logout('Sessão expirada. Faça login novamente.');
                 return false;
             }
@@ -39,7 +34,7 @@ const Auth = {
                     return sessaoObj;
                 }
                 
-                // Verificar se o tipo corresponde
+                // Verificar permissões específicas
                 if (Array.isArray(tipoRequerido)) {
                     if (!tipoRequerido.includes(sessaoObj.tipo)) {
                         alert('Você não tem permissão para acessar esta área.');
@@ -57,7 +52,7 @@ const Auth = {
             sessaoObj.ultimaAtividade = new Date().toISOString();
             sessionStorage.setItem('sessao_ativa', JSON.stringify(sessaoObj));
             
-            // NOVO: Verificar notificações ao autenticar
+            // Verificar notificações
             this.Notificacoes.verificarNovas();
             
             return sessaoObj;
@@ -78,24 +73,16 @@ const Auth = {
         return null;
     },
     
-    // Alias para compatibilidade
-    getUsuarioAtual: function() {
-        return this.obterUsuarioAtual();
-    },
-    
     // Fazer logout
     logout: function(mensagem = null) {
-        const usuario = this.getUsuarioAtual();
+        const usuario = this.obterUsuarioAtual();
         
         if (usuario) {
-            // Registrar logout
             this.registrarLog(usuario.usuarioId, 'logout', 'sucesso');
         }
         
-        // Limpar sessão
         sessionStorage.removeItem('sessao_ativa');
         
-        // Redirecionar para login
         if (mensagem) {
             alert(mensagem);
         }
@@ -107,10 +94,13 @@ const Auth = {
     redirecionarPorTipo: function(tipo) {
         switch(tipo) {
             case 'admin':
-                window.location.href = 'sistema-gestao-corrigido2.html';
+                window.location.href = 'sistema-gestao-atualizado.html';
                 break;
             case 'comprador':
-                window.location.href = 'sistema-gestao-corrigido2.html';
+                window.location.href = 'sistema-gestao-atualizado.html';
+                break;
+            case 'requisitante':
+                window.location.href = 'sistema-gestao-atualizado.html';
                 break;
             case 'fornecedor':
                 window.location.href = 'dashboard-fornecedor.html';
@@ -143,19 +133,15 @@ const Auth = {
         localStorage.setItem('logs_atividade', JSON.stringify(logs));
     },
     
-    // Adicionar informações do usuário ao header
+    // Exibir informações do usuário no header
     exibirInfoUsuario: function(elementId = 'infoUsuario') {
-        const usuario = this.getUsuarioAtual();
+        const usuario = this.obterUsuarioAtual();
         const elemento = document.getElementById(elementId);
         
         if (usuario && elemento) {
-            let tipoExibicao = usuario.tipo;
-            if (usuario.tipo === 'comprador') {
-                tipoExibicao = usuario.nivelAcesso || 'Comprador';
-                tipoExibicao = tipoExibicao.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            }
+            let tipoExibicao = this.formatarTipoUsuario(usuario.tipo);
             
-            // NOVO: Adicionar badge de notificações
+            // Adicionar badge de notificações
             const notificacoesNaoLidas = this.Notificacoes.contarNaoLidas();
             const badgeNotificacoes = notificacoesNaoLidas > 0 
                 ? `<span id="badge-notificacoes" class="badge-notificacoes">${notificacoesNaoLidas}</span>` 
@@ -168,7 +154,6 @@ const Auth = {
                     <span style="color: #fff; opacity: 0.8;">|</span>
                     <span style="color: #fff; font-size: 12px; opacity: 0.8;">${tipoExibicao}</span>
                     <span style="color: #fff; opacity: 0.8;">|</span>
-                    <!-- NOVO: Botão de notificações -->
                     <button onclick="Auth.Notificacoes.togglePainel()" class="btn-notificacoes" style="position: relative; background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; font-weight: 600; padding: 5px 15px; border-radius: 5px; transition: all 0.3s;">
                         🔔 ${badgeNotificacoes}
                     </button>
@@ -178,326 +163,151 @@ const Auth = {
                 </div>
             `;
             
-            // NOVO: Adicionar estilos CSS para notificações (se ainda não existir)
-            if (!document.getElementById('notificacoes-styles')) {
-                const style = document.createElement('style');
-                style.id = 'notificacoes-styles';
-                style.innerHTML = `
-                    .badge-notificacoes {
-                        position: absolute;
-                        top: -5px;
-                        right: -5px;
-                        background: #ff4444;
-                        color: white;
-                        border-radius: 50%;
-                        padding: 2px 6px;
-                        font-size: 11px;
-                        font-weight: bold;
-                        min-width: 18px;
-                        text-align: center;
-                    }
-                    
-                    .btn-notificacoes {
-                        position: relative !important;
-                    }
-                    
-                    .painel-notificacoes {
-                        position: fixed;
-                        top: 70px;
-                        right: 20px;
-                        width: 400px;
-                        max-height: 500px;
-                        background: white;
-                        border-radius: 10px;
-                        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-                        display: none;
-                        z-index: 1000;
-                        overflow: hidden;
-                    }
-                    
-                    .painel-notificacoes.ativo {
-                        display: block;
-                    }
-                    
-                    .painel-notificacoes-header {
-                        background: #2c3e50;
-                        color: white;
-                        padding: 15px;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    }
-                    
-                    .painel-notificacoes-body {
-                        max-height: 400px;
-                        overflow-y: auto;
-                    }
-                    
-                    .notificacao-item {
-                        padding: 15px;
-                        border-bottom: 1px solid #eee;
-                        cursor: pointer;
-                        transition: background 0.2s;
-                    }
-                    
-                    .notificacao-item:hover {
-                        background: #f8f9fa;
-                    }
-                    
-                    .notificacao-item.nao-lida {
-                        background: #e3f2fd;
-                        border-left: 4px solid #2196f3;
-                    }
-                    
-                    .notificacao-titulo {
-                        font-weight: bold;
-                        margin-bottom: 5px;
-                        color: #2c3e50;
-                    }
-                    
-                    .notificacao-mensagem {
-                        color: #666;
-                        font-size: 14px;
-                        margin-bottom: 5px;
-                    }
-                    
-                    .notificacao-data {
-                        color: #999;
-                        font-size: 12px;
-                    }
-                    
-                    .notificacao-acao {
-                        margin-top: 10px;
-                    }
-                    
-                    .notificacao-acao button {
-                        background: #3498db;
-                        color: white;
-                        border: none;
-                        padding: 5px 15px;
-                        border-radius: 5px;
-                        cursor: pointer;
-                        font-size: 12px;
-                    }
-                    
-                    .notificacao-acao button:hover {
-                        background: #2980b9;
-                    }
-                `;
-                document.head.appendChild(style);
-            }
+            // Adicionar estilos CSS para notificações
+            this.adicionarEstilosNotificacoes();
         }
     },
     
-    // Verificar permissões específicas - ATUALIZADO COM NOVOS MÓDULOS
+    // Formatar tipo de usuário para exibição
+    formatarTipoUsuario: function(tipo) {
+        const tipos = {
+            'admin': 'Administrador',
+            'comprador': 'Comprador',
+            'requisitante': 'Requisitante',
+            'fornecedor': 'Fornecedor',
+            'auditor': 'Auditor'
+        };
+        return tipos[tipo] || tipo;
+    },
+    
+    // Adicionar estilos CSS para notificações
+    adicionarEstilosNotificacoes: function() {
+        if (!document.getElementById('notificacoes-styles')) {
+            const style = document.createElement('style');
+            style.id = 'notificacoes-styles';
+            style.innerHTML = `
+                .badge-notificacoes {
+                    position: absolute;
+                    top: -5px;
+                    right: -5px;
+                    background: #ff4444;
+                    color: white;
+                    border-radius: 50%;
+                    padding: 2px 6px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    min-width: 18px;
+                    text-align: center;
+                }
+                
+                .btn-notificacoes {
+                    position: relative !important;
+                }
+                
+                .painel-notificacoes {
+                    position: fixed;
+                    top: 70px;
+                    right: 20px;
+                    width: 400px;
+                    max-height: 500px;
+                    background: white;
+                    border-radius: 10px;
+                    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+                    display: none;
+                    z-index: 1000;
+                    overflow: hidden;
+                }
+                
+                .painel-notificacoes.ativo {
+                    display: block;
+                }
+                
+                .painel-notificacoes-header {
+                    background: #2c3e50;
+                    color: white;
+                    padding: 15px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .painel-notificacoes-body {
+                    max-height: 400px;
+                    overflow-y: auto;
+                }
+                
+                .notificacao-item {
+                    padding: 15px;
+                    border-bottom: 1px solid #eee;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                
+                .notificacao-item:hover {
+                    background: #f8f9fa;
+                }
+                
+                .notificacao-item.nao-lida {
+                    background: #e3f2fd;
+                    border-left: 4px solid #2196f3;
+                }
+                
+                .notificacao-titulo {
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                    color: #2c3e50;
+                }
+                
+                .notificacao-mensagem {
+                    color: #666;
+                    font-size: 14px;
+                    margin-bottom: 5px;
+                }
+                
+                .notificacao-data {
+                    color: #999;
+                    font-size: 12px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    },
+    
+    // Verificar permissões específicas
     temPermissao: function(permissao) {
-        const usuario = this.getUsuarioAtual();
+        const usuario = this.obterUsuarioAtual();
         if (!usuario) return false;
         
         // Admin tem todas as permissões
         if (usuario.tipo === 'admin') return true;
         
+        // Mapeamento de permissões por tipo de usuário
         const permissoes = {
             admin: [
-                'criar_processo',
-                'editar_processo',
-                'deletar_processo',
-                'ver_todos_processos',
-                'ver_todas_propostas',
-                'gerar_relatorios',
-                'gerenciar_usuarios',
-                'criar_compradores',
-                'criar_tr',
-                'requisitante',
-                'comprador'
+                'dashboard_geral', 'dashboard_requisitante', 'criar_tr', 'meus_trs', 'emitir_parecer',
+                'dashboard_comprador', 'processos', 'cadastrar_processos', 'propostas', 'relatorios',
+                'dashboard_fornecedor', 'meu_cadastro', 'processos_disponiveis', 'minhas_propostas', 'enviar_proposta',
+                'usuarios'
             ],
             comprador: [
-                'criar_processo',
-                'editar_proprio_processo',
-                'deletar_proprio_processo',
-                'ver_proprios_processos',
-                'ver_propostas_proprios_processos',
-                'gerar_relatorios_proprios_processos',
-                'criar_tr',
-                'comprador'
-            ],
-            comprador_senior: [
-                'criar_processo',
-                'editar_proprio_processo',
-                'deletar_proprio_processo',
-                'ver_todos_processos',
-                'ver_propostas_proprios_processos',
-                'gerar_relatorios',
-                'criar_tr',
-                'comprador'
-            ],
-            gerente: [
-                'criar_processo',
-                'editar_processo',
-                'aprovar_processo',
-                'ver_todos_processos',
-                'ver_todas_propostas',
-                'gerar_relatorios',
-                'criar_tr',
-                'requisitante',
-                'comprador'
+                'dashboard_geral', 'dashboard_comprador', 'processos', 'cadastrar_processos', 'propostas', 'relatorios'
             ],
             requisitante: [
-                'criar_tr',
-                'requisitante',
-                'ver_processos_ativos',
-                'ver_propostas_tecnicas'
+                'dashboard_geral', 'dashboard_requisitante', 'criar_tr', 'meus_trs', 'emitir_parecer'
             ],
             fornecedor: [
-                'ver_processos_ativos',
-                'enviar_proposta',
-                'ver_proprias_propostas',
-                'editar_propria_proposta'
+                'dashboard_fornecedor', 'meu_cadastro', 'processos_disponiveis', 'minhas_propostas', 'enviar_proposta'
             ],
             auditor: [
-                'ver_todos_processos',
-                'ver_todas_propostas',
-                'gerar_relatorios'
+                'dashboard_geral', 'processos', 'propostas', 'relatorios'
             ]
         };
         
-        // Para compradores, usar o nível de acesso específico
-        let tipoPermissao = usuario.tipo;
-        if (usuario.tipo === 'comprador' && usuario.nivelAcesso) {
-            tipoPermissao = usuario.nivelAcesso;
-            
-            // Adicionar permissões específicas para requisitante
-            if (usuario.nivelAcesso === 'requisitante') {
-                const permissoesRequisitante = permissoes.requisitante || [];
-                return permissoesRequisitante.includes(permissao);
-            }
-        }
-        
-        const permissoesUsuario = permissoes[tipoPermissao] || [];
+        const permissoesUsuario = permissoes[usuario.tipo] || [];
         return permissoesUsuario.includes(permissao);
     },
     
-    // Filtrar dados baseado no tipo de usuário
-    filtrarDadosPorPermissao: function(dados, tipo) {
-        const usuario = this.getUsuarioAtual();
-        if (!usuario) return [];
-        
-        switch(tipo) {
-            case 'processos':
-                // Admin e gerente veem todos
-                if (usuario.tipo === 'admin' || usuario.nivelAcesso === 'gerente' || usuario.nivelAcesso === 'comprador_senior') {
-                    return dados;
-                }
-                
-                // Requisitante vê processos relacionados aos seus TRs
-                if (usuario.nivelAcesso === 'requisitante') {
-                    // Por enquanto, vê todos os processos ativos
-                    const agora = new Date();
-                    return dados.filter(p => new Date(p.prazo) > agora);
-                }
-                
-                // Comprador vê apenas seus processos
-                if (usuario.tipo === 'comprador') {
-                    return dados.filter(p => p.criadoPor === usuario.usuarioId);
-                }
-                
-                // Fornecedor só vê processos ativos
-                if (usuario.tipo === 'fornecedor') {
-                    const agora = new Date();
-                    return dados.filter(p => new Date(p.prazo) > agora);
-                }
-                
-                return dados;
-                
-            case 'propostas':
-                // Admin, gerente e auditor veem todas
-                if (usuario.tipo === 'admin' || usuario.nivelAcesso === 'gerente' || usuario.tipo === 'auditor') {
-                    return dados;
-                }
-                
-                // Requisitante vê apenas propostas técnicas (sem valores)
-                if (usuario.nivelAcesso === 'requisitante') {
-                    // Filtrar apenas informações técnicas
-                    return dados.map(proposta => {
-                        const propostaTecnica = {...proposta};
-                        // Remover informações comerciais
-                        delete propostaTecnica.valor;
-                        delete propostaTecnica.comercial;
-                        return propostaTecnica;
-                    });
-                }
-                
-                // Comprador vê apenas propostas dos seus processos
-                if (usuario.tipo === 'comprador') {
-                    // Primeiro, pegar os processos do comprador
-                    const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-                    const meusProcessos = processos
-                        .filter(p => p.criadoPor === usuario.usuarioId)
-                        .map(p => p.numero);
-                    
-                    // Filtrar propostas
-                    return dados.filter(proposta => meusProcessos.includes(proposta.processo));
-                }
-                
-                // Fornecedor só vê suas próprias propostas
-                if (usuario.tipo === 'fornecedor') {
-                    return dados.filter(p => p.cnpj === usuario.cnpj);
-                }
-                
-                return dados;
-                
-            default:
-                return dados;
-        }
-    },
-    
-    // Verificar se pode editar processo
-    podeEditarProcesso: function(processo) {
-        const usuario = this.getUsuarioAtual();
-        if (!usuario) return false;
-        
-        // Admin e gerente podem editar qualquer processo
-        if (usuario.tipo === 'admin' || usuario.nivelAcesso === 'gerente') {
-            return true;
-        }
-        
-        // Comprador só pode editar seus próprios processos
-        if (usuario.tipo === 'comprador' && processo.criadoPor === usuario.usuarioId) {
-            return true;
-        }
-        
-        return false;
-    },
-    
-    // Proteger elementos da página baseado em permissões
-    protegerElementos: function() {
-        const usuario = this.getUsuarioAtual();
-        if (!usuario) return;
-        
-        // Esconder elementos baseado em data-permissao
-        document.querySelectorAll('[data-permissao]').forEach(elemento => {
-            const permissaoRequerida = elemento.getAttribute('data-permissao');
-            if (!this.temPermissao(permissaoRequerida)) {
-                elemento.style.display = 'none';
-            }
-        });
-        
-        // Desabilitar inputs se usuário for auditor
-        if (usuario.tipo === 'auditor') {
-            document.querySelectorAll('input, textarea, select, button[type="submit"]').forEach(elemento => {
-                elemento.disabled = true;
-            });
-        }
-        
-        // Para requisitantes, esconder valores comerciais
-        if (usuario.nivelAcesso === 'requisitante') {
-            document.querySelectorAll('[data-comercial="true"]').forEach(elemento => {
-                elemento.style.display = 'none';
-            });
-        }
-    },
-    
-    // NOVO: Sistema de Notificações
+    // Sistema de Notificações
     Notificacoes: {
         // Criar nova notificação
         criar: function(dados) {
@@ -505,15 +315,15 @@ const Auth = {
             
             const novaNotificacao = {
                 id: Date.now().toString(),
-                tipo: dados.tipo || 'info', // novo_processo, proposta_recebida, prazo_proximo, etc
+                tipo: dados.tipo || 'info',
                 titulo: dados.titulo,
                 mensagem: dados.mensagem,
-                destinatario: dados.destinatario, // usuarioId ou 'todos'
-                destinatarioTipo: dados.destinatarioTipo, // fornecedor, comprador, etc
+                destinatario: dados.destinatario,
+                destinatarioTipo: dados.destinatarioTipo,
                 remetente: dados.remetente || 'Sistema',
                 lida: false,
                 data: new Date().toISOString(),
-                acao: dados.acao || null, // { texto: 'Ver Processo', link: '/processo/123' }
+                acao: dados.acao || null,
                 processoId: dados.processoId || null,
                 metadata: dados.metadata || {}
             };
@@ -521,7 +331,7 @@ const Auth = {
             notificacoes.unshift(novaNotificacao);
             
             // Manter apenas últimas 100 notificações por usuário
-            const usuario = Auth.getUsuarioAtual();
+            const usuario = Auth.obterUsuarioAtual();
             if (usuario) {
                 const minhasNotificacoes = notificacoes.filter(n => 
                     n.destinatario === usuario.usuarioId || 
@@ -529,7 +339,6 @@ const Auth = {
                     n.destinatarioTipo === usuario.tipo
                 );
                 if (minhasNotificacoes.length > 100) {
-                    // Remover antigas
                     const idsParaManter = minhasNotificacoes.slice(0, 100).map(n => n.id);
                     const notificacoesFiltradas = notificacoes.filter(n => 
                         idsParaManter.includes(n.id) || 
@@ -541,14 +350,12 @@ const Auth = {
             }
             
             localStorage.setItem('notificacoes', JSON.stringify(notificacoes));
-            
-            // Atualizar badge se usuário estiver online
             Auth.Notificacoes.atualizarBadge();
         },
         
         // Obter notificações do usuário atual
         obterMinhas: function() {
-            const usuario = Auth.getUsuarioAtual();
+            const usuario = Auth.obterUsuarioAtual();
             if (!usuario) return [];
             
             const todas = JSON.parse(localStorage.getItem('notificacoes') || '[]');
@@ -580,7 +387,7 @@ const Auth = {
         
         // Marcar todas como lidas
         marcarTodasComoLidas: function() {
-            const usuario = Auth.getUsuarioAtual();
+            const usuario = Auth.obterUsuarioAtual();
             if (!usuario) return;
             
             const notificacoes = JSON.parse(localStorage.getItem('notificacoes') || '[]');
@@ -617,7 +424,6 @@ const Auth = {
             let painel = document.getElementById('painel-notificacoes');
             
             if (!painel) {
-                // Criar painel se não existir
                 painel = document.createElement('div');
                 painel.id = 'painel-notificacoes';
                 painel.className = 'painel-notificacoes';
@@ -675,13 +481,6 @@ const Auth = {
                             <div class="notificacao-titulo">${notif.titulo}</div>
                             <div class="notificacao-mensagem">${notif.mensagem}</div>
                             <div class="notificacao-data">${dataFormatada}</div>
-                            ${notif.acao ? `
-                                <div class="notificacao-acao">
-                                    <button onclick="event.stopPropagation(); window.location.href='${notif.acao.link}'">
-                                        ${notif.acao.texto}
-                                    </button>
-                                </div>
-                            ` : ''}
                         </div>
                     `;
                 });
@@ -695,7 +494,6 @@ const Auth = {
         clicarNotificacao: function(notificacaoId) {
             this.marcarComoLida(notificacaoId);
             
-            // Se tiver ação, executar
             const notificacoes = this.obterMinhas();
             const notif = notificacoes.find(n => n.id === notificacaoId);
             if (notif && notif.acao && notif.acao.link) {
@@ -703,63 +501,52 @@ const Auth = {
             }
         },
         
-        // Verificar novas notificações (mostrar alerta ao logar)
+        // Verificar novas notificações
         verificarNovas: function() {
             const naoLidas = this.contarNaoLidas();
-            if (naoLidas > 0) {
-                // Mostrar alerta suave no canto da tela
-                const alerta = document.createElement('div');
-                alerta.style.cssText = `
-                    position: fixed;
-                    bottom: 20px;
-                    right: 20px;
-                    background: #3498db;
-                    color: white;
-                    padding: 15px 20px;
-                    border-radius: 10px;
-                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                    cursor: pointer;
-                    z-index: 1000;
-                    animation: slideIn 0.5s ease;
-                `;
-                alerta.innerHTML = `
-                    <strong>🔔 Você tem ${naoLidas} notificação${naoLidas > 1 ? 'ões' : ''} não lida${naoLidas > 1 ? 's' : ''}</strong>
-                `;
-                alerta.onclick = () => {
-                    this.togglePainel();
-                    alerta.remove();
-                };
-                
-                document.body.appendChild(alerta);
-                
-                // Remover após 5 segundos
-                setTimeout(() => {
-                    if (alerta.parentNode) {
-                        alerta.style.animation = 'slideOut 0.5s ease';
-                        setTimeout(() => alerta.remove(), 500);
-                    }
-                }, 5000);
-                
-                // Adicionar animação CSS se não existir
-                if (!document.getElementById('notif-animations')) {
-                    const style = document.createElement('style');
-                    style.id = 'notif-animations';
-                    style.innerHTML = `
-                        @keyframes slideIn {
-                            from { transform: translateX(400px); opacity: 0; }
-                            to { transform: translateX(0); opacity: 1; }
-                        }
-                        @keyframes slideOut {
-                            from { transform: translateX(0); opacity: 1; }
-                            to { transform: translateX(400px); opacity: 0; }
-                        }
-                    `;
-                    document.head.appendChild(style);
-                }
+            this.atualizarBadge();
+            
+            // Mostrar alerta apenas se houver muitas notificações não lidas
+            if (naoLidas > 5) {
+                this.mostrarAlertaNotificacoes(naoLidas);
             }
         },
         
-        // NOVO: Notificações específicas para fornecedores
+        // Mostrar alerta de notificações
+        mostrarAlertaNotificacoes: function(count) {
+            const alerta = document.createElement('div');
+            alerta.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #3498db;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                cursor: pointer;
+                z-index: 1000;
+                animation: slideIn 0.5s ease;
+            `;
+            alerta.innerHTML = `
+                <strong>🔔 Você tem ${count} notificações não lidas</strong>
+            `;
+            alerta.onclick = () => {
+                this.togglePainel();
+                alerta.remove();
+            };
+            
+            document.body.appendChild(alerta);
+            
+            // Remover após 5 segundos
+            setTimeout(() => {
+                if (alerta.parentNode) {
+                    alerta.remove();
+                }
+            }, 5000);
+        },
+        
+        // Notificar novo processo para fornecedores
         notificarNovoProcesso: function(processoId, fornecedorId, dadosProcesso) {
             this.criar({
                 tipo: 'novo_processo',
@@ -779,7 +566,7 @@ const Auth = {
             });
         },
         
-        // NOVO: Notificar comprador sobre nova proposta
+        // Notificar comprador sobre nova proposta
         notificarNovaProposta: function(processoId, compradorId, dadosProposta) {
             this.criar({
                 tipo: 'nova_proposta',
@@ -788,7 +575,7 @@ const Auth = {
                 destinatario: compradorId,
                 acao: {
                     texto: 'Ver Proposta',
-                    link: `sistema-gestao-corrigido2.html#propostas/${processoId}`
+                    link: `sistema-gestao-atualizado.html#propostas`
                 },
                 processoId: processoId,
                 metadata: {
@@ -800,83 +587,22 @@ const Auth = {
     }
 };
 
-// ========================================
-// COMO USAR O SISTEMA DE NOTIFICAÇÕES
-// ========================================
+// Adicionar animações CSS
+if (!document.getElementById('auth-animations')) {
+    const style = document.createElement('style');
+    style.id = 'auth-animations';
+    style.innerHTML = `
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+}
 
-// 1. Para criar notificação quando fornecedor é convidado:
-/*
-// No sistema-gestao-corrigido2.html ao convidar fornecedor
-Auth.Notificacoes.notificarNovoProcesso(
-    processo.id,
-    fornecedor.usuarioId,
-    {
-        titulo: processo.titulo,
-        numero: processo.numero,
-        prazo: processo.prazo,
-        valor: processo.valor
-    }
-);
-*/
-
-// 2. Para notificar comprador sobre nova proposta:
-/*
-// No portal-propostas ao enviar proposta
-Auth.Notificacoes.notificarNovaProposta(
-    processo.id,
-    processo.criadoPor,
-    {
-        fornecedor: fornecedor.razaoSocial,
-        processo: processo.numero,
-        cnpj: fornecedor.cnpj,
-        valor: proposta.valor
-    }
-);
-*/
-
-// 3. Para notificação genérica:
-/*
-Auth.Notificacoes.criar({
-    tipo: 'alerta',
-    titulo: 'Prazo Próximo',
-    mensagem: 'O processo LIC-2025-001 encerra em 2 dias',
-    destinatario: usuario.usuarioId,
-    acao: {
-        texto: 'Ver Processo',
-        link: 'dashboard.html#processo/123'
-    }
-});
-*/
-
-// 4. Para notificar todos os fornecedores:
-/*
-Auth.Notificacoes.criar({
-    tipo: 'aviso',
-    titulo: 'Manutenção Programada',
-    mensagem: 'Sistema em manutenção dia 25/07 das 22h às 23h',
-    destinatario: 'todos',
-    destinatarioTipo: 'fornecedor'
-});
-*/
-
-// ========================================
-// EXEMPLO DE USO COMPLETO EM PÁGINA
-// ========================================
-
-/*
-window.addEventListener('DOMContentLoaded', function() {
-    const usuario = Auth.verificarAutenticacao(['admin', 'comprador']);
-    if (usuario) {
-        Auth.exibirInfoUsuario();
-        Auth.protegerElementos();
-        
-        // Verificar e mostrar notificações
-        Auth.Notificacoes.verificarNovas();
-        
-        // Atualizar badge periodicamente (opcional)
-        setInterval(() => {
-            Auth.Notificacoes.atualizarBadge();
-        }, 30000); // A cada 30 segundos
-    }
-});
-*/
+// Exportar para compatibilidade
+window.Auth = Auth;
