@@ -1,5 +1,5 @@
 // ========================================
-// SISTEMA DE AUTENTICAÇÃO - ATUALIZADO PARA MULTI-COMPRADOR
+// SISTEMA DE AUTENTICAÇÃO - ATUALIZADO PARA MULTI-COMPRADOR E NOVOS MÓDULOS
 // Arquivo: auth.js
 // ========================================
 
@@ -66,12 +66,17 @@ const Auth = {
     },
     
     // Obter dados do usuário atual
-    getUsuarioAtual: function() {
+    obterUsuarioAtual: function() {
         const sessao = sessionStorage.getItem('sessao_ativa');
         if (sessao) {
             return JSON.parse(sessao);
         }
         return null;
+    },
+    
+    // Alias para compatibilidade
+    getUsuarioAtual: function() {
+        return this.obterUsuarioAtual();
     },
     
     // Fazer logout
@@ -161,10 +166,13 @@ const Auth = {
         }
     },
     
-    // Verificar permissões específicas
+    // Verificar permissões específicas - ATUALIZADO COM NOVOS MÓDULOS
     temPermissao: function(permissao) {
         const usuario = this.getUsuarioAtual();
         if (!usuario) return false;
+        
+        // Admin tem todas as permissões
+        if (usuario.tipo === 'admin') return true;
         
         const permissoes = {
             admin: [
@@ -175,7 +183,10 @@ const Auth = {
                 'ver_todas_propostas',
                 'gerar_relatorios',
                 'gerenciar_usuarios',
-                'criar_compradores'
+                'criar_compradores',
+                'criar_tr',
+                'requisitante',
+                'comprador'
             ],
             comprador: [
                 'criar_processo',
@@ -183,7 +194,9 @@ const Auth = {
                 'deletar_proprio_processo',
                 'ver_proprios_processos',
                 'ver_propostas_proprios_processos',
-                'gerar_relatorios_proprios_processos'
+                'gerar_relatorios_proprios_processos',
+                'criar_tr',
+                'comprador'
             ],
             comprador_senior: [
                 'criar_processo',
@@ -191,7 +204,9 @@ const Auth = {
                 'deletar_proprio_processo',
                 'ver_todos_processos',
                 'ver_propostas_proprios_processos',
-                'gerar_relatorios'
+                'gerar_relatorios',
+                'criar_tr',
+                'comprador'
             ],
             gerente: [
                 'criar_processo',
@@ -199,7 +214,16 @@ const Auth = {
                 'aprovar_processo',
                 'ver_todos_processos',
                 'ver_todas_propostas',
-                'gerar_relatorios'
+                'gerar_relatorios',
+                'criar_tr',
+                'requisitante',
+                'comprador'
+            ],
+            requisitante: [
+                'criar_tr',
+                'requisitante',
+                'ver_processos_ativos',
+                'ver_propostas_tecnicas'
             ],
             fornecedor: [
                 'ver_processos_ativos',
@@ -218,6 +242,12 @@ const Auth = {
         let tipoPermissao = usuario.tipo;
         if (usuario.tipo === 'comprador' && usuario.nivelAcesso) {
             tipoPermissao = usuario.nivelAcesso;
+            
+            // Adicionar permissões específicas para requisitante
+            if (usuario.nivelAcesso === 'requisitante') {
+                const permissoesRequisitante = permissoes.requisitante || [];
+                return permissoesRequisitante.includes(permissao);
+            }
         }
         
         const permissoesUsuario = permissoes[tipoPermissao] || [];
@@ -234,6 +264,13 @@ const Auth = {
                 // Admin e gerente veem todos
                 if (usuario.tipo === 'admin' || usuario.nivelAcesso === 'gerente' || usuario.nivelAcesso === 'comprador_senior') {
                     return dados;
+                }
+                
+                // Requisitante vê processos relacionados aos seus TRs
+                if (usuario.nivelAcesso === 'requisitante') {
+                    // Por enquanto, vê todos os processos ativos
+                    const agora = new Date();
+                    return dados.filter(p => new Date(p.prazo) > agora);
                 }
                 
                 // Comprador vê apenas seus processos
@@ -253,6 +290,18 @@ const Auth = {
                 // Admin, gerente e auditor veem todas
                 if (usuario.tipo === 'admin' || usuario.nivelAcesso === 'gerente' || usuario.tipo === 'auditor') {
                     return dados;
+                }
+                
+                // Requisitante vê apenas propostas técnicas (sem valores)
+                if (usuario.nivelAcesso === 'requisitante') {
+                    // Filtrar apenas informações técnicas
+                    return dados.map(proposta => {
+                        const propostaTecnica = {...proposta};
+                        // Remover informações comerciais
+                        delete propostaTecnica.valor;
+                        delete propostaTecnica.comercial;
+                        return propostaTecnica;
+                    });
                 }
                 
                 // Comprador vê apenas propostas dos seus processos
@@ -317,9 +366,11 @@ const Auth = {
             });
         }
         
-        // Para compradores, mostrar apenas seus processos
-        if (usuario.tipo === 'comprador' && usuario.nivelAcesso !== 'comprador_senior' && usuario.nivelAcesso !== 'gerente') {
-            // Esta lógica será implementada em cada página específica
+        // Para requisitantes, esconder valores comerciais
+        if (usuario.nivelAcesso === 'requisitante') {
+            document.querySelectorAll('[data-comercial="true"]').forEach(elemento => {
+                elemento.style.display = 'none';
+            });
         }
     }
 };
@@ -357,4 +408,11 @@ const novoProcesso = {
     criadoPor: usuario.usuarioId,
     criadoEm: new Date().toISOString()
 };
+*/
+
+// 4. Para proteger elementos específicos na página:
+/*
+<button data-permissao="criar_processo">Novo Processo</button>
+<div data-permissao="gerenciar_usuarios">Menu de Usuários</div>
+<span data-comercial="true">R$ 1.000,00</span>
 */
