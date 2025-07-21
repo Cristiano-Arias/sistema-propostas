@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Gestão de Propostas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .login-form {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .credenciais-teste {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .credenciais-teste h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .credencial-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .credencial-item:last-child {
+            border-bottom: none;
+        }
+
+        .credencial-item:hover {
+            background: #e9ecef;
+            padding-left: 10px;
+            border-radius: 5px;
+        }
+
+        .credencial-tipo {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 12px;
+        }
+
+        .credencial-dados {
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 10px;
+            }
+            
+            .login-header {
+                padding: 30px 20px;
+            }
+            
+            .login-form {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>🏢 Sistema de Gestão</h1>
+            <p>Faça login para acessar o sistema</p>
+        </div>
+        
+        <div class="login-form">
+            <div class="error-message" id="errorMessage"></div>
+            
+            <form onsubmit="realizarLogin(event)">
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" required placeholder="seu@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" required placeholder="Sua senha">
+                </div>
+                
+                <button type="submit" class="btn-login" id="btnLogin">
+                    Entrar
+                </button>
+            </form>
+            
+            <div class="credenciais-teste">
+                <h4>🔑 Credenciais de Teste (clique para usar):</h4>
+                
+                <div class="credencial-item" onclick="preencherCredenciais('admin@sistema.com', 'admin123')">
+                    <span class="credencial-tipo">ADMIN</span>
+                    <span class="credencial-dados">admin@sistema.com / admin123</span>
+                </div>
+                
+                <div class="credencial-item" onclick="preencherCredenciais('joao.silva@empresa.com', 'comprador123')">
+                    <span class="credencial-tipo">COMPRADOR</span>
+                    <span class="credencial-dados">joao.silva@empresa.com / comprador123</span>
+                </div>
+                
+                <div class="credencial-item" onclick="preencherCredenciais('carlos.oliveira@requisitante.com', 'requisitante123')">
+                    <span class="credencial-tipo">REQUISITANTE</span>
+                    <span class="credencial-dados">carlos.oliveira@requisitante.com / requisitante123</span>
+                </div>
+                
+                <div class="credencial-item" onclick="preencherCredenciais('contato@alpha.com', 'fornecedor123')">
+                    <span class="credencial-tipo">FORNECEDOR</span>
+                    <span class="credencial-dados">contato@alpha.com / fornecedor123</span>
+                </div>
+                
+                <div class="credencial-item" onclick="preencherCredenciais('ana.auditora@sistema.com', 'auditor123')">
+                    <span class="credencial-tipo">AUDITOR</span>
+                    <span class="credencial-dados">ana.auditora@sistema.com / auditor123</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração da API
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000' 
+            : window.location.origin;
+
+        // Usuários de teste
+        const usuariosTeste = {
+            'admin@sistema.com': {
+                senha: 'admin123',
+                tipo: 'admin',
+                nome: 'Administrador do Sistema',
+                usuarioId: 'admin_001'
+            },
+            'joao.silva@empresa.com': {
+                senha: 'comprador123',
+                tipo: 'comprador',
+                nome: 'João Silva',
+                usuarioId: 'comp_001'
+            },
+            'carlos.oliveira@requisitante.com': {
+                senha: 'requisitante123',
+                tipo: 'requisitante',
+                nome: 'Carlos Oliveira',
+                usuarioId: 'req_001'
+            },
+            'contato@alpha.com': {
+                senha: 'fornecedor123',
+                tipo: 'fornecedor',
+                nome: 'Alpha Construções LTDA',
+                cnpj: '12.345.678/0001-90',
+                usuarioId: 'forn_001'
+            },
+            'ana.auditora@sistema.com': {
+                senha: 'auditor123',
+                tipo: 'auditor',
+                nome: 'Ana Auditora',
+                usuarioId: 'aud_001'
+            }
+        };
+
+        function preencherCredenciais(email, senha) {
+            document.getElementById('email').value = email;
+            document.getElementById('senha').value = senha;
+        }
+
+        function mostrarErro(mensagem) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = mensagem;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        async function realizarLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            const btnLogin = document.getElementById('btnLogin');
+            
+            // Desabilitar botão
+            btnLogin.disabled = true;
+            btnLogin.innerHTML = 'Entrando... <span class="loading"></span>';
+            
+            try {
+                // Tentar autenticação via API
+                const response = await fetch(`${API_URL}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, senha })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        criarSessao(result.usuario);
+                        redirecionarUsuario(result.usuario.tipo);
+                        return;
+                    }
+                }
+                
+                throw new Error('API não disponível');
+            } catch (error) {
+                console.warn('Usando autenticação local:', error);
+                autenticarLocal(email, senha);
+            } finally {
+                // Reabilitar botão
+                btnLogin.disabled = false;
+                btnLogin.innerHTML = 'Entrar';
+            }
+        }
+
+        function autenticarLocal(email, senha) {
+            const usuario = usuariosTeste[email];
+            
+            if (!usuario || usuario.senha !== senha) {
+                mostrarErro('E-mail ou senha incorretos');
+                return;
+            }
+            
+            // Criar sessão
+            const dadosUsuario = {
+                email: email,
+                nome: usuario.nome,
+                tipo: usuario.tipo,
+                usuarioId: usuario.usuarioId,
+                cnpj: usuario.cnpj || null
+            };
+            
+            criarSessao(dadosUsuario);
+            redirecionarUsuario(usuario.tipo);
+        }
+
+        function criarSessao(usuario) {
+            const sessao = {
+                ...usuario,
+                inicio: new Date().toISOString(),
+                expiracao: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutos
+            };
+            
+            sessionStorage.setItem('sessao_ativa', JSON.stringify(sessao));
+        }
+
+        function redirecionarUsuario(tipo) {
+            const redirecionamentos = {
+                'admin': 'sistema-gestao-corrigido2.html',
+                'comprador': 'dashboard-comprador.html',
+                'requisitante': 'dashboard-requisitante-seguro.html',
+                'fornecedor': 'dashboard-fornecedor.html',
+                'auditor': 'dashboard-auditor.html'
+            };
+            
+            const destino = redirecionamentos[tipo] || 'sistema-gestao-corrigido2.html';
+            window.location.href = destino;
+        }
+
+        // Verificar se já está logado
+        window.addEventListener('DOMContentLoaded', function() {
+            const sessao = sessionStorage.getItem('sessao_ativa');
+            if (sessao) {
+                try {
+                    const sessaoObj = JSON.parse(sessao);
+                    const agora = new Date();
+                    const expiracao = new Date(sessaoObj.expiracao);
+                    
+                    if (agora < expiracao) {
+                        redirecionarUsuario(sessaoObj.tipo);
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Sessão inválida:', error);
+                }
+                
+                // Limpar sessão expirada
+                sessionStorage.removeItem('sessao_ativa');
+            }
+        });
+    </script>
+</body>
+</html>
+
