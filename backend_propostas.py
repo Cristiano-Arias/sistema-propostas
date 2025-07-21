@@ -45,9 +45,10 @@ logger = logging.getLogger(__name__)
 # Diretórios
 PROPOSTAS_DIR = 'propostas'
 STATIC_DIR = 'static'
+DATA_DIR = 'data'
 
 # Criar diretórios se não existirem
-for dir_name in [PROPOSTAS_DIR, STATIC_DIR]:
+for dir_name in [PROPOSTAS_DIR, STATIC_DIR, DATA_DIR]:
     try:
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
@@ -877,7 +878,22 @@ def home():
                 "/api/processos/listar",
                 "/api/processos/<numero>",
                 "/api/criar-processo",
-                "/api/cadastrar-fornecedor"
+                "/api/cadastrar-fornecedor",
+                "/api/trs",
+                "/api/trs/<tr_id>",
+                "/api/trs/<tr_id>/aprovar",
+                "/api/propostas/enviar-analise-tecnica",
+                "/api/propostas/para-analise",
+                "/api/dashboard/requisitante/<user_id>",
+                "/api/dashboard/comprador/<user_id>",
+                "/api/propostas/tecnicas",
+                "/api/propostas/<proposta_id>/parecer",
+                "/api/pareceres",
+                "/api/concorrencias",
+                "/api/inicializar-dados",
+                "/api/processos/ativos",
+                "/api/propostas/fornecedor/<cnpj>",
+                "/api/fornecedor/estatisticas/<cnpj>"
             ],
             "email_configurado": bool(app.config['MAIL_USERNAME']),
             "total_propostas": len(propostas_db),
@@ -923,7 +939,8 @@ def api_status():
         "email_configurado": bool(app.config['MAIL_USERNAME']),
         "diretorios": {
             "propostas": os.path.exists(PROPOSTAS_DIR),
-            "static": os.path.exists(STATIC_DIR)
+            "static": os.path.exists(STATIC_DIR),
+            "data": os.path.exists(DATA_DIR)
         }
     }), 200
 
@@ -999,19 +1016,74 @@ def enviar_proposta():
         logger.error(f"Erro ao processar proposta: {str(e)}")
         return jsonify({
             "success": False,
-            "erro": "Erro ao calcular estatísticas"
+            "erro": "Erro ao processar proposta"
         }), 500
 
-# Endpoint alternativo com query parameter para evitar problemas de codificação
-@app.route('/api/fornecedor/estatisticas', methods=['GET'])
-def estatisticas_fornecedor_query():
-    """Retorna estatísticas específicas do fornecedor via query parameter"""
-    cnpj = request.args.get('cnpj', '')
-    if not cnpj:
-        return jsonify({"success": False, "erro": "CNPJ não fornecido"}), 400
-    return estatisticas_fornecedor(cnpj)
+@app.route('/api/propostas/listar', methods=['GET'])
+def listar_propostas():
+    """Lista todas as propostas com formato compatível com o frontend"""
+    try:
+        # Filtros opcionais
+        processo = request.args.get('processo')
+        cnpj = request.args.get('cnpj')
+        
+        propostas_lista = []
+        
+        for proposta in propostas_db.values():
+            # Aplicar filtros se especificados
+            if processo and proposta.get('processo') != processo:
+                continue
+            if cnpj and proposta.get('dados', {}).get('cnpj') != cnpj:
+                continue
+            
+            # Formatar proposta para o frontend
+            proposta_formatada = {
+                "protocolo": proposta.get('protocolo', ''),
+                "processo": proposta.get('processo', ''),
+                "empresa": proposta.get('dados', {}).get('razaoSocial', 'N/A'),
+                "cnpj": proposta.get('dados', {}).get('cnpj', ''),
+                "valor": f"R$ {proposta.get('comercial', {}).get('valorTotal', '0,00')}",
+                "data": proposta.get('data_envio', ''),
+                "dados": proposta
+            }
+            
+            propostas_lista.append(proposta_formatada)
+        
+        # Ordena por data
+        propostas_lista.sort(key=lambda x: x.get('data', ''), reverse=True)
+        
+        return jsonify({
+            "propostas": propostas_lista,
+            "total": len(propostas_lista)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar propostas: {str(e)}")
+        return jsonify({
+            "erro": "Erro ao listar propostas"
+        }), 500
 
-# ===== FIM DOS NOVOS ENDPOINTS =====
+@app.route('/api/processos/<numero>', methods=['GET'])
+def obter_processo(numero):
+    """Obtém informações de um processo específico"""
+    if numero in processos_db:
+        return jsonify(processos_db[numero]), 200
+    else:
+        # Retorna dados padrão se não encontrar
+        return jsonify({
+            "numero": numero,
+            "objeto": "Processo não cadastrado",
+            "modalidade": "Não informada",
+            "prazo": datetime.now().isoformat()
+        }), 200
+
+@app.route('/api/processos/listar', methods=['GET'])
+def listar_processos():
+    """Lista todos os processos"""
+    return jsonify({
+        "processos": list(processos_db.values()),
+        "total": len(processos_db)
+    }), 200
 
 @app.route('/api/criar-processo', methods=['POST'])
 def criar_processo():
@@ -1106,16 +1178,6 @@ def cadastrar_fornecedor():
             "erro": "Erro ao cadastrar fornecedor"
         }), 500
 
-# Endpoints para arquivos estáticos movidos para o final
-
-@app.errorhandler(404)
-def nao_encontrado(e):
-    return jsonify({"erro": "Endpoint não encontrado"}), 404
-
-@app.errorhandler(500)
-def erro_interno(e):
-    return jsonify({"erro": "Erro interno do servidor"}), 500
-
 @app.route('/api/download/proposta/<protocolo>/<tipo>', methods=['GET'])
 def download_proposta(protocolo, tipo):
     """Download de proposta em Excel ou Word usando as mesmas funções dos anexos de e-mail"""
@@ -1171,524 +1233,6 @@ def download_proposta(protocolo, tipo):
             "success": False,
             "erro": f"Erro ao gerar arquivo: {str(e)}"
         }), 500
-
-# ===== EXTENSÃO DO BACKEND - NOVOS ENDPOINTS =====
-# Este arquivo contém apenas os novos endpoints para os módulos TR
-# Para integrar: copiar e colar no FINAL do backend_propostas.py
-
-# ===== NOVOS ENDPOINTS PARA MÓDULOS ADICIONAIS =====
-
-@app.route('/api/trs', methods=['GET'])
-def listar_trs():
-    """Listar Termos de Referência"""
-    try:
-        # Carregar TRs de arquivo JSON
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            trs = []
-        
-        # Filtrar por usuário se especificado
-        user_id = request.args.get('user_id')
-        if user_id:
-            trs = [tr for tr in trs if tr.get('criado_por') == user_id]
-        
-        return jsonify({'success': True, 'trs': trs, 'total': len(trs)})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/trs', methods=['POST'])
-def criar_tr():
-    """Criar novo Termo de Referência"""
-    try:
-        data = request.get_json()
-        
-        # Carregar TRs existentes
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            trs = []
-        
-        # Criar novo TR
-        novo_tr = {
-            'id': f"TR-{len(trs) + 1:03d}",
-            'titulo': data.get('titulo', ''),
-            'objetivo': data.get('objetivo', ''),
-            'situacao_atual': data.get('situacao_atual', ''),
-            'problemas': data.get('problemas', ''),
-            'necessidades': data.get('necessidades', ''),
-            'modalidade': data.get('modalidade', 'concorrencia'),
-            'especificacoes': data.get('especificacoes', ''),
-            'normas': data.get('normas', ''),
-            'prazo_execucao': data.get('prazo_execucao', 0),
-            'prazo_garantia': data.get('prazo_garantia', 0),
-            'servicos': data.get('servicos', []),
-            'criado_por': data.get('criado_por', 'sistema'),
-            'criado_em': datetime.now().isoformat(),
-            'atualizado_em': datetime.now().isoformat(),
-            'status': data.get('status', 'rascunho')
-        }
-        
-        trs.append(novo_tr)
-        
-        # Salvar TRs
-        os.makedirs('data', exist_ok=True)
-        with open(trs_file, 'w', encoding='utf-8') as f:
-            json.dump(trs, f, ensure_ascii=False, indent=2)
-        
-        return jsonify({'success': True, 'tr': novo_tr})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/trs/<tr_id>', methods=['GET'])
-def obter_tr(tr_id):
-    """Obter TR específico"""
-    try:
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-            
-            tr = next((t for t in trs if t['id'] == tr_id), None)
-            if tr:
-                return jsonify({'success': True, 'tr': tr})
-            else:
-                return jsonify({'success': False, 'error': 'TR não encontrado'})
-        else:
-            return jsonify({'success': False, 'error': 'Nenhum TR encontrado'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/trs/<tr_id>', methods=['PUT'])
-def atualizar_tr(tr_id):
-    """Atualizar TR existente"""
-    try:
-        data = request.get_json()
-        
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            return jsonify({'success': False, 'error': 'TR não encontrado'})
-        
-        # Encontrar e atualizar TR
-        for i, tr in enumerate(trs):
-            if tr['id'] == tr_id:
-                # Manter dados originais
-                trs[i].update({
-                    'titulo': data.get('titulo', tr['titulo']),
-                    'objetivo': data.get('objetivo', tr['objetivo']),
-                    'situacao_atual': data.get('situacao_atual', tr['situacao_atual']),
-                    'problemas': data.get('problemas', tr.get('problemas', '')),
-                    'necessidades': data.get('necessidades', tr.get('necessidades', '')),
-                    'modalidade': data.get('modalidade', tr.get('modalidade', 'concorrencia')),
-                    'especificacoes': data.get('especificacoes', tr.get('especificacoes', '')),
-                    'normas': data.get('normas', tr.get('normas', '')),
-                    'prazo_execucao': data.get('prazo_execucao', tr.get('prazo_execucao', 0)),
-                    'prazo_garantia': data.get('prazo_garantia', tr.get('prazo_garantia', 0)),
-                    'servicos': data.get('servicos', tr.get('servicos', [])),
-                    'status': data.get('status', tr['status']),
-                    'atualizado_em': datetime.now().isoformat()
-                })
-                
-                # Salvar alterações
-                with open(trs_file, 'w', encoding='utf-8') as f:
-                    json.dump(trs, f, ensure_ascii=False, indent=2)
-                
-                return jsonify({'success': True, 'tr': trs[i]})
-        
-        return jsonify({'success': False, 'error': 'TR não encontrado'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/trs/<tr_id>', methods=['DELETE'])
-def excluir_tr(tr_id):
-    """Excluir TR"""
-    try:
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            return jsonify({'success': False, 'error': 'TR não encontrado'})
-        
-        # Encontrar e remover TR
-        trs_filtrados = [tr for tr in trs if tr['id'] != tr_id]
-        
-        if len(trs_filtrados) < len(trs):
-            # TR foi removido
-            with open(trs_file, 'w', encoding='utf-8') as f:
-                json.dump(trs_filtrados, f, ensure_ascii=False, indent=2)
-            
-            return jsonify({'success': True, 'message': 'TR excluído com sucesso'})
-        else:
-            return jsonify({'success': False, 'error': 'TR não encontrado'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/dashboard/requisitante/<user_id>')
-def dashboard_requisitante(user_id):
-    """Dashboard específico para requisitante"""
-    try:
-        # Carregar dados dos TRs
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            trs = []
-        
-        # Filtrar TRs do usuário
-        meus_trs = [tr for tr in trs if tr.get('criado_por') == user_id]
-        trs_aprovados = [tr for tr in meus_trs if tr.get('status') == 'aprovado']
-        
-        # Simular dados de propostas em análise
-        propostas_analise = 2
-        pareceres_pendentes = 1
-        
-        dados = {
-            'meus_trs': len(meus_trs),
-            'trs_aprovados': len(trs_aprovados),
-            'propostas_analise': propostas_analise,
-            'pareceres_pendentes': pareceres_pendentes,
-            'trs_recentes': meus_trs[-5:] if meus_trs else []
-        }
-        
-        return jsonify({'success': True, 'dados': dados})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/dashboard/comprador/<user_id>')
-def dashboard_comprador(user_id):
-    """Dashboard específico para comprador"""
-    try:
-        # Carregar dados dos TRs
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            trs = []
-        
-        # Simular dados do comprador
-        trs_pendentes = len([tr for tr in trs if tr.get('status') == 'analise'])
-        concorrencias_ativas = 2
-        propostas_recebidas = 8
-        valor_total = 1250000
-        
-        dados = {
-            'trs_pendentes': trs_pendentes,
-            'concorrencias_ativas': concorrencias_ativas,
-            'propostas_recebidas': propostas_recebidas,
-            'valor_total': valor_total,
-            'trs_para_analise': [tr for tr in trs if tr.get('status') in ['rascunho', 'analise']]
-        }
-        
-        return jsonify({'success': True, 'dados': dados})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/propostas/tecnicas', methods=['GET'])
-def listar_propostas_tecnicas():
-    """Listar propostas técnicas (sem valores comerciais)"""
-    try:
-        # Simular dados de propostas técnicas
-        propostas_tecnicas = [
-            {
-                'id': 'PROP-001',
-                'fornecedor': 'Construtora ABC Ltda',
-                'tr_id': 'TR-001',
-                'metodologia': 'Metodologia construtiva com técnicas modernas...',
-                'cronograma': '120 dias',
-                'equipe_tecnica': 'Eng. João Silva (CREA 12345) + equipe de 15 profissionais',
-                'experiencia': '10 obras similares nos últimos 5 anos',
-                'certificacoes': 'ISO 9001, ISO 14001',
-                'recebida_em': datetime.now().isoformat(),
-                'status': 'analise_tecnica'
-            },
-            {
-                'id': 'PROP-002',
-                'fornecedor': 'Engenharia XYZ S.A.',
-                'tr_id': 'TR-001',
-                'metodologia': 'Abordagem sustentável com materiais eco-friendly...',
-                'cronograma': '90 dias',
-                'equipe_tecnica': 'Eng. Maria Santos (CREA 67890) + equipe especializada',
-                'experiencia': '15 obras similares, incluindo projetos governamentais',
-                'certificacoes': 'ISO 9001, PBQP-H',
-                'recebida_em': datetime.now().isoformat(),
-                'status': 'analise_tecnica'
-            }
-        ]
-        
-        return jsonify({'success': True, 'propostas': propostas_tecnicas})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/propostas/<proposta_id>/parecer', methods=['POST'])
-def emitir_parecer_tecnico(proposta_id):
-    """Emitir parecer técnico sobre proposta"""
-    try:
-        data = request.get_json()
-        
-        parecer = {
-            'id': f"PARECER-{proposta_id}",
-            'proposta_id': proposta_id,
-            'avaliacao_metodologia': data.get('avaliacao_metodologia', ''),
-            'avaliacao_cronograma': data.get('avaliacao_cronograma', ''),
-            'avaliacao_equipe': data.get('avaliacao_equipe', ''),
-            'pontos_positivos': data.get('pontos_positivos', ''),
-            'pontos_negativos': data.get('pontos_negativos', ''),
-            'recomendacao': data.get('recomendacao', ''),  # aprovado/rejeitado/condicional
-            'observacoes': data.get('observacoes', ''),
-            'emitido_por': data.get('emitido_por', 'requisitante'),
-            'emitido_em': datetime.now().isoformat()
-        }
-        
-        # Salvar parecer
-        pareceres_file = 'data/pareceres.json'
-        if os.path.exists(pareceres_file):
-            with open(pareceres_file, 'r', encoding='utf-8') as f:
-                pareceres = json.load(f)
-        else:
-            pareceres = []
-        
-        pareceres.append(parecer)
-        
-        os.makedirs('data', exist_ok=True)
-        with open(pareceres_file, 'w', encoding='utf-8') as f:
-            json.dump(pareceres, f, ensure_ascii=False, indent=2)
-        
-        return jsonify({'success': True, 'parecer': parecer})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/pareceres', methods=['GET'])
-def listar_pareceres():
-    """Listar pareceres técnicos"""
-    try:
-        pareceres_file = 'data/pareceres.json'
-        if os.path.exists(pareceres_file):
-            with open(pareceres_file, 'r', encoding='utf-8') as f:
-                pareceres = json.load(f)
-        else:
-            pareceres = []
-        
-        # Filtrar por usuário se especificado
-        user_id = request.args.get('user_id')
-        if user_id:
-            pareceres = [p for p in pareceres if p.get('emitido_por') == user_id]
-        
-        return jsonify({'success': True, 'pareceres': pareceres})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/concorrencias', methods=['GET'])
-def listar_concorrencias():
-    """Listar concorrências ativas"""
-    try:
-        # Simular dados de concorrências
-        concorrencias = [
-            {
-                'id': 'CONC-001',
-                'numero': '001/2025',
-                'objeto': 'Reforma do Centro de Saúde Municipal',
-                'modalidade': 'Concorrência',
-                'valor_estimado': 850000.00,
-                'prazo_proposta': '2025-02-15',
-                'dias_restantes': 15,
-                'status': 'aberta',
-                'tr_id': 'TR-001'
-            },
-            {
-                'id': 'CONC-002',
-                'numero': '002/2025',
-                'objeto': 'Construção de Quadra Poliesportiva',
-                'modalidade': 'Tomada de Preços',
-                'valor_estimado': 450000.00,
-                'prazo_proposta': '2025-02-20',
-                'dias_restantes': 20,
-                'status': 'aberta',
-                'tr_id': 'TR-002'
-            },
-            {
-                'id': 'CONC-003',
-                'numero': '003/2025',
-                'objeto': 'Pavimentação de Ruas do Bairro Centro',
-                'modalidade': 'Concorrência',
-                'valor_estimado': 1200000.00,
-                'prazo_proposta': '2025-02-25',
-                'dias_restantes': 25,
-                'status': 'aberta',
-                'tr_id': 'TR-003'
-            }
-        ]
-        
-        return jsonify({'success': True, 'concorrencias': concorrencias})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/inicializar-dados', methods=['POST'])
-def inicializar_dados_exemplo_api():
-    """Inicializar dados de exemplo para demonstração"""
-    try:
-        # Criar diretório de dados
-        os.makedirs('data', exist_ok=True)
-        
-        # TRs de exemplo
-        trs_exemplo = [
-            {
-                'id': 'TR-001',
-                'titulo': 'Reforma do Centro de Saúde Municipal',
-                'objetivo': 'Reforma completa das instalações do Centro de Saúde para melhorar o atendimento à população',
-                'situacao_atual': 'Instalações antigas com necessidade de modernização',
-                'modalidade': 'concorrencia',
-                'servicos': [
-                    {'item': 1, 'descricao': 'Demolição de paredes internas', 'unidade': 'm²', 'quantidade': 150},
-                    {'item': 2, 'descricao': 'Construção de novas paredes', 'unidade': 'm²', 'quantidade': 200},
-                    {'item': 3, 'descricao': 'Instalação elétrica completa', 'unidade': 'vb', 'quantidade': 1}
-                ],
-                'criado_por': 'requisitante1',
-                'criado_em': datetime.now().isoformat(),
-                'status': 'aprovado'
-            },
-            {
-                'id': 'TR-002',
-                'titulo': 'Construção de Quadra Poliesportiva',
-                'objetivo': 'Construção de quadra poliesportiva coberta para atividades esportivas da comunidade',
-                'situacao_atual': 'Terreno disponível, necessidade de espaço esportivo',
-                'modalidade': 'tomada_precos',
-                'servicos': [
-                    {'item': 1, 'descricao': 'Terraplanagem e fundação', 'unidade': 'm²', 'quantidade': 800},
-                    {'item': 2, 'descricao': 'Estrutura metálica da cobertura', 'unidade': 'm²', 'quantidade': 600},
-                    {'item': 3, 'descricao': 'Piso esportivo', 'unidade': 'm²', 'quantidade': 600}
-                ],
-                'criado_por': 'requisitante1',
-                'criado_em': datetime.now().isoformat(),
-                'status': 'analise'
-            }
-        ]
-        
-        # Salvar TRs
-        with open('data/trs.json', 'w', encoding='utf-8') as f:
-            json.dump(trs_exemplo, f, ensure_ascii=False, indent=2)
-        
-        # Pareceres de exemplo
-        pareceres_exemplo = []
-        with open('data/pareceres.json', 'w', encoding='utf-8') as f:
-            json.dump(pareceres_exemplo, f, ensure_ascii=False, indent=2)
-        
-        return jsonify({'success': True, 'message': 'Dados de exemplo inicializados'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-# ===== FIM DOS NOVOS ENDPOINTS =====
-
-# ===== ENDPOINT CATCH-ALL (DEVE SER O ÚLTIMO) =====
-@app.route('/<path:filename>')
-def serve_static(filename):
-    """Serve arquivos estáticos com tratamento de erro"""
-    try:
-        # Previne path traversal
-        if '..' in filename or filename.startswith('/'):
-            return jsonify({"erro": "Caminho inválido"}), 400
-            
-        file_path = os.path.join(STATIC_DIR, filename)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return send_from_directory(STATIC_DIR, filename)
-        else:
-            return jsonify({"erro": "Arquivo não encontrado"}), 404
-    except Exception as e:
-        logger.error(f"Erro ao servir arquivo {filename}: {e}")
-        return jsonify({"erro": "Erro ao acessar arquivo"}), 500
-
-if __name__ == '__main__':
-    logger.info("Iniciando servidor de propostas v2.0.0...")
-    logger.info(f"Diretório de trabalho: {os.getcwd()}")
-    logger.info(f"Email configurado: {bool(app.config['MAIL_USERNAME'])}")
-    logger.info(f"Destinatário principal: {EMAIL_CONFIG['destinatario_principal']}")
-    
-    # Verificar prazos periodicamente (em produção usar scheduler apropriado)
-    # verificar_prazos_proximos()
-    
-    port = int(os.environ.get('PORT', 5000))
-    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
-    
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=debug_mode
-    ) 
-    
-@app.route('/api/propostas/listar', methods=['GET'])
-def listar_propostas():
-    """Lista todas as propostas com formato compatível com o frontend"""
-    try:
-        # Filtros opcionais
-        processo = request.args.get('processo')
-        cnpj = request.args.get('cnpj')
-        
-        propostas_lista = []
-        
-        for proposta in propostas_db.values():
-            # Aplicar filtros se especificados
-            if processo and proposta.get('processo') != processo:
-                continue
-            if cnpj and proposta.get('dados', {}).get('cnpj') != cnpj:
-                continue
-            
-            # Formatar proposta para o frontend
-            proposta_formatada = {
-                "protocolo": proposta.get('protocolo', ''),
-                "processo": proposta.get('processo', ''),
-                "empresa": proposta.get('dados', {}).get('razaoSocial', 'N/A'),
-                "cnpj": proposta.get('dados', {}).get('cnpj', ''),
-                "valor": f"R$ {proposta.get('comercial', {}).get('valorTotal', '0,00')}",
-                "data": proposta.get('data_envio', ''),
-                "dados": proposta
-            }
-            
-            propostas_lista.append(proposta_formatada)
-        
-        # Ordena por data
-        propostas_lista.sort(key=lambda x: x.get('data', ''), reverse=True)
-        
-        return jsonify({
-            "propostas": propostas_lista,
-            "total": len(propostas_lista)
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro ao listar propostas: {str(e)}")
-        return jsonify({
-            "erro": "Erro ao listar propostas"
-        }), 500
-
-@app.route('/api/processos/<numero>', methods=['GET'])
-def obter_processo(numero):
-    """Obtém informações de um processo específico"""
-    if numero in processos_db:
-        return jsonify(processos_db[numero]), 200
-    else:
-        # Retorna dados padrão se não encontrar
-        return jsonify({
-            "numero": numero,
-            "objeto": "Processo não cadastrado",
-            "modalidade": "Não informada",
-            "prazo": datetime.now().isoformat()
-        }), 200
-
-@app.route('/api/processos/listar', methods=['GET'])
-def listar_processos():
-    """Lista todos os processos"""
-    return jsonify({
-        "processos": list(processos_db.values()),
-        "total": len(processos_db)
-    }), 200
 
 # ===== NOVOS ENDPOINTS PARA ÁREA DO FORNECEDOR =====
 
@@ -1842,7 +1386,7 @@ def estatisticas_fornecedor(cnpj):
             valor_str = proposta.get('comercial', {}).get('valorTotal', '0,00')
             try:
                 # Remover formatação e converter para float
-                valor_limpo = valor_str.replace('R$', '').replace('.', '').replace(',', '.').strip()
+                valor_limpo = valor_str.replace('R, '').replace('.', '').replace(',', '.').strip()
                 valor_total += float(valor_limpo)
             except:
                 continue
@@ -1863,3 +1407,571 @@ def estatisticas_fornecedor(cnpj):
             "success": False,
             "erro": "Erro ao calcular estatísticas"
         }), 500
+
+# Endpoint alternativo com query parameter para evitar problemas de codificação
+@app.route('/api/fornecedor/estatisticas', methods=['GET'])
+def estatisticas_fornecedor_query():
+    """Retorna estatísticas específicas do fornecedor via query parameter"""
+    cnpj = request.args.get('cnpj', '')
+    if not cnpj:
+        return jsonify({"success": False, "erro": "CNPJ não fornecido"}), 400
+    return estatisticas_fornecedor(cnpj)
+
+# ========== NOVOS ENDPOINTS PARA O FLUXO INTEGRADO ==========
+
+@app.route('/api/trs', methods=['GET'])
+def listar_trs():
+    """Listar Termos de Referência"""
+    try:
+        # Carregar TRs de arquivo JSON
+        trs_file = os.path.join(DATA_DIR, 'trs.json')
+        if os.path.exists(trs_file):
+            with open(trs_file, 'r', encoding='utf-8') as f:
+                trs = json.load(f)
+        else:
+            trs = []
+        
+        # Filtrar por usuário se especificado
+        user_id = request.args.get('user_id')
+        if user_id:
+            trs = [tr for tr in trs if tr.get('criado_por') == user_id]
+        
+        # Filtrar por status se especificado
+        status = request.args.get('status')
+        if status:
+            trs = [tr for tr in trs if tr.get('status') == status]
+        
+        return jsonify({'success': True, 'trs': trs, 'total': len(trs)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/trs', methods=['POST'])
+def criar_tr():
+    """Criar novo Termo de Referência"""
+    try:
+        data = request.get_json()
+        
+        # Carregar TRs existentes
+        trs_file = os.path.join(DATA_DIR, 'trs.json')
+        if os.path.exists(trs_file):
+            with open(trs_file, 'r', encoding='utf-8') as f:
+                trs = json.load(f)
+        else:
+            trs = []
+        
+        # Criar novo TR
+        novo_tr = {
+            'id': f"TR-{len(trs) + 1:03d}",
+            'titulo': data.get('titulo', ''),
+            'objetivo': data.get('objetivo', ''),
+            'situacao_atual': data.get('situacao_atual', ''),
+            'problemas': data.get('problemas', ''),
+            'necessidades': data.get('necessidades', ''),
+            'modalidade': data.get('modalidade', 'concorrencia'),
+            'especificacoes': data.get('especificacoes', ''),
+            'normas': data.get('normas', ''),
+            'prazo_execucao': data.get('prazo_execucao', 0),
+            'prazo_garantia': data.get('prazo_garantia', 0),
+            'servicos': data.get('servicos', []),
+            'criado_por': data.get('criado_por', 'sistema'),
+            'criado_em': datetime.now().isoformat(),
+            'atualizado_em': datetime.now().isoformat(),
+            'status': data.get('status', 'rascunho')
+        }
+        
+        trs.append(novo_tr)
+        
+        # Salvar TRs
+        with open(trs_file, 'w', encoding='utf-8') as f:
+            json.dump(trs, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({'success': True, 'tr': novo_tr})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/trs/<tr_id>', methods=['GET'])
+def obter_tr(tr_id):
+    """Obter TR específico"""
+    try:
+        trs_file = os.path.join(DATA_DIR, 'trs.json')
+        if os.path.exists(trs_file):
+            with open(trs_file, 'r', encoding='utf-8') as f:
+                trs = json.load(f)
+            
+            tr = next((t for t in trs if t['id'] == tr_id), None)
+            if tr:
+                return jsonify({'success': True, 'tr': tr})
+            else:
+                return jsonify({'success': False, 'error': 'TR não encontrado'})
+        else:
+            return jsonify({'success': False, 'error': 'Nenhum TR encontrado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/trs/<tr_id>', methods=['PUT'])
+def atualizar_tr(tr_id):
+    """Atualizar TR existente"""
+    try:
+        data = request.get_json()
+        
+        trs_file = os.path.join(DATA_DIR, 'trs.json')
+        if os.path.exists(trs_file):
+            with open(trs_file, 'r', encoding='utf-8') as f:
+                trs = json.load(f)
+        else:
+            return jsonify({'success': False, 'error': 'TR não encontrado'})
+        
+        # Encontrar e atualizar TR
+        for i, tr in enumerate(trs):
+            if tr['id'] == tr_id:
+                # Manter dados originais
+                trs[i].update({
+                    'titulo': data.get('titulo', tr['titulo']),
+                    'objetivo': data.get('objetivo', tr['objetivo']),
+                    'situacao_atual': data.get('situacao_atual', tr['situacao_atual']),
+                    'problemas': data.get('problemas', tr.get('problemas', '')),
+                    'necessidades': data.get('necessidades', tr.get('necessidades', '')),
+                    'modalidade': data.get('modalidade', tr.get('modalidade', 'concorrencia')),
+                    'especificacoes': data.get('especificacoes', tr.get('especificacoes', '')),
+                    'normas': data.get('normas', tr.get('normas', '')),
+                    'prazo_execucao': data.get('prazo_execucao', tr.get('prazo_execucao', 0)),
+                    'prazo_garantia': data.get('prazo_garantia', tr.get('prazo_garantia', 0)),
+                    'servicos': data.get('servicos', tr.get('servicos', [])),
+                    'status': data.get('status', tr['status']),
+                    'atualizado_em': datetime.now().isoformat()
+                })
+                
+                # Salvar alterações
+                with open(trs_file, 'w', encoding='utf-8') as f:
+                    json.dump(trs, f, ensure_ascii=False, indent=2)
+                
+                return jsonify({'success': True, 'tr': trs[i]})
+        
+        return jsonify({'success': False, 'error': 'TR não encontrado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/trs/<tr_id>', methods=['DELETE'])
+def excluir_tr(tr_id):
+    """Excluir TR"""
+    try:
+        trs_file = os.path.join(DATA_DIR, 'trs.json')
+        if os.path.exists(trs_file):
+            with open(trs_file, 'r', encoding='utf-8') as f:
+                trs = json.load(f)
+        else:
+            return jsonify({'success': False, 'error': 'TR não encontrado'})
+        
+        # Encontrar e remover TR
+        trs_filtrados = [tr for tr in trs if tr['id'] != tr_id]
+        
+        if len(trs_filtrados) < len(trs):
+            # TR foi removido
+            with open(trs_file, 'w', encoding='utf-8') as f:
+                json.dump(trs_filtrados, f, ensure_ascii=False, indent=2)
+            
+            return jsonify({'success': True, 'message': 'TR excluído com sucesso'})
+        else:
+            return jsonify({'success': False, 'error': 'TR não encontrado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/trs/<tr_id>/aprovar', methods=['POST'])
+def aprovar_tr(tr_id):
+    """Aprovar TR e preparar para criar concorrência"""
+    try:
+        data = request.get_json()
+        
+        # Carregar TRs
+        trs_file = os.path.join(DATA_DIR, 'trs.json')
+        if os.path.exists(trs_file):
+            with open(trs_file, 'r', encoding='utf-8') as f:
+                trs = json.load(f)
+        else:
+            return jsonify({'success': False, 'error': 'TR não encontrado'})
+        
+        # Atualizar status do TR
+        for tr in trs:
+            if tr['id'] == tr_id:
+                tr['status'] = 'aprovado'
+                tr['aprovado_por'] = data.get('aprovado_por')
+                tr['data_aprovacao'] = data.get('data_aprovacao')
+                
+                # Salvar
+                with open(trs_file, 'w', encoding='utf-8') as f:
+                    json.dump(trs, f, ensure_ascii=False, indent=2)
+                
+                return jsonify({'success': True, 'tr': tr})
+        
+        return jsonify({'success': False, 'error': 'TR não encontrado'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/propostas/enviar-analise-tecnica', methods=['POST'])
+def enviar_analise_tecnica():
+    """Enviar propostas para análise técnica do requisitante"""
+    try:
+        data = request.get_json()
+        processo = data.get('processo')
+        protocolos = data.get('protocolos', [])
+        enviado_por = data.get('enviado_por')
+        
+        # Criar registro de análise
+        analise = {
+            'id': f"ANALISE-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
+            'processo': processo,
+            'propostas': protocolos,
+            'enviado_por': enviado_por,
+            'data_envio': datetime.now().isoformat(),
+            'status': 'pendente_analise'
+        }
+        
+        # Salvar análise
+        analises_file = os.path.join(DATA_DIR, 'analises_tecnicas.json')
+        if os.path.exists(analises_file):
+            with open(analises_file, 'r', encoding='utf-8') as f:
+                analises = json.load(f)
+        else:
+            analises = []
+        
+        analises.append(analise)
+        
+        with open(analises_file, 'w', encoding='utf-8') as f:
+            json.dump(analises, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({'success': True, 'analise': analise})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/propostas/para-analise', methods=['GET'])
+def propostas_para_analise():
+    """Listar propostas disponíveis para enviar para análise técnica"""
+    try:
+        # Filtrar propostas que ainda não foram enviadas para análise
+        propostas_disponiveis = []
+        
+        for proposta in propostas_db.values():
+            # Verificar se já foi enviada para análise
+            analises_file = os.path.join(DATA_DIR, 'analises_tecnicas.json')
+            ja_enviada = False
+            
+            if os.path.exists(analises_file):
+                with open(analises_file, 'r', encoding='utf-8') as f:
+                    analises = json.load(f)
+                    for analise in analises:
+                        if proposta.get('protocolo') in analise.get('propostas', []):
+                            ja_enviada = True
+                            break
+            
+            if not ja_enviada:
+                propostas_disponiveis.append({
+                    'protocolo': proposta.get('protocolo'),
+                    'processo': proposta.get('processo'),
+                    'empresa': proposta.get('dados', {}).get('razaoSocial'),
+                    'cnpj': proposta.get('dados', {}).get('cnpj'),
+                    'data': proposta.get('data_envio'),
+                    'valor': proposta.get('comercial', {}).get('valorTotal')
+                })
+        
+        return jsonify({'success': True, 'propostas': propostas_disponiveis})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/dashboard/requisitante/<user_id>')
+def dashboard_requisitante(user_id):
+    """Dashboard específico para requisitante"""
+    try:
+        # Carregar dados dos TRs
+        trs_file = os.path.join(DATA_DIR, 'trs.json')
+        if os.path.exists(trs_file):
+            with open(trs_file, 'r', encoding='utf-8') as f:
+                trs = json.load(f)
+        else:
+            trs = []
+        
+        # Filtrar TRs do usuário
+        meus_trs = [tr for tr in trs if tr.get('criado_por') == user_id]
+        trs_aprovados = [tr for tr in meus_trs if tr.get('status') == 'aprovado']
+        
+        # Simular dados de propostas em análise
+        propostas_analise = 2
+        pareceres_pendentes = 1
+        
+        dados = {
+            'meus_trs': len(meus_trs),
+            'trs_aprovados': len(trs_aprovados),
+            'propostas_analise': propostas_analise,
+            'pareceres_pendentes': pareceres_pendentes,
+            'trs_recentes': meus_trs[-5:] if meus_trs else []
+        }
+        
+        return jsonify({'success': True, 'dados': dados})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/dashboard/comprador/<user_id>')
+def dashboard_comprador(user_id):
+    """Dashboard específico para comprador"""
+    try:
+        # Carregar dados dos TRs
+        trs_file = os.path.join(DATA_DIR, 'trs.json')
+        if os.path.exists(trs_file):
+            with open(trs_file, 'r', encoding='utf-8') as f:
+                trs = json.load(f)
+        else:
+            trs = []
+        
+        # Simular dados do comprador
+        trs_pendentes = len([tr for tr in trs if tr.get('status') == 'analise'])
+        concorrencias_ativas = 2
+        propostas_recebidas = 8
+        valor_total = 1250000
+        
+        dados = {
+            'trs_pendentes': trs_pendentes,
+            'concorrencias_ativas': concorrencias_ativas,
+            'propostas_recebidas': propostas_recebidas,
+            'valor_total': valor_total,
+            'trs_para_analise': [tr for tr in trs if tr.get('status') in ['rascunho', 'analise']]
+        }
+        
+        return jsonify({'success': True, 'dados': dados})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/propostas/tecnicas', methods=['GET'])
+def listar_propostas_tecnicas():
+    """Listar propostas técnicas (sem valores comerciais)"""
+    try:
+        # Simular dados de propostas técnicas
+        propostas_tecnicas = [
+            {
+                'id': 'PROP-001',
+                'fornecedor': 'Construtora ABC Ltda',
+                'tr_id': 'TR-001',
+                'metodologia': 'Metodologia construtiva com técnicas modernas...',
+                'cronograma': '120 dias',
+                'equipe_tecnica': 'Eng. João Silva (CREA 12345) + equipe de 15 profissionais',
+                'experiencia': '10 obras similares nos últimos 5 anos',
+                'certificacoes': 'ISO 9001, ISO 14001',
+                'recebida_em': datetime.now().isoformat(),
+                'status': 'analise_tecnica'
+            },
+            {
+                'id': 'PROP-002',
+                'fornecedor': 'Engenharia XYZ S.A.',
+                'tr_id': 'TR-001',
+                'metodologia': 'Abordagem sustentável com materiais eco-friendly...',
+                'cronograma': '90 dias',
+                'equipe_tecnica': 'Eng. Maria Santos (CREA 67890) + equipe especializada',
+                'experiencia': '15 obras similares, incluindo projetos governamentais',
+                'certificacoes': 'ISO 9001, PBQP-H',
+                'recebida_em': datetime.now().isoformat(),
+                'status': 'analise_tecnica'
+            }
+        ]
+        
+        return jsonify({'success': True, 'propostas': propostas_tecnicas})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/propostas/<proposta_id>/parecer', methods=['POST'])
+def emitir_parecer_tecnico(proposta_id):
+    """Emitir parecer técnico sobre proposta"""
+    try:
+        data = request.get_json()
+        
+        parecer = {
+            'id': f"PARECER-{proposta_id}",
+            'proposta_id': proposta_id,
+            'avaliacao_metodologia': data.get('avaliacao_metodologia', ''),
+            'avaliacao_cronograma': data.get('avaliacao_cronograma', ''),
+            'avaliacao_equipe': data.get('avaliacao_equipe', ''),
+            'pontos_positivos': data.get('pontos_positivos', ''),
+            'pontos_negativos': data.get('pontos_negativos', ''),
+            'recomendacao': data.get('recomendacao', ''),  # aprovado/rejeitado/condicional
+            'observacoes': data.get('observacoes', ''),
+            'emitido_por': data.get('emitido_por', 'requisitante'),
+            'emitido_em': datetime.now().isoformat()
+        }
+        
+        # Salvar parecer
+        pareceres_file = os.path.join(DATA_DIR, 'pareceres.json')
+        if os.path.exists(pareceres_file):
+            with open(pareceres_file, 'r', encoding='utf-8') as f:
+                pareceres = json.load(f)
+        else:
+            pareceres = []
+        
+        pareceres.append(parecer)
+        
+        with open(pareceres_file, 'w', encoding='utf-8') as f:
+            json.dump(pareceres, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({'success': True, 'parecer': parecer})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/pareceres', methods=['GET'])
+def listar_pareceres():
+    """Listar pareceres técnicos"""
+    try:
+        pareceres_file = os.path.join(DATA_DIR, 'pareceres.json')
+        if os.path.exists(pareceres_file):
+            with open(pareceres_file, 'r', encoding='utf-8') as f:
+                pareceres = json.load(f)
+        else:
+            pareceres = []
+        
+        # Filtrar por usuário se especificado
+        user_id = request.args.get('user_id')
+        if user_id:
+            pareceres = [p for p in pareceres if p.get('emitido_por') == user_id]
+        
+        return jsonify({'success': True, 'pareceres': pareceres})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/concorrencias', methods=['GET'])
+def listar_concorrencias():
+    """Listar concorrências ativas"""
+    try:
+        # Simular dados de concorrências
+        concorrencias = [
+            {
+                'id': 'CONC-001',
+                'numero': '001/2025',
+                'objeto': 'Reforma do Centro de Saúde Municipal',
+                'modalidade': 'Concorrência',
+                'valor_estimado': 850000.00,
+                'prazo_proposta': '2025-02-15',
+                'dias_restantes': 15,
+                'status': 'aberta',
+                'tr_id': 'TR-001'
+            },
+            {
+                'id': 'CONC-002',
+                'numero': '002/2025',
+                'objeto': 'Construção de Quadra Poliesportiva',
+                'modalidade': 'Tomada de Preços',
+                'valor_estimado': 450000.00,
+                'prazo_proposta': '2025-02-20',
+                'dias_restantes': 20,
+                'status': 'aberta',
+                'tr_id': 'TR-002'
+            },
+            {
+                'id': 'CONC-003',
+                'numero': '003/2025',
+                'objeto': 'Pavimentação de Ruas do Bairro Centro',
+                'modalidade': 'Concorrência',
+                'valor_estimado': 1200000.00,
+                'prazo_proposta': '2025-02-25',
+                'dias_restantes': 25,
+                'status': 'aberta',
+                'tr_id': 'TR-003'
+            }
+        ]
+        
+        return jsonify({'success': True, 'concorrencias': concorrencias})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/inicializar-dados', methods=['POST'])
+def inicializar_dados_exemplo_api():
+    """Inicializar dados de exemplo para demonstração"""
+    try:
+        # TRs de exemplo
+        trs_exemplo = [
+            {
+                'id': 'TR-001',
+                'titulo': 'Reforma do Centro de Saúde Municipal',
+                'objetivo': 'Reforma completa das instalações do Centro de Saúde para melhorar o atendimento à população',
+                'situacao_atual': 'Instalações antigas com necessidade de modernização',
+                'modalidade': 'concorrencia',
+                'servicos': [
+                    {'item': 1, 'descricao': 'Demolição de paredes internas', 'unidade': 'm²', 'quantidade': 150},
+                    {'item': 2, 'descricao': 'Construção de novas paredes', 'unidade': 'm²', 'quantidade': 200},
+                    {'item': 3, 'descricao': 'Instalação elétrica completa', 'unidade': 'vb', 'quantidade': 1}
+                ],
+                'criado_por': 'requisitante1',
+                'criado_em': datetime.now().isoformat(),
+                'status': 'aprovado'
+            },
+            {
+                'id': 'TR-002',
+                'titulo': 'Construção de Quadra Poliesportiva',
+                'objetivo': 'Construção de quadra poliesportiva coberta para atividades esportivas da comunidade',
+                'situacao_atual': 'Terreno disponível, necessidade de espaço esportivo',
+                'modalidade': 'tomada_precos',
+                'servicos': [
+                    {'item': 1, 'descricao': 'Terraplanagem e fundação', 'unidade': 'm²', 'quantidade': 800},
+                    {'item': 2, 'descricao': 'Estrutura metálica da cobertura', 'unidade': 'm²', 'quantidade': 600},
+                    {'item': 3, 'descricao': 'Piso esportivo', 'unidade': 'm²', 'quantidade': 600}
+                ],
+                'criado_por': 'requisitante1',
+                'criado_em': datetime.now().isoformat(),
+                'status': 'analise'
+            }
+        ]
+        
+        # Salvar TRs
+        trs_file = os.path.join(DATA_DIR, 'trs.json')
+        with open(trs_file, 'w', encoding='utf-8') as f:
+            json.dump(trs_exemplo, f, ensure_ascii=False, indent=2)
+        
+        # Pareceres de exemplo
+        pareceres_exemplo = []
+        pareceres_file = os.path.join(DATA_DIR, 'pareceres.json')
+        with open(pareceres_file, 'w', encoding='utf-8') as f:
+            json.dump(pareceres_exemplo, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({'success': True, 'message': 'Dados de exemplo inicializados'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# ========== FIM DOS NOVOS ENDPOINTS ==========
+
+# ===== ENDPOINT CATCH-ALL (DEVE SER O ÚLTIMO) =====
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Serve arquivos estáticos com tratamento de erro"""
+    try:
+        # Previne path traversal
+        if '..' in filename or filename.startswith('/'):
+            return jsonify({"erro": "Caminho inválido"}), 400
+            
+        file_path = os.path.join(STATIC_DIR, filename)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return send_from_directory(STATIC_DIR, filename)
+        else:
+            return jsonify({"erro": "Arquivo não encontrado"}), 404
+    except Exception as e:
+        logger.error(f"Erro ao servir arquivo {filename}: {e}")
+        return jsonify({"erro": "Erro ao acessar arquivo"}), 500
+
+@app.errorhandler(404)
+def nao_encontrado(e):
+    return jsonify({"erro": "Endpoint não encontrado"}), 404
+
+@app.errorhandler(500)
+def erro_interno(e):
+    return jsonify({"erro": "Erro interno do servidor"}), 500
+
+if __name__ == '__main__':
+    logger.info("Iniciando servidor de propostas v2.0.0...")
+    logger.info(f"Diretório de trabalho: {os.getcwd()}")
+    logger.info(f"Email configurado: {bool(app.config['MAIL_USERNAME'])}")
+    logger.info(f"Destinatário principal: {EMAIL_CONFIG['destinatario_principal']}")
+    
+    # Verificar prazos periodicamente (em produção usar scheduler apropriado)
+    # verificar_prazos_proximos()
+    
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=debug_mode
+    )
