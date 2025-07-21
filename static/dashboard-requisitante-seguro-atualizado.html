@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Requisitante - Sistema de Gestão de Propostas</title>
+    <script>
+        // Configuração da API
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000' 
+            : window.location.origin;
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .container {
+            display: flex;
+            min-height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .menu-section {
+            margin-bottom: 25px;
+        }
+
+        .menu-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 6px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            transition: all 0.3s;
+            color: #333;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+            border-left-color: #667eea;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+            border-left-color: #fff;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            color: #6c757d;
+            font-size: 16px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .quick-action-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .quick-action-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .quick-action-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .quick-action-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .quick-action-desc {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .info-panel {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .info-panel h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .info-panel p {
+            color: #0d47a1;
+            margin: 5px 0;
+        }
+
+        .tr-form {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .tr-list {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .tr-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+            transition: all 0.3s;
+        }
+
+        .tr-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+
+        .tr-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .tr-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tr-info span {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .tr-info strong {
+            color: #2c3e50;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 200px;
+                overflow-x: auto;
+                display: flex;
+                gap: 10px;
+                padding: 10px;
+            }
+            
+            .menu-section {
+                min-width: 200px;
+                margin-bottom: 0;
+            }
+            
+            .nav-item {
+                white-space: nowrap;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script src="auth-atualizado.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1>👨‍💼 Portal do Requisitante</h1>
+                <p>Gerencie Termos de Referência e emita pareceres técnicos</p>
+            </div>
+            <div id="infoUsuario" style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 8px;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <nav>
+                <div class="menu-section">
+                    <div class="menu-section-title">Requisitante</div>
+                    <button class="nav-item active" onclick="mostrarPagina('dashboard')">
+                        👨‍💼 1.1 Dashboard Requisitante
+                    </button>
+                    <button class="nav-item" onclick="mostrarPagina('criar-tr')">
+                        📝 1.2 Criar TR
+                    </button>
+                    <button class="nav-item" onclick="mostrarPagina('meus-trs')">
+                        📋 1.3 Meus TRs
+                    </button>
+                    <button class="nav-item" onclick="mostrarPagina('emitir-parecer')">
+                        📄 1.4 Emitir Parecer
+                    </button>
+                </div>
+
+                <div class="menu-section">
+                    <div class="menu-section-title">Sistema</div>
+                    <button class="nav-item" onclick="window.location.href='sistema-gestao-atualizado.html'">
+                        🏠 Voltar ao Sistema Principal
+                    </button>
+                </div>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <!-- Dashboard Principal -->
+            <div id="dashboard" class="page active">
+                <div class="welcome-section">
+                    <div class="welcome-title">🎯 Dashboard Requisitante</div>
+                    <div class="welcome-subtitle">Gerencie Termos de Referência e análises técnicas</div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTRs">0</div>
+                        <div class="stat-label">TRs Criados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="trsAtivos">0</div>
+                        <div class="stat-label">TRs Ativos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pareceresPendentes">0</div>
+                        <div class="stat-label">Pareceres Pendentes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="processosRelacionados">0</div>
+                        <div class="stat-label">Processos Relacionados</div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="quick-action-card" onclick="mostrarPagina('criar-tr')">
+                        <div class="quick-action-icon">📝</div>
+                        <div class="quick-action-title">Criar TR</div>
+                        <div class="quick-action-desc">Elaborar novo Termo de Referência</div>
+                    </div>
+                    <div class="quick-action-card" onclick="mostrarPagina('meus-trs')">
+                        <div class="quick-action-icon">📋</div>
+                        <div class="quick-action-title">Meus TRs</div>
+                        <div class="quick-action-desc">Visualizar TRs criados</div>
+                    </div>
+                    <div class="quick-action-card" onclick="mostrarPagina('emitir-parecer')">
+                        <div class="quick-action-icon">📄</div>
+                        <div class="quick-action-title">Emitir Parecer</div>
+                        <div class="quick-action-desc">Análise técnica de propostas</div>
+                    </div>
+                    <div class="quick-action-card" onclick="window.location.href='modulo-termo-referencia-seguro.html'">
+                        <div class="quick-action-icon">🔧</div>
+                        <div class="quick-action-title">Módulo Completo</div>
+                        <div class="quick-action-desc">Acesso ao módulo completo</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Criar TR -->
+            <div id="criar-tr" class="page">
+                <h2>📝 Criar Termo de Referência</h2>
+                <div class="info-panel">
+                    <h4>Novo Termo de Referência</h4>
+                    <p>Elabore um TR detalhado para orientar o processo licitatório.</p>
+                </div>
+                
+                <form class="tr-form" onsubmit="salvarTR(event)">
+                    <div class="form-group">
+                        <label for="trTitulo">Título do TR</label>
+                        <input type="text" id="trTitulo" required placeholder="Ex: Construção de Escola Municipal">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trObjeto">Objeto</label>
+                        <textarea id="trObjeto" required placeholder="Descreva detalhadamente o objeto do TR..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trJustificativa">Justificativa</label>
+                        <textarea id="trJustificativa" required placeholder="Justifique a necessidade da contratação..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trEspecificacoes">Especificações Técnicas</label>
+                        <textarea id="trEspecificacoes" required placeholder="Detalhe as especificações técnicas necessárias..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trPrazo">Prazo de Execução</label>
+                        <input type="text" id="trPrazo" required placeholder="Ex: 180 dias">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trModalidade">Modalidade Sugerida</label>
+                        <select id="trModalidade" required>
+                            <option value="">Selecione...</option>
+                            <option value="Pregão">Pregão</option>
+                            <option value="Concorrência">Concorrência</option>
+                            <option value="Tomada de Preços">Tomada de Preços</option>
+                            <option value="Convite">Convite</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">💾 Salvar TR</button>
+                    <button type="button" class="btn btn-info" onclick="limparFormulario()">🔄 Limpar</button>
+                </form>
+            </div>
+
+            <!-- Meus TRs -->
+            <div id="meus-trs" class="page">
+                <h2>📋 Meus Termos de Referência</h2>
+                <div class="info-panel">
+                    <h4>TRs Criados</h4>
+                    <p>Visualize e gerencie todos os Termos de Referência que você criou.</p>
+                </div>
+                <div id="listaTRs" class="loading">
+                    Carregando TRs...
+                </div>
+            </div>
+
+            <!-- Emitir Parecer -->
+            <div id="emitir-parecer" class="page">
+                <h2>📄 Emitir Parecer Técnico</h2>
+                <div class="info-panel">
+                    <h4>Análise Técnica de Propostas</h4>
+                    <p>Analise os aspectos técnicos das propostas e emita pareceres especializados.</p>
+                </div>
+                <div id="propostasParaParecer" class="loading">
+                    Carregando propostas...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let usuarioAtual = null;
+        let meusTRs = [];
+        let propostasDisponiveis = [];
+
+        window.addEventListener('DOMContentLoaded', function() {
+            usuarioAtual = Auth.verificarAutenticacao(['requisitante', 'admin']);
+            if (usuarioAtual) {
+                Auth.exibirInfoUsuario();
+                carregarDados();
+            }
+        });
+
+        function mostrarPagina(paginaId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            const pagina = document.getElementById(paginaId);
+            if (pagina) {
+                pagina.classList.add('active');
+            }
+            
+            // Ativar o botão do menu correspondente
+            const botoesMenu = document.querySelectorAll('.nav-item');
+            botoesMenu.forEach(botao => {
+                if (botao.onclick && botao.onclick.toString().includes(paginaId)) {
+                    botao.classList.add('active');
+                }
+            });
+
+            // Carregar conteúdo específico da página
+            if (paginaId === 'meus-trs') carregarMeusTRs();
+            if (paginaId === 'emitir-parecer') carregarPropostasParaParecer();
+        }
+
+        function carregarDados() {
+            // Carregar dados do localStorage
+            meusTRs = JSON.parse(localStorage.getItem('termos_referencia') || '[]')
+                .filter(tr => tr.criadoPor === usuarioAtual.usuarioId);
+            
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            
+            // Atualizar estatísticas
+            document.getElementById('totalTRs').textContent = meusTRs.length;
+            document.getElementById('trsAtivos').textContent = meusTRs.filter(tr => tr.status === 'ativo').length;
+            document.getElementById('pareceresPendentes').textContent = propostas.filter(p => !p.parecerTecnico).length;
+            document.getElementById('processosRelacionados').textContent = processos.filter(p => 
+                meusTRs.some(tr => tr.id === p.trId)
+            ).length;
+        }
+
+        function salvarTR(event) {
+            event.preventDefault();
+            
+            const novoTR = {
+                id: 'tr_' + Date.now(),
+                titulo: document.getElementById('trTitulo').value,
+                objeto: document.getElementById('trObjeto').value,
+                justificativa: document.getElementById('trJustificativa').value,
+                especificacoes: document.getElementById('trEspecificacoes').value,
+                prazo: document.getElementById('trPrazo').value,
+                modalidade: document.getElementById('trModalidade').value,
+                criadoPor: usuarioAtual.usuarioId,
+                criadorNome: usuarioAtual.nome,
+                dataCriacao: new Date().toISOString(),
+                status: 'ativo'
+            };
+            
+            // Salvar no localStorage
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            trs.push(novoTR);
+            localStorage.setItem('termos_referencia', JSON.stringify(trs));
+            
+            // Atualizar lista local
+            meusTRs.push(novoTR);
+            
+            // Notificar sucesso
+            alert('Termo de Referência salvo com sucesso!');
+            
+            // Limpar formulário
+            limparFormulario();
+            
+            // Atualizar estatísticas
+            carregarDados();
+            
+            // Criar notificação para compradores
+            Auth.Notificacoes.criar({
+                tipo: 'novo_tr',
+                titulo: '📝 Novo TR Disponível',
+                mensagem: `${novoTR.titulo} foi criado por ${usuarioAtual.nome}`,
+                destinatarioTipo: 'comprador',
+                remetente: usuarioAtual.nome,
+                metadata: {
+                    trId: novoTR.id,
+                    modalidade: novoTR.modalidade
+                }
+            });
+        }
+
+        function limparFormulario() {
+            document.getElementById('trTitulo').value = '';
+            document.getElementById('trObjeto').value = '';
+            document.getElementById('trJustificativa').value = '';
+            document.getElementById('trEspecificacoes').value = '';
+            document.getElementById('trPrazo').value = '';
+            document.getElementById('trModalidade').value = '';
+        }
+
+        function carregarMeusTRs() {
+            const container = document.getElementById('listaTRs');
+            
+            if (meusTRs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>Você ainda não criou nenhum Termo de Referência</p>
+                        <button class="btn btn-primary" onclick="mostrarPagina('criar-tr')">
+                            📝 Criar Primeiro TR
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = meusTRs.map(tr => {
+                const dataCriacao = new Date(tr.dataCriacao);
+                
+                return `
+                    <div class="tr-item">
+                        <div class="tr-title">${tr.titulo}</div>
+                        <div class="tr-info">
+                            <span><strong>Modalidade:</strong> ${tr.modalidade}</span>
+                            <span><strong>Prazo:</strong> ${tr.prazo}</span>
+                            <span><strong>Data:</strong> ${dataCriacao.toLocaleDateString('pt-BR')}</span>
+                            <span><strong>Status:</strong> ${tr.status}</span>
+                        </div>
+                        <p style="color: #6c757d; margin-bottom: 15px;">${tr.objeto.substring(0, 150)}...</p>
+                        <button class="btn btn-info" onclick="visualizarTR('${tr.id}')">
+                            👁️ Visualizar
+                        </button>
+                        <button class="btn btn-primary" onclick="editarTR('${tr.id}')">
+                            ✏️ Editar
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function carregarPropostasParaParecer() {
+            const container = document.getElementById('propostasParaParecer');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            
+            // Filtrar propostas que precisam de parecer técnico
+            const propostasParaParecer = propostas.filter(p => !p.parecerTecnico);
+            
+            if (propostasParaParecer.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <p>Não há propostas pendentes de parecer técnico</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = propostasParaParecer.map(proposta => {
+                const data = new Date(proposta.data);
+                
+                return `
+                    <div class="tr-item">
+                        <div class="tr-title">Proposta: ${proposta.empresa}</div>
+                        <div class="tr-info">
+                            <span><strong>Processo:</strong> ${proposta.processo}</span>
+                            <span><strong>CNPJ:</strong> ${proposta.cnpj}</span>
+                            <span><strong>Data:</strong> ${data.toLocaleDateString('pt-BR')}</span>
+                            <span><strong>Valor:</strong> ${proposta.valor || 'Não informado'}</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="emitirParecer('${proposta.protocolo}')">
+                            📄 Emitir Parecer
+                        </button>
+                        <button class="btn btn-info" onclick="visualizarProposta('${proposta.protocolo}')">
+                            👁️ Ver Detalhes
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function visualizarTR(trId) {
+            const tr = meusTRs.find(t => t.id === trId);
+            if (tr) {
+                alert(`TR: ${tr.titulo}\n\nObjeto: ${tr.objeto}\n\nJustificativa: ${tr.justificativa}`);
+            }
+        }
+
+        function editarTR(trId) {
+            alert('Funcionalidade de edição será implementada em breve.');
+        }
+
+        function emitirParecer(protocolo) {
+            const parecer = prompt('Digite seu parecer técnico:');
+            if (parecer) {
+                // Atualizar proposta com parecer
+                const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+                const index = propostas.findIndex(p => p.protocolo === protocolo);
+                
+                if (index !== -1) {
+                    propostas[index].parecerTecnico = {
+                        parecer: parecer,
+                        emitidoPor: usuarioAtual.usuarioId,
+                        emitidoPorNome: usuarioAtual.nome,
+                        dataEmissao: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem('propostas', JSON.stringify(propostas));
+                    alert('Parecer técnico emitido com sucesso!');
+                    
+                    // Recarregar lista
+                    carregarPropostasParaParecer();
+                    carregarDados();
+                }
+            }
+        }
+
+        function visualizarProposta(protocolo) {
+            alert(`Visualizar detalhes da proposta: ${protocolo}`);
+        }
+    </script>
+</body>
+</html>
+

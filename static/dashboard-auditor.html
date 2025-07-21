@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Auditoria do Sistema</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+        }
+
+        #infoUsuario {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .audit-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #34495e;
+            border-bottom-color: #34495e;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .audit-table th {
+            background: #34495e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .audit-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f3f5;
+            font-size: 14px;
+        }
+
+        .audit-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .log-entry {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #34495e;
+        }
+
+        .log-time {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        .log-action {
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 5px 0;
+        }
+
+        .log-details {
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .filter-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-item label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .filter-item select,
+        .filter-item input {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #34495e;
+            color: white;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-info {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .compliance-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .compliance-ok {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .compliance-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .compliance-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e0e0e0;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            background: #34495e;
+            border-radius: 50%;
+        }
+
+        .anomaly-alert {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .chart-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .mini-chart {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 10px;
+        }
+
+        .chart-bar {
+            width: 30px;
+            background: #34495e;
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .read-only-notice {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>🔍 Dashboard de Auditoria</h1>
+            <div id="infoUsuario"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="audit-notice">
+            <span style="font-size: 24px;">👁️</span>
+            <div>
+                <strong>Modo Auditoria:</strong> Você tem acesso somente leitura a todos os dados do sistema.
+                Todas as suas ações são registradas para fins de auditoria.
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-number" id="totalProcessosAudit">0</div>
+                <div class="stat-label">Total de Processos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-number" id="totalPropostasAudit">0</div>
+                <div class="stat-label">Total de Propostas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-number" id="valorTotalAudit">R$ 0</div>
+                <div class="stat-label">Valor Total Movimentado</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-number" id="anomaliasDetectadas">0</div>
+                <div class="stat-label">Anomalias Detectadas</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="tabs">
+                <button class="tab active" onclick="mostrarTab('visao-geral')">
+                    Visão Geral
+                </button>
+                <button class="tab" onclick="mostrarTab('processos-audit')">
+                    Processos
+                </button>
+                <button class="tab" onclick="mostrarTab('propostas-audit')">
+                    Propostas
+                </button>
+                <button class="tab" onclick="mostrarTab('logs')">
+                    Logs de Atividade
+                </button>
+                <button class="tab" onclick="mostrarTab('compliance')">
+                    Compliance
+                </button>
+                <button class="tab" onclick="mostrarTab('anomalias')">
+                    Anomalias
+                </button>
+            </div>
+
+            <!-- TAB: Visão Geral -->
+            <div class="tab-content active" id="tab-visao-geral">
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <h3 class="chart-title">📈 Processos por Mês</h3>
+                        <div class="mini-chart" id="chartProcessosMes"></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3 class="chart-title">📊 Propostas por Status</h3>
+                        <div class="mini-chart" id="chartPropostasStatus"></div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 30px; margin-bottom: 20px;">🕐 Linha do Tempo - Últimas Atividades</h3>
+                <div class="timeline" id="timeline">
+                    <!-- Timeline será preenchida dinamicamente -->
+                </div>
+            </div>
+
+            <!-- TAB: Processos -->
+            <div class="tab-content" id="tab-processos-audit">
+                <div class="read-only-notice">
+                    👁️ Visualização somente leitura - Todas as ações são registradas
+                </div>
+                
+                <div class="filter-container">
+                    <div class="filter-item">
+                        <label>Período</label>
+                        <select id="filtroPeriodoProcessos" onchange="filtrarProcessosAudit()">
+                            <option value="todos">Todos</option>
+                            <option value="30">Últimos 30 dias</option>
+                            <option value="90">Últimos 90 dias</option>
+                            <option value="365">Último ano</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>Status</label>
+                        <select id="filtroStatusProcessos" onchange="filtrarProcessosAudit()">
+                            <option value="todos">Todos</option>
+                            <option value="ativo">Ativos</option>
+                            <option value="encerrado">Encerrados</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>Criado por</label>
+                        <select id="filtroCriadoPor" onchange="filtrarProcessosAudit()">
+                            <option value="todos">Todos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <table class="audit-table" id="tabelaProcessosAudit">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Objeto</th>
+                            <th>Modalidade</th>
+                            <th>Prazo</th>
+                            <th>Status</th>
+                            <th>Propostas</th>
+                            <th>Criado por</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Será preenchido dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TAB: Propostas -->
+            <div class="tab-content" id="tab-propostas-audit">
+                <div class="read-only-notice">
+                    👁️ Visualização somente leitura - Todas as ações são registradas
+                </div>
+
+                <div class="filter-container">
+                    <div class="filter-item">
+                        <label>Processo</label>
+                        <select id="filtroProcessoProposta" onchange="filtrarPropostasAudit()">
+                            <option value="todos">Todos</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>Faixa de Valor</label>
+                        <select id="filtroValorProposta" onchange="filtrarPropostasAudit()">
+                            <option value="todos">Todos</option>
+                            <option value="0-50000">Até R$ 50.000</option>
+                            <option value="50000-200000">R$ 50.000 - R$ 200.000</option>
+                            <option value="200000-1000000">R$ 200.000 - R$ 1.000.000</option>
+                            <option value="1000000+">Acima de R$ 1.000.000</option>
+                        </select>
+                    </div>
+                </div>
+
+                <table class="audit-table" id="tabelaPropostasAudit">
+                    <thead>
+                        <tr>
+                            <th>Protocolo</th>
+                            <th>Processo</th>
+                            <th>Empresa</th>
+                            <th>CNPJ</th>
+                            <th>Data</th>
+                            <th>Valor</th>
+                            <th>Compliance</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Será preenchido dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TAB: Logs -->
+            <div class="tab-content" id="tab-logs">
+                <div class="filter-container">
+                    <div class="filter-item">
+                        <label>Tipo de Ação</label>
+                        <select id="filtroTipoLog" onchange="filtrarLogs()">
+                            <option value="todos">Todas</option>
+                            <option value="login">Login/Logout</option>
+                            <option value="criar_processo">Criação de Processo</option>
+                            <option value="editar_processo">Edição de Processo</option>
+                            <option value="visualizar_proposta">Visualização de Proposta</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>Usuário</label>
+                        <select id="filtroUsuarioLog" onchange="filtrarLogs()">
+                            <option value="todos">Todos</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>Data</label>
+                        <input type="date" id="filtroDataLog" onchange="filtrarLogs()">
+                    </div>
+                </div>
+
+                <div id="listaLogs">
+                    <!-- Logs serão carregados aqui -->
+                </div>
+            </div>
+
+            <!-- TAB: Compliance -->
+            <div class="tab-content" id="tab-compliance">
+                <h3 style="margin-bottom: 20px;">✅ Verificações de Compliance</h3>
+                
+                <div id="checklistCompliance">
+                    <!-- Checklist será carregado dinamicamente -->
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-primary" onclick="gerarRelatorioCompliance()">
+                        📄 Gerar Relatório de Compliance
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB: Anomalias -->
+            <div class="tab-content" id="tab-anomalias">
+                <div id="listaAnomalias">
+                    <!-- Anomalias serão carregadas aqui -->
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h3 class="section-title">🎯 Ações de Auditoria</h3>
+            </div>
+            
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="exportarRelatorioAuditoria()">
+                    📊 Exportar Relatório Completo
+                </button>
+                <button class="btn btn-success" onclick="exportarLogs()">
+                    📋 Exportar Logs
+                </button>
+                <button class="btn btn-info" onclick="gerarRelatorioAnomalias()">
+                    ⚠️ Relatório de Anomalias
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        let usuarioAtual = null;
+        let processos = [];
+        let propostas = [];
+        let usuarios = [];
+        let logs = [];
+
+        // Verificar autenticação
+        window.addEventListener('DOMContentLoaded', function() {
+            usuarioAtual = Auth.verificarAutenticacao('auditor');
+            
+            if (usuarioAtual) {
+                Auth.exibirInfoUsuario();
+                
+                // Registrar acesso de auditoria
+                Auth.registrarLog(usuarioAtual.usuarioId, 'acesso_auditoria', 'Dashboard de auditoria');
+                
+                carregarDados();
+            }
+        });
+
+        // Carregar dados
+        function carregarDados() {
+            // Carregar todos os dados (auditor vê tudo)
+            processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            usuarios = JSON.parse(localStorage.getItem('usuarios_sistema') || '[]');
+            logs = JSON.parse(localStorage.getItem('logs_atividade') || '[]');
+            
+            // Atualizar estatísticas
+            atualizarEstatisticas();
+            
+            // Carregar filtros
+            carregarFiltros();
+            
+            // Carregar conteúdo inicial
+            carregarVisaoGeral();
+            carregarProcessosAudit();
+            carregarPropostasAudit();
+            carregarLogs();
+            carregarCompliance();
+            carregarAnomalias();
+        }
+
+        // Atualizar estatísticas
+        function atualizarEstatisticas() {
+            // Total de processos
+            document.getElementById('totalProcessosAudit').textContent = processos.length;
+            
+            // Total de propostas
+            document.getElementById('totalPropostasAudit').textContent = propostas.length;
+            
+            // Valor total
+            let valorTotal = 0;
+            propostas.forEach(p => {
+                if (p.valor) {
+                    let valorStr = p.valor.toString().replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
+                    valorTotal += parseFloat(valorStr) || 0;
+                }
+            });
+            document.getElementById('valorTotalAudit').textContent = valorTotal.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+            
+            // Detectar anomalias
+            const anomalias = detectarAnomalias();
+            document.getElementById('anomaliasDetectadas').textContent = anomalias.length;
+        }
+
+        // Mostrar tab
+        function mostrarTab(tabName) {
+            // Esconder todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Mostrar tab selecionada
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Registrar visualização
+            Auth.registrarLog(usuarioAtual.usuarioId, 'visualizar_tab_auditoria', tabName);
+        }
+
+        // Carregar visão geral
+        function carregarVisaoGeral() {
+            // Gráfico de processos por mês
+            const chartProcessos = document.getElementById('chartProcessosMes');
+            chartProcessos.innerHTML = '';
+            
+            // Agrupar processos por mês
+            const processosPorMes = {};
+            const hoje = new Date();
+            
+            for (let i = 5; i >= 0; i--) {
+                const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+                const mes = data.toLocaleDateString('pt-BR', { month: 'short' });
+                processosPorMes[mes] = 0;
+            }
+            
+            processos.forEach(p => {
+                const data = new Date(p.dataCadastro);
+                const mes = data.toLocaleDateString('pt-BR', { month: 'short' });
+                if (processosPorMes.hasOwnProperty(mes)) {
+                    processosPorMes[mes]++;
+                }
+            });
+            
+            const maxProcessos = Math.max(...Object.values(processosPorMes), 1);
+            
+            Object.entries(processosPorMes).forEach(([mes, count]) => {
+                const altura = (count / maxProcessos) * 150;
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = altura + 'px';
+                bar.innerHTML = `
+                    <div style="position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 12px;">${count}</div>
+                    <div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 11px;">${mes}</div>
+                `;
+                chartProcessos.appendChild(bar);
+            });
+            
+            // Timeline
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+            
+            // Últimas 10 atividades
+            const ultimasAtividades = logs
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .slice(0, 10);
+            
+            ultimasAtividades.forEach(log => {
+                const usuario = usuarios.find(u => u.id === log.usuarioId);
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                item.innerHTML = `
+                    <div class="log-entry">
+                        <div class="log-time">${new Date(log.timestamp).toLocaleString('pt-BR')}</div>
+                        <div class="log-action">${formatarAcao(log.acao)}</div>
+                        <div class="log-details">
+                            Usuário: ${usuario ? usuario.nome : 'Desconhecido'} | 
+                            Detalhes: ${log.detalhes}
+                        </div>
+                    </div>
+                `;
+                timeline.appendChild(item);
+            });
+        }
+
+        // Carregar processos para auditoria
+        function carregarProcessosAudit() {
+            const tbody = document.querySelector('#tabelaProcessosAudit tbody');
+            tbody.innerHTML = '';
+            
+            processos.forEach(processo => {
+                const usuario = usuarios.find(u => u.id === processo.criadoPor);
+                const propostasCount = propostas.filter(p => p.processo === processo.numero).length;
+                const status = new Date(processo.prazo) > new Date() ? 'ativo' : 'encerrado';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${processo.numero}</td>
+                    <td>${processo.objeto}</td>
+                    <td>${processo.modalidade}</td>
+                    <td>${new Date(processo.prazo).toLocaleDateString('pt-BR')}</td>
+                    <td>
+                        <span class="compliance-indicator ${status === 'ativo' ? 'compliance-ok' : 'compliance-warning'}">
+                            ${status === 'ativo' ? 'Ativo' : 'Encerrado'}
+                        </span>
+                    </td>
+                    <td>${propostasCount}</td>
+                    <td>${usuario ? usuario.nome : 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-info" style="padding: 5px 10px; font-size: 12px;" 
+                                onclick="verDetalhesProcessoAudit('${processo.numero}')">
+                            Ver Detalhes
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Carregar propostas para auditoria
+        function carregarPropostasAudit() {
+            const tbody = document.querySelector('#tabelaPropostasAudit tbody');
+            tbody.innerHTML = '';
+            
+            propostas.forEach(proposta => {
+                const compliance = verificarComplianceProposta(proposta);
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${proposta.protocolo}</td>
+                    <td>${proposta.processo}</td>
+                    <td>${proposta.empresa}</td>
+                    <td>${proposta.cnpj}</td>
+                    <td>${new Date(proposta.data).toLocaleDateString('pt-BR')}</td>
+                    <td>${proposta.valor || 'R$ 0,00'}</td>
+                    <td>
+                        <span class="compliance-indicator ${compliance.class}">
+                            ${compliance.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-info" style="padding: 5px 10px; font-size: 12px;" 
+                                onclick="verDetalhesPropostaAudit('${proposta.protocolo}')">
+                            Auditar
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Carregar logs
+        function carregarLogs() {
+            const container = document.getElementById('listaLogs');
+            container.innerHTML = '';
+            
+            // Ordenar logs por data
+            const logsOrdenados = logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            logsOrdenados.slice(0, 100).forEach(log => {
+                const usuario = usuarios.find(u => u.id === log.usuarioId);
+                
+                const logDiv = document.createElement('div');
+                logDiv.className = 'log-entry';
+                logDiv.innerHTML = `
+                    <div class="log-time">${new Date(log.timestamp).toLocaleString('pt-BR')}</div>
+                    <div class="log-action">${formatarAcao(log.acao)}</div>
+                    <div class="log-details">
+                        <strong>Usuário:</strong> ${usuario ? usuario.nome : 'Desconhecido'}<br>
+                        <strong>Detalhes:</strong> ${log.detalhes}<br>
+                        <strong>Página:</strong> ${log.pagina || 'N/A'}
+                    </div>
+                `;
+                container.appendChild(logDiv);
+            });
+        }
+
+        // Carregar compliance
+        function carregarCompliance() {
+            const container = document.getElementById('checklistCompliance');
+            
+            const checks = [
+                {
+                    titulo: 'Processos com documentação completa',
+                    verificar: () => {
+                        const completos = processos.filter(p => p.objeto && p.modalidade && p.prazo).length;
+                        return {
+                            status: completos === processos.length,
+                            texto: `${completos}/${processos.length} processos`
+                        };
+                    }
+                },
+                {
+                    titulo: 'Propostas com valores dentro do esperado',
+                    verificar: () => {
+                        const anomalas = detectarPropostasAnomalas().length;
+                        return {
+                            status: anomalas === 0,
+                            texto: anomalas > 0 ? `${anomalas} propostas com valores suspeitos` : 'Todas OK'
+                        };
+                    }
+                },
+                {
+                    titulo: 'Usuários ativos com credenciais válidas',
+                    verificar: () => {
+                        const ativos = usuarios.filter(u => u.ativo !== false).length;
+                        return {
+                            status: true,
+                            texto: `${ativos} usuários ativos`
+                        };
+                    }
+                },
+                {
+                    titulo: 'Processos encerrados com propostas',
+                    verificar: () => {
+                        const encerrados = processos.filter(p => new Date(p.prazo) < new Date());
+                        const semPropostas = encerrados.filter(p => 
+                            propostas.filter(prop => prop.processo === p.numero).length === 0
+                        ).length;
+                        return {
+                            status: semPropostas === 0,
+                            texto: semPropostas > 0 ? `${semPropostas} processos sem propostas` : 'Todos têm propostas'
+                        };
+                    }
+                }
+            ];
+            
+            container.innerHTML = checks.map(check => {
+                const resultado = check.verificar();
+                return `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
+                        <div>
+                            <strong>${check.titulo}</strong><br>
+                            <small>${resultado.texto}</small>
+                        </div>
+                        <span class="compliance-indicator ${resultado.status ? 'compliance-ok' : 'compliance-warning'}">
+                            ${resultado.status ? '✓ OK' : '⚠️ Atenção'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Detectar anomalias
+        function detectarAnomalias() {
+            const anomalias = [];
+            
+            // 1. Propostas com valores muito discrepantes
+            const propostasAnomalas = detectarPropostasAnomalas();
+            propostasAnomalas.forEach(p => {
+                anomalias.push({
+                    tipo: 'valor_discrepante',
+                    severidade: 'alta',
+                    descricao: `Proposta ${p.protocolo} com valor ${p.percentual}% ${p.tipo} da média`,
+                    data: p.data
+                });
+            });
+            
+            // 2. Múltiplos logins falhos
+            const loginsFalhos = logs.filter(l => l.acao === 'login' && l.detalhes === 'falha');
+            const usuariosComFalhas = {};
+            loginsFalhos.forEach(log => {
+                if (!usuariosComFalhas[log.usuarioId]) {
+                    usuariosComFalhas[log.usuarioId] = 0;
+                }
+                usuariosComFalhas[log.usuarioId]++;
+            });
+            
+            Object.entries(usuariosComFalhas).forEach(([userId, count]) => {
+                if (count > 5) {
+                    anomalias.push({
+                        tipo: 'logins_falhos',
+                        severidade: 'media',
+                        descricao: `${count} tentativas de login falhas para usuário ${userId}`,
+                        data: new Date()
+                    });
+                }
+            });
+            
+            // 3. Processos sem propostas próximos ao vencimento
+            const agora = new Date();
+            const tresDias = new Date();
+            tresDias.setDate(tresDias.getDate() + 3);
+            
+            processos.forEach(p => {
+                const prazo = new Date(p.prazo);
+                const propostasProcesso = propostas.filter(prop => prop.processo === p.numero);
+                
+                if (prazo > agora && prazo < tresDias && propostasProcesso.length === 0) {
+                    anomalias.push({
+                        tipo: 'processo_sem_propostas',
+                        severidade: 'media',
+                        descricao: `Processo ${p.numero} vence em breve sem propostas`,
+                        data: new Date()
+                    });
+                }
+            });
+            
+            return anomalias;
+        }
+
+        // Detectar propostas anômalas
+        function detectarPropostasAnomalas() {
+            const anomalas = [];
+            
+            // Agrupar propostas por processo
+            const propostasPorProcesso = {};
+            propostas.forEach(p => {
+                if (!propostasPorProcesso[p.processo]) {
+                    propostasPorProcesso[p.processo] = [];
+                }
+                propostasPorProcesso[p.processo].push(p);
+            });
+            
+            // Analisar cada grupo
+            Object.entries(propostasPorProcesso).forEach(([processo, props]) => {
+                if (props.length < 2) return;
+                
+                const valores = props.map(p => {
+                    if (p.valor) {
+                        let valorStr = p.valor.toString().replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
+                        return parseFloat(valorStr) || 0;
+                    }
+                    return 0;
+                }).filter(v => v > 0);
+                
+                if (valores.length < 2) return;
+                
+                const media = valores.reduce((a, b) => a + b, 0) / valores.length;
+                
+                props.forEach(proposta => {
+                    let valor = 0;
+                    if (proposta.valor) {
+                        let valorStr = proposta.valor.toString().replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
+                        valor = parseFloat(valorStr) || 0;
+                    }
+                    
+                    if (valor > 0) {
+                        const percentual = Math.abs((valor - media) / media * 100);
+                        
+                        if (percentual > 50) {
+                            anomalas.push({
+                                ...proposta,
+                                percentual: percentual.toFixed(2),
+                                tipo: valor > media ? 'acima' : 'abaixo'
+                            });
+                        }
+                    }
+                });
+            });
+            
+            return anomalas;
+        }
+
+        // Carregar anomalias
+        function carregarAnomalias() {
+            const container = document.getElementById('listaAnomalias');
+            const anomalias = detectarAnomalias();
+            
+            if (anomalias.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #27ae60;">
+                        <div style="font-size: 48px;">✅</div>
+                        <h3>Nenhuma anomalia detectada</h3>
+                        <p>Todos os indicadores estão dentro dos parâmetros normais.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = anomalias.map(anomalia => {
+                const severidadeClass = {
+                    'alta': 'compliance-error',
+                    'media': 'compliance-warning',
+                    'baixa': 'compliance-ok'
+                }[anomalia.severidade];
+                
+                return `
+                    <div class="anomaly-alert">
+                        <span style="font-size: 24px;">⚠️</span>
+                        <div style="flex: 1;">
+                            <strong>${formatarTipoAnomalia(anomalia.tipo)}</strong>
+                            <span class="compliance-indicator ${severidadeClass}" style="margin-left: 10px;">
+                                ${anomalia.severidade.toUpperCase()}
+                            </span>
+                            <p style="margin: 5px 0 0 0;">${anomalia.descricao}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Carregar filtros
+        function carregarFiltros() {
+            // Filtro de criadores
+            const filtroCriadoPor = document.getElementById('filtroCriadoPor');
+            const criadores = [...new Set(processos.map(p => p.criadoPor))];
+            
+            criadores.forEach(criadorId => {
+                const usuario = usuarios.find(u => u.id === criadorId);
+                if (usuario) {
+                    const option = document.createElement('option');
+                    option.value = criadorId;
+                    option.textContent = usuario.nome;
+                    filtroCriadoPor.appendChild(option);
+                }
+            });
+            
+            // Filtro de processos
+            const filtroProcesso = document.getElementById('filtroProcessoProposta');
+            processos.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.numero;
+                option.textContent = p.numero;
+                filtroProcesso.appendChild(option);
+            });
+            
+            // Filtro de usuários nos logs
+            const filtroUsuarioLog = document.getElementById('filtroUsuarioLog');
+            usuarios.forEach(u => {
+                const option = document.createElement('option');
+                option.value = u.id;
+                option.textContent = u.nome;
+                filtroUsuarioLog.appendChild(option);
+            });
+        }
+
+        // Ver detalhes do processo (auditoria)
+        function verDetalhesProcessoAudit(numeroProcesso) {
+            Auth.registrarLog(usuarioAtual.usuarioId, 'auditar_processo', numeroProcesso);
+            
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            if (!processo) return;
+            
+            alert(`
+                AUDITORIA DO PROCESSO
+                
+                Número: ${processo.numero}
+                Objeto: ${processo.objeto}
+                Modalidade: ${processo.modalidade}
+                Prazo: ${new Date(processo.prazo).toLocaleString('pt-BR')}
+                Criado por: ${obterNomeUsuario(processo.criadoPor)}
+                Data de criação: ${new Date(processo.dataCadastro).toLocaleString('pt-BR')}
+                
+                Esta visualização foi registrada para fins de auditoria.
+            `);
+        }
+
+        // Ver detalhes da proposta (auditoria)
+        function verDetalhesPropostaAudit(protocolo) {
+            Auth.registrarLog(usuarioAtual.usuarioId, 'auditar_proposta', protocolo);
+            
+            const proposta = propostas.find(p => p.protocolo === protocolo);
+            if (!proposta) return;
+            
+            // Abrir em nova janela com marca d'água de auditoria
+            const janela = window.open('', '_blank');
+            janela.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Auditoria - Proposta ${protocolo}</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 40px;
+                            position: relative;
+                        }
+                        .watermark {
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%) rotate(-45deg);
+                            font-size: 120px;
+                            color: rgba(255, 0, 0, 0.1);
+                            z-index: -1;
+                            font-weight: bold;
+                        }
+                        .audit-header {
+                            background: #fee;
+                            border: 2px solid #c33;
+                            padding: 15px;
+                            margin-bottom: 20px;
+                            border-radius: 5px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="watermark">AUDITORIA</div>
+                    <div class="audit-header">
+                        <strong>⚠️ DOCUMENTO SOB AUDITORIA</strong><br>
+                        Auditor: ${usuarioAtual.nome}<br>
+                        Data/Hora: ${new Date().toLocaleString('pt-BR')}<br>
+                        Esta visualização foi registrada.
+                    </div>
+                    
+                    <h1>Proposta ${protocolo}</h1>
+                    <pre>${JSON.stringify(proposta, null, 2)}</pre>
+                </body>
+                </html>
+            `);
+        }
+
+        // Verificar compliance da proposta
+        function verificarComplianceProposta(proposta) {
+            // Verificações básicas
+            if (!proposta.dados || !proposta.dados.dados) {
+                return { status: 'Incompleta', class: 'compliance-error' };
+            }
+            
+            const dados = proposta.dados.dados;
+            if (!dados.cnpj || !dados.razaoSocial || !dados.email) {
+                return { status: 'Dados faltando', class: 'compliance-warning' };
+            }
+            
+            // Verificar valor
+            if (proposta.valor) {
+                const propostasProcesso = propostas.filter(p => p.processo === proposta.processo);
+                if (propostasProcesso.length > 1) {
+                    const valores = propostasProcesso.map(p => {
+                        if (p.valor) {
+                            let valorStr = p.valor.toString().replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
+                            return parseFloat(valorStr) || 0;
+                        }
+                        return 0;
+                    }).filter(v => v > 0);
+                    
+                    if (valores.length > 0) {
+                        const media = valores.reduce((a, b) => a + b, 0) / valores.length;
+                        let valorProposta = proposta.valor.toString().replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
+                        valorProposta = parseFloat(valorProposta) || 0;
+                        
+                        const percentual = Math.abs((valorProposta - media) / media * 100);
+                        if (percentual > 50) {
+                            return { status: 'Valor suspeito', class: 'compliance-warning' };
+                        }
+                    }
+                }
+            }
+            
+            return { status: 'OK', class: 'compliance-ok' };
+        }
+
+        // Funções auxiliares
+        function formatarAcao(acao) {
+            const acoes = {
+                'login': '🔐 Login no sistema',
+                'logout': '🚪 Logout do sistema',
+                'criar_processo': '➕ Criação de processo',
+                'editar_processo': '✏️ Edição de processo',
+                'visualizar_proposta': '👁️ Visualização de proposta',
+                'acesso_auditoria': '🔍 Acesso à auditoria',
+                'auditar_processo': '🔍 Auditoria de processo',
+                'auditar_proposta': '🔍 Auditoria de proposta'
+            };
+            
+            return acoes[acao] || acao;
+        }
+
+        function formatarTipoAnomalia(tipo) {
+            const tipos = {
+                'valor_discrepante': '💰 Valor Discrepante',
+                'logins_falhos': '🔐 Tentativas de Login Falhas',
+                'processo_sem_propostas': '📋 Processo sem Propostas'
+            };
+            
+            return tipos[tipo] || tipo;
+        }
+
+        function obterNomeUsuario(userId) {
+            const usuario = usuarios.find(u => u.id === userId);
+            return usuario ? usuario.nome : 'Desconhecido';
+        }
+
+        // Filtros
+        function filtrarProcessosAudit() {
+            // Implementar filtros
+            carregarProcessosAudit();
+        }
+
+        function filtrarPropostasAudit() {
+            // Implementar filtros
+            carregarPropostasAudit();
+        }
+
+        function filtrarLogs() {
+            // Implementar filtros
+            carregarLogs();
+        }
+
+        // Exportações
+        function exportarRelatorioAuditoria() {
+            Auth.registrarLog(usuarioAtual.usuarioId, 'exportar_relatorio_auditoria', 'completo');
+            
+            let csv = 'RELATÓRIO DE AUDITORIA\n';
+            csv += `Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
+            csv += `Auditor: ${usuarioAtual.nome}\n\n`;
+            
+            csv += 'RESUMO\n';
+            csv += `Total de Processos: ${processos.length}\n`;
+            csv += `Total de Propostas: ${propostas.length}\n`;
+            csv += `Anomalias Detectadas: ${detectarAnomalias().length}\n\n`;
+            
+            csv += 'PROCESSOS\n';
+            csv += 'Número,Objeto,Modalidade,Status,Propostas,Criado por\n';
+            processos.forEach(p => {
+                const status = new Date(p.prazo) > new Date() ? 'Ativo' : 'Encerrado';
+                const propostasCount = propostas.filter(prop => prop.processo === p.numero).length;
+                const criador = obterNomeUsuario(p.criadoPor);
+                csv += `${p.numero},"${p.objeto}",${p.modalidade},${status},${propostasCount},${criador}\n`;
+            });
+            
+            // Download
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `relatorio_auditoria_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        }
+
+        function exportarLogs() {
+            Auth.registrarLog(usuarioAtual.usuarioId, 'exportar_logs', 'todos');
+            
+            let csv = 'LOGS DE ATIVIDADE\n';
+            csv += 'Data/Hora,Usuário,Ação,Detalhes,Página\n';
+            
+            logs.forEach(log => {
+                const usuario = obterNomeUsuario(log.usuarioId);
+                const data = new Date(log.timestamp).toLocaleString('pt-BR');
+                csv += `${data},${usuario},"${formatarAcao(log.acao)}","${log.detalhes}",${log.pagina || 'N/A'}\n`;
+            });
+            
+            // Download
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `logs_sistema_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        }
+
+        function gerarRelatorioCompliance() {
+            Auth.registrarLog(usuarioAtual.usuarioId, 'gerar_relatorio_compliance', 'completo');
+            alert('Relatório de compliance será gerado...');
+        }
+
+        function gerarRelatorioAnomalias() {
+            Auth.registrarLog(usuarioAtual.usuarioId, 'gerar_relatorio_anomalias', 'completo');
+            
+            const anomalias = detectarAnomalias();
+            
+            let csv = 'RELATÓRIO DE ANOMALIAS\n';
+            csv += `Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
+            csv += `Total de Anomalias: ${anomalias.length}\n\n`;
+            
+            csv += 'Tipo,Severidade,Descrição,Data\n';
+            anomalias.forEach(a => {
+                csv += `${formatarTipoAnomalia(a.tipo)},${a.severidade},"${a.descricao}",${new Date(a.data).toLocaleDateString('pt-BR')}\n`;
+            });
+            
+            // Download
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `anomalias_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        }
+    </script>
+</body>
+</html>

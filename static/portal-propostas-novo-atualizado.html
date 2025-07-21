@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Proposta - Sistema de Gestão de Propostas</title>
+    <script>
+        // Configuração da API
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000' 
+            : window.location.origin;
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .form-header h2 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .form-header p {
+            color: #6c757d;
+            font-size: 16px;
+        }
+
+        .form-steps {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0 20px;
+            color: #6c757d;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .step.active {
+            color: #667eea;
+        }
+
+        .step.completed {
+            color: #28a745;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .step.active .step-number {
+            background: #667eea;
+        }
+
+        .step.completed .step-number {
+            background: #28a745;
+        }
+
+        .form-content {
+            padding: 40px;
+        }
+
+        .form-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group.required label::after {
+            content: ' *';
+            color: #e74c3c;
+        }
+
+        .info-panel {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .info-panel h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .info-panel p {
+            color: #0d47a1;
+            margin: 5px 0;
+        }
+
+        .warning-panel {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .warning-panel h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .warning-panel p {
+            color: #856404;
+            margin: 5px 0;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .processo-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #28a745;
+        }
+
+        .processo-info h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .processo-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .processo-details span {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .processo-details strong {
+            color: #2c3e50;
+        }
+
+        .planilha-custos {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .planilha-custos h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .custo-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: end;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .custo-total {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .custo-total h4 {
+            margin-bottom: 10px;
+        }
+
+        .custo-total .valor {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .success-message h3 {
+            margin-bottom: 10px;
+        }
+
+        .protocolo-box {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 10px;
+            }
+            
+            .form-content {
+                padding: 20px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-steps {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .step {
+                margin: 5px 0;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .custo-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+    </style>
+    <script src="auth-atualizado.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto;">
+            <div>
+                <h1>📤 Enviar Proposta</h1>
+                <p>Participe do processo licitatório enviando sua proposta</p>
+            </div>
+            <div id="infoUsuario" style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 8px;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="form-container">
+            <div class="form-header">
+                <h2>📋 Formulário de Proposta</h2>
+                <p>Preencha todos os dados necessários para enviar sua proposta</p>
+            </div>
+
+            <div class="form-steps">
+                <div class="step active" id="step1">
+                    <div class="step-number">1</div>
+                    <span>Processo</span>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-number">2</div>
+                    <span>Dados da Empresa</span>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-number">3</div>
+                    <span>Proposta Técnica</span>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-number">4</div>
+                    <span>Proposta Comercial</span>
+                </div>
+                <div class="step" id="step5">
+                    <div class="step-number">5</div>
+                    <span>Confirmação</span>
+                </div>
+            </div>
+
+            <div class="form-content">
+                <!-- Etapa 1: Seleção do Processo -->
+                <div class="form-section active" id="section1">
+                    <h3 class="section-title">🔍 Selecionar Processo</h3>
+                    
+                    <div class="info-panel">
+                        <h4>Processos Disponíveis</h4>
+                        <p>Selecione o processo licitatório para o qual deseja enviar sua proposta.</p>
+                    </div>
+
+                    <div class="form-group required">
+                        <label for="processoSelect">Processo Licitatório</label>
+                        <select id="processoSelect" required onchange="carregarDadosProcesso()">
+                            <option value="">Selecione um processo...</option>
+                        </select>
+                    </div>
+
+                    <div id="processoInfo" style="display: none;">
+                        <!-- Informações do processo serão carregadas aqui -->
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="window.history.back()">
+                            ← Voltar
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="proximaEtapa(2)" id="btnProximo1" disabled>
+                            Próximo →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Etapa 2: Dados da Empresa -->
+                <div class="form-section" id="section2">
+                    <h3 class="section-title">🏢 Dados da Empresa</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group required">
+                            <label for="razaoSocial">Razão Social</label>
+                            <input type="text" id="razaoSocial" required>
+                        </div>
+                        <div class="form-group required">
+                            <label for="cnpj">CNPJ</label>
+                            <input type="text" id="cnpj" required placeholder="00.000.000/0000-00">
+                        </div>
+                        <div class="form-group required">
+                            <label for="email">E-mail</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group required">
+                            <label for="telefone">Telefone</label>
+                            <input type="tel" id="telefone" required placeholder="(00) 0000-0000">
+                        </div>
+                    </div>
+
+                    <div class="form-group required">
+                        <label for="endereco">Endereço Completo</label>
+                        <textarea id="endereco" required placeholder="Rua, número, bairro, cidade, estado, CEP"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="etapaAnterior(1)">
+                            ← Anterior
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="proximaEtapa(3)">
+                            Próximo →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Etapa 3: Proposta Técnica -->
+                <div class="form-section" id="section3">
+                    <h3 class="section-title">🔧 Proposta Técnica</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group required">
+                            <label for="responsavelTecnico">Responsável Técnico</label>
+                            <input type="text" id="responsavelTecnico" required>
+                        </div>
+                        <div class="form-group required">
+                            <label for="crea">CREA/CAU</label>
+                            <input type="text" id="crea" required placeholder="000000/UF">
+                        </div>
+                        <div class="form-group required">
+                            <label for="prazoExecucao">Prazo de Execução</label>
+                            <input type="text" id="prazoExecucao" required placeholder="Ex: 180 dias">
+                        </div>
+                    </div>
+
+                    <div class="form-group required">
+                        <label for="metodologia">Metodologia de Execução</label>
+                        <textarea id="metodologia" required placeholder="Descreva detalhadamente a metodologia que será utilizada..."></textarea>
+                    </div>
+
+                    <div class="form-group required">
+                        <label for="especificacoesTecnicas">Especificações Técnicas</label>
+                        <textarea id="especificacoesTecnicas" required placeholder="Detalhe as especificações técnicas da sua proposta..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="etapaAnterior(2)">
+                            ← Anterior
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="proximaEtapa(4)">
+                            Próximo →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Etapa 4: Proposta Comercial -->
+                <div class="form-section" id="section4">
+                    <h3 class="section-title">💰 Proposta Comercial</h3>
+                    
+                    <div class="warning-panel">
+                        <h4>⚠️ Atenção</h4>
+                        <p>Os valores informados devem ser precisos e incluir todos os custos necessários para execução do objeto.</p>
+                    </div>
+
+                    <div class="planilha-custos">
+                        <h4>📊 Planilha de Custos</h4>
+                        
+                        <div id="itensCusto">
+                            <div class="custo-item">
+                                <div class="form-group">
+                                    <label>Descrição do Item</label>
+                                    <input type="text" placeholder="Ex: Mão de obra especializada" onchange="calcularTotal()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Quantidade</label>
+                                    <input type="number" placeholder="1" onchange="calcularTotal()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Valor Unitário (R$)</label>
+                                    <input type="number" step="0.01" placeholder="0,00" onchange="calcularTotal()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Subtotal (R$)</label>
+                                    <input type="text" readonly style="background: #f8f9fa;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-outline" onclick="adicionarItemCusto()">
+                            ➕ Adicionar Item
+                        </button>
+
+                        <div class="custo-total">
+                            <h4>Valor Total da Proposta</h4>
+                            <div class="valor" id="valorTotalProposta">R$ 0,00</div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group required">
+                            <label for="validadeProposta">Validade da Proposta</label>
+                            <select id="validadeProposta" required>
+                                <option value="">Selecione...</option>
+                                <option value="30">30 dias</option>
+                                <option value="60">60 dias</option>
+                                <option value="90">90 dias</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="condicoesPagamento">Condições de Pagamento</label>
+                            <input type="text" id="condicoesPagamento" placeholder="Ex: 30 dias após medição">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="etapaAnterior(3)">
+                            ← Anterior
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="proximaEtapa(5)">
+                            Próximo →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Etapa 5: Confirmação -->
+                <div class="form-section" id="section5">
+                    <h3 class="section-title">✅ Confirmação e Envio</h3>
+                    
+                    <div class="info-panel">
+                        <h4>Revisão da Proposta</h4>
+                        <p>Revise todos os dados antes de enviar. Após o envio, não será possível fazer alterações.</p>
+                    </div>
+
+                    <div id="resumoProposta">
+                        <!-- Resumo será gerado dinamicamente -->
+                    </div>
+
+                    <div class="warning-panel">
+                        <h4>⚠️ Declaração de Responsabilidade</h4>
+                        <p>Ao enviar esta proposta, declaro que:</p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>Todas as informações são verdadeiras</li>
+                            <li>A empresa está habilitada para executar o objeto</li>
+                            <li>Os valores apresentados são finais e irrevogáveis</li>
+                            <li>Aceito os termos do edital</li>
+                        </ul>
+                        <label style="margin-top: 15px; display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="aceiteTermos" required>
+                            <span>Li e aceito todos os termos acima</span>
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="etapaAnterior(4)">
+                            ← Anterior
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="enviarProposta()" id="btnEnviar">
+                            📤 Enviar Proposta
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Confirmação de Envio -->
+                <div class="form-section" id="sectionSucesso" style="display: none;">
+                    <div class="success-message">
+                        <h3>🎉 Proposta Enviada com Sucesso!</h3>
+                        <p>Sua proposta foi recebida e está sendo processada.</p>
+                        
+                        <div class="protocolo-box" id="protocoloGerado">
+                            <!-- Protocolo será gerado aqui -->
+                        </div>
+                        
+                        <p style="margin-top: 15px;">
+                            Guarde este número de protocolo para acompanhar o status da sua proposta.
+                        </p>
+                        
+                        <div style="margin-top: 30px;">
+                            <button class="btn btn-primary" onclick="window.location.href='dashboard-fornecedor-atualizado.html'">
+                                🏠 Voltar ao Dashboard
+                            </button>
+                            <button class="btn btn-outline" onclick="novaProposta()">
+                                📝 Enviar Nova Proposta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let usuarioAtual = null;
+        let processosDisponiveis = [];
+        let processoSelecionado = null;
+        let etapaAtual = 1;
+
+        window.addEventListener('DOMContentLoaded', function() {
+            usuarioAtual = Auth.verificarAutenticacao(['fornecedor']);
+            if (usuarioAtual) {
+                Auth.exibirInfoUsuario();
+                carregarProcessosDisponiveis();
+                preencherDadosEmpresa();
+                
+                // Verificar se há processo pré-selecionado na URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const processoParam = urlParams.get('processo');
+                if (processoParam) {
+                    document.getElementById('processoSelect').value = processoParam;
+                    carregarDadosProcesso();
+                }
+            }
+        });
+
+        async function carregarProcessosDisponiveis() {
+            try {
+                const response = await fetch(`${API_URL}/api/processos/ativos`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        processosDisponiveis = data.processos;
+                    }
+                } else {
+                    throw new Error('API não disponível');
+                }
+            } catch (error) {
+                console.warn('Usando dados locais para processos');
+                const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+                const agora = new Date();
+                processosDisponiveis = processos.filter(p => new Date(p.prazo) > agora);
+            }
+
+            // Preencher select de processos
+            const select = document.getElementById('processoSelect');
+            select.innerHTML = '<option value="">Selecione um processo...</option>';
+            
+            processosDisponiveis.forEach(processo => {
+                const option = document.createElement('option');
+                option.value = processo.numero;
+                option.textContent = `${processo.numero} - ${processo.objeto}`;
+                select.appendChild(option);
+            });
+        }
+
+        function carregarDadosProcesso() {
+            const numeroProcesso = document.getElementById('processoSelect').value;
+            if (!numeroProcesso) {
+                document.getElementById('processoInfo').style.display = 'none';
+                document.getElementById('btnProximo1').disabled = true;
+                return;
+            }
+
+            processoSelecionado = processosDisponiveis.find(p => p.numero === numeroProcesso);
+            if (!processoSelecionado) return;
+
+            const prazo = new Date(processoSelecionado.prazo);
+            const diasRestantes = Math.ceil((prazo - new Date()) / (1000 * 60 * 60 * 24));
+
+            document.getElementById('processoInfo').innerHTML = `
+                <div class="processo-info">
+                    <h3>📋 ${processoSelecionado.objeto}</h3>
+                    <div class="processo-details">
+                        <span><strong>Número:</strong> ${processoSelecionado.numero}</span>
+                        <span><strong>Modalidade:</strong> ${processoSelecionado.modalidade}</span>
+                        <span><strong>Prazo:</strong> ${prazo.toLocaleDateString('pt-BR')} às ${prazo.toLocaleTimeString('pt-BR')}</span>
+                        <span><strong>Dias restantes:</strong> ${diasRestantes} dias</span>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('processoInfo').style.display = 'block';
+            document.getElementById('btnProximo1').disabled = false;
+        }
+
+        function preencherDadosEmpresa() {
+            // Preencher com dados do usuário logado
+            if (usuarioAtual) {
+                document.getElementById('razaoSocial').value = usuarioAtual.nome || '';
+                document.getElementById('cnpj').value = usuarioAtual.cnpj || '';
+                document.getElementById('email').value = usuarioAtual.email || '';
+            }
+        }
+
+        function proximaEtapa(etapa) {
+            // Validar etapa atual
+            if (!validarEtapa(etapaAtual)) {
+                return;
+            }
+
+            // Ocultar etapa atual
+            document.getElementById(`section${etapaAtual}`).classList.remove('active');
+            document.getElementById(`step${etapaAtual}`).classList.remove('active');
+            document.getElementById(`step${etapaAtual}`).classList.add('completed');
+
+            // Mostrar próxima etapa
+            etapaAtual = etapa;
+            document.getElementById(`section${etapa}`).classList.add('active');
+            document.getElementById(`step${etapa}`).classList.add('active');
+
+            // Gerar resumo se for a última etapa
+            if (etapa === 5) {
+                gerarResumoProposta();
+            }
+        }
+
+        function etapaAnterior(etapa) {
+            // Ocultar etapa atual
+            document.getElementById(`section${etapaAtual}`).classList.remove('active');
+            document.getElementById(`step${etapaAtual}`).classList.remove('active');
+
+            // Mostrar etapa anterior
+            etapaAtual = etapa;
+            document.getElementById(`section${etapa}`).classList.add('active');
+            document.getElementById(`step${etapa}`).classList.remove('completed');
+            document.getElementById(`step${etapa}`).classList.add('active');
+        }
+
+        function validarEtapa(etapa) {
+            switch(etapa) {
+                case 1:
+                    return document.getElementById('processoSelect').value !== '';
+                case 2:
+                    return document.getElementById('razaoSocial').value &&
+                           document.getElementById('cnpj').value &&
+                           document.getElementById('email').value &&
+                           document.getElementById('telefone').value &&
+                           document.getElementById('endereco').value;
+                case 3:
+                    return document.getElementById('responsavelTecnico').value &&
+                           document.getElementById('crea').value &&
+                           document.getElementById('prazoExecucao').value &&
+                           document.getElementById('metodologia').value &&
+                           document.getElementById('especificacoesTecnicas').value;
+                case 4:
+                    return document.getElementById('validadeProposta').value &&
+                           parseFloat(document.getElementById('valorTotalProposta').textContent.replace(/[^\d,]/g, '').replace(',', '.')) > 0;
+                default:
+                    return true;
+            }
+        }
+
+        function adicionarItemCusto() {
+            const container = document.getElementById('itensCusto');
+            const novoItem = document.createElement('div');
+            novoItem.className = 'custo-item';
+            novoItem.innerHTML = `
+                <div class="form-group">
+                    <label>Descrição do Item</label>
+                    <input type="text" placeholder="Ex: Materiais de construção" onchange="calcularTotal()">
+                </div>
+                <div class="form-group">
+                    <label>Quantidade</label>
+                    <input type="number" placeholder="1" onchange="calcularTotal()">
+                </div>
+                <div class="form-group">
+                    <label>Valor Unitário (R$)</label>
+                    <input type="number" step="0.01" placeholder="0,00" onchange="calcularTotal()">
+                </div>
+                <div class="form-group">
+                    <label>Subtotal (R$)</label>
+                    <input type="text" readonly style="background: #f8f9fa;">
+                </div>
+            `;
+            container.appendChild(novoItem);
+        }
+
+        function calcularTotal() {
+            const itens = document.querySelectorAll('.custo-item');
+            let total = 0;
+
+            itens.forEach(item => {
+                const inputs = item.querySelectorAll('input');
+                const quantidade = parseFloat(inputs[1].value) || 0;
+                const valorUnitario = parseFloat(inputs[2].value) || 0;
+                const subtotal = quantidade * valorUnitario;
+                
+                inputs[3].value = subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                total += subtotal;
+            });
+
+            document.getElementById('valorTotalProposta').textContent = 
+                total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function gerarResumoProposta() {
+            const resumo = document.getElementById('resumoProposta');
+            const valorTotal = document.getElementById('valorTotalProposta').textContent;
+            
+            resumo.innerHTML = `
+                <div class="processo-info">
+                    <h3>📋 Resumo da Proposta</h3>
+                    <div class="processo-details">
+                        <span><strong>Processo:</strong> ${processoSelecionado.numero}</span>
+                        <span><strong>Empresa:</strong> ${document.getElementById('razaoSocial').value}</span>
+                        <span><strong>CNPJ:</strong> ${document.getElementById('cnpj').value}</span>
+                        <span><strong>Responsável Técnico:</strong> ${document.getElementById('responsavelTecnico').value}</span>
+                        <span><strong>Prazo de Execução:</strong> ${document.getElementById('prazoExecucao').value}</span>
+                        <span><strong>Valor Total:</strong> ${valorTotal}</span>
+                        <span><strong>Validade:</strong> ${document.getElementById('validadeProposta').value} dias</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function enviarProposta() {
+            if (!document.getElementById('aceiteTermos').checked) {
+                alert('Você deve aceitar os termos para enviar a proposta.');
+                return;
+            }
+
+            const btnEnviar = document.getElementById('btnEnviar');
+            btnEnviar.innerHTML = 'Enviando... <span class="loading"></span>';
+            btnEnviar.disabled = true;
+
+            // Coletar dados da proposta
+            const dadosProposta = {
+                processo: processoSelecionado.numero,
+                empresa: document.getElementById('razaoSocial').value,
+                cnpj: document.getElementById('cnpj').value,
+                email: document.getElementById('email').value,
+                telefone: document.getElementById('telefone').value,
+                endereco: document.getElementById('endereco').value,
+                responsavelTecnico: document.getElementById('responsavelTecnico').value,
+                crea: document.getElementById('crea').value,
+                prazoExecucao: document.getElementById('prazoExecucao').value,
+                metodologia: document.getElementById('metodologia').value,
+                especificacoesTecnicas: document.getElementById('especificacoesTecnicas').value,
+                valorTotal: document.getElementById('valorTotalProposta').textContent,
+                validadeProposta: document.getElementById('validadeProposta').value,
+                condicoesPagamento: document.getElementById('condicoesPagamento').value,
+                dados: {
+                    empresa: {
+                        razaoSocial: document.getElementById('razaoSocial').value,
+                        cnpj: document.getElementById('cnpj').value,
+                        email: document.getElementById('email').value,
+                        telefone: document.getElementById('telefone').value,
+                        endereco: document.getElementById('endereco').value
+                    },
+                    tecnica: {
+                        responsavelTecnico: document.getElementById('responsavelTecnico').value,
+                        crea: document.getElementById('crea').value,
+                        prazoExecucao: document.getElementById('prazoExecucao').value,
+                        metodologia: document.getElementById('metodologia').value,
+                        especificacoesTecnicas: document.getElementById('especificacoesTecnicas').value
+                    },
+                    comercial: {
+                        valorTotal: document.getElementById('valorTotalProposta').textContent,
+                        validadeProposta: document.getElementById('validadeProposta').value,
+                        condicoesPagamento: document.getElementById('condicoesPagamento').value
+                    }
+                }
+            };
+
+            try {
+                // Tentar enviar via API
+                const response = await fetch(`${API_URL}/api/propostas`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dadosProposta)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        mostrarSucesso(result.protocolo);
+                        return;
+                    }
+                }
+                throw new Error('Erro na API');
+            } catch (error) {
+                console.warn('Salvando localmente:', error);
+                salvarPropostaLocal(dadosProposta);
+            }
+        }
+
+        function salvarPropostaLocal(dadosProposta) {
+            // Gerar protocolo único
+            const protocolo = `PROP-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+            
+            // Adicionar dados de controle
+            dadosProposta.protocolo = protocolo;
+            dadosProposta.data = new Date().toISOString();
+            dadosProposta.status = 'enviada';
+            dadosProposta.valor = dadosProposta.valorTotal;
+
+            // Salvar no localStorage
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            propostas.push(dadosProposta);
+            localStorage.setItem('propostas', JSON.stringify(propostas));
+
+            // Criar notificação para compradores
+            Auth.Notificacoes.criar({
+                tipo: 'nova_proposta',
+                titulo: '📨 Nova Proposta Recebida',
+                mensagem: `${dadosProposta.empresa} enviou proposta para ${dadosProposta.processo}`,
+                destinatarioTipo: 'comprador',
+                remetente: dadosProposta.empresa,
+                metadata: {
+                    protocolo: protocolo,
+                    processo: dadosProposta.processo,
+                    valor: dadosProposta.valorTotal
+                }
+            });
+
+            mostrarSucesso(protocolo);
+        }
+
+        function mostrarSucesso(protocolo) {
+            // Ocultar formulário
+            document.getElementById('section5').classList.remove('active');
+            
+            // Mostrar confirmação
+            document.getElementById('protocoloGerado').textContent = `Protocolo: ${protocolo}`;
+            document.getElementById('sectionSucesso').style.display = 'block';
+        }
+
+        function novaProposta() {
+            window.location.reload();
+        }
+
+        // Inicializar com um item de custo
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                calcularTotal();
+            }, 100);
+        });
+    </script>
+</body>
+</html>
+
