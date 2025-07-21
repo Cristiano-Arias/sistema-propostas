@@ -2354,7 +2354,7 @@ def estatisticas_fornecedor(cnpj):
             valor_str = proposta.get('comercial', {}).get('valorTotal', '0,00')
             try:
                 # Remover formatação e converter para float
-                valor_limpo = valor_str.replace('R, '').replace('.', '').replace(',', '.').strip()
+                valor_limpo = valor_str.replace('R$ ', '').replace('.', '').replace(',', '.').strip()
                 valor_total += float(valor_limpo)
             except:
                 continue
