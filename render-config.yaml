@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: sistema-gestao-propostas
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements-atualizado.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT backend-atualizado:app
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+    healthCheckPath: /api/status
+
