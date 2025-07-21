@@ -3,7 +3,7 @@ services:
     name: sistema-gestao-propostas
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn backend_render_fix:app
+    startCommand: gunicorn backend_propostas:app
     plan: free
     envVars:
       - key: PYTHON_VERSION
