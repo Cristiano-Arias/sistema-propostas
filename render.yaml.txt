@@ -1,17 +1,13 @@
 services:
   - type: web
-    name: sistema-propostas
+    name: sistema-gestao-propostas
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn backend_propostas:app
+    plan: free
+    buildCommand: pip install -r requirements-atualizado.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT backend-atualizado:app
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.9.16
-      - key: EMAIL_USER
-        value: # deixe vazio por enquanto
-      - key: EMAIL_PASS
-        value: # deixe vazio por enquanto
-      - key: EMAIL_SERVER
-        value: smtp.gmail.com
-      - key: EMAIL_PORT
-        value: 587
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+    healthCheckPath: /api/status
