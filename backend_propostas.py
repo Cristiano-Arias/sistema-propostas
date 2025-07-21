@@ -134,21 +134,8 @@ DADOS_SISTEMA = {
 
 @app.route('/')
 def index():
-    """Página inicial da API"""
-    return jsonify({
-        "sistema": "Sistema de Gestão de Propostas",
-        "versao": "3.0",
-        "status": "online",
-        "timestamp": datetime.now().isoformat(),
-        "endpoints": {
-            "status": "/api/status",
-            "processos": "/api/processos",
-            "propostas": "/api/propostas",
-            "usuarios": "/api/usuarios",
-            "notificacoes": "/api/notificacoes"
-        }
-    })
-
+    """Redireciona para a página de login"""
+    return send_from_directory(STATIC_DIR, 'index.html')
 @app.route('/api/status')
 def api_status():
     """Status detalhado da API"""
