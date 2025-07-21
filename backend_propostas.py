@@ -1,39 +1,20 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""
+Backend Atualizado - Sistema de Gestão de Propostas
+Versão 3.0 - Estrutura Revisada e Confirmada
+Compatível com Render.com e GitHub
+"""
 
-from flask import Flask, request, jsonify, send_from_directory, render_template_string, send_file
-from flask_cors import CORS
-from flask_mail import Mail, Message
-from datetime import datetime, timedelta
-import json
 import os
-import uuid
+import json
 import logging
-from docx import Document
-from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.style import WD_STYLE_TYPE
-from openpyxl import Workbook
-from openpyxl.styles import Font, Fill, PatternFill, Alignment, Border, Side
-from openpyxl.utils import get_column_letter
-import io
-import base64
+from datetime import datetime, timedelta
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 
 # Configuração do Flask
 app = Flask(__name__)
-app.config['JSON_AS_ASCII'] = False
-app.config['JSONIFY_MIMETYPE'] = 'application/json; charset=utf-8'
-CORS(app)
-
-# Configuração de Email (compatível com suas variáveis)
-app.config['MAIL_SERVER'] = os.environ.get('EMAIL_SERVER', 'smtp.gmail.com')
-app.config['MAIL_PORT'] = int(os.environ.get('EMAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER', os.environ.get('MAIL_USERNAME', ''))
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS', os.environ.get('MAIL_PASSWORD', ''))
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('EMAIL_USER', os.environ.get('MAIL_USERNAME', ''))
-
-mail = Mail(app)
+CORS(app, origins="*")  # Permitir todas as origens para desenvolvimento
 
 # Configuração de logging
 logging.basicConfig(
@@ -43,2321 +24,434 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Diretórios
-PROPOSTAS_DIR = 'propostas'
-STATIC_DIR = 'static'
-DATA_DIR = 'data'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, 'static')
 
 # Criar diretórios se não existirem
-for dir_name in [PROPOSTAS_DIR, STATIC_DIR, DATA_DIR]:
-    try:
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-            logger.info(f"Diretório {dir_name} criado")
-    except Exception as e:
-        logger.error(f"Erro ao criar diretório {dir_name}: {e}")
+os.makedirs(STATIC_DIR, exist_ok=True)
 
-# Base de dados em memória
-propostas_db = {}
-processos_db = {}
-fornecedores_db = {}
-notificacoes_db = {}  # NOVO: Base de notificações
-analises_ia_db = {}   # NOVO: Base de análises IA
-
-# Configurações de email
-EMAIL_CONFIG = {
-    'destinatario_principal': os.environ.get('EMAIL_SUPRIMENTOS', 'portaldofornecedor.arias@gmail.com')
+# Dados de exemplo para demonstração
+DADOS_SISTEMA = {
+    "processos": [
+        {
+            "id": "proc_001",
+            "numero": "LIC-2025-001",
+            "objeto": "Construção de Escola Municipal de Ensino Fundamental",
+            "modalidade": "Concorrência",
+            "prazo": (datetime.now() + timedelta(days=15)).isoformat(),
+            "status": "ativo",
+            "criadoPor": "comprador_001",
+            "dataCadastro": datetime.now().isoformat(),
+            "fornecedoresConvidados": ["forn_001", "forn_002"]
+        },
+        {
+            "id": "proc_002",
+            "numero": "LIC-2025-002", 
+            "objeto": "Reforma e Ampliação do Centro de Saúde",
+            "modalidade": "Tomada de Preços",
+            "prazo": (datetime.now() + timedelta(days=10)).isoformat(),
+            "status": "ativo",
+            "criadoPor": "comprador_001",
+            "dataCadastro": datetime.now().isoformat(),
+            "fornecedoresConvidados": ["forn_001"]
+        },
+        {
+            "id": "proc_003",
+            "numero": "LIC-2025-003",
+            "objeto": "Pavimentação Asfáltica de Vias Urbanas",
+            "modalidade": "Concorrência", 
+            "prazo": (datetime.now() + timedelta(days=20)).isoformat(),
+            "status": "ativo",
+            "criadoPor": "comprador_002",
+            "dataCadastro": datetime.now().isoformat(),
+            "fornecedoresConvidados": ["forn_002", "forn_003"]
+        }
+    ],
+    "propostas": [
+        {
+            "protocolo": "PROP-2025-001",
+            "processo": "LIC-2025-001",
+            "empresa": "Construtora Alpha LTDA",
+            "cnpj": "12.345.678/0001-90",
+            "data": datetime.now().isoformat(),
+            "valor": "R$ 850.000,00",
+            "dados": {
+                "dados": {
+                    "razaoSocial": "Construtora Alpha LTDA",
+                    "cnpj": "12.345.678/0001-90",
+                    "email": "contato@alpha.com.br",
+                    "telefone": "(11) 3456-7890"
+                },
+                "tecnica": {
+                    "prazoExecucao": "180 dias",
+                    "metodologia": "Metodologia construtiva tradicional"
+                },
+                "comercial": {
+                    "valorTotal": "850.000,00",
+                    "validadeProposta": "60 dias"
+                }
+            }
+        }
+    ],
+    "usuarios": [
+        {
+            "id": "admin_001",
+            "nome": "Administrador Sistema",
+            "email": "admin@sistema.gov.br",
+            "tipo": "admin",
+            "ativo": True,
+            "dataCriacao": datetime.now().isoformat()
+        },
+        {
+            "id": "comprador_001",
+            "nome": "João Silva",
+            "email": "joao.silva@prefeitura.gov.br",
+            "tipo": "comprador",
+            "nivelAcesso": "comprador_senior",
+            "ativo": True,
+            "dataCriacao": datetime.now().isoformat()
+        },
+        {
+            "id": "requisitante_001",
+            "nome": "Maria Santos",
+            "email": "maria.santos@educacao.gov.br",
+            "tipo": "requisitante",
+            "ativo": True,
+            "dataCriacao": datetime.now().isoformat()
+        },
+        {
+            "id": "forn_001",
+            "nome": "Construtora Alpha LTDA",
+            "email": "contato@alpha.com.br",
+            "cnpj": "12.345.678/0001-90",
+            "tipo": "fornecedor",
+            "ativo": True,
+            "dataCriacao": datetime.now().isoformat()
+        }
+    ],
+    "notificacoes": []
 }
 
-def inicializar_dados_exemplo():
-    """Inicializa dados de exemplo para demonstração"""
-    global processos_db, fornecedores_db
-    
-    # Dados de exemplo de processos
-    agora = datetime.now()
-    processos_exemplo = [
-        {
-            "numero": "001/2025",
-            "objeto": "Construção de Escola Municipal",
-            "modalidade": "Concorrência",
-            "prazo": (agora + timedelta(days=15)).isoformat(),
-            "valor_estimado": "R$ 2.500.000,00",
-            "status": "ativo"
-        },
-        {
-            "numero": "002/2025", 
-            "objeto": "Reforma do Centro de Saúde",
-            "modalidade": "Tomada de Preços",
-            "prazo": (agora + timedelta(days=10)).isoformat(),
-            "valor_estimado": "R$ 850.000,00",
-            "status": "ativo"
-        },
-        {
-            "numero": "003/2025",
-            "objeto": "Pavimentação de Ruas",
-            "modalidade": "Concorrência", 
-            "prazo": (agora + timedelta(days=20)).isoformat(),
-            "valor_estimado": "R$ 1.200.000,00",
-            "status": "ativo"
-        }
-    ]
-    
-    # Adicionar aos processos_db
-    for processo in processos_exemplo:
-        processos_db[processo["numero"]] = processo
-    
-    # Dados de exemplo de fornecedores
-    fornecedores_exemplo = [
-        {
-            "cnpj": "12.345.678/0001-90",
-            "razaoSocial": "Construtora Exemplo LTDA",
-            "email": "contato@exemplo.com.br",
-            "telefone": "(11) 99999-9999",
-            "status": "ativo"
-        }
-    ]
-    
-    # Adicionar aos fornecedores_db
-    for fornecedor in fornecedores_exemplo:
-        fornecedores_db[fornecedor["cnpj"]] = fornecedor
-    
-    logger.info(f"Dados de exemplo inicializados: {len(processos_db)} processos, {len(fornecedores_db)} fornecedores")
-
-# ===== NOVOS ENDPOINTS PARA SISTEMA DE NOTIFICAÇÕES =====
-
-@app.route('/api/notificacoes/<usuario_id>')
-def obter_notificacoes(usuario_id):
-    """Retorna notificações não lidas do usuário"""
-    try:
-        notificacoes_usuario = []
-        
-        for notif_id, notif in notificacoes_db.items():
-            if notif.get('destinatario') == usuario_id and not notif.get('lida', False):
-                notificacoes_usuario.append({
-                    'id': notif_id,
-                    'tipo': notif.get('tipo'),
-                    'titulo': notif.get('titulo'),
-                    'mensagem': notif.get('mensagem'),
-                    'data': notif.get('data'),
-                    'acao': notif.get('acao'),
-                    'lida': notif.get('lida', False)
-                })
-        
-        # Ordenar por data (mais recentes primeiro)
-        notificacoes_usuario.sort(key=lambda x: x['data'], reverse=True)
-        
-        return jsonify({
-            'success': True,
-            'notificacoes': notificacoes_usuario,
-            'total': len(notificacoes_usuario)
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro ao obter notificações: {str(e)}")
-        return jsonify({
-            'success': False,
-            'erro': 'Erro ao obter notificações'
-        }), 500
-
-@app.route('/api/notificacoes/marcar-lida/<notif_id>', methods=['POST'])
-def marcar_notificacao_lida(notif_id):
-    """Marca uma notificação como lida"""
-    try:
-        if notif_id in notificacoes_db:
-            notificacoes_db[notif_id]['lida'] = True
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False, 'erro': 'Notificação não encontrada'}), 404
-            
-    except Exception as e:
-        logger.error(f"Erro ao marcar notificação: {str(e)}")
-        return jsonify({'success': False, 'erro': 'Erro ao marcar notificação'}), 500
-
-@app.route('/api/notificacoes/criar', methods=['POST'])
-def criar_notificacao():
-    """Cria uma nova notificação no sistema"""
-    try:
-        data = request.get_json()
-        
-        notif_id = str(uuid.uuid4())
-        notificacao = {
-            'id': notif_id,
-            'tipo': data.get('tipo', 'info'),
-            'titulo': data.get('titulo', ''),
-            'mensagem': data.get('mensagem', ''),
-            'destinatario': data.get('destinatario'),
-            'remetente': data.get('remetente', 'sistema'),
-            'data': datetime.now().isoformat(),
-            'lida': False,
-            'acao': data.get('acao')  # Link ou ação associada
-        }
-        
-        notificacoes_db[notif_id] = notificacao
-        
-        return jsonify({
-            'success': True,
-            'notificacao': notificacao
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro ao criar notificação: {str(e)}")
-        return jsonify({
-            'success': False,
-            'erro': 'Erro ao criar notificação'
-        }), 500
-
-# ===== NOVOS ENDPOINTS PARA ANÁLISE TÉCNICA COM IA =====
-
-@app.route('/api/analise-ia', methods=['POST'])
-def analisar_proposta_ia():
-    """Analisa proposta técnica usando IA simulada"""
-    try:
-        data = request.get_json()
-        
-        proposta_tecnica = data.get('proposta_tecnica', {})
-        termo_referencia = data.get('termo_referencia', {})
-        
-        # Simular análise de IA
-        analise = {
-            'id': str(uuid.uuid4()),
-            'data_analise': datetime.now().isoformat(),
-            'score_geral': 0,
-            'criterios': {},
-            'alertas': [],
-            'sugestoes': []
-        }
-        
-        # Análise de metodologia
-        metodologia_score = analisar_similaridade_texto(
-            proposta_tecnica.get('metodologia', ''),
-            termo_referencia.get('especificacoes', '')
-        )
-        analise['criterios']['metodologia'] = {
-            'score': metodologia_score,
-            'status': 'aprovado' if metodologia_score >= 70 else 'atencao'
-        }
-        
-        # Análise de equipe
-        equipe_score = analisar_equipe_tecnica(
-            proposta_tecnica.get('equipe', []),
-            termo_referencia.get('equipe_minima', [])
-        )
-        analise['criterios']['equipe'] = {
-            'score': equipe_score,
-            'status': 'aprovado' if equipe_score >= 80 else 'atencao'
-        }
-        
-        # Análise de prazo
-        prazo_score = analisar_prazo(
-            proposta_tecnica.get('prazo', ''),
-            termo_referencia.get('prazo_maximo', '')
-        )
-        analise['criterios']['prazo'] = {
-            'score': prazo_score,
-            'status': 'aprovado' if prazo_score >= 90 else 'atencao'
-        }
-        
-        # Análise de experiência
-        experiencia_score = analisar_experiencia(
-            proposta_tecnica.get('experiencia', [])
-        )
-        analise['criterios']['experiencia'] = {
-            'score': experiencia_score,
-            'status': 'aprovado' if experiencia_score >= 60 else 'atencao'
-        }
-        
-        # Análise de certificações
-        certificacoes_score = analisar_certificacoes(
-            proposta_tecnica.get('certificacoes', [])
-        )
-        analise['criterios']['certificacoes'] = {
-            'score': certificacoes_score,
-            'status': 'aprovado' if certificacoes_score >= 70 else 'atencao'
-        }
-        
-        # Calcular score geral (média ponderada)
-        pesos = {
-            'metodologia': 0.30,
-            'equipe': 0.25,
-            'prazo': 0.20,
-            'experiencia': 0.15,
-            'certificacoes': 0.10
-        }
-        
-        score_total = 0
-        peso_total = 0
-        
-        for criterio, dados in analise['criterios'].items():
-            peso = pesos.get(criterio, 0.1)
-            score_total += dados['score'] * peso
-            peso_total += peso
-        
-        analise['score_geral'] = round(score_total / peso_total) if peso_total > 0 else 0
-        
-        # Gerar alertas
-        if analise['criterios']['prazo']['score'] < 90:
-            analise['alertas'].append({
-                'tipo': 'prazo',
-                'mensagem': 'Prazo proposto pode estar acima do especificado',
-                'severidade': 'media'
-            })
-        
-        if analise['criterios']['metodologia']['score'] < 70:
-            analise['alertas'].append({
-                'tipo': 'metodologia',
-                'mensagem': 'Metodologia com baixa aderência ao TR',
-                'severidade': 'alta'
-            })
-        
-        # Gerar sugestões
-        if analise['score_geral'] >= 85:
-            analise['sugestoes'].append('Proposta bem alinhada com o TR. Recomenda-se aprovação.')
-        elif analise['score_geral'] >= 70:
-            analise['sugestoes'].append('Proposta aceitável. Solicitar esclarecimentos pontuais.')
-        else:
-            analise['sugestoes'].append('Proposta necessita revisão significativa.')
-        
-        # Salvar análise
-        analise_id = analise['id']
-        analises_ia_db[analise_id] = analise
-        
-        return jsonify({
-            'success': True,
-            'analise': analise
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro na análise IA: {str(e)}")
-        return jsonify({
-            'success': False,
-            'erro': 'Erro ao analisar proposta'
-        }), 500
-
-def analisar_similaridade_texto(texto1, texto2):
-    """Simula análise de similaridade entre textos"""
-    if not texto1 or not texto2:
-        return 0
-    
-    # Simulação simples: contar palavras-chave em comum
-    palavras_chave = ['qualidade', 'prazo', 'normas', 'segurança', 'execução', 
-                      'fiscalização', 'material', 'técnica', 'controle', 'garantia']
-    
-    palavras_texto1 = set(texto1.lower().split())
-    palavras_texto2 = set(texto2.lower().split())
-    
-    palavras_comuns = 0
-    for palavra in palavras_chave:
-        if palavra in palavras_texto1 and palavra in palavras_texto2:
-            palavras_comuns += 1
-    
-    # Score baseado em palavras-chave encontradas
-    score_base = (palavras_comuns / len(palavras_chave)) * 100
-    
-    # Bonus por tamanho adequado
-    if len(texto1) > 100:
-        score_base = min(score_base + 10, 100)
-    
-    return round(score_base)
-
-def analisar_equipe_tecnica(equipe_proposta, equipe_minima):
-    """Analisa se a equipe proposta atende aos requisitos"""
-    if not equipe_proposta:
-        return 0
-    
-    score = 70  # Score base por ter equipe
-    
-    # Bonus por tamanho da equipe
-    if len(equipe_proposta) >= len(equipe_minima):
-        score += 20
-    
-    # Bonus por certificações
-    tem_certificacao = any(
-        membro.get('certificacao') or membro.get('crea') or membro.get('cau') 
-        for membro in equipe_proposta if isinstance(membro, dict)
-    )
-    
-    if tem_certificacao:
-        score += 10
-    
-    return min(score, 100)
-
-def analisar_prazo(prazo_proposta, prazo_maximo):
-    """Analisa se o prazo está adequado"""
-    try:
-        # Extrair números dos prazos
-        prazo_prop_num = int(''.join(filter(str.isdigit, str(prazo_proposta))))
-        prazo_max_num = int(''.join(filter(str.isdigit, str(prazo_maximo))))
-        
-        if prazo_prop_num <= prazo_max_num:
-            # Dentro do prazo - quanto mais rápido, melhor
-            economia = ((prazo_max_num - prazo_prop_num) / prazo_max_num) * 100
-            return min(90 + economia / 10, 100)
-        else:
-            # Acima do prazo
-            excesso = ((prazo_prop_num - prazo_max_num) / prazo_max_num) * 100
-            return max(70 - excesso, 0)
-    except:
-        return 50  # Score padrão se não conseguir analisar
-
-def analisar_experiencia(experiencias):
-    """Analisa experiência da empresa"""
-    if not experiencias:
-        return 30
-    
-    score = 50  # Base por ter experiência
-    
-    # Bonus por quantidade
-    score += min(len(experiencias) * 10, 30)
-    
-    # Bonus por obras recentes
-    ano_atual = datetime.now().year
-    obras_recentes = sum(1 for exp in experiencias 
-                        if isinstance(exp, dict) and 
-                        int(exp.get('ano', 0)) >= ano_atual - 3)
-    
-    score += min(obras_recentes * 10, 20)
-    
-    return min(score, 100)
-
-def analisar_certificacoes(certificacoes):
-    """Analisa certificações da empresa"""
-    if not certificacoes:
-        return 40
-    
-    score = 60  # Base por ter certificações
-    
-    # Certificações importantes
-    cert_importantes = ['ISO 9001', 'ISO 14001', 'PBQP-H']
-    
-    for cert in certificacoes:
-        if isinstance(cert, dict):
-            nome_cert = cert.get('nome', '')
-            if any(imp in nome_cert.upper() for imp in cert_importantes):
-                score += 15
-    
-    return min(score, 100)
-
-# ===== NOVO ENDPOINT PARA CADASTRO RÁPIDO =====
-
-@app.route('/api/cadastro-rapido', methods=['POST'])
-def cadastro_rapido_fornecedor():
-    """Cadastro simplificado de fornecedor (3 campos apenas)"""
-    try:
-        data = request.get_json()
-        
-        # Validações básicas
-        cnpj = data.get('cnpj', '').strip()
-        razao_social = data.get('razao_social', '').strip()
-        email = data.get('email', '').strip()
-        
-        if not all([cnpj, razao_social, email]):
-            return jsonify({
-                'success': False,
-                'erro': 'Todos os campos são obrigatórios'
-            }), 400
-        
-        # Verificar se já existe
-        if cnpj in fornecedores_db:
-            return jsonify({
-                'success': False,
-                'erro': 'Fornecedor já cadastrado'
-            }), 409
-        
-        # Criar fornecedor
-        fornecedor = {
-            'id': str(uuid.uuid4()),
-            'cnpj': cnpj,
-            'razaoSocial': razao_social,
-            'email': email,
-            'status': 'ativo',
-            'dataCadastro': datetime.now().isoformat(),
-            'cadastroSimplificado': True,
-            'senhaTemporaria': gerar_senha_temporaria()
-        }
-        
-        # Salvar
-        fornecedores_db[cnpj] = fornecedor
-        
-        # Criar notificação para o fornecedor
-        criar_notificacao_sistema(
-            destinatario=fornecedor['id'],
-            tipo='cadastro',
-            titulo='Bem-vindo ao Portal de Fornecedores!',
-            mensagem=f'Seu cadastro foi realizado. Senha temporária: {fornecedor["senhaTemporaria"]}',
-            acao={'tipo': 'completar_cadastro', 'link': '/cadastro-fornecedor.html'}
-        )
-        
-        # Salvar em arquivo
-        salvar_fornecedores()
-        
-        return jsonify({
-            'success': True,
-            'fornecedor': {
-                'id': fornecedor['id'],
-                'cnpj': fornecedor['cnpj'],
-                'razaoSocial': fornecedor['razaoSocial'],
-                'email': fornecedor['email']
-            },
-            'mensagem': 'Fornecedor cadastrado com sucesso!'
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro no cadastro rápido: {str(e)}")
-        return jsonify({
-            'success': False,
-            'erro': 'Erro ao cadastrar fornecedor'
-        }), 500
-
-def gerar_senha_temporaria():
-    """Gera senha temporária aleatória"""
-    import random
-    import string
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-
-def criar_notificacao_sistema(destinatario, tipo, titulo, mensagem, acao=None):
-    """Cria notificação no sistema"""
-    notif_id = str(uuid.uuid4())
-    notificacao = {
-        'id': notif_id,
-        'tipo': tipo,
-        'titulo': titulo,
-        'mensagem': mensagem,
-        'destinatario': destinatario,
-        'remetente': 'sistema',
-        'data': datetime.now().isoformat(),
-        'lida': False,
-        'acao': acao
-    }
-    
-    notificacoes_db[notif_id] = notificacao
-    return notif_id
-
-def salvar_fornecedores():
-    """Salva fornecedores em arquivo"""
-    try:
-        fornecedores_file = os.path.join(DATA_DIR, 'fornecedores.json')
-        with open(fornecedores_file, 'w', encoding='utf-8') as f:
-            json.dump(list(fornecedores_db.values()), f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logger.error(f"Erro ao salvar fornecedores: {e}")
-
-# ===== ENDPOINT PARA CONVIDAR FORNECEDOR PARA PROCESSO =====
-
-@app.route('/api/convidar-fornecedor', methods=['POST'])
-def convidar_fornecedor():
-    """Convida fornecedor para participar de processo"""
-    try:
-        data = request.get_json()
-        
-        processo_numero = data.get('processo')
-        fornecedor_id = data.get('fornecedor_id')
-        
-        # Verificar se processo existe
-        if processo_numero not in processos_db:
-            return jsonify({
-                'success': False,
-                'erro': 'Processo não encontrado'
-            }), 404
-        
-        # Buscar fornecedor
-        fornecedor = None
-        for f in fornecedores_db.values():
-            if f.get('id') == fornecedor_id:
-                fornecedor = f
-                break
-        
-        if not fornecedor:
-            return jsonify({
-                'success': False,
-                'erro': 'Fornecedor não encontrado'
-            }), 404
-        
-        processo = processos_db[processo_numero]
-        
-        # Criar notificação
-        criar_notificacao_sistema(
-            destinatario=fornecedor_id,
-            tipo='novo_processo',
-            titulo=f'Novo Processo: {processo_numero}',
-            mensagem=f'Você foi convidado para participar do processo: {processo["objeto"]}',
-            acao={
-                'tipo': 'ver_processo',
-                'link': f'/portal-propostas-novo.html?processo={processo_numero}'
-            }
-        )
-        
-        return jsonify({
-            'success': True,
-            'mensagem': 'Fornecedor convidado com sucesso!'
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro ao convidar fornecedor: {str(e)}")
-        return jsonify({
-            'success': False,
-            'erro': 'Erro ao convidar fornecedor'
-        }), 500
-
-# ===== FUNÇÕES EXISTENTES CONTINUAM IGUAIS =====
-
-def gerar_excel_proposta(dados_proposta):
-    """Gera arquivo Excel com a proposta comercial"""
-    wb = Workbook()
-    
-    # Estilos
-    header_font = Font(name='Arial', size=12, bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
-    header_alignment = Alignment(horizontal="center", vertical="center")
-    
-    title_font = Font(name='Arial', size=14, bold=True)
-    subtitle_font = Font(name='Arial', size=11, bold=True)
-    normal_font = Font(name='Arial', size=10)
-    
-    border = Border(
-        left=Side(style='thin'),
-        right=Side(style='thin'),
-        top=Side(style='thin'),
-        bottom=Side(style='thin')
-    )
-    
-    # Aba 1: Resumo
-    ws_resumo = wb.active
-    ws_resumo.title = "Resumo"
-    
-    # Cabeçalho
-    ws_resumo.merge_cells('A1:F1')
-    ws_resumo['A1'] = 'PROPOSTA COMERCIAL'
-    ws_resumo['A1'].font = Font(name='Arial', size=16, bold=True)
-    ws_resumo['A1'].alignment = Alignment(horizontal="center")
-    
-    ws_resumo['A3'] = 'Dados da Empresa'
-    ws_resumo['A3'].font = subtitle_font
-    
-    # Dados da empresa
-    dados_empresa = [
-        ['Razão Social:', dados_proposta.get('dados', {}).get('razaoSocial', '')],
-        ['CNPJ:', dados_proposta.get('dados', {}).get('cnpj', '')],
-        ['Endereço:', dados_proposta.get('dados', {}).get('endereco', '')],
-        ['Cidade:', dados_proposta.get('dados', {}).get('cidade', '')],
-        ['Telefone:', dados_proposta.get('dados', {}).get('telefone', '')],
-        ['E-mail:', dados_proposta.get('dados', {}).get('email', '')],
-        ['Responsável Técnico:', dados_proposta.get('dados', {}).get('respTecnico', '')],
-        ['CREA/CAU:', dados_proposta.get('dados', {}).get('crea', '')]
-    ]
-    
-    row = 5
-    for label, value in dados_empresa:
-        ws_resumo[f'A{row}'] = label
-        ws_resumo[f'A{row}'].font = Font(bold=True)
-        ws_resumo[f'B{row}'] = value
-        ws_resumo.merge_cells(f'B{row}:D{row}')
-        row += 1
-    
-    # Resumo financeiro
-    ws_resumo[f'A{row+2}'] = 'Resumo Financeiro'
-    ws_resumo[f'A{row+2}'].font = subtitle_font
-    
-    row += 4
-    resumo_financeiro = [
-        ['Mão de Obra:', dados_proposta.get('comercial', {}).get('totalMaoObra', '0,00')],
-        ['Materiais:', dados_proposta.get('comercial', {}).get('totalMateriais', '0,00')],
-        ['Equipamentos:', dados_proposta.get('comercial', {}).get('totalEquipamentos', '0,00')],
-        ['BDI:', f"{dados_proposta.get('comercial', {}).get('bdiPercentual', '0')}% = R$ {dados_proposta.get('comercial', {}).get('bdiValor', '0,00')}"],
-        ['VALOR TOTAL:', f"R$ {dados_proposta.get('comercial', {}).get('valorTotal', '0,00')}"]
-    ]
-    
-    for label, value in resumo_financeiro:
-        ws_resumo[f'A{row}'] = label
-        ws_resumo[f'A{row}'].font = Font(bold=True)
-        ws_resumo[f'B{row}'] = value
-        ws_resumo.merge_cells(f'B{row}:D{row}')
-        if label == 'VALOR TOTAL:':
-            ws_resumo[f'A{row}'].font = Font(bold=True, size=12, color="FF0000")
-            ws_resumo[f'B{row}'].font = Font(bold=True, size=12, color="FF0000")
-        row += 1
-    
-    # Aba 2: Serviços
-    if dados_proposta.get('comercial', {}).get('servicos'):
-        ws_servicos = wb.create_sheet("Serviços")
-        
-        # Cabeçalho
-        headers = ['Item', 'Descrição', 'Unidade', 'Quantidade', 'Preço Unit.', 'Total']
-        for col, header in enumerate(headers, 1):
-            cell = ws_servicos.cell(row=1, column=col, value=header)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = header_alignment
-            cell.border = border
-        
-        # Dados
-        row = 2
-        for servico in dados_proposta['comercial']['servicos']:
-            for col, value in enumerate(servico[:6], 1):
-                cell = ws_servicos.cell(row=row, column=col, value=value)
-                cell.border = border
-                if col >= 4:  # Colunas numéricas
-                    cell.alignment = Alignment(horizontal="right")
-            row += 1
-        
-        # Total
-        ws_servicos[f'E{row}'] = 'TOTAL:'
-        ws_servicos[f'E{row}'].font = Font(bold=True)
-        ws_servicos[f'F{row}'] = f"R$ {dados_proposta.get('comercial', {}).get('totalServicos', '0,00')}"
-        ws_servicos[f'F{row}'].font = Font(bold=True)
-        
-        # Ajustar largura das colunas
-        ws_servicos.column_dimensions['B'].width = 50
-        for col in ['C', 'D', 'E', 'F']:
-            ws_servicos.column_dimensions[col].width = 15
-    
-    # Aba 3: Mão de Obra
-    if dados_proposta.get('comercial', {}).get('maoObra'):
-        ws_mo = wb.create_sheet("Mão de Obra")
-        
-        headers = ['Função', 'Qtd', 'Tempo', 'Salário', 'Encargos %', 'Total Mensal', 'Total Geral']
-        for col, header in enumerate(headers, 1):
-            cell = ws_mo.cell(row=1, column=col, value=header)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = header_alignment
-            cell.border = border
-        
-        row = 2
-        for mo in dados_proposta['comercial']['maoObra']:
-            for col, value in enumerate(mo[:7], 1):
-                cell = ws_mo.cell(row=row, column=col, value=value)
-                cell.border = border
-                if col >= 2:
-                    cell.alignment = Alignment(horizontal="right")
-            row += 1
-        
-        ws_mo[f'F{row}'] = 'TOTAL:'
-        ws_mo[f'F{row}'].font = Font(bold=True)
-        ws_mo[f'G{row}'] = f"R$ {dados_proposta.get('comercial', {}).get('totalMaoObra', '0,00')}"
-        ws_mo[f'G{row}'].font = Font(bold=True)
-    
-    # Aba 4: Materiais
-    if dados_proposta.get('comercial', {}).get('materiaisComercial'):
-        ws_mat = wb.create_sheet("Materiais")
-        
-        headers = ['Material', 'Especificação', 'Unidade', 'Quantidade', 'Preço Unit.', 'Total']
-        for col, header in enumerate(headers, 1):
-            cell = ws_mat.cell(row=1, column=col, value=header)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = header_alignment
-            cell.border = border
-        
-        row = 2
-        for material in dados_proposta['comercial']['materiaisComercial']:
-            for col, value in enumerate(material[:6], 1):
-                cell = ws_mat.cell(row=row, column=col, value=value)
-                cell.border = border
-                if col >= 4:
-                    cell.alignment = Alignment(horizontal="right")
-            row += 1
-        
-        ws_mat[f'E{row}'] = 'TOTAL:'
-        ws_mat[f'E{row}'].font = Font(bold=True)
-        ws_mat[f'F{row}'] = f"R$ {dados_proposta.get('comercial', {}).get('totalMateriais', '0,00')}"
-        ws_mat[f'F{row}'].font = Font(bold=True)
-    
-    # Aba 5: Equipamentos
-    if dados_proposta.get('comercial', {}).get('equipamentosComercial'):
-        ws_equip = wb.create_sheet("Equipamentos")
-        
-        headers = ['Equipamento', 'Especificação', 'Quantidade', 'Tempo', 'Preço/mês', 'Total']
-        for col, header in enumerate(headers, 1):
-            cell = ws_equip.cell(row=1, column=col, value=header)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = header_alignment
-            cell.border = border
-        
-        row = 2
-        for equip in dados_proposta['comercial']['equipamentosComercial']:
-            for col, value in enumerate(equip[:6], 1):
-                cell = ws_equip.cell(row=row, column=col, value=value)
-                cell.border = border
-                if col >= 3:
-                    cell.alignment = Alignment(horizontal="right")
-            row += 1
-        
-        ws_equip[f'E{row}'] = 'TOTAL:'
-        ws_equip[f'E{row}'].font = Font(bold=True)
-        ws_equip[f'F{row}'] = f"R$ {dados_proposta.get('comercial', {}).get('totalEquipamentos', '0,00')}"
-        ws_equip[f'F{row}'].font = Font(bold=True)
-    
-    # Aba 6: BDI
-    if dados_proposta.get('comercial', {}).get('bdi'):
-        ws_bdi = wb.create_sheet("BDI")
-        
-        headers = ['Componente', 'Percentual %', 'Valor R$']
-        for col, header in enumerate(headers, 1):
-            cell = ws_bdi.cell(row=1, column=col, value=header)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = header_alignment
-            cell.border = border
-        
-        row = 2
-        for bdi_item in dados_proposta['comercial']['bdi']:
-            for col, value in enumerate(bdi_item[:3], 1):
-                cell = ws_bdi.cell(row=row, column=col, value=value)
-                cell.border = border
-                if col >= 2:
-                    cell.alignment = Alignment(horizontal="right")
-            row += 1
-        
-        # Total BDI
-        ws_bdi[f'A{row+1}'] = 'BDI TOTAL:'
-        ws_bdi[f'B{row+1}'] = f"{dados_proposta.get('comercial', {}).get('bdiPercentual', '0')}%"
-        ws_bdi[f'C{row+1}'] = f"R$ {dados_proposta.get('comercial', {}).get('bdiValor', '0,00')}"
-        for col in range(1, 4):
-            ws_bdi.cell(row=row+1, column=col).font = Font(bold=True, size=12)
-    
-    # Salvar em memória
-    excel_buffer = io.BytesIO()
-    wb.save(excel_buffer)
-    excel_buffer.seek(0)
-    
-    return excel_buffer
-
-def gerar_word_proposta(dados_proposta):
-    """Gera arquivo Word com a proposta técnica"""
-    doc = Document()
-    
-    # Configurar margens
-    sections = doc.sections
-    for section in sections:
-        section.top_margin = Inches(1)
-        section.bottom_margin = Inches(1)
-        section.left_margin = Inches(1)
-        section.right_margin = Inches(1)
-    
-    # Título principal
-    titulo = doc.add_heading('PROPOSTA TÉCNICA', 0)
-    titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    
-    # Dados da empresa
-    doc.add_heading('1. DADOS DA EMPRESA', level=1)
-    
-    table = doc.add_table(rows=8, cols=2)
-    table.style = 'Table Grid'
-    
-    dados_empresa = [
-        ('Razão Social:', dados_proposta.get('dados', {}).get('razaoSocial', '')),
-        ('CNPJ:', dados_proposta.get('dados', {}).get('cnpj', '')),
-        ('Endereço:', dados_proposta.get('dados', {}).get('endereco', '')),
-        ('Cidade/UF:', dados_proposta.get('dados', {}).get('cidade', '')),
-        ('Telefone:', dados_proposta.get('dados', {}).get('telefone', '')),
-        ('E-mail:', dados_proposta.get('dados', {}).get('email', '')),
-        ('Responsável Técnico:', dados_proposta.get('dados', {}).get('respTecnico', '')),
-        ('CREA/CAU:', dados_proposta.get('dados', {}).get('crea', ''))
-    ]
-    
-    for i, (label, value) in enumerate(dados_empresa):
-        table.cell(i, 0).text = label
-        table.cell(i, 0).paragraphs[0].runs[0].bold = True
-        table.cell(i, 1).text = str(value)
-    
-    # Objeto
-    doc.add_heading('2. OBJETO DA CONCORRÊNCIA', level=1)
-    doc.add_paragraph(dados_proposta.get('tecnica', {}).get('objetoConcorrencia', ''))
-    
-    # Escopo
-    if dados_proposta.get('tecnica', {}).get('escopoInclusos'):
-        doc.add_heading('3. ESCOPO DOS SERVIÇOS', level=1)
-        doc.add_heading('3.1 Serviços Inclusos:', level=2)
-        doc.add_paragraph(dados_proposta['tecnica']['escopoInclusos'])
-    
-    if dados_proposta.get('tecnica', {}).get('escopoExclusos'):
-        doc.add_heading('3.2 Serviços Exclusos:', level=2)
-        doc.add_paragraph(dados_proposta['tecnica']['escopoExclusos'])
-    
-    # Metodologia
-    if dados_proposta.get('tecnica', {}).get('metodologia'):
-        doc.add_heading('4. METODOLOGIA DE EXECUÇÃO', level=1)
-        doc.add_paragraph(dados_proposta['tecnica']['metodologia'])
-    
-    if dados_proposta.get('tecnica', {}).get('sequenciaExecucao'):
-        doc.add_heading('4.1 Sequência de Execução:', level=2)
-        doc.add_paragraph(dados_proposta['tecnica']['sequenciaExecucao'])
-    
-    # Prazo
-    doc.add_heading('5. PRAZO DE EXECUÇÃO', level=1)
-    prazo_exec = dados_proposta.get('tecnica', {}).get('prazoExecucao', 'Não informado')
-    doc.add_paragraph(f'Prazo total para execução dos serviços: {prazo_exec}')
-    
-    if dados_proposta.get('tecnica', {}).get('prazoMobilizacao'):
-        doc.add_paragraph(f'Prazo de mobilização: {dados_proposta["tecnica"]["prazoMobilizacao"]}')
-    
-    # Cronograma
-    if dados_proposta.get('tecnica', {}).get('cronograma'):
-        doc.add_heading('6. CRONOGRAMA DE EXECUÇÃO', level=1)
-        
-        table = doc.add_table(rows=1, cols=4)
-        table.style = 'Table Grid'
-        
-        # Cabeçalho
-        hdr_cells = table.rows[0].cells
-        headers = ['Atividade', 'Duração', 'Início', 'Fim']
-        for i, header in enumerate(headers):
-            hdr_cells[i].text = header
-            hdr_cells[i].paragraphs[0].runs[0].bold = True
-        
-        # Dados
-        for atividade in dados_proposta['tecnica']['cronograma']:
-            row_cells = table.add_row().cells
-            for i in range(min(4, len(atividade))):
-                row_cells[i].text = str(atividade[i])
-    
-    # Equipe técnica
-    if dados_proposta.get('tecnica', {}).get('equipe'):
-        doc.add_heading('7. EQUIPE TÉCNICA', level=1)
-        
-        table = doc.add_table(rows=1, cols=3)
-        table.style = 'Table Grid'
-        
-        hdr_cells = table.rows[0].cells
-        headers = ['Função', 'Quantidade', 'Tempo (meses)']
-        for i, header in enumerate(headers):
-            hdr_cells[i].text = header
-            hdr_cells[i].paragraphs[0].runs[0].bold = True
-        
-        for membro in dados_proposta['tecnica']['equipe']:
-            row_cells = table.add_row().cells
-            for i in range(min(3, len(membro))):
-                row_cells[i].text = str(membro[i])
-    
-    # Experiência
-    if dados_proposta.get('tecnica', {}).get('experiencia'):
-        doc.add_heading('8. EXPERIÊNCIA DA EMPRESA', level=1)
-        
-        for i, obra in enumerate(dados_proposta['tecnica']['experiencia'], 1):
-            doc.add_heading(f'8.{i} Obra {i}:', level=2)
-            if len(obra) > 0 and obra[0]:
-                doc.add_paragraph(f'Obra: {obra[0]}')
-            if len(obra) > 1 and obra[1]:
-                doc.add_paragraph(f'Cliente: {obra[1]}')
-            if len(obra) > 2 and obra[2]:
-                doc.add_paragraph(f'Valor: {obra[2]}')
-            if len(obra) > 3 and obra[3]:
-                doc.add_paragraph(f'Ano: {obra[3]}')
-    
-    # Garantias
-    if dados_proposta.get('tecnica', {}).get('garantias'):
-        doc.add_heading('9. GARANTIAS OFERECIDAS', level=1)
-        doc.add_paragraph(dados_proposta['tecnica']['garantias'])
-    
-    # Rodapé com data
-    doc.add_paragraph()
-    doc.add_paragraph()
-    data_proposta = doc.add_paragraph(f'Data da Proposta: {datetime.now().strftime("%d/%m/%Y")}')
-    data_proposta.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    
-    # Salvar em memória
-    word_buffer = io.BytesIO()
-    doc.save(word_buffer)
-    word_buffer.seek(0)
-    
-    return word_buffer
-
-def enviar_email_proposta(protocolo, dados_proposta):
-    """Envia email com os dados da proposta e anexos Excel e Word"""
-    if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
-        logger.warning("Configurações de email não definidas")
-        return False
-    
-    try:
-        # Gerar anexos
-        excel_buffer = gerar_excel_proposta(dados_proposta)
-        word_buffer = gerar_word_proposta(dados_proposta)
-        
-        # Criar mensagem
-        msg = Message(
-            subject=f"Nova Proposta Recebida - {protocolo}",
-            recipients=[EMAIL_CONFIG['destinatario_principal']]
-        )
-        
-        # Extrai informações principais
-        empresa = dados_proposta.get('dados', {}).get('razaoSocial', 'N/A')
-        cnpj = dados_proposta.get('dados', {}).get('cnpj', 'N/A')
-        valor_total = dados_proposta.get('comercial', {}).get('valorTotal', '0,00')
-        processo = dados_proposta.get('processo', 'N/A')
-        prazo = dados_proposta.get('tecnica', {}).get('prazoExecucao', 'N/A')
-        
-        # Corpo do email em HTML
-        msg.html = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="background-color: #f0f0f0; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #333;">🏢 Nova Proposta Recebida</h2>
-                
-                <div style="background-color: white; padding: 20px; border-radius: 5px; margin-top: 20px;">
-                    <h3 style="color: #2c3e50;">Informações Principais</h3>
-                    
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Protocolo:</strong></td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{protocolo}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Processo:</strong></td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{processo}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Empresa:</strong></td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{empresa}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>CNPJ:</strong></td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{cnpj}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>E-mail:</strong></td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{dados_proposta.get('dados', {}).get('email', 'N/A')}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Telefone:</strong></td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{dados_proposta.get('dados', {}).get('telefone', 'N/A')}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Prazo de Execução:</strong></td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{prazo}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px;"><strong>Valor Total:</strong></td>
-                            <td style="padding: 8px; color: #27ae60; font-size: 18px;"><strong>R$ {valor_total}</strong></td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 5px;">
-                    <p style="margin: 0;"><strong>📎 Anexos:</strong></p>
-                    <ul>
-                        <li>Proposta Comercial Detalhada (Excel)</li>
-                        <li>Proposta Técnica Completa (Word)</li>
-                    </ul>
-                </div>
-                
-                <p style="text-align: center; color: #666; margin-top: 20px;">
-                    <small>Data/Hora: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</small>
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-        
-        # Anexar Excel
-        msg.attach(
-            f"proposta_comercial_{protocolo}.xlsx",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            excel_buffer.getvalue()
-        )
-        
-        # Anexar Word
-        msg.attach(
-            f"proposta_tecnica_{protocolo}.docx",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            word_buffer.getvalue()
-        )
-        
-        # Enviar
-        mail.send(msg)
-        
-        logger.info(f"Email enviado com sucesso para proposta {protocolo}")
-        
-        # Enviar email de confirmação ao fornecedor
-        if dados_proposta.get('dados', {}).get('email'):
-            enviar_email_confirmacao_fornecedor(protocolo, dados_proposta)
-        
-        return True
-        
-    except Exception as e:
-        logger.error(f"Erro ao enviar email: {str(e)}")
-        return False
-
-def enviar_email_confirmacao_fornecedor(protocolo, dados_proposta):
-    """Envia email de confirmação para o fornecedor"""
-    try:
-        email_fornecedor = dados_proposta.get('dados', {}).get('email')
-        if not email_fornecedor:
-            return False
-        
-        msg = Message(
-            subject=f"Confirmação de Recebimento - Proposta {protocolo}",
-            recipients=[email_fornecedor]
-        )
-        
-        empresa = dados_proposta.get('dados', {}).get('razaoSocial', 'N/A')
-        processo = dados_proposta.get('processo', 'N/A')
-        
-        msg.html = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="background-color: #f0f0f0; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #333;">✅ Proposta Recebida com Sucesso!</h2>
-                
-                <div style="background-color: white; padding: 20px; border-radius: 5px; margin-top: 20px;">
-                    <p>Prezado(a) {empresa},</p>
-                    
-                    <p>Confirmamos o recebimento de sua proposta para o processo <strong>{processo}</strong>.</p>
-                    
-                    <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                        <p style="margin: 0;"><strong>Protocolo:</strong> {protocolo}</p>
-                        <p style="margin: 0;"><strong>Data/Hora:</strong> {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}</p>
-                    </div>
-                    
-                    <p>Sua proposta será analisada e você será notificado sobre o andamento do processo.</p>
-                    
-                    <p>Guarde este protocolo para futuras consultas.</p>
-                    
-                    <p style="margin-top: 30px;">Atenciosamente,<br>
-                    Equipe de Suprimentos</p>
-                </div>
-                
-                <p style="text-align: center; color: #666; margin-top: 20px;">
-                    <small>Este é um e-mail automático, por favor não responda.</small>
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-        
-        mail.send(msg)
-        logger.info(f"Email de confirmação enviado para {email_fornecedor}")
-        return True
-        
-    except Exception as e:
-        logger.error(f"Erro ao enviar confirmação ao fornecedor: {str(e)}")
-        return False
-
-def enviar_notificacao_novo_processo(processo):
-    """Envia notificação aos fornecedores sobre novo processo"""
-    try:
-        # Buscar fornecedores cadastrados
-        fornecedores = list(fornecedores_db.values())
-        
-        if not fornecedores:
-            logger.info("Nenhum fornecedor cadastrado para notificar")
-            return
-        
-        for fornecedor in fornecedores:
-            if fornecedor.get('email'):
-                msg = Message(
-                    subject=f"Novo Processo de Licitação - {processo['numero']}",
-                    recipients=[fornecedor['email']]
-                )
-                
-                prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
-                prazo_formatado = prazo.strftime('%d/%m/%Y às %H:%M')
-                
-                msg.html = f"""
-                <html>
-                <body style="font-family: Arial, sans-serif;">
-                    <div style="background-color: #f0f0f0; padding: 20px; border-radius: 10px;">
-                        <h2 style="color: #333;">📢 Novo Processo de Licitação</h2>
-                        
-                        <div style="background-color: white; padding: 20px; border-radius: 5px; margin-top: 20px;">
-                            <p>Prezado(a) {fornecedor.get('razaoSocial', 'Fornecedor')},</p>
-                            
-                            <p>Informamos que foi aberto um novo processo de licitação que pode ser de seu interesse:</p>
-                            
-                            <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                                <p><strong>Número:</strong> {processo['numero']}</p>
-                                <p><strong>Objeto:</strong> {processo['objeto']}</p>
-                                <p><strong>Modalidade:</strong> {processo['modalidade']}</p>
-                                <p><strong>Prazo para envio:</strong> {prazo_formatado}</p>
-                            </div>
-                            
-                            <p>Para participar, acesse o portal de propostas através do link:</p>
-                            
-                            <div style="text-align: center; margin: 30px 0;">
-                                <a href="{request.url_root}portal-propostas?processo={processo['numero']}" 
-                                   style="background-color: #4CAF50; color: white; padding: 15px 30px; 
-                                          text-decoration: none; border-radius: 5px; display: inline-block;">
-                                    Acessar Portal de Propostas
-                                </a>
-                            </div>
-                            
-                            <p>Não perca esta oportunidade!</p>
-                            
-                            <p style="margin-top: 30px;">Atenciosamente,<br>
-                            Equipe de Suprimentos</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-                """
-                
-                mail.send(msg)
-                logger.info(f"Notificação enviada para {fornecedor['email']}")
-                
-    except Exception as e:
-        logger.error(f"Erro ao enviar notificações: {str(e)}")
-
-def verificar_prazos_proximos():
-    """Verifica processos com prazo próximo e envia lembretes"""
-    try:
-        agora = datetime.now()
-        tres_dias = timedelta(days=3)
-        
-        for processo in processos_db.values():
-            prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
-            
-            # Se faltam 3 dias ou menos
-            if prazo > agora and (prazo - agora) <= tres_dias:
-                # Buscar fornecedores que não enviaram proposta
-                propostas_processo = [p for p in propostas_db.values() if p['processo'] == processo['numero']]
-                cnpjs_com_proposta = [p['dados']['cnpj'] for p in propostas_processo if 'dados' in p and 'cnpj' in p['dados']]
-                
-                for fornecedor in fornecedores_db.values():
-                    if fornecedor.get('cnpj') not in cnpjs_com_proposta and fornecedor.get('email'):
-                        enviar_lembrete_prazo(fornecedor, processo)
-                        
-    except Exception as e:
-        logger.error(f"Erro ao verificar prazos: {str(e)}")
-
-def enviar_lembrete_prazo(fornecedor, processo):
-    """Envia lembrete de prazo para fornecedor"""
-    try:
-        msg = Message(
-            subject=f"⏰ Lembrete: Prazo próximo - Processo {processo['numero']}",
-            recipients=[fornecedor['email']]
-        )
-        
-        prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
-        prazo_formatado = prazo.strftime('%d/%m/%Y às %H:%M')
-        
-        msg.html = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="background-color: #fff3cd; padding: 20px; border-radius: 10px; border: 1px solid #ffeaa7;">
-                <h2 style="color: #856404;">⏰ Lembrete de Prazo</h2>
-                
-                <div style="background-color: white; padding: 20px; border-radius: 5px; margin-top: 20px;">
-                    <p>Prezado(a) {fornecedor.get('razaoSocial', 'Fornecedor')},</p>
-                    
-                    <p>Este é um lembrete de que o prazo para envio de propostas para o processo abaixo está próximo:</p>
-                    
-                    <div style="background-color: #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                        <p><strong>Processo:</strong> {processo['numero']}</p>
-                        <p><strong>Objeto:</strong> {processo['objeto']}</p>
-                        <p><strong>PRAZO FINAL:</strong> {prazo_formatado}</p>
-                    </div>
-                    
-                    <p><strong>Ainda não recebemos sua proposta!</strong></p>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="{request.url_root}portal-propostas?processo={processo['numero']}" 
-                           style="background-color: #ff9800; color: white; padding: 15px 30px; 
-                                  text-decoration: none; border-radius: 5px; display: inline-block;">
-                            Enviar Proposta Agora
-                        </a>
-                    </div>
-                    
-                    <p style="color: #dc3545;"><strong>Não perca o prazo!</strong></p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        
-        mail.send(msg)
-        
-        # Enviar cópia para o comprador
-        if EMAIL_CONFIG['destinatario_principal']:
-            msg_comprador = Message(
-                subject=f"Lembrete enviado - Processo {processo['numero']}",
-                recipients=[EMAIL_CONFIG['destinatario_principal']]
-            )
-            msg_comprador.body = f"Lembrete de prazo enviado para {fornecedor['razaoSocial']} ({fornecedor['email']})"
-            mail.send(msg_comprador)
-            
-        logger.info(f"Lembrete enviado para {fornecedor['email']}")
-        
-    except Exception as e:
-        logger.error(f"Erro ao enviar lembrete: {str(e)}")
-
-def salvar_proposta_arquivo(proposta_id, proposta_data):
-    """Salva a proposta em arquivo JSON"""
-    try:
-        safe_id = str(proposta_id).replace('/', '_').replace('\\', '_').replace(':', '_')
-        filename = os.path.join(PROPOSTAS_DIR, f'proposta_{safe_id}.json')
-        
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(proposta_data, f, ensure_ascii=False, indent=2)
-        
-        logger.info(f"Proposta salva: {filename}")
-        return True
-    except Exception as e:
-        logger.error(f"Erro ao salvar proposta: {str(e)}")
-        return False
-
-def carregar_dados():
-    """Carrega propostas, processos e fornecedores do diretório"""
-    try:
-        if not os.path.exists(PROPOSTAS_DIR):
-            logger.info(f"Diretório {PROPOSTAS_DIR} não existe ainda")
-            return
-            
-        # Carrega propostas
-        for filename in os.listdir(PROPOSTAS_DIR):
-            if filename.endswith('.json') and filename.startswith('proposta_'):
-                filepath = os.path.join(PROPOSTAS_DIR, filename)
-                try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
-                        proposta = json.load(f)
-                        propostas_db[proposta.get('protocolo', proposta.get('id'))] = proposta
-                except Exception as e:
-                    logger.error(f"Erro ao carregar {filename}: {e}")
-        
-        logger.info(f"Carregadas {len(propostas_db)} propostas")
-        
-        # Carrega processos se existir arquivo
-        processos_file = os.path.join(PROPOSTAS_DIR, 'processos.json')
-        if os.path.exists(processos_file):
-            with open(processos_file, 'r', encoding='utf-8') as f:
-                processos = json.load(f)
-                for processo in processos:
-                    processos_db[processo['numero']] = processo
-                    
-        # Carrega fornecedores se existir arquivo
-        fornecedores_file = os.path.join(PROPOSTAS_DIR, 'fornecedores.json')
-        if os.path.exists(fornecedores_file):
-            with open(fornecedores_file, 'r', encoding='utf-8') as f:
-                fornecedores = json.load(f)
-                for fornecedor in fornecedores:
-                    fornecedores_db[fornecedor.get('cnpj', fornecedor.get('id'))] = fornecedor
-                    
-    except Exception as e:
-        logger.error(f"Erro ao carregar dados: {str(e)}")
-
-# Inicializar dados de exemplo
-inicializar_dados_exemplo()
-
-# Carrega dados existentes ao iniciar
-carregar_dados()
-
 @app.route('/')
-def home():
-    """Serve a página principal ou informações da API"""
-    static_index = os.path.join(STATIC_DIR, 'index.html')
-    if os.path.exists(static_index):
-        return send_from_directory(STATIC_DIR, 'index.html')
-    else:
-        return jsonify({
-            "message": "Sistema de Propostas - API v2.0",
-            "status": "online",
-            "endpoints": [
-                "/portal-propostas",
-                "/api/enviar-proposta",
-                "/api/status",
-                "/api/propostas/listar",
-                "/api/processos/listar",
-                "/api/processos/<numero>",
-                "/api/criar-processo",
-                "/api/cadastrar-fornecedor",
-                "/api/notificacoes/<usuario_id>",
-                "/api/analise-ia",
-                "/api/cadastro-rapido"
-            ],
-            "email_configurado": bool(app.config['MAIL_USERNAME']),
-            "total_propostas": len(propostas_db),
-            "total_processos": len(processos_db),
-            "total_fornecedores": len(fornecedores_db),
-            "versao": "2.1.0"  # Atualizada com novos recursos
-        }), 200
-
-@app.route('/portal-propostas')
-def portal_propostas():
-    """Serve o portal de propostas"""
-    portal_path = os.path.join(STATIC_DIR, 'portal-propostas-novo.html')
-    if os.path.exists(portal_path):
-        return send_from_directory(STATIC_DIR, 'portal-propostas-novo.html')
-    else:
-        return render_template_string("""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Portal de Propostas</title>
-            <meta charset="UTF-8">
-        </head>
-        <body>
-            <h1>Portal de Propostas</h1>
-            <p>O arquivo portal-propostas-novo.html não foi encontrado.</p>
-            <p>Por favor, faça o upload do arquivo para a pasta static/</p>
-            <hr>
-            <p><a href="/api/status">Verificar Status da API</a></p>
-        </body>
-        </html>
-        """)
-
-@app.route('/api/status', methods=['GET'])
-def api_status():
-    """Verifica o status do servidor"""
+def index():
+    """Página inicial da API"""
     return jsonify({
+        "sistema": "Sistema de Gestão de Propostas",
+        "versao": "3.0",
         "status": "online",
         "timestamp": datetime.now().isoformat(),
-        "propostas_total": len(propostas_db),
-        "processos_total": len(processos_db),
-        "fornecedores_total": len(fornecedores_db),
-        "notificacoes_total": len(notificacoes_db),
-        "analises_ia_total": len(analises_ia_db),
-        "encoding": "UTF-8",
-        "versao": "2.1.0",
-        "email_configurado": bool(app.config['MAIL_USERNAME']),
-        "diretorios": {
-            "propostas": os.path.exists(PROPOSTAS_DIR),
-            "static": os.path.exists(STATIC_DIR),
-            "data": os.path.exists(DATA_DIR)
-        },
-        "modulos_ativos": {
-            "notificacoes": True,
-            "analise_ia": True,
-            "cadastro_rapido": True
+        "endpoints": {
+            "status": "/api/status",
+            "processos": "/api/processos",
+            "propostas": "/api/propostas",
+            "usuarios": "/api/usuarios",
+            "notificacoes": "/api/notificacoes"
         }
-    }), 200
+    })
 
-@app.route('/api/enviar-proposta', methods=['POST'])
-def enviar_proposta():
-    """Recebe proposta do portal novo"""
+@app.route('/api/status')
+def api_status():
+    """Status detalhado da API"""
     try:
-        data = request.get_json(force=True)
+        agora = datetime.now()
+        processos_ativos = [p for p in DADOS_SISTEMA["processos"] 
+                           if datetime.fromisoformat(p["prazo"]) > agora]
         
-        # Gera protocolo único
-        protocolo = data.get('protocolo')
-        if not protocolo:
-            protocolo = f"PROP-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{str(uuid.uuid4())[:8].upper()}"
-        
-        # Verifica se fornecedor já enviou proposta para este processo
-        processo_numero = data.get('processo', 'N/A')
-        cnpj = data.get('dados', {}).get('cnpj', '')
-        
-        # Verifica propostas existentes
-        for proposta in propostas_db.values():
-            if (proposta.get('processo') == processo_numero and 
-                proposta.get('dados', {}).get('cnpj') == cnpj):
-                return jsonify({
-                    "success": False,
-                    "erro": "Sua empresa já enviou uma proposta para este processo"
-                }), 400
-        
-        # Estrutura completa da proposta
-        proposta = {
-            "protocolo": protocolo,
-            "data_envio": datetime.now().isoformat(),
-            "processo": processo_numero,
-            "status": "recebida",
-            "dados": data.get('dados', {}),
-            "resumo": data.get('resumo', {}),
-            "tecnica": data.get('tecnica', {}),
-            "comercial": data.get('comercial', {})
-        }
-        
-        # Armazena na memória
-        propostas_db[protocolo] = proposta
-        
-        # Salva em arquivo
-        if salvar_proposta_arquivo(protocolo, proposta):
-            logger.info(f"Nova proposta recebida: {protocolo}")
-            
-            # Criar notificação para o comprador
-            criar_notificacao_sistema(
-                destinatario='comprador',  # Notificar todos os compradores
-                tipo='nova_proposta',
-                titulo=f'Nova Proposta - Processo {processo_numero}',
-                mensagem=f'Empresa {proposta["dados"].get("razaoSocial", "N/A")} enviou proposta. Valor: R$ {proposta["comercial"].get("valorTotal", "0,00")}',
-                acao={'tipo': 'ver_proposta', 'link': f'/api/propostas/{protocolo}'}
-            )
-            
-            # Envia email com anexos
-            email_enviado = enviar_email_proposta(protocolo, proposta)
-            
-            return jsonify({
-                "success": True,
-                "protocolo": protocolo,
-                "mensagem": "Proposta enviada com sucesso!",
-                "email_enviado": email_enviado,
-                "data": datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
-                "proposta_resumo": {
-                    "protocolo": protocolo,
-                    "processo": processo_numero,
-                    "empresa": proposta['dados'].get('razaoSocial', 'N/A'),
-                    "cnpj": cnpj,
-                    "valor": f"R$ {proposta['comercial'].get('valorTotal', '0,00')}",
-                    "data": proposta['data_envio'],
-                    "dados": proposta
-                }
-            }), 201
-        else:
-            return jsonify({
-                "success": False,
-                "erro": "Erro ao salvar proposta"
-            }), 500
-            
-    except Exception as e:
-        logger.error(f"Erro ao processar proposta: {str(e)}")
         return jsonify({
-            "success": False,
-            "erro": "Erro ao processar proposta"
-        }), 500
+            "status": "online",
+            "timestamp": agora.isoformat(),
+            "estatisticas": {
+                "processos_total": len(DADOS_SISTEMA["processos"]),
+                "processos_ativos": len(processos_ativos),
+                "propostas_total": len(DADOS_SISTEMA["propostas"]),
+                "usuarios_total": len(DADOS_SISTEMA["usuarios"]),
+                "notificacoes_total": len(DADOS_SISTEMA["notificacoes"])
+            },
+            "versao": "3.0",
+            "ambiente": os.environ.get('ENVIRONMENT', 'development')
+        })
+    except Exception as e:
+        logger.error(f"Erro ao obter status: {e}")
+        return jsonify({"erro": "Erro interno"}), 500
 
-# Endpoint alternativo com query parameter para evitar problemas de codificação
-@app.route('/api/fornecedor/estatisticas', methods=['GET'])
-def estatisticas_fornecedor_query():
-    """Retorna estatísticas específicas do fornecedor via query parameter"""
-    cnpj = request.args.get('cnpj', '')
-    if not cnpj:
-        return jsonify({"success": False, "erro": "CNPJ não fornecido"}), 400
-    return estatisticas_fornecedor(cnpj)
-
-@app.route('/api/criar-processo', methods=['POST'])
-def criar_processo():
-    """Cria um novo processo e notifica fornecedores"""
+@app.route('/api/processos')
+def listar_processos():
+    """Lista todos os processos"""
     try:
-        data = request.get_json(force=True)
+        status_filtro = request.args.get('status', 'todos')
+        agora = datetime.now()
         
-        processo = {
-            "id": str(uuid.uuid4()),
-            "numero": data.get('numero', ''),
-            "objeto": data.get('objeto', ''),
-            "modalidade": data.get('modalidade', ''),
-            "prazo": data.get('prazo', ''),
-            "dataCadastro": datetime.now().isoformat(),
-            "criadoPor": data.get('criadoPor', ''),
-            "notificarFornecedores": data.get('notificarFornecedores', False)
-        }
+        processos = DADOS_SISTEMA["processos"].copy()
         
-        # Salva processo
-        processos_db[processo['numero']] = processo
+        # Aplicar filtro de status
+        if status_filtro == 'ativo':
+            processos = [p for p in processos 
+                        if datetime.fromisoformat(p["prazo"]) > agora]
+        elif status_filtro == 'encerrado':
+            processos = [p for p in processos 
+                        if datetime.fromisoformat(p["prazo"]) <= agora]
         
-        # Salvar em arquivo
-        processos_file = os.path.join(PROPOSTAS_DIR, 'processos.json')
-        with open(processos_file, 'w', encoding='utf-8') as f:
-            json.dump(list(processos_db.values()), f, ensure_ascii=False, indent=2)
-        
-        # Notificar fornecedores se solicitado
-        if processo['notificarFornecedores']:
-            # Criar notificações internas ao invés de emails
-            for fornecedor in fornecedores_db.values():
-                criar_notificacao_sistema(
-                    destinatario=fornecedor.get('id'),
-                    tipo='novo_processo',
-                    titulo=f'Novo Processo: {processo["numero"]}',
-                    mensagem=f'Novo processo disponível: {processo["objeto"]}',
-                    acao={'tipo': 'participar', 'link': f'/portal-propostas?processo={processo["numero"]}'}
-                )
+        # Adicionar informações calculadas
+        for processo in processos:
+            prazo = datetime.fromisoformat(processo["prazo"])
+            processo["dias_restantes"] = (prazo - agora).days
+            processo["prazo_formatado"] = prazo.strftime("%d/%m/%Y %H:%M")
+            processo["status_calculado"] = "ativo" if prazo > agora else "encerrado"
             
-            # Opcionalmente, ainda enviar emails
-            if app.config['MAIL_USERNAME']:
-                enviar_notificacao_novo_processo(processo)
+            # Contar propostas
+            propostas_processo = [p for p in DADOS_SISTEMA["propostas"] 
+                                 if p["processo"] == processo["numero"]]
+            processo["total_propostas"] = len(propostas_processo)
         
         return jsonify({
             "success": True,
-            "processo": processo,
-            "mensagem": "Processo criado com sucesso!"
+            "processos": processos,
+            "total": len(processos),
+            "filtro_aplicado": status_filtro
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar processos: {e}")
+        return jsonify({
+            "success": False,
+            "erro": "Erro ao carregar processos"
+        }), 500
+
+@app.route('/api/processos/ativos')
+def processos_ativos():
+    """Lista apenas processos ativos (para fornecedores)"""
+    try:
+        agora = datetime.now()
+        processos_formatados = []
+        
+        for processo in DADOS_SISTEMA["processos"]:
+            try:
+                prazo = datetime.fromisoformat(processo["prazo"])
+                dias_restantes = (prazo - agora).days
+                
+                if dias_restantes > 0:  # Apenas processos ativos
+                    processos_formatados.append({
+                        "id": processo["id"],
+                        "numero": processo["numero"],
+                        "objeto": processo["objeto"],
+                        "modalidade": processo["modalidade"],
+                        "prazo": processo["prazo"],
+                        "prazo_formatado": prazo.strftime("%d/%m/%Y %H:%M"),
+                        "dias_restantes": dias_restantes,
+                        "status": "ativo"
+                    })
+            except Exception as e:
+                logger.warning(f"Erro ao processar processo {processo.get('numero', 'N/A')}: {e}")
+                continue
+        
+        # Ordenar por prazo (mais próximos primeiro)
+        processos_formatados.sort(key=lambda x: x["dias_restantes"])
+        
+        return jsonify({
+            "success": True,
+            "processos": processos_formatados,
+            "total": len(processos_formatados)
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar processos ativos: {e}")
+        return jsonify({
+            "success": False,
+            "erro": "Erro ao carregar processos"
+        }), 500
+
+@app.route('/api/processos', methods=['POST'])
+def criar_processo():
+    """Criar novo processo"""
+    try:
+        dados = request.get_json()
+        
+        # Validações básicas
+        campos_obrigatorios = ['numero', 'objeto', 'modalidade', 'prazo']
+        for campo in campos_obrigatorios:
+            if not dados.get(campo):
+                return jsonify({
+                    "success": False,
+                    "erro": f"Campo '{campo}' é obrigatório"
+                }), 400
+        
+        # Verificar se número já existe
+        if any(p["numero"] == dados["numero"] for p in DADOS_SISTEMA["processos"]):
+            return jsonify({
+                "success": False,
+                "erro": "Já existe um processo com este número"
+            }), 400
+        
+        # Criar novo processo
+        novo_processo = {
+            "id": f"proc_{len(DADOS_SISTEMA['processos']) + 1:03d}",
+            "numero": dados["numero"],
+            "objeto": dados["objeto"],
+            "modalidade": dados["modalidade"],
+            "prazo": dados["prazo"],
+            "status": "ativo",
+            "criadoPor": dados.get("criadoPor", "sistema"),
+            "dataCadastro": datetime.now().isoformat(),
+            "fornecedoresConvidados": dados.get("fornecedoresConvidados", [])
+        }
+        
+        DADOS_SISTEMA["processos"].append(novo_processo)
+        
+        logger.info(f"Processo criado: {novo_processo['numero']}")
+        
+        return jsonify({
+            "success": True,
+            "processo": novo_processo,
+            "mensagem": "Processo criado com sucesso"
         }), 201
         
     except Exception as e:
-        logger.error(f"Erro ao criar processo: {str(e)}")
+        logger.error(f"Erro ao criar processo: {e}")
         return jsonify({
             "success": False,
             "erro": "Erro ao criar processo"
         }), 500
 
-@app.route('/api/cadastrar-fornecedor', methods=['POST'])
-def cadastrar_fornecedor():
-    """Cadastra um novo fornecedor"""
+@app.route('/api/propostas')
+def listar_propostas():
+    """Lista todas as propostas"""
     try:
-        data = request.get_json(force=True)
+        processo_filtro = request.args.get('processo')
+        cnpj_filtro = request.args.get('cnpj')
         
-        cnpj = data.get('cnpj', '')
+        propostas = DADOS_SISTEMA["propostas"].copy()
         
-        # Verifica se já existe
-        if cnpj in fornecedores_db:
-            return jsonify({
-                "success": False,
-                "erro": "Fornecedor já cadastrado"
-            }), 400
+        # Aplicar filtros
+        if processo_filtro:
+            propostas = [p for p in propostas if p["processo"] == processo_filtro]
         
-        fornecedor = {
-            "id": str(uuid.uuid4()),
-            "cnpj": cnpj,
-            "razaoSocial": data.get('razaoSocial', ''),
-            "email": data.get('email', ''),
-            "telefone": data.get('telefone', ''),
-            "endereco": data.get('endereco', ''),
-            "cidade": data.get('cidade', ''),
-            "estado": data.get('estado', ''),
-            "cep": data.get('cep', ''),
-            "responsavel": data.get('responsavel', ''),
-            "dataCadastro": datetime.now().isoformat(),
-            "ativo": True
-        }
+        if cnpj_filtro:
+            cnpj_limpo = cnpj_filtro.replace('.', '').replace('/', '').replace('-', '')
+            propostas = [p for p in propostas 
+                        if p["cnpj"].replace('.', '').replace('/', '').replace('-', '') == cnpj_limpo]
         
-        # Salva fornecedor
-        fornecedores_db[cnpj] = fornecedor
-        
-        # Salvar em arquivo
-        fornecedores_file = os.path.join(PROPOSTAS_DIR, 'fornecedores.json')
-        with open(fornecedores_file, 'w', encoding='utf-8') as f:
-            json.dump(list(fornecedores_db.values()), f, ensure_ascii=False, indent=2)
+        # Adicionar informações calculadas
+        for proposta in propostas:
+            proposta["data_formatada"] = datetime.fromisoformat(proposta["data"]).strftime("%d/%m/%Y %H:%M")
         
         return jsonify({
             "success": True,
-            "fornecedor": fornecedor,
-            "mensagem": "Fornecedor cadastrado com sucesso!"
+            "propostas": propostas,
+            "total": len(propostas),
+            "filtros": {
+                "processo": processo_filtro,
+                "cnpj": cnpj_filtro
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar propostas: {e}")
+        return jsonify({
+            "success": False,
+            "erro": "Erro ao carregar propostas"
+        }), 500
+
+@app.route('/api/propostas', methods=['POST'])
+def enviar_proposta():
+    """Enviar nova proposta"""
+    try:
+        dados = request.get_json()
+        
+        # Validações básicas
+        campos_obrigatorios = ['processo', 'empresa', 'cnpj', 'dados']
+        for campo in campos_obrigatorios:
+            if not dados.get(campo):
+                return jsonify({
+                    "success": False,
+                    "erro": f"Campo '{campo}' é obrigatório"
+                }), 400
+        
+        # Verificar se processo existe e está ativo
+        processo = next((p for p in DADOS_SISTEMA["processos"] 
+                        if p["numero"] == dados["processo"]), None)
+        
+        if not processo:
+            return jsonify({
+                "success": False,
+                "erro": "Processo não encontrado"
+            }), 404
+        
+        # Verificar se processo ainda está ativo
+        if datetime.fromisoformat(processo["prazo"]) <= datetime.now():
+            return jsonify({
+                "success": False,
+                "erro": "Prazo do processo já expirou"
+            }), 400
+        
+        # Gerar protocolo único
+        protocolo = f"PROP-{datetime.now().strftime('%Y')}-{len(DADOS_SISTEMA['propostas']) + 1:03d}"
+        
+        # Criar nova proposta
+        nova_proposta = {
+            "protocolo": protocolo,
+            "processo": dados["processo"],
+            "empresa": dados["empresa"],
+            "cnpj": dados["cnpj"],
+            "data": datetime.now().isoformat(),
+            "valor": dados.get("valor", "R$ 0,00"),
+            "dados": dados["dados"]
+        }
+        
+        DADOS_SISTEMA["propostas"].append(nova_proposta)
+        
+        logger.info(f"Proposta enviada: {protocolo} para processo {dados['processo']}")
+        
+        return jsonify({
+            "success": True,
+            "proposta": nova_proposta,
+            "protocolo": protocolo,
+            "mensagem": "Proposta enviada com sucesso"
         }), 201
         
     except Exception as e:
-        logger.error(f"Erro ao cadastrar fornecedor: {str(e)}")
+        logger.error(f"Erro ao enviar proposta: {e}")
         return jsonify({
             "success": False,
-            "erro": "Erro ao cadastrar fornecedor"
+            "erro": "Erro ao enviar proposta"
         }), 500
 
-# Endpoints para arquivos estáticos movidos para o final
-
-@app.errorhandler(404)
-def nao_encontrado(e):
-    return jsonify({"erro": "Endpoint não encontrado"}), 404
-
-@app.errorhandler(500)
-def erro_interno(e):
-    return jsonify({"erro": "Erro interno do servidor"}), 500
-
-@app.route('/api/download/proposta/<protocolo>/<tipo>', methods=['GET'])
-def download_proposta(protocolo, tipo):
-    """Download de proposta em Excel ou Word usando as mesmas funções dos anexos de e-mail"""
+@app.route('/api/fornecedor/estatisticas')
+def estatisticas_fornecedor():
+    """Estatísticas específicas do fornecedor"""
     try:
-        # Buscar proposta
-        proposta = None
-        for p in propostas_db.values():
-            if p.get('protocolo') == protocolo:
-                proposta = p
-                break
-        
-        if not proposta:
+        cnpj = request.args.get('cnpj', '')
+        if not cnpj:
             return jsonify({
                 "success": False,
-                "erro": "Proposta não encontrada"
-            }), 404
-        
-        if tipo == 'excel':
-            # Gerar Excel usando a mesma função do e-mail
-            excel_buffer = gerar_excel_proposta(proposta)
-            
-            # Configurar response
-            response = send_file(
-                excel_buffer,
-                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                as_attachment=True,
-                download_name=f'proposta_{protocolo}_completa.xlsx'
-            )
-            return response
-            
-        elif tipo == 'word':
-            # Gerar Word usando a mesma função do e-mail
-            word_buffer = gerar_word_proposta(proposta)
-            
-            # Configurar response
-            response = send_file(
-                word_buffer,
-                mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                as_attachment=True,
-                download_name=f'proposta_{protocolo}_tecnica.docx'
-            )
-            return response
-            
-        else:
-            return jsonify({
-                "success": False,
-                "erro": "Tipo inválido. Use 'excel' ou 'word'"
+                "erro": "CNPJ não fornecido"
             }), 400
-            
-    except Exception as e:
-        logger.error(f"Erro ao fazer download: {str(e)}")
-        return jsonify({
-            "success": False,
-            "erro": f"Erro ao gerar arquivo: {str(e)}"
-        }), 500
-
-# ===== EXTENSÃO DO BACKEND - NOVOS ENDPOINTS =====
-# Este arquivo contém apenas os novos endpoints para os módulos TR
-# Para integrar: copiar e colar no FINAL do backend_propostas.py
-
-# ===== NOVOS ENDPOINTS PARA MÓDULOS ADICIONAIS =====
-
-@app.route('/api/trs', methods=['GET'])
-def listar_trs():
-    """Listar Termos de Referência"""
-    try:
-        # Carregar TRs de arquivo JSON
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            trs = []
         
-        # Filtrar por usuário se especificado
-        user_id = request.args.get('user_id')
-        if user_id:
-            trs = [tr for tr in trs if tr.get('criado_por') == user_id]
-        
-        return jsonify({'success': True, 'trs': trs, 'total': len(trs)})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/trs', methods=['POST'])
-def criar_tr():
-    """Criar novo Termo de Referência"""
-    try:
-        data = request.get_json()
-        
-        # Carregar TRs existentes
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            trs = []
-        
-        # Criar novo TR
-        novo_tr = {
-            'id': f"TR-{len(trs) + 1:03d}",
-            'titulo': data.get('titulo', ''),
-            'objetivo': data.get('objetivo', ''),
-            'situacao_atual': data.get('situacao_atual', ''),
-            'problemas': data.get('problemas', ''),
-            'necessidades': data.get('necessidades', ''),
-            'modalidade': data.get('modalidade', 'concorrencia'),
-            'especificacoes': data.get('especificacoes', ''),
-            'normas': data.get('normas', ''),
-            'prazo_execucao': data.get('prazo_execucao', 0),
-            'prazo_garantia': data.get('prazo_garantia', 0),
-            'servicos': data.get('servicos', []),
-            'criado_por': data.get('criado_por', 'sistema'),
-            'criado_em': datetime.now().isoformat(),
-            'atualizado_em': datetime.now().isoformat(),
-            'status': data.get('status', 'rascunho')
-        }
-        
-        trs.append(novo_tr)
-        
-        # Salvar TRs
-        os.makedirs('data', exist_ok=True)
-        with open(trs_file, 'w', encoding='utf-8') as f:
-            json.dump(trs, f, ensure_ascii=False, indent=2)
-        
-        return jsonify({'success': True, 'tr': novo_tr})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/trs/<tr_id>', methods=['GET'])
-def obter_tr(tr_id):
-    """Obter TR específico"""
-    try:
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-            
-            tr = next((t for t in trs if t['id'] == tr_id), None)
-            if tr:
-                return jsonify({'success': True, 'tr': tr})
-            else:
-                return jsonify({'success': False, 'error': 'TR não encontrado'})
-        else:
-            return jsonify({'success': False, 'error': 'Nenhum TR encontrado'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/trs/<tr_id>', methods=['PUT'])
-def atualizar_tr(tr_id):
-    """Atualizar TR existente"""
-    try:
-        data = request.get_json()
-        
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            return jsonify({'success': False, 'error': 'TR não encontrado'})
-        
-        # Encontrar e atualizar TR
-        for i, tr in enumerate(trs):
-            if tr['id'] == tr_id:
-                # Manter dados originais
-                trs[i].update({
-                    'titulo': data.get('titulo', tr['titulo']),
-                    'objetivo': data.get('objetivo', tr['objetivo']),
-                    'situacao_atual': data.get('situacao_atual', tr['situacao_atual']),
-                    'problemas': data.get('problemas', tr.get('problemas', '')),
-                    'necessidades': data.get('necessidades', tr.get('necessidades', '')),
-                    'modalidade': data.get('modalidade', tr.get('modalidade', 'concorrencia')),
-                    'especificacoes': data.get('especificacoes', tr.get('especificacoes', '')),
-                    'normas': data.get('normas', tr.get('normas', '')),
-                    'prazo_execucao': data.get('prazo_execucao', tr.get('prazo_execucao', 0)),
-                    'prazo_garantia': data.get('prazo_garantia', tr.get('prazo_garantia', 0)),
-                    'servicos': data.get('servicos', tr.get('servicos', [])),
-                    'status': data.get('status', tr['status']),
-                    'atualizado_em': datetime.now().isoformat()
-                })
-                
-                # Salvar alterações
-                with open(trs_file, 'w', encoding='utf-8') as f:
-                    json.dump(trs, f, ensure_ascii=False, indent=2)
-                
-                return jsonify({'success': True, 'tr': trs[i]})
-        
-        return jsonify({'success': False, 'error': 'TR não encontrado'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/trs/<tr_id>', methods=['DELETE'])
-def excluir_tr(tr_id):
-    """Excluir TR"""
-    try:
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            return jsonify({'success': False, 'error': 'TR não encontrado'})
-        
-        # Encontrar e remover TR
-        trs_filtrados = [tr for tr in trs if tr['id'] != tr_id]
-        
-        if len(trs_filtrados) < len(trs):
-            # TR foi removido
-            with open(trs_file, 'w', encoding='utf-8') as f:
-                json.dump(trs_filtrados, f, ensure_ascii=False, indent=2)
-            
-            return jsonify({'success': True, 'message': 'TR excluído com sucesso'})
-        else:
-            return jsonify({'success': False, 'error': 'TR não encontrado'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/dashboard/requisitante/<user_id>')
-def dashboard_requisitante(user_id):
-    """Dashboard específico para requisitante"""
-    try:
-        # Carregar dados dos TRs
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            trs = []
-        
-        # Filtrar TRs do usuário
-        meus_trs = [tr for tr in trs if tr.get('criado_por') == user_id]
-        trs_aprovados = [tr for tr in meus_trs if tr.get('status') == 'aprovado']
-        
-        # Simular dados de propostas em análise
-        propostas_analise = 2
-        pareceres_pendentes = 1
-        
-        dados = {
-            'meus_trs': len(meus_trs),
-            'trs_aprovados': len(trs_aprovados),
-            'propostas_analise': propostas_analise,
-            'pareceres_pendentes': pareceres_pendentes,
-            'trs_recentes': meus_trs[-5:] if meus_trs else []
-        }
-        
-        return jsonify({'success': True, 'dados': dados})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/dashboard/comprador/<user_id>')
-def dashboard_comprador(user_id):
-    """Dashboard específico para comprador"""
-    try:
-        # Carregar dados dos TRs
-        trs_file = 'data/trs.json'
-        if os.path.exists(trs_file):
-            with open(trs_file, 'r', encoding='utf-8') as f:
-                trs = json.load(f)
-        else:
-            trs = []
-        
-        # Simular dados do comprador
-        trs_pendentes = len([tr for tr in trs if tr.get('status') == 'analise'])
-        concorrencias_ativas = 2
-        propostas_recebidas = 8
-        valor_total = 1250000
-        
-        dados = {
-            'trs_pendentes': trs_pendentes,
-            'concorrencias_ativas': concorrencias_ativas,
-            'propostas_recebidas': propostas_recebidas,
-            'valor_total': valor_total,
-            'trs_para_analise': [tr for tr in trs if tr.get('status') in ['rascunho', 'analise']]
-        }
-        
-        return jsonify({'success': True, 'dados': dados})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/propostas/tecnicas', methods=['GET'])
-def listar_propostas_tecnicas():
-    """Listar propostas técnicas (sem valores comerciais)"""
-    try:
-        # Simular dados de propostas técnicas
-        propostas_tecnicas = [
-            {
-                'id': 'PROP-001',
-                'fornecedor': 'Construtora ABC Ltda',
-                'tr_id': 'TR-001',
-                'metodologia': 'Metodologia construtiva com técnicas modernas...',
-                'cronograma': '120 dias',
-                'equipe_tecnica': 'Eng. João Silva (CREA 12345) + equipe de 15 profissionais',
-                'experiencia': '10 obras similares nos últimos 5 anos',
-                'certificacoes': 'ISO 9001, ISO 14001',
-                'recebida_em': datetime.now().isoformat(),
-                'status': 'analise_tecnica'
-            },
-            {
-                'id': 'PROP-002',
-                'fornecedor': 'Engenharia XYZ S.A.',
-                'tr_id': 'TR-001',
-                'metodologia': 'Abordagem sustentável com materiais eco-friendly...',
-                'cronograma': '90 dias',
-                'equipe_tecnica': 'Eng. Maria Santos (CREA 67890) + equipe especializada',
-                'experiencia': '15 obras similares, incluindo projetos governamentais',
-                'certificacoes': 'ISO 9001, PBQP-H',
-                'recebida_em': datetime.now().isoformat(),
-                'status': 'analise_tecnica'
-            }
-        ]
-        
-        return jsonify({'success': True, 'propostas': propostas_tecnicas})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/propostas/<proposta_id>/parecer', methods=['POST'])
-def emitir_parecer_tecnico(proposta_id):
-    """Emitir parecer técnico sobre proposta"""
-    try:
-        data = request.get_json()
-        
-        parecer = {
-            'id': f"PARECER-{proposta_id}",
-            'proposta_id': proposta_id,
-            'avaliacao_metodologia': data.get('avaliacao_metodologia', ''),
-            'avaliacao_cronograma': data.get('avaliacao_cronograma', ''),
-            'avaliacao_equipe': data.get('avaliacao_equipe', ''),
-            'pontos_positivos': data.get('pontos_positivos', ''),
-            'pontos_negativos': data.get('pontos_negativos', ''),
-            'recomendacao': data.get('recomendacao', ''),  # aprovado/rejeitado/condicional
-            'observacoes': data.get('observacoes', ''),
-            'emitido_por': data.get('emitido_por', 'requisitante'),
-            'emitido_em': datetime.now().isoformat()
-        }
-        
-        # Salvar parecer
-        pareceres_file = 'data/pareceres.json'
-        if os.path.exists(pareceres_file):
-            with open(pareceres_file, 'r', encoding='utf-8') as f:
-                pareceres = json.load(f)
-        else:
-            pareceres = []
-        
-        pareceres.append(parecer)
-        
-        os.makedirs('data', exist_ok=True)
-        with open(pareceres_file, 'w', encoding='utf-8') as f:
-            json.dump(pareceres, f, ensure_ascii=False, indent=2)
-        
-        return jsonify({'success': True, 'parecer': parecer})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/pareceres', methods=['GET'])
-def listar_pareceres():
-    """Listar pareceres técnicos"""
-    try:
-        pareceres_file = 'data/pareceres.json'
-        if os.path.exists(pareceres_file):
-            with open(pareceres_file, 'r', encoding='utf-8') as f:
-                pareceres = json.load(f)
-        else:
-            pareceres = []
-        
-        # Filtrar por usuário se especificado
-        user_id = request.args.get('user_id')
-        if user_id:
-            pareceres = [p for p in pareceres if p.get('emitido_por') == user_id]
-        
-        return jsonify({'success': True, 'pareceres': pareceres})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/concorrencias', methods=['GET'])
-def listar_concorrencias():
-    """Listar concorrências ativas"""
-    try:
-        # Simular dados de concorrências
-        concorrencias = [
-            {
-                'id': 'CONC-001',
-                'numero': '001/2025',
-                'objeto': 'Reforma do Centro de Saúde Municipal',
-                'modalidade': 'Concorrência',
-                'valor_estimado': 850000.00,
-                'prazo_proposta': '2025-02-15',
-                'dias_restantes': 15,
-                'status': 'aberta',
-                'tr_id': 'TR-001'
-            },
-            {
-                'id': 'CONC-002',
-                'numero': '002/2025',
-                'objeto': 'Construção de Quadra Poliesportiva',
-                'modalidade': 'Tomada de Preços',
-                'valor_estimado': 450000.00,
-                'prazo_proposta': '2025-02-20',
-                'dias_restantes': 20,
-                'status': 'aberta',
-                'tr_id': 'TR-002'
-            },
-            {
-                'id': 'CONC-003',
-                'numero': '003/2025',
-                'objeto': 'Pavimentação de Ruas do Bairro Centro',
-                'modalidade': 'Concorrência',
-                'valor_estimado': 1200000.00,
-                'prazo_proposta': '2025-02-25',
-                'dias_restantes': 25,
-                'status': 'aberta',
-                'tr_id': 'TR-003'
-            }
-        ]
-        
-        return jsonify({'success': True, 'concorrencias': concorrencias})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/api/inicializar-dados', methods=['POST'])
-def inicializar_dados_exemplo_api():
-    """Inicializar dados de exemplo para demonstração"""
-    try:
-        # Criar diretório de dados
-        os.makedirs('data', exist_ok=True)
-        
-        # TRs de exemplo
-        trs_exemplo = [
-            {
-                'id': 'TR-001',
-                'titulo': 'Reforma do Centro de Saúde Municipal',
-                'objetivo': 'Reforma completa das instalações do Centro de Saúde para melhorar o atendimento à população',
-                'situacao_atual': 'Instalações antigas com necessidade de modernização',
-                'modalidade': 'concorrencia',
-                'servicos': [
-                    {'item': 1, 'descricao': 'Demolição de paredes internas', 'unidade': 'm²', 'quantidade': 150},
-                    {'item': 2, 'descricao': 'Construção de novas paredes', 'unidade': 'm²', 'quantidade': 200},
-                    {'item': 3, 'descricao': 'Instalação elétrica completa', 'unidade': 'vb', 'quantidade': 1}
-                ],
-                'criado_por': 'requisitante1',
-                'criado_em': datetime.now().isoformat(),
-                'status': 'aprovado'
-            },
-            {
-                'id': 'TR-002',
-                'titulo': 'Construção de Quadra Poliesportiva',
-                'objetivo': 'Construção de quadra poliesportiva coberta para atividades esportivas da comunidade',
-                'situacao_atual': 'Terreno disponível, necessidade de espaço esportivo',
-                'modalidade': 'tomada_precos',
-                'servicos': [
-                    {'item': 1, 'descricao': 'Terraplanagem e fundação', 'unidade': 'm²', 'quantidade': 800},
-                    {'item': 2, 'descricao': 'Estrutura metálica da cobertura', 'unidade': 'm²', 'quantidade': 600},
-                    {'item': 3, 'descricao': 'Piso esportivo', 'unidade': 'm²', 'quantidade': 600}
-                ],
-                'criado_por': 'requisitante1',
-                'criado_em': datetime.now().isoformat(),
-                'status': 'analise'
-            }
-        ]
-        
-        # Salvar TRs
-        with open('data/trs.json', 'w', encoding='utf-8') as f:
-            json.dump(trs_exemplo, f, ensure_ascii=False, indent=2)
-        
-        # Pareceres de exemplo
-        pareceres_exemplo = []
-        with open('data/pareceres.json', 'w', encoding='utf-8') as f:
-            json.dump(pareceres_exemplo, f, ensure_ascii=False, indent=2)
-        
-        return jsonify({'success': True, 'message': 'Dados de exemplo inicializados'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-# ===== FIM DOS NOVOS ENDPOINTS =====
-
-# ===== ENDPOINT CATCH-ALL (DEVE SER O ÚLTIMO) =====
-@app.route('/<path:filename>')
-def serve_static(filename):
-    """Serve arquivos estáticos com tratamento de erro"""
-    try:
-        # Previne path traversal
-        if '..' in filename or filename.startswith('/'):
-            return jsonify({"erro": "Caminho inválido"}), 400
-            
-        file_path = os.path.join(STATIC_DIR, filename)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return send_from_directory(STATIC_DIR, filename)
-        else:
-            return jsonify({"erro": "Arquivo não encontrado"}), 404
-    except Exception as e:
-        logger.error(f"Erro ao servir arquivo {filename}: {e}")
-        return jsonify({"erro": "Erro ao acessar arquivo"}), 500
-
-if __name__ == '__main__':
-    logger.info("Iniciando servidor de propostas v2.1.0...")
-    logger.info(f"Diretório de trabalho: {os.getcwd()}")
-    logger.info(f"Email configurado: {bool(app.config['MAIL_USERNAME'])}")
-    logger.info(f"Destinatário principal: {EMAIL_CONFIG['destinatario_principal']}")
-    logger.info("Módulos ativos: Notificações, Análise IA, Cadastro Rápido")
-    
-    # Verificar prazos periodicamente (em produção usar scheduler apropriado)
-    # verificar_prazos_proximos()
-    
-    port = int(os.environ.get('PORT', 5000))
-    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
-    
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=debug_mode
-    ) 
-    
-@app.route('/api/propostas/listar', methods=['GET'])
-def listar_propostas():
-    """Lista todas as propostas com formato compatível com o frontend"""
-    try:
-        # Filtros opcionais
-        processo = request.args.get('processo')
-        cnpj = request.args.get('cnpj')
-        
-        propostas_lista = []
-        
-        for proposta in propostas_db.values():
-            # Aplicar filtros se especificados
-            if processo and proposta.get('processo') != processo:
-                continue
-            if cnpj and proposta.get('dados', {}).get('cnpj') != cnpj:
-                continue
-            
-            # Formatar proposta para o frontend
-            proposta_formatada = {
-                "protocolo": proposta.get('protocolo', ''),
-                "processo": proposta.get('processo', ''),
-                "empresa": proposta.get('dados', {}).get('razaoSocial', 'N/A'),
-                "cnpj": proposta.get('dados', {}).get('cnpj', ''),
-                "valor": f"R$ {proposta.get('comercial', {}).get('valorTotal', '0,00')}",
-                "data": proposta.get('data_envio', ''),
-                "dados": proposta
-            }
-            
-            propostas_lista.append(proposta_formatada)
-        
-        # Ordena por data
-        propostas_lista.sort(key=lambda x: x.get('data', ''), reverse=True)
-        
-        return jsonify({
-            "propostas": propostas_lista,
-            "total": len(propostas_lista)
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro ao listar propostas: {str(e)}")
-        return jsonify({
-            "erro": "Erro ao listar propostas"
-        }), 500
-
-@app.route('/api/processos/<numero>', methods=['GET'])
-def obter_processo(numero):
-    """Obtém informações de um processo específico"""
-    if numero in processos_db:
-        return jsonify(processos_db[numero]), 200
-    else:
-        # Retorna dados padrão se não encontrar
-        return jsonify({
-            "numero": numero,
-            "objeto": "Processo não cadastrado",
-            "modalidade": "Não informada",
-            "prazo": datetime.now().isoformat()
-        }), 200
-
-@app.route('/api/processos/listar', methods=['GET'])
-def listar_processos():
-    """Lista todos os processos"""
-    return jsonify({
-        "processos": list(processos_db.values()),
-        "total": len(processos_db)
-    }), 200
-
-# ===== NOVOS ENDPOINTS PARA ÁREA DO FORNECEDOR =====
-
-@app.route('/api/processos/ativos', methods=['GET'])
-def listar_processos_ativos():
-    """Lista apenas processos com prazo não vencido"""
-    try:
-        agora = datetime.now()
-        processos_ativos = []
-        
-        for processo in processos_db.values():
-            try:
-                # Converter prazo para datetime
-                prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
-                
-                # Verificar se ainda está ativo
-                if prazo > agora:
-                    # Calcular dias restantes
-                    dias_restantes = (prazo - agora).days
-                    
-                    processo_ativo = {
-                        "numero": processo['numero'],
-                        "objeto": processo['objeto'],
-                        "modalidade": processo['modalidade'],
-                        "prazo": processo['prazo'],
-                        "prazo_formatado": prazo.strftime('%d/%m/%Y %H:%M'),
-                        "dias_restantes": dias_restantes,
-                        "status": "ativo"
-                    }
-                    processos_ativos.append(processo_ativo)
-                    
-            except Exception as e:
-                logger.error(f"Erro ao processar processo {processo.get('numero', 'N/A')}: {e}")
-                continue
-        
-        # Ordenar por prazo (mais próximos primeiro)
-        processos_ativos.sort(key=lambda x: x['prazo'])
-        
-        return jsonify({
-            "success": True,
-            "processos": processos_ativos,
-            "total": len(processos_ativos)
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro ao listar processos ativos: {str(e)}")
-        return jsonify({
-            "success": False,
-            "erro": "Erro ao listar processos ativos"
-        }), 500
-
-@app.route('/api/propostas/fornecedor/<cnpj>', methods=['GET'])
-def listar_propostas_fornecedor(cnpj):
-    """Lista propostas de um fornecedor específico"""
-    try:
-        # Remover formatação do CNPJ para comparação
-        cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
-        
-        propostas_fornecedor = []
-        
-        for proposta in propostas_db.values():
-            proposta_cnpj = proposta.get('dados', {}).get('cnpj', '')
-            proposta_cnpj_limpo = proposta_cnpj.replace('.', '').replace('/', '').replace('-', '')
-            
-            if proposta_cnpj_limpo == cnpj_limpo:
-                # Buscar informações do processo
-                processo = processos_db.get(proposta.get('processo', ''), {})
-                
-                proposta_formatada = {
-                    "protocolo": proposta.get('protocolo', ''),
-                    "processo": proposta.get('processo', ''),
-                    "processo_objeto": processo.get('objeto', 'N/A'),
-                    "data_envio": proposta.get('data_envio', ''),
-                    "data_envio_formatada": datetime.fromisoformat(proposta.get('data_envio', '')).strftime('%d/%m/%Y %H:%M') if proposta.get('data_envio') else '',
-                    "valor_total": proposta.get('comercial', {}).get('valorTotal', '0,00'),
-                    "status": proposta.get('status', 'enviada'),
-                    "empresa": proposta.get('dados', {}).get('razaoSocial', ''),
-                    "processo_prazo": processo.get('prazo', ''),
-                    "processo_encerrado": datetime.fromisoformat(processo.get('prazo', '').replace('Z', '+00:00')) < datetime.now() if processo.get('prazo') else False
-                }
-                
-                propostas_fornecedor.append(proposta_formatada)
-        
-        # Ordenar por data de envio (mais recentes primeiro)
-        propostas_fornecedor.sort(key=lambda x: x.get('data_envio', ''), reverse=True)
-        
-        return jsonify({
-            "success": True,
-            "propostas": propostas_fornecedor,
-            "total": len(propostas_fornecedor),
-            "cnpj": cnpj
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro ao listar propostas do fornecedor {cnpj}: {str(e)}")
-        return jsonify({
-            "success": False,
-            "erro": "Erro ao listar propostas do fornecedor"
-        }), 500
-
-# Endpoint alternativo com query parameter para evitar problemas de codificação
-@app.route('/api/propostas/fornecedor', methods=['GET'])
-def listar_propostas_fornecedor_query():
-    """Lista propostas de um fornecedor específico via query parameter"""
-    cnpj = request.args.get('cnpj', '')
-    if not cnpj:
-        return jsonify({"success": False, "erro": "CNPJ não fornecido"}), 400
-    return listar_propostas_fornecedor(cnpj)
-
-@app.route('/api/fornecedor/estatisticas/<cnpj>', methods=['GET'])
-def estatisticas_fornecedor(cnpj):
-    """Retorna estatísticas específicas do fornecedor"""
-    try:
-        # Remover formatação do CNPJ
+        # Limpar CNPJ
         cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
         
         # Contar propostas do fornecedor
-        propostas_fornecedor = []
-        for proposta in propostas_db.values():
-            proposta_cnpj = proposta.get('dados', {}).get('cnpj', '')
-            proposta_cnpj_limpo = proposta_cnpj.replace('.', '').replace('/', '').replace('-', '')
-            
-            if proposta_cnpj_limpo == cnpj_limpo:
-                propostas_fornecedor.append(proposta)
+        propostas_fornecedor = [p for p in DADOS_SISTEMA["propostas"] 
+                               if p["cnpj"].replace('.', '').replace('/', '').replace('-', '') == cnpj_limpo]
         
         # Contar processos ativos
         agora = datetime.now()
-        processos_ativos = 0
-        for processo in processos_db.values():
-            try:
-                prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
-                if prazo > agora:
-                    processos_ativos += 1
-            except:
-                continue
+        processos_ativos = len([p for p in DADOS_SISTEMA["processos"] 
+                               if datetime.fromisoformat(p["prazo"]) > agora])
         
-        # Contar prazos próximos (próximos 7 dias)
-        uma_semana = agora + timedelta(days=7)
-        prazos_proximos = 0
-        for processo in processos_db.values():
-            try:
-                prazo = datetime.fromisoformat(processo['prazo'].replace('Z', '+00:00'))
-                if agora < prazo <= uma_semana:
-                    prazos_proximos += 1
-            except:
-                continue
+        # Processos com prazo próximo (7 dias)
+        prazos_proximos = len([p for p in DADOS_SISTEMA["processos"] 
+                              if datetime.fromisoformat(p["prazo"]) > agora and 
+                              (datetime.fromisoformat(p["prazo"]) - agora).days <= 7])
         
         # Calcular valor total das propostas
         valor_total = 0
         for proposta in propostas_fornecedor:
-            valor_str = proposta.get('comercial', {}).get('valorTotal', '0,00')
-            try:
-                # Remover formatação e converter para float
-                valor_limpo = valor_str.replace('R$ ', '').replace('.', '').replace(',', '.').strip()
-                valor_total += float(valor_limpo)
-            except:
-                continue
+            if proposta.get("valor"):
+                valor_str = proposta["valor"].replace("R$", "").replace(".", "").replace(",", ".").strip()
+                try:
+                    valor_total += float(valor_str)
+                except:
+                    pass
         
         return jsonify({
             "success": True,
@@ -2365,13 +459,217 @@ def estatisticas_fornecedor(cnpj):
                 "processos_ativos": processos_ativos,
                 "propostas_enviadas": len(propostas_fornecedor),
                 "prazos_proximos": prazos_proximos,
-                "valor_total": f"{valor_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-            }
-        }), 200
+                "valor_total": f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            },
+            "cnpj": cnpj
+        })
         
     except Exception as e:
-        logger.error(f"Erro ao calcular estatísticas do fornecedor {cnpj}: {str(e)}")
+        logger.error(f"Erro ao calcular estatísticas do fornecedor: {e}")
         return jsonify({
             "success": False,
             "erro": "Erro ao calcular estatísticas"
         }), 500
+
+@app.route('/api/usuarios')
+def listar_usuarios():
+    """Lista usuários do sistema"""
+    try:
+        tipo_filtro = request.args.get('tipo')
+        
+        usuarios = DADOS_SISTEMA["usuarios"].copy()
+        
+        # Aplicar filtro de tipo
+        if tipo_filtro:
+            usuarios = [u for u in usuarios if u["tipo"] == tipo_filtro]
+        
+        # Remover informações sensíveis
+        for usuario in usuarios:
+            if "senha" in usuario:
+                del usuario["senha"]
+        
+        return jsonify({
+            "success": True,
+            "usuarios": usuarios,
+            "total": len(usuarios),
+            "filtro_tipo": tipo_filtro
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar usuários: {e}")
+        return jsonify({
+            "success": False,
+            "erro": "Erro ao carregar usuários"
+        }), 500
+
+@app.route('/api/notificacoes')
+def listar_notificacoes():
+    """Lista notificações do sistema"""
+    try:
+        usuario_id = request.args.get('usuario_id')
+        tipo_usuario = request.args.get('tipo_usuario')
+        
+        notificacoes = DADOS_SISTEMA["notificacoes"].copy()
+        
+        # Filtrar por usuário específico ou tipo
+        if usuario_id:
+            notificacoes = [n for n in notificacoes 
+                           if n.get("destinatario") == usuario_id or 
+                           n.get("destinatario") == "todos"]
+        
+        if tipo_usuario:
+            notificacoes = [n for n in notificacoes 
+                           if n.get("destinatarioTipo") == tipo_usuario or 
+                           n.get("destinatario") == "todos"]
+        
+        # Ordenar por data (mais recentes primeiro)
+        notificacoes.sort(key=lambda x: x.get("data", ""), reverse=True)
+        
+        return jsonify({
+            "success": True,
+            "notificacoes": notificacoes,
+            "total": len(notificacoes)
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar notificações: {e}")
+        return jsonify({
+            "success": False,
+            "erro": "Erro ao carregar notificações"
+        }), 500
+
+@app.route('/api/notificacoes', methods=['POST'])
+def criar_notificacao():
+    """Criar nova notificação"""
+    try:
+        dados = request.get_json()
+        
+        nova_notificacao = {
+            "id": f"notif_{len(DADOS_SISTEMA['notificacoes']) + 1:03d}",
+            "tipo": dados.get("tipo", "info"),
+            "titulo": dados.get("titulo", ""),
+            "mensagem": dados.get("mensagem", ""),
+            "destinatario": dados.get("destinatario", "todos"),
+            "destinatarioTipo": dados.get("destinatarioTipo"),
+            "remetente": dados.get("remetente", "Sistema"),
+            "lida": False,
+            "data": datetime.now().isoformat(),
+            "acao": dados.get("acao"),
+            "processoId": dados.get("processoId"),
+            "metadata": dados.get("metadata", {})
+        }
+        
+        DADOS_SISTEMA["notificacoes"].append(nova_notificacao)
+        
+        logger.info(f"Notificação criada: {nova_notificacao['titulo']}")
+        
+        return jsonify({
+            "success": True,
+            "notificacao": nova_notificacao,
+            "mensagem": "Notificação criada com sucesso"
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Erro ao criar notificação: {e}")
+        return jsonify({
+            "success": False,
+            "erro": "Erro ao criar notificação"
+        }), 500
+
+# Endpoints para download de arquivos (Excel/Word)
+@app.route('/api/download/proposta/<protocolo>/excel')
+def download_proposta_excel(protocolo):
+    """Download de proposta em formato Excel"""
+    try:
+        proposta = next((p for p in DADOS_SISTEMA["propostas"] 
+                        if p["protocolo"] == protocolo), None)
+        
+        if not proposta:
+            return jsonify({"erro": "Proposta não encontrada"}), 404
+        
+        # Em produção, aqui seria gerado um arquivo Excel real
+        # Por enquanto, retorna JSON simulando o download
+        return jsonify({
+            "success": True,
+            "mensagem": "Em produção, seria gerado arquivo Excel",
+            "proposta": proposta,
+            "formato": "excel"
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao gerar Excel: {e}")
+        return jsonify({"erro": "Erro ao gerar arquivo"}), 500
+
+@app.route('/api/download/proposta/<protocolo>/word')
+def download_proposta_word(protocolo):
+    """Download de proposta em formato Word"""
+    try:
+        proposta = next((p for p in DADOS_SISTEMA["propostas"] 
+                        if p["protocolo"] == protocolo), None)
+        
+        if not proposta:
+            return jsonify({"erro": "Proposta não encontrada"}), 404
+        
+        # Em produção, aqui seria gerado um arquivo Word real
+        return jsonify({
+            "success": True,
+            "mensagem": "Em produção, seria gerado arquivo Word",
+            "proposta": proposta,
+            "formato": "word"
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao gerar Word: {e}")
+        return jsonify({"erro": "Erro ao gerar arquivo"}), 500
+
+# Servir arquivos estáticos (DEVE SER O ÚLTIMO)
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Serve arquivos estáticos"""
+    try:
+        # Não interceptar rotas da API
+        if filename.startswith('api/'):
+            return jsonify({"erro": "Endpoint não encontrado"}), 404
+            
+        # Prevenir path traversal
+        if '..' in filename or filename.startswith('/'):
+            return jsonify({"erro": "Caminho inválido"}), 400
+            
+        file_path = os.path.join(STATIC_DIR, filename)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return send_from_directory(STATIC_DIR, filename)
+        else:
+            # Se arquivo não existe, retornar index.html para SPAs
+            index_path = os.path.join(STATIC_DIR, 'index.html')
+            if os.path.exists(index_path):
+                return send_from_directory(STATIC_DIR, 'index.html')
+            else:
+                return jsonify({"erro": "Arquivo não encontrado"}), 404
+            
+    except Exception as e:
+        logger.error(f"Erro ao servir arquivo {filename}: {e}")
+        return jsonify({"erro": "Erro ao acessar arquivo"}), 500
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"erro": "Endpoint não encontrado"}), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    return jsonify({"erro": "Erro interno do servidor"}), 500
+
+if __name__ == '__main__':
+    logger.info("Iniciando Sistema de Gestão de Propostas...")
+    logger.info(f"Diretório de trabalho: {os.getcwd()}")
+    logger.info(f"Diretório estático: {STATIC_DIR}")
+    
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    logger.info(f"Servidor iniciando na porta {port}")
+    
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=debug_mode
+    )
