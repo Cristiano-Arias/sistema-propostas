@@ -902,6 +902,9 @@
                 loadProcessos();
             } else if (pageId === 'propostas') {
                 loadPropostas();
+            } else if (pageId === 'empresa') {
+                // Recarregar dados ao abrir a página
+                loadEmpresaData();
             }
         }
 
@@ -1222,39 +1225,64 @@
 
         // Carregar dados da empresa
         function loadEmpresaData() {
+            // Verificar se currentUser existe
+            if (!currentUser || !currentUser.usuarioId) {
+                console.error('Usuário não definido ao carregar dados da empresa');
+                return;
+            }
+            
             // Carregar dados salvos do localStorage
             const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
+            console.log('Buscando dados com a chave:', empresaKey);
+            
             const empresaData = localStorage.getItem(empresaKey);
             
             if (empresaData) {
-                const data = JSON.parse(empresaData);
-                document.getElementById('cnpj').value = data.cnpj || '';
-                document.getElementById('razaoSocial').value = data.razaoSocial || '';
-                document.getElementById('nomeFantasia').value = data.nomeFantasia || '';
-                document.getElementById('email').value = data.email || currentUser.email || '';
-                document.getElementById('telefone').value = data.telefone || '';
-                document.getElementById('endereco').value = data.endereco || '';
-                document.getElementById('areaAtuacao').value = data.areaAtuacao || '';
-                
-                // Atualizar nome no header
-                if (data.nomeFantasia) {
-                    document.getElementById('fornecedorNome').textContent = data.nomeFantasia;
+                try {
+                    const data = JSON.parse(empresaData);
+                    console.log('Dados encontrados:', data);
+                    
+                    // Preencher os campos
+                    if (document.getElementById('cnpj')) document.getElementById('cnpj').value = data.cnpj || '';
+                    if (document.getElementById('razaoSocial')) document.getElementById('razaoSocial').value = data.razaoSocial || '';
+                    if (document.getElementById('nomeFantasia')) document.getElementById('nomeFantasia').value = data.nomeFantasia || '';
+                    if (document.getElementById('email')) document.getElementById('email').value = data.email || currentUser.email || '';
+                    if (document.getElementById('telefone')) document.getElementById('telefone').value = data.telefone || '';
+                    if (document.getElementById('endereco')) document.getElementById('endereco').value = data.endereco || '';
+                    if (document.getElementById('areaAtuacao')) document.getElementById('areaAtuacao').value = data.areaAtuacao || '';
+                    
+                    // Atualizar nome no header
+                    if (data.nomeFantasia) {
+                        document.getElementById('fornecedorNome').textContent = data.nomeFantasia;
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar dados da empresa:', error);
                 }
             } else {
+                console.log('Nenhum dado salvo encontrado para:', empresaKey);
                 // Preencher com dados do usuário se disponível
-                document.getElementById('email').value = currentUser.email || '';
+                if (document.getElementById('email') && currentUser.email) {
+                    document.getElementById('email').value = currentUser.email;
+                }
             }
         }
 
         // Salvar dados da empresa
         function salvarEmpresa() {
+            // Verificar se currentUser existe
+            if (!currentUser || !currentUser.usuarioId) {
+                console.error('Usuário não autenticado');
+                alert('❌ Erro: Usuário não autenticado. Por favor, faça login novamente.');
+                return;
+            }
+            
             const data = {
-                cnpj: document.getElementById('cnpj').value,
-                razaoSocial: document.getElementById('razaoSocial').value,
-                nomeFantasia: document.getElementById('nomeFantasia').value,
-                email: document.getElementById('email').value,
-                telefone: document.getElementById('telefone').value,
-                endereco: document.getElementById('endereco').value,
+                cnpj: document.getElementById('cnpj').value.trim(),
+                razaoSocial: document.getElementById('razaoSocial').value.trim(),
+                nomeFantasia: document.getElementById('nomeFantasia').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                telefone: document.getElementById('telefone').value.trim(),
+                endereco: document.getElementById('endereco').value.trim(),
                 areaAtuacao: document.getElementById('areaAtuacao').value
             };
             
@@ -1264,16 +1292,44 @@
                 return;
             }
             
-            // Salvar no localStorage
-            const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
-            localStorage.setItem(empresaKey, JSON.stringify(data));
-            
-            // Atualizar nome no header
-            if (data.nomeFantasia) {
-                document.getElementById('fornecedorNome').textContent = data.nomeFantasia;
+            try {
+                // Salvar no localStorage
+                const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
+                localStorage.setItem(empresaKey, JSON.stringify(data));
+                
+                // Verificar se foi salvo
+                const savedData = localStorage.getItem(empresaKey);
+                if (!savedData) {
+                    throw new Error('Falha ao salvar dados no navegador');
+                }
+                
+                // Atualizar dados do usuário também
+                const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                const userIndex = usuarios.findIndex(u => u.usuarioId === currentUser.usuarioId);
+                
+                if (userIndex !== -1) {
+                    usuarios[userIndex].empresa = data.nomeFantasia || data.razaoSocial;
+                    usuarios[userIndex].cnpj = data.cnpj;
+                    localStorage.setItem('usuarios', JSON.stringify(usuarios));
+                }
+                
+                // Atualizar nome no header
+                if (data.nomeFantasia) {
+                    document.getElementById('fornecedorNome').textContent = data.nomeFantasia;
+                }
+                
+                console.log('Dados salvos:', data);
+                console.log('Chave utilizada:', empresaKey);
+                
+                alert('✅ Dados salvos com sucesso!');
+                
+                // Recarregar dados para confirmar
+                loadEmpresaData();
+                
+            } catch (error) {
+                console.error('Erro ao salvar dados:', error);
+                alert('❌ Erro ao salvar dados. Por favor, tente novamente.');
             }
-            
-            alert('✅ Dados salvos com sucesso!');
         }
 
         // Setup de upload de arquivos
