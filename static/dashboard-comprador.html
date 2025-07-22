@@ -1410,15 +1410,84 @@
             const container = document.getElementById('listaFornecedores');
             if (!container) return;
             
+            console.log('Carregando fornecedores...');
+            
             const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            console.log('Total de usuários:', usuarios.length);
+            
             const fornecedores = usuarios.filter(u => u.tipo === 'fornecedor');
+            console.log('Fornecedores encontrados:', fornecedores);
             
             if (fornecedores.length === 0) {
-                container.innerHTML = '<p style="color: #6c757d;">Nenhum fornecedor cadastrado no sistema</p>';
+                // Criar fornecedores de exemplo se não houver nenhum
+                const fornecedoresExemplo = [
+                    {
+                        usuarioId: 'forn_001',
+                        nome: 'Fornecedor Exemplo 1',
+                        email: 'fornecedor1@exemplo.com',
+                        empresa: 'Empresa Exemplo 1 Ltda',
+                        tipo: 'fornecedor'
+                    },
+                    {
+                        usuarioId: 'forn_002',
+                        nome: 'Fornecedor Exemplo 2',
+                        email: 'fornecedor2@exemplo.com',
+                        empresa: 'Empresa Exemplo 2 S.A.',
+                        tipo: 'fornecedor'
+                    }
+                ];
+                
+                container.innerHTML = `
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <p style="color: #856404; margin-bottom: 10px;">
+                            <strong>⚠️ Nenhum fornecedor cadastrado no sistema.</strong>
+                        </p>
+                        <p style="color: #856404; font-size: 14px;">
+                            Para fins de demonstração, você pode usar os fornecedores de exemplo abaixo:
+                        </p>
+                    </div>
+                    ${fornecedoresExemplo.map(fornecedor => `
+                        <div class="fornecedor-item" onclick="toggleFornecedor('${fornecedor.usuarioId}')">
+                            <input type="checkbox" 
+                                   class="fornecedor-checkbox" 
+                                   id="fornecedor_${fornecedor.usuarioId}"
+                                   value="${fornecedor.usuarioId}"
+                                   onclick="event.stopPropagation()">
+                            <div class="fornecedor-info">
+                                <div class="fornecedor-nome">${fornecedor.nome} <span style="color: #28a745; font-size: 12px;">(Exemplo)</span></div>
+                                <div class="fornecedor-detalhes">
+                                    ${fornecedor.empresa} | ${fornecedor.email}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
                 return;
             }
             
-            container.innerHTML = fornecedores.map(fornecedor => `
+            // Carregar dados adicionais dos fornecedores
+            const fornecedoresComDados = fornecedores.map(fornecedor => {
+                // Buscar dados da empresa salvos
+                const empresaKey = `fornecedorData_${fornecedor.usuarioId}`;
+                const empresaData = localStorage.getItem(empresaKey);
+                
+                if (empresaData) {
+                    try {
+                        const dados = JSON.parse(empresaData);
+                        return {
+                            ...fornecedor,
+                            empresa: dados.nomeFantasia || dados.razaoSocial || fornecedor.empresa || 'Empresa não informada',
+                            cnpj: dados.cnpj || ''
+                        };
+                    } catch (e) {
+                        console.error('Erro ao carregar dados da empresa:', e);
+                    }
+                }
+                
+                return fornecedor;
+            });
+            
+            container.innerHTML = fornecedoresComDados.map(fornecedor => `
                 <div class="fornecedor-item" onclick="toggleFornecedor('${fornecedor.usuarioId}')">
                     <input type="checkbox" 
                            class="fornecedor-checkbox" 
@@ -1429,15 +1498,29 @@
                         <div class="fornecedor-nome">${fornecedor.nome}</div>
                         <div class="fornecedor-detalhes">
                             ${fornecedor.empresa || 'Empresa não informada'} | ${fornecedor.email}
+                            ${fornecedor.cnpj ? ` | CNPJ: ${fornecedor.cnpj}` : ''}
                         </div>
                     </div>
                 </div>
             `).join('');
+            
+            // Adicionar informação adicional
+            container.innerHTML += `
+                <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 5px; font-size: 14px; color: #1976d2;">
+                    <strong>ℹ️ Dica:</strong> Selecione os fornecedores que deseja convidar para este processo. 
+                    Apenas os fornecedores selecionados poderão visualizar e enviar propostas.
+                </div>
+            `;
         }
 
         // Toggle seleção de fornecedor
         function toggleFornecedor(fornecedorId) {
             const checkbox = document.getElementById(`fornecedor_${fornecedorId}`);
+            if (!checkbox) {
+                console.error('Checkbox não encontrado para fornecedor:', fornecedorId);
+                return;
+            }
+            
             checkbox.checked = !checkbox.checked;
             
             const fornecedorItem = checkbox.closest('.fornecedor-item');
@@ -1450,6 +1533,8 @@
                 fornecedorItem.classList.remove('selected');
                 fornecedoresSelecionados = fornecedoresSelecionados.filter(id => id !== fornecedorId);
             }
+            
+            console.log('Fornecedores selecionados:', fornecedoresSelecionados);
         }
 
         // Cadastrar processo
@@ -1464,6 +1549,8 @@
             // Verificar fornecedores selecionados
             const checkboxes = document.querySelectorAll('.fornecedor-checkbox:checked');
             fornecedoresSelecionados = Array.from(checkboxes).map(cb => cb.value);
+            
+            console.log('Fornecedores selecionados para o processo:', fornecedoresSelecionados);
             
             if (fornecedoresSelecionados.length === 0) {
                 alert('❌ Por favor, selecione pelo menos um fornecedor!');
@@ -1502,6 +1589,8 @@
                 }
             };
             
+            console.log('Novo processo a ser criado:', novoProcesso);
+            
             const processos = JSON.parse(localStorage.getItem('processos') || '[]');
             processos.push(novoProcesso);
             localStorage.setItem('processos', JSON.stringify(processos));
@@ -1523,7 +1612,15 @@
             
             // Notificar fornecedores selecionados
             const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            let fornecedoresNotificados = 0;
+            
             fornecedoresSelecionados.forEach(fornecedorId => {
+                // Se for fornecedor de exemplo, não notificar
+                if (fornecedorId.startsWith('forn_00')) {
+                    console.log('Fornecedor de exemplo, não será notificado:', fornecedorId);
+                    return;
+                }
+                
                 const fornecedor = usuarios.find(u => u.usuarioId === fornecedorId);
                 if (fornecedor) {
                     Auth.Notificacoes.criar({
@@ -1537,11 +1634,13 @@
                             prazo: novoProcesso.prazo
                         }
                     });
+                    fornecedoresNotificados++;
                 }
             });
             
-            alert(`✅ Processo criado e enviado para ${fornecedoresSelecionados.length} fornecedor(es)!`);
+            alert(`✅ Processo criado e enviado para ${fornecedoresSelecionados.length} fornecedor(es)!\n${fornecedoresNotificados > 0 ? `${fornecedoresNotificados} fornecedor(es) foram notificados.` : ''}`);
             document.getElementById('formCadastroProcesso').reset();
+            fornecedoresSelecionados = [];
             mostrarPagina('processos');
         }
 
