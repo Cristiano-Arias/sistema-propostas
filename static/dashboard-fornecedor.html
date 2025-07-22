@@ -761,38 +761,157 @@
                 <div class="submit-proposal-section">
                     <h3>📤 Enviar Proposta</h3>
                     
-                    <div class="form-group">
-                        <label>Valor Total da Proposta (R$) *</label>
-                        <input type="text" id="valorProposta" placeholder="0,00" onblur="formatCurrency(this)" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Prazo de Entrega (dias) *</label>
-                        <input type="number" id="prazoEntrega" placeholder="30" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Validade da Proposta (dias) *</label>
-                        <input type="number" id="validadeProposta" value="60" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Observações</label>
-                        <textarea id="observacoes" rows="4" placeholder="Informações adicionais sobre sua proposta..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Anexar Documentos</label>
-                        <div class="file-upload-area" id="fileUploadArea">
-                            <p>📎 Clique para selecionar ou arraste arquivos aqui</p>
-                            <p style="font-size: 12px; color: #6c757d;">PDF, DOC, DOCX, XLS, XLSX (máx. 10MB cada)</p>
-                            <input type="file" id="fileInput" multiple style="display: none;" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                    <!-- Dados Comerciais -->
+                    <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h4 style="color: #1976d2; margin-bottom: 20px;">💰 Dados Comerciais</h4>
+                        
+                        <div class="form-group">
+                            <label>Valor Total da Proposta (R$) *</label>
+                            <input type="text" id="valorProposta" placeholder="0,00" onblur="formatCurrency(this)" required>
                         </div>
-                        <div id="fileList" style="margin-top: 10px;"></div>
+
+                        <div class="form-group">
+                            <label>Condições de Pagamento *</label>
+                            <select id="condicoesPagamento" required>
+                                <option value="">Selecione...</option>
+                                <option value="avista">À Vista</option>
+                                <option value="30dias">30 dias</option>
+                                <option value="30-60dias">30/60 dias</option>
+                                <option value="30-60-90dias">30/60/90 dias</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="outrasCondicoesDiv" style="display: none;">
+                            <label>Especifique as Condições</label>
+                            <input type="text" id="outrasCondicoes" placeholder="Descreva as condições de pagamento">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Prazo de Entrega (dias) *</label>
+                            <input type="number" id="prazoEntrega" placeholder="30" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Validade da Proposta (dias) *</label>
+                            <input type="number" id="validadeProposta" value="60" required>
+                        </div>
                     </div>
 
-                    <button class="btn btn-success" onclick="enviarProposta()">✅ Enviar Proposta</button>
-                    <button class="btn btn-secondary" onclick="voltarProcessos()">↩️ Voltar aos Processos</button>
+                    <!-- Dados Técnicos -->
+                    <div style="background: #e8f5e9; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h4 style="color: #2e7d32; margin-bottom: 20px;">🔧 Dados Técnicos</h4>
+                        
+                        <div class="form-group">
+                            <label>Responsável Técnico *</label>
+                            <input type="text" id="responsavelTecnico" placeholder="Nome completo do responsável técnico" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>CREA/CAU</label>
+                            <input type="text" id="crea" placeholder="Número do registro profissional">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Prazo de Execução (dias) *</label>
+                            <input type="number" id="prazoExecucao" placeholder="90" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Metodologia de Execução *</label>
+                            <textarea id="metodologia" rows="4" placeholder="Descreva a metodologia que será utilizada..." required></textarea>
+                        </div>
+
+                        <!-- Equipe Técnica -->
+                        <div class="form-group">
+                            <label>Equipe Técnica</label>
+                            <div id="equipeTecnica" style="background: white; padding: 15px; border-radius: 8px;">
+                                <div class="membro-equipe" style="margin-bottom: 10px;">
+                                    <input type="text" placeholder="Nome do profissional" style="width: 40%; margin-right: 10px;">
+                                    <input type="text" placeholder="Função" style="width: 30%; margin-right: 10px;">
+                                    <input type="text" placeholder="CREA/CAU" style="width: 20%;">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" onclick="adicionarMembroEquipe()" style="margin-top: 10px;">
+                                ➕ Adicionar Membro
+                            </button>
+                        </div>
+
+                        <!-- Experiência -->
+                        <div class="form-group">
+                            <label>Experiência em Obras Similares</label>
+                            <div id="experienciaObras" style="background: white; padding: 15px; border-radius: 8px;">
+                                <div class="experiencia-item" style="margin-bottom: 10px;">
+                                    <input type="text" placeholder="Descrição da obra" style="width: 60%; margin-right: 10px;">
+                                    <input type="text" placeholder="Ano" style="width: 30%;">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" onclick="adicionarExperiencia()" style="margin-top: 10px;">
+                                ➕ Adicionar Experiência
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Observações e Anexos -->
+                    <div style="background: #fff3cd; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h4 style="color: #856404; margin-bottom: 20px;">📝 Informações Adicionais</h4>
+                        
+                        <div class="form-group">
+                            <label>Observações</label>
+                            <textarea id="observacoes" rows="4" placeholder="Informações adicionais sobre sua proposta..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Anexar Documentos *</label>
+                            <p style="font-size: 12px; color: #6c757d; margin-bottom: 10px;">
+                                Documentos obrigatórios: Proposta comercial, Documentação técnica, Certidões
+                            </p>
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <p>📎 Clique para selecionar ou arraste arquivos aqui</p>
+                                <p style="font-size: 12px; color: #6c757d;">PDF, DOC, DOCX, XLS, XLSX (máx. 10MB cada)</p>
+                                <input type="file" id="fileInput" multiple style="display: none;" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                            </div>
+                            <div id="fileList" style="margin-top: 10px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Declarações -->
+                    <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h4 style="color: #495057; margin-bottom: 20px;">✓ Declarações</h4>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: flex; align-items: start; cursor: pointer;">
+                                <input type="checkbox" id="declaracao1" style="margin-right: 10px; margin-top: 3px;" required>
+                                <span style="font-size: 14px;">
+                                    Declaro que todas as informações prestadas são verdadeiras e que estou ciente das penalidades previstas em lei em caso de falsidade.
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: flex; align-items: start; cursor: pointer;">
+                                <input type="checkbox" id="declaracao2" style="margin-right: 10px; margin-top: 3px;" required>
+                                <span style="font-size: 14px;">
+                                    Declaro que a empresa está em situação regular com todas as obrigações fiscais, trabalhistas e previdenciárias.
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label style="display: flex; align-items: start; cursor: pointer;">
+                                <input type="checkbox" id="declaracao3" style="margin-right: 10px; margin-top: 3px;" required>
+                                <span style="font-size: 14px;">
+                                    Declaro que li e concordo com todos os termos e condições do edital.
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button class="btn btn-success" onclick="enviarProposta()">✅ Enviar Proposta</button>
+                        <button class="btn btn-secondary" onclick="salvarRascunho()">💾 Salvar Rascunho</button>
+                        <button class="btn btn-warning" onclick="voltarProcessos()">↩️ Voltar aos Processos</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1412,13 +1531,33 @@
                 return;
             }
             
+            // Validar campos obrigatórios
             const valorInput = document.getElementById('valorProposta').value;
+            const condicoesPagamento = document.getElementById('condicoesPagamento').value;
             const prazo = document.getElementById('prazoEntrega').value;
             const validade = document.getElementById('validadeProposta').value;
-            const observacoes = document.getElementById('observacoes').value;
+            const responsavelTecnico = document.getElementById('responsavelTecnico').value;
+            const prazoExecucao = document.getElementById('prazoExecucao').value;
+            const metodologia = document.getElementById('metodologia').value;
             
-            if (!valorInput || !prazo || !validade) {
+            // Validar declarações
+            const declaracao1 = document.getElementById('declaracao1').checked;
+            const declaracao2 = document.getElementById('declaracao2').checked;
+            const declaracao3 = document.getElementById('declaracao3').checked;
+            
+            if (!valorInput || !condicoesPagamento || !prazo || !validade || 
+                !responsavelTecnico || !prazoExecucao || !metodologia) {
                 alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+            
+            if (!declaracao1 || !declaracao2 || !declaracao3) {
+                alert('Por favor, marque todas as declarações obrigatórias.');
+                return;
+            }
+            
+            if (selectedFiles.length === 0) {
+                alert('Por favor, anexe os documentos obrigatórios.');
                 return;
             }
             
@@ -1426,6 +1565,31 @@
             const valor = parseFloat(valorInput.replace(/[^\d,]/g, '').replace(',', '.'));
             
             const empresaInfo = JSON.parse(empresaData);
+            
+            // Coletar dados da equipe técnica
+            const equipe = [];
+            document.querySelectorAll('#equipeTecnica .membro-equipe').forEach(div => {
+                const inputs = div.querySelectorAll('input');
+                if (inputs[0].value) {
+                    equipe.push({
+                        nome: inputs[0].value,
+                        funcao: inputs[1].value,
+                        crea: inputs[2].value
+                    });
+                }
+            });
+            
+            // Coletar dados de experiência
+            const experiencia = [];
+            document.querySelectorAll('#experienciaObras .experiencia-item').forEach(div => {
+                const inputs = div.querySelectorAll('input');
+                if (inputs[0].value) {
+                    experiencia.push({
+                        obra: inputs[0].value,
+                        ano: inputs[1].value
+                    });
+                }
+            });
             
             const proposta = {
                 protocolo: 'PROP-' + Date.now(),
@@ -1436,19 +1600,32 @@
                 valor: `R$ ${formatarMoeda(valor)}`,
                 prazo: parseInt(prazo),
                 validade: parseInt(validade),
-                observacoes: observacoes,
+                observacoes: document.getElementById('observacoes').value,
                 arquivos: selectedFiles.map(f => f.name),
                 data: new Date().toISOString(),
                 status: 'enviada',
                 dados: {
                     comercial: {
                         valor: valor,
+                        condicoesPagamento: condicoesPagamento,
+                        outrasCondicoes: document.getElementById('outrasCondicoes')?.value,
                         prazo: prazo,
                         validade: validade
                     },
                     tecnica: {
-                        observacoes: observacoes,
+                        responsavelTecnico: responsavelTecnico,
+                        crea: document.getElementById('crea').value,
+                        prazoExecucao: prazoExecucao,
+                        metodologia: metodologia,
+                        equipe: equipe,
+                        experiencia: experiencia,
+                        observacoes: document.getElementById('observacoes').value,
                         arquivos: selectedFiles.map(f => f.name)
+                    },
+                    declaracoes: {
+                        veracidade: declaracao1,
+                        regularidade: declaracao2,
+                        concordancia: declaracao3
                     }
                 }
             };
@@ -1472,20 +1649,16 @@
                         remetente: currentUser.nome,
                         metadata: {
                             processoId: processo.numero,
-                            propostaId: proposta.protocolo
+                            propostaId: proposta.protocolo,
+                            valor: proposta.valor
                         }
                     });
                 }
                 
-                alert('✅ Proposta enviada com sucesso! Você pode acompanhar o status em "Minhas Propostas".');
+                alert('✅ Proposta enviada com sucesso!\n\nProtocolo: ' + proposta.protocolo + '\n\nVocê pode acompanhar o status em "Minhas Propostas".');
                 
                 // Limpar formulário
-                document.getElementById('valorProposta').value = '';
-                document.getElementById('prazoEntrega').value = '';
-                document.getElementById('validadeProposta').value = '60';
-                document.getElementById('observacoes').value = '';
-                selectedFiles = [];
-                document.getElementById('fileList').innerHTML = '';
+                limparFormularioProposta();
                 
                 // Voltar para lista de processos
                 showPage('propostas');
@@ -1494,6 +1667,102 @@
                 alert('Erro ao enviar proposta. Tente novamente.');
             }
         }
+
+        // Adicionar membro à equipe técnica
+        function adicionarMembroEquipe() {
+            const container = document.getElementById('equipeTecnica');
+            const div = document.createElement('div');
+            div.className = 'membro-equipe';
+            div.style.marginBottom = '10px';
+            div.innerHTML = `
+                <input type="text" placeholder="Nome do profissional" style="width: 40%; margin-right: 10px;">
+                <input type="text" placeholder="Função" style="width: 30%; margin-right: 10px;">
+                <input type="text" placeholder="CREA/CAU" style="width: 20%;">
+                <button type="button" onclick="removerItem(this)" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        // Adicionar experiência
+        function adicionarExperiencia() {
+            const container = document.getElementById('experienciaObras');
+            const div = document.createElement('div');
+            div.className = 'experiencia-item';
+            div.style.marginBottom = '10px';
+            div.innerHTML = `
+                <input type="text" placeholder="Descrição da obra" style="width: 60%; margin-right: 10px;">
+                <input type="text" placeholder="Ano" style="width: 30%;">
+                <button type="button" onclick="removerItem(this)" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        // Remover item
+        function removerItem(btn) {
+            btn.parentElement.remove();
+        }
+
+        // Salvar rascunho
+        function salvarRascunho() {
+            const rascunho = {
+                valorProposta: document.getElementById('valorProposta').value,
+                condicoesPagamento: document.getElementById('condicoesPagamento').value,
+                prazoEntrega: document.getElementById('prazoEntrega').value,
+                validadeProposta: document.getElementById('validadeProposta').value,
+                responsavelTecnico: document.getElementById('responsavelTecnico').value,
+                crea: document.getElementById('crea').value,
+                prazoExecucao: document.getElementById('prazoExecucao').value,
+                metodologia: document.getElementById('metodologia').value,
+                observacoes: document.getElementById('observacoes').value,
+                dataRascunho: new Date().toISOString()
+            };
+            
+            const rascunhoKey = `rascunho_proposta_${currentUser.usuarioId}_${window.processoSelecionado?.numero}`;
+            localStorage.setItem(rascunhoKey, JSON.stringify(rascunho));
+            
+            alert('✅ Rascunho salvo com sucesso!');
+        }
+
+        // Limpar formulário de proposta
+        function limparFormularioProposta() {
+            document.getElementById('valorProposta').value = '';
+            document.getElementById('condicoesPagamento').value = '';
+            document.getElementById('prazoEntrega').value = '';
+            document.getElementById('validadeProposta').value = '60';
+            document.getElementById('responsavelTecnico').value = '';
+            document.getElementById('crea').value = '';
+            document.getElementById('prazoExecucao').value = '';
+            document.getElementById('metodologia').value = '';
+            document.getElementById('observacoes').value = '';
+            document.getElementById('declaracao1').checked = false;
+            document.getElementById('declaracao2').checked = false;
+            document.getElementById('declaracao3').checked = false;
+            selectedFiles = [];
+            document.getElementById('fileList').innerHTML = '';
+            
+            // Limpar equipe e experiência extras
+            document.querySelectorAll('#equipeTecnica .membro-equipe').forEach((div, index) => {
+                if (index > 0) div.remove();
+            });
+            document.querySelectorAll('#experienciaObras .experiencia-item').forEach((div, index) => {
+                if (index > 0) div.remove();
+            });
+        }
+
+        // Configurar mudança de condições de pagamento
+        document.addEventListener('DOMContentLoaded', function() {
+            const condicoesPagamento = document.getElementById('condicoesPagamento');
+            if (condicoesPagamento) {
+                condicoesPagamento.addEventListener('change', function() {
+                    const outrasDiv = document.getElementById('outrasCondicoesDiv');
+                    if (this.value === 'outro') {
+                        outrasDiv.style.display = 'block';
+                    } else {
+                        outrasDiv.style.display = 'none';
+                    }
+                });
+            }
+        });
 
         // Funções auxiliares
         function formatarMoeda(valor) {
