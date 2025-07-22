@@ -357,6 +357,146 @@
             background: #f8f9fa;
         }
 
+        /* Novos estilos para publicação de processo */
+        .processo-card-completo {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .processo-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .status-processo {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-rascunho {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+
+        .status-publicado {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-encerrado {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .portal-section {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 2px solid #2196f3;
+        }
+
+        .portal-section h4 {
+            color: #1976d2;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .link-portal {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .link-portal input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .btn-copiar {
+            background: #17a2b8;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-copiar:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        .confirmacao-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .confirmacao-section h4 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .opcoes-publicacao {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .opcao-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .opcao-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .opcao-card.selected {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .opcao-card h5 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .opcao-card p {
+            color: #6c757d;
+            font-size: 14px;
+            margin: 0;
+        }
+
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -723,7 +863,22 @@
                 criadoPor: usuarioAtual.usuarioId,
                 criadorNome: usuarioAtual.nome,
                 trId: trId,
-                status: 'ativo'
+                
+                // NOVO: Controle de publicação
+                status: 'rascunho',
+                publicacao: {
+                    confirmado: false,
+                    dataConfirmacao: null,
+                    tipoPublicacao: null,
+                    dataPublicacao: null,
+                    linkPortal: null,
+                    tokenAcesso: null
+                },
+                visibilidade: {
+                    publico: false,
+                    fornecedoresNotificados: [],
+                    totalVisualizacoes: 0
+                }
             };
             
             const processos = JSON.parse(localStorage.getItem('processos') || '[]');
@@ -748,9 +903,204 @@
                 });
             }
             
-            alert('✅ Processo cadastrado com sucesso!');
+            alert('✅ Processo criado como rascunho! Você precisa confirmar a publicação para que fique disponível aos fornecedores.');
             document.getElementById('formCadastroProcesso').reset();
             mostrarPagina('processos');
+        }
+
+        // Função para gerar link do portal
+        function gerarLinkPortal(processo) {
+            const token = btoa(JSON.stringify({
+                processoId: processo.numero,
+                validadeToken: new Date(Date.now() + 30*24*60*60*1000),
+                tipo: 'acesso_portal'
+            }));
+            
+            const baseUrl = window.location.origin;
+            const link = `${baseUrl}/portal-propostas-novo.html?processo=${encodeURIComponent(processo.numero)}&token=${token}`;
+            
+            return { link, token };
+        }
+
+        // Renderizar seção de publicação
+        function renderizarSecaoPublicacao(processo) {
+            return `
+                <div class="confirmacao-section">
+                    <h4>⚠️ Confirmar Publicação do Processo</h4>
+                    <p>Este processo ainda não foi publicado. Escolha como deseja disponibilizá-lo:</p>
+                    
+                    <div class="opcoes-publicacao">
+                        <div class="opcao-card" onclick="selecionarOpcaoPublicacao('${processo.numero}', 'imediata')">
+                            <h5>🚀 Publicação Imediata</h5>
+                            <p>O processo ficará disponível imediatamente para fornecedores</p>
+                        </div>
+                        <div class="opcao-card" onclick="selecionarOpcaoPublicacao('${processo.numero}', 'programada')">
+                            <h5>📅 Agendar Publicação</h5>
+                            <p>Defina uma data/hora para publicação automática</p>
+                        </div>
+                    </div>
+                    
+                    <div id="opcoes-${processo.numero}" style="margin-top: 20px;"></div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn btn-success" onclick="confirmarPublicacao('${processo.numero}')">
+                            ✅ Confirmar e Publicar Processo
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Renderizar portal quando publicado
+        function renderizarPortalPublicado(processo) {
+            const linkInfo = processo.publicacao.linkPortal || gerarLinkPortal(processo).link;
+            
+            return `
+                <div class="portal-section">
+                    <h4>🌐 Portal de Propostas Ativo</h4>
+                    <p>O processo está publicado e disponível para receber propostas.</p>
+                    
+                    <div class="link-portal">
+                        <input type="text" id="link-${processo.numero}" value="${linkInfo}" readonly>
+                        <button class="btn-copiar" onclick="copiarLink('${processo.numero}')">
+                            📋 Copiar Link
+                        </button>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
+                        <div style="text-align: center;">
+                            <p style="font-size: 24px; font-weight: bold; color: #667eea;">
+                                ${processo.visibilidade.totalVisualizacoes || 0}
+                            </p>
+                            <p style="color: #6c757d; font-size: 14px;">Visualizações</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="font-size: 24px; font-weight: bold; color: #28a745;">
+                                ${contarPropostasProcesso(processo.numero)}
+                            </p>
+                            <p style="color: #6c757d; font-size: 14px;">Propostas Recebidas</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="font-size: 24px; font-weight: bold; color: #ffc107;">
+                                ${diasRestantesProcesso(processo.prazo)}
+                            </p>
+                            <p style="color: #6c757d; font-size: 14px;">Dias Restantes</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Selecionar opção de publicação
+        function selecionarOpcaoPublicacao(numeroProcesso, tipo) {
+            const container = document.getElementById(`opcoes-${numeroProcesso}`);
+            
+            if (tipo === 'programada') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Data e Hora da Publicação:</label>
+                        <input type="datetime-local" id="dataPublicacao-${numeroProcesso}" 
+                               min="${new Date().toISOString().slice(0, 16)}"
+                               class="form-control">
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '<p style="color: #28a745;">✅ O processo será publicado imediatamente após confirmação.</p>';
+            }
+            
+            document.querySelectorAll('.opcao-card').forEach(card => card.classList.remove('selected'));
+            event.target.closest('.opcao-card').classList.add('selected');
+        }
+
+        // Confirmar publicação
+        function confirmarPublicacao(numeroProcesso) {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+            
+            const opcaoSelecionada = document.querySelector('.opcao-card.selected');
+            if (!opcaoSelecionada) {
+                alert('Por favor, selecione uma opção de publicação!');
+                return;
+            }
+            
+            const tipoPublicacao = opcaoSelecionada.textContent.includes('Imediata') ? 'imediata' : 'programada';
+            const { link, token } = gerarLinkPortal(processo);
+            
+            processo.status = tipoPublicacao === 'imediata' ? 'publicado' : 'agendado';
+            processo.publicacao = {
+                confirmado: true,
+                dataConfirmacao: new Date().toISOString(),
+                tipoPublicacao: tipoPublicacao,
+                dataPublicacao: tipoPublicacao === 'imediata' ? 
+                    new Date().toISOString() : 
+                    document.getElementById(`dataPublicacao-${numeroProcesso}`)?.value,
+                linkPortal: link,
+                tokenAcesso: token
+            };
+            processo.visibilidade.publico = tipoPublicacao === 'imediata';
+            
+            localStorage.setItem('processos', JSON.stringify(processos));
+            
+            if (tipoPublicacao === 'imediata') {
+                notificarFornecedoresAutomaticamente(processo);
+            }
+            
+            alert('✅ Processo publicado com sucesso!');
+            carregarMeusProcessos();
+        }
+
+        // Notificar fornecedores
+        function notificarFornecedoresAutomaticamente(processo) {
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            const fornecedores = usuarios.filter(u => u.tipo === 'fornecedor');
+            
+            fornecedores.forEach(fornecedor => {
+                Auth.Notificacoes.criar({
+                    tipo: 'processo_publicado',
+                    titulo: '📋 Novo Processo Disponível',
+                    mensagem: `${processo.numero} - ${processo.objeto} está aberto para propostas até ${new Date(processo.prazo).toLocaleDateString('pt-BR')}`,
+                    destinatario: fornecedor.usuarioId,
+                    remetente: processo.criadorNome,
+                    metadata: {
+                        processoId: processo.numero,
+                        linkPortal: processo.publicacao.linkPortal,
+                        prazo: processo.prazo
+                    }
+                });
+            });
+        }
+
+        // Copiar link
+        function copiarLink(numeroProcesso) {
+            const input = document.getElementById(`link-${numeroProcesso}`);
+            input.select();
+            document.execCommand('copy');
+            
+            const btn = event.target;
+            const textoOriginal = btn.textContent;
+            btn.textContent = '✅ Copiado!';
+            btn.style.background = '#28a745';
+            
+            setTimeout(() => {
+                btn.textContent = textoOriginal;
+                btn.style.background = '#17a2b8';
+            }, 2000);
+        }
+
+        // Funções auxiliares
+        function contarPropostasProcesso(numeroProcesso) {
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            return propostas.filter(p => p.processo === numeroProcesso).length;
+        }
+
+        function diasRestantesProcesso(prazo) {
+            const dias = Math.ceil((new Date(prazo) - new Date()) / (1000 * 60 * 60 * 24));
+            return dias > 0 ? dias : 0;
         }
 
         function carregarMeusProcessos() {
@@ -779,6 +1129,11 @@
                 const dataPrazo = new Date(processo.prazo);
                 const diasRestantes = Math.ceil((dataPrazo - new Date()) / (1000 * 60 * 60 * 24));
                 
+                // NOVO: Verificar status do processo
+                const statusBadge = processo.status === 'rascunho' ? 
+                    '<span style="background: #e9ecef; color: #6c757d; padding: 5px 12px; border-radius: 20px; font-size: 12px;">📝 Rascunho</span>' :
+                    '<span style="background: #d4edda; color: #155724; padding: 5px 12px; border-radius: 20px; font-size: 12px;">✅ Publicado</span>';
+                
                 return `
                     <div class="processo-card">
                         <div class="processo-header">
@@ -787,6 +1142,7 @@
                                 <p style="color: #6c757d; margin-top: 5px;">${processo.objeto}</p>
                             </div>
                             <div style="text-align: right;">
+                                ${statusBadge}
                                 ${processo.trId ? '<span class="tr-badge">📋 Com TR</span>' : ''}
                                 <p style="color: ${diasRestantes > 0 ? '#28a745' : '#dc3545'}; margin-top: 10px; font-weight: 600;">
                                     ${diasRestantes > 0 ? `${diasRestantes} dias restantes` : 'Encerrado'}
@@ -807,6 +1163,10 @@
                                 <strong>Prazo:</strong> ${dataPrazo.toLocaleString('pt-BR')}
                             </div>
                         </div>
+                        
+                        ${processo.status === 'rascunho' ? renderizarSecaoPublicacao(processo) : ''}
+                        ${processo.status === 'publicado' ? renderizarPortalPublicado(processo) : ''}
+                        
                         <div style="margin-top: 15px;">
                             <button class="btn btn-info" onclick="verDetalhesProcesso('${processo.numero}')">
                                 👁️ Detalhes
