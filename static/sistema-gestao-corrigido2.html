@@ -50,7 +50,7 @@
         }
 
         .menu-section {
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
 
         .menu-section-title {
@@ -59,8 +59,39 @@
             color: #6c757d;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 10px;
-            padding-left: 10px;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .menu-section-title:hover {
+            background: #f0f0f0;
+        }
+
+        .menu-section-title::after {
+            content: '▶';
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        .menu-section.active .menu-section-title::after {
+            transform: rotate(90deg);
+        }
+
+        .menu-items {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .menu-section.active .menu-items {
+            max-height: 500px;
         }
 
         .nav-item {
@@ -220,79 +251,91 @@
     <div class="container">
         <div class="sidebar">
             <nav>
-                <div class="menu-section">
-                    <div class="menu-section-title">Dashboard Geral</div>
-                    <button class="nav-item active" onclick="mostrarPagina('dashboard')">
-                        🏠 Dashboard Geral
-                    </button>
+                <div class="menu-section active">
+                    <div class="menu-section-title" onclick="toggleMenu(this)">Dashboard Geral</div>
+                    <div class="menu-items">
+                        <button class="nav-item active" onclick="mostrarPagina('dashboard')">
+                            🏠 Dashboard Geral
+                        </button>
+                    </div>
                 </div>
 
                 <div class="menu-section">
-                    <div class="menu-section-title">1. Requisitante</div>
-                    <button class="nav-item" onclick="window.location.href='dashboard-requisitante-seguro.html'">
-                        👨‍💼 1.1 Dashboard Requisitante
-                    </button>
-                    <button class="nav-item" onclick="window.location.href='modulo-termo-referencia-seguro.html'">
-                        📝 1.2 Criar TR
-                    </button>
-                    <button class="nav-item" onclick="mostrarPagina('meus-trs')">
-                        📋 1.3 Meus TRs
-                    </button>
-                    <button class="nav-item" onclick="mostrarPagina('emitir-parecer')">
-                        📄 1.4 Emitir Parecer
-                    </button>
+                    <div class="menu-section-title" onclick="toggleMenu(this)">Requisitante</div>
+                    <div class="menu-items">
+                        <button class="nav-item" onclick="window.location.href='dashboard-requisitante-seguro.html'">
+                            👨‍💼 Dashboard Requisitante
+                        </button>
+                        <button class="nav-item" onclick="window.location.href='modulo-termo-referencia-seguro.html'">
+                            📝 Criar TR
+                        </button>
+                        <button class="nav-item" onclick="mostrarPagina('meus-trs')">
+                            📋 Meus TRs
+                        </button>
+                        <button class="nav-item" onclick="mostrarPagina('emitir-parecer')">
+                            📄 Emitir Parecer
+                        </button>
+                    </div>
                 </div>
 
                 <div class="menu-section">
-                    <div class="menu-section-title">2. Comprador</div>
-                    <button class="nav-item" onclick="window.location.href='dashboard-comprador.html'">
-                        🛒 2.1 Dashboard Comprador
-                    </button>
-                    <button class="nav-item" onclick="mostrarPagina('processos')">
-                        📋 2.2 Processos (listar todos)
-                    </button>
-                    <button class="nav-item" onclick="mostrarPagina('cadastrar-processos')">
-                        ➕ 2.3 Cadastrar Processos
-                    </button>
-                    <button class="nav-item" onclick="mostrarPagina('propostas')">
-                        💰 2.4 Propostas (análise comercial)
-                    </button>
-                    <button class="nav-item" onclick="window.location.href='modulo-relatorios.html'">
-                        📈 2.5 Relatórios
-                    </button>
+                    <div class="menu-section-title" onclick="toggleMenu(this)">Comprador</div>
+                    <div class="menu-items">
+                        <button class="nav-item" onclick="window.location.href='dashboard-comprador.html'">
+                            🛒 Dashboard Comprador
+                        </button>
+                        <button class="nav-item" onclick="mostrarPagina('processos')">
+                            📋 Processos
+                        </button>
+                        <button class="nav-item" onclick="mostrarPagina('cadastrar-processos')">
+                            ➕ Cadastrar Processos
+                        </button>
+                        <button class="nav-item" onclick="mostrarPagina('propostas')">
+                            💰 Propostas
+                        </button>
+                        <button class="nav-item" onclick="window.location.href='modulo-relatorios.html'">
+                            📈 Relatórios
+                        </button>
+                    </div>
                 </div>
 
                 <div class="menu-section">
-                    <div class="menu-section-title">3. Fornecedor</div>
-                    <button class="nav-item" onclick="window.location.href='dashboard-fornecedor.html'">
-                        🏢 3.1 Dashboard Fornecedor
-                    </button>
-                    <button class="nav-item" onclick="mostrarPagina('meu-cadastro')">
-                        👤 3.2 Meu Cadastro
-                    </button>
-                    <button class="nav-item" onclick="mostrarPagina('processos-disponiveis')">
-                        🔍 3.3 Processos Disponíveis
-                    </button>
-                    <button class="nav-item" onclick="mostrarPagina('minhas-propostas')">
-                        📄 3.4 Minhas Propostas
-                    </button>
-                    <button class="nav-item" onclick="window.location.href='portal-propostas-novo.html'">
-                        📤 3.5 Enviar Proposta
-                    </button>
+                    <div class="menu-section-title" onclick="toggleMenu(this)">Fornecedor</div>
+                    <div class="menu-items">
+                        <button class="nav-item" onclick="window.location.href='dashboard-fornecedor.html'">
+                            🏢 Dashboard Fornecedor
+                        </button>
+                        <button class="nav-item" onclick="mostrarPagina('meu-cadastro')">
+                            👤 Meu Cadastro
+                        </button>
+                        <button class="nav-item" onclick="mostrarPagina('processos-disponiveis')">
+                            🔍 Processos Disponíveis
+                        </button>
+                        <button class="nav-item" onclick="mostrarPagina('minhas-propostas')">
+                            📄 Minhas Propostas
+                        </button>
+                        <button class="nav-item" onclick="window.location.href='portal-propostas-novo.html'">
+                            📤 Enviar Proposta
+                        </button>
+                    </div>
                 </div>
 
                 <div class="menu-section">
-                    <div class="menu-section-title">4. Usuários</div>
-                    <button class="nav-item" onclick="mostrarPagina('gerenciar-usuarios')">
-                        👥 Gerenciamento de Usuários
-                    </button>
+                    <div class="menu-section-title" onclick="toggleMenu(this)">Usuários</div>
+                    <div class="menu-items">
+                        <button class="nav-item" onclick="mostrarPagina('gerenciar-usuarios')">
+                            👥 Gerenciamento de Usuários
+                        </button>
+                    </div>
                 </div>
 
                 <div class="menu-section">
-                    <div class="menu-section-title">Sistema</div>
-                    <button class="nav-item" onclick="Auth.logout()">
-                        🚪 Sair
-                    </button>
+                    <div class="menu-section-title" onclick="toggleMenu(this)">Sistema</div>
+                    <div class="menu-items">
+                        <button class="nav-item" onclick="Auth.logout()">
+                            🚪 Sair
+                        </button>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -308,22 +351,22 @@
                 <div class="quick-actions">
                     <div class="quick-action-card" onclick="window.location.href='dashboard-requisitante-seguro.html'">
                         <div class="quick-action-icon">👨‍💼</div>
-                        <div class="quick-action-title">1. Requisitante</div>
+                        <div class="quick-action-title">Requisitante</div>
                         <div class="quick-action-desc">Gerencie TRs e emita pareceres técnicos</div>
                     </div>
                     <div class="quick-action-card" onclick="window.location.href='dashboard-comprador.html'">
                         <div class="quick-action-icon">🛒</div>
-                        <div class="quick-action-title">2. Comprador</div>
+                        <div class="quick-action-title">Comprador</div>
                         <div class="quick-action-desc">Gerencie processos e análise comercial</div>
                     </div>
                     <div class="quick-action-card" onclick="window.location.href='dashboard-fornecedor.html'">
                         <div class="quick-action-icon">🏢</div>
-                        <div class="quick-action-title">3. Fornecedor</div>
+                        <div class="quick-action-title">Fornecedor</div>
                         <div class="quick-action-desc">Participe de processos e envie propostas</div>
                     </div>
                     <div class="quick-action-card" onclick="mostrarPagina('gerenciar-usuarios')">
                         <div class="quick-action-icon">👥</div>
-                        <div class="quick-action-title">4. Usuários</div>
+                        <div class="quick-action-title">Usuários</div>
                         <div class="quick-action-desc">Gerencie usuários do sistema</div>
                     </div>
                 </div>
@@ -381,7 +424,11 @@
                 }
             });
         }
+
+        function toggleMenu(element) {
+            const menuSection = element.parentElement;
+            menuSection.classList.toggle('active');
+        }
     </script>
 </body>
 </html>
-
