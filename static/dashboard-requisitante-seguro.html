@@ -213,6 +213,109 @@
             font-size: 14px;
         }
 
+        /* Estilos para Meus TRs */
+        .tr-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .tr-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+
+        .tr-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .tr-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .tr-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-criado {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-processo {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-parecer-pendente {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-concluido {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .tr-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        /* Estilos para Emitir Parecer */
+        .parecer-card {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .proposta-tecnica {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .proposta-tecnica h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .dados-tecnicos {
+            display: grid;
+            gap: 15px;
+        }
+
+        .dado-item {
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+
+        .parecer-form {
+            background: #e3f2fd;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
         .info-panel {
             background: #e3f2fd;
             border-left: 4px solid #2196f3;
@@ -305,54 +408,6 @@
             color: white;
         }
 
-        .tr-list {
-            display: grid;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .tr-item {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid #28a745;
-            transition: all 0.3s;
-        }
-
-        .tr-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
-        }
-
-        .tr-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .tr-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .tr-info span {
-            color: #6c757d;
-            font-size: 14px;
-        }
-
-        .tr-info strong {
-            color: #2c3e50;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-        }
-
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -420,16 +475,16 @@
                 <div class="menu-section">
                     <div class="menu-section-title">Requisitante</div>
                     <button class="nav-item active" onclick="mostrarPagina('dashboard')">
-                        👨‍💼 1.1 Dashboard Requisitante
+                        👨‍💼 Dashboard Requisitante
                     </button>
                     <button class="nav-item" onclick="mostrarPagina('criar-tr')">
-                        📝 1.2 Criar TR
+                        📝 Criar TR
                     </button>
                     <button class="nav-item" onclick="mostrarPagina('meus-trs')">
-                        📋 1.3 Meus TRs
+                        📋 Meus TRs
                     </button>
                     <button class="nav-item" onclick="mostrarPagina('emitir-parecer')">
-                        📄 1.4 Emitir Parecer
+                        📄 Emitir Parecer
                     </button>
                 </div>
 
@@ -437,6 +492,9 @@
                     <div class="menu-section-title">Sistema</div>
                     <button class="nav-item" onclick="window.location.href='sistema-gestao-corrigido2.html'">
                         🏠 Voltar ao Sistema Principal
+                    </button>
+                    <button class="nav-item" onclick="Auth.logout()">
+                        🚪 Sair
                     </button>
                 </div>
             </nav>
@@ -464,8 +522,8 @@
                         <div class="stat-label">Pareceres Pendentes</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="processosRelacionados">0</div>
-                        <div class="stat-label">Processos Relacionados</div>
+                        <div class="stat-number" id="pareceresEmitidos">0</div>
+                        <div class="stat-label">Pareceres Emitidos</div>
                     </div>
                 </div>
 
@@ -546,24 +604,33 @@
             <!-- Meus TRs -->
             <div id="meus-trs" class="page">
                 <h2>📋 Meus Termos de Referência</h2>
-                <div class="info-panel">
-                    <h4>TRs Criados</h4>
-                    <p>Visualize e gerencie todos os Termos de Referência que você criou.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <p style="color: #6c757d;">Gerencie todos os seus Termos de Referência criados</p>
+                    <button class="btn btn-primary" onclick="mostrarPagina('criar-tr')">
+                        ➕ Criar Novo TR
+                    </button>
                 </div>
-                <div id="listaTRs" class="loading">
-                    Carregando TRs...
+                
+                <div id="listaMeusTRs">
+                    <!-- Lista será carregada dinamicamente -->
                 </div>
             </div>
 
             <!-- Emitir Parecer -->
             <div id="emitir-parecer" class="page">
                 <h2>📄 Emitir Parecer Técnico</h2>
-                <div class="info-panel">
-                    <h4>Análise Técnica de Propostas</h4>
-                    <p>Analise os aspectos técnicos das propostas e emita pareceres especializados.</p>
+                <p style="color: #6c757d; margin-bottom: 20px;">
+                    Analise as propostas técnicas liberadas pelo comprador e emita seu parecer especializado
+                </p>
+                
+                <div class="parecer-card">
+                    <h4>⚠️ Atenção</h4>
+                    <p>Você está visualizando apenas os aspectos técnicos das propostas. 
+                    Informações comerciais e valores não são exibidos nesta análise.</p>
                 </div>
-                <div id="propostasParaParecer" class="loading">
-                    Carregando propostas...
+                
+                <div id="listaPropostasParaParecer">
+                    <!-- Lista será carregada dinamicamente -->
                 </div>
             </div>
         </div>
@@ -571,21 +638,21 @@
 
     <script>
         let usuarioAtual = null;
-        let meusTRs = [];
-        let propostasDisponiveis = [];
 
         window.addEventListener('DOMContentLoaded', function() {
             usuarioAtual = Auth.verificarAutenticacao(['requisitante', 'admin']);
             if (usuarioAtual) {
                 Auth.exibirInfoUsuario();
-                carregarDados();
+                atualizarEstatisticas();
             }
         });
 
         function mostrarPagina(paginaId) {
+            // Ocultar todas as páginas
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             
+            // Mostrar página selecionada
             const pagina = document.getElementById(paginaId);
             if (pagina) {
                 pagina.classList.add('active');
@@ -600,25 +667,32 @@
             });
 
             // Carregar conteúdo específico da página
-            if (paginaId === 'meus-trs') carregarMeusTRs();
-            if (paginaId === 'emitir-parecer') carregarPropostasParaParecer();
+            if (paginaId === 'meus-trs') {
+                carregarMeusTRs();
+            } else if (paginaId === 'emitir-parecer') {
+                carregarPropostasParaParecer();
+            }
         }
 
-        function carregarDados() {
-            // Carregar dados do localStorage
-            meusTRs = JSON.parse(localStorage.getItem('termos_referencia') || '[]')
-                .filter(tr => tr.criadoPor === usuarioAtual.usuarioId);
+        function atualizarEstatisticas() {
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const meusTRs = trs.filter(tr => tr.criadoPor === usuarioAtual.usuarioId);
+            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
+            const pareceres = JSON.parse(localStorage.getItem('pareceres_tecnicos') || '[]');
             
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            // Filtrar propostas pendentes e pareceres emitidos para este requisitante
+            const minhasPropostasPendentes = propostasLiberadas.filter(pl => 
+                pl.requisitanteId === usuarioAtual.usuarioId && !pl.parecerEmitido
+            );
             
-            // Atualizar estatísticas
+            const meusPareceres = pareceres.filter(p => 
+                p.requisitanteId === usuarioAtual.usuarioId
+            );
+            
             document.getElementById('totalTRs').textContent = meusTRs.length;
             document.getElementById('trsAtivos').textContent = meusTRs.filter(tr => tr.status === 'ativo').length;
-            document.getElementById('pareceresPendentes').textContent = propostas.filter(p => !p.parecerTecnico).length;
-            document.getElementById('processosRelacionados').textContent = processos.filter(p => 
-                meusTRs.some(tr => tr.id === p.trId)
-            ).length;
+            document.getElementById('pareceresPendentes').textContent = minhasPropostasPendentes.length;
+            document.getElementById('pareceresEmitidos').textContent = meusPareceres.length;
         }
 
         function salvarTR(event) {
@@ -630,11 +704,12 @@
                 objeto: document.getElementById('trObjeto').value,
                 justificativa: document.getElementById('trJustificativa').value,
                 especificacoes: document.getElementById('trEspecificacoes').value,
-                prazo: document.getElementById('trPrazo').value,
+                prazo_execucao: document.getElementById('trPrazo').value,
                 modalidade: document.getElementById('trModalidade').value,
                 criadoPor: usuarioAtual.usuarioId,
                 criadorNome: usuarioAtual.nome,
                 dataCriacao: new Date().toISOString(),
+                criado_em: new Date().toISOString(),
                 status: 'ativo'
             };
             
@@ -642,18 +717,6 @@
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
             trs.push(novoTR);
             localStorage.setItem('termos_referencia', JSON.stringify(trs));
-            
-            // Atualizar lista local
-            meusTRs.push(novoTR);
-            
-            // Notificar sucesso
-            alert('Termo de Referência salvo com sucesso!');
-            
-            // Limpar formulário
-            limparFormulario();
-            
-            // Atualizar estatísticas
-            carregarDados();
             
             // Criar notificação para compradores
             Auth.Notificacoes.criar({
@@ -667,6 +730,14 @@
                     modalidade: novoTR.modalidade
                 }
             });
+            
+            alert('✅ Termo de Referência salvo com sucesso!');
+            
+            // Limpar formulário
+            limparFormulario();
+            
+            // Atualizar estatísticas
+            atualizarEstatisticas();
         }
 
         function limparFormulario() {
@@ -679,125 +750,287 @@
         }
 
         function carregarMeusTRs() {
-            const container = document.getElementById('listaTRs');
+            const container = document.getElementById('listaMeusTRs');
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            
+            // Filtrar apenas TRs do usuário atual
+            const meusTRs = trs.filter(tr => tr.criadoPor === usuarioAtual.usuarioId);
             
             if (meusTRs.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">📋</div>
+                        <h3>Nenhum TR encontrado</h3>
                         <p>Você ainda não criou nenhum Termo de Referência</p>
                         <button class="btn btn-primary" onclick="mostrarPagina('criar-tr')">
-                            📝 Criar Primeiro TR
+                            Criar Primeiro TR
                         </button>
                     </div>
                 `;
                 return;
             }
-            
+
+            // Buscar processos vinculados
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
+
             container.innerHTML = meusTRs.map(tr => {
-                const dataCriacao = new Date(tr.dataCriacao);
-                
+                // Verificar status do TR
+                const processoVinculado = processos.find(p => p.trId === tr.id);
+                let status = 'criado';
+                let statusTexto = 'TR Criado';
+                let statusClass = 'status-criado';
+
+                if (processoVinculado) {
+                    status = 'processo';
+                    statusTexto = 'Processo em Andamento';
+                    statusClass = 'status-processo';
+
+                    // Verificar se há propostas liberadas para parecer
+                    const temPropostasLiberadas = propostasLiberadas.some(pl => 
+                        pl.processoId === processoVinculado.numero && 
+                        pl.requisitanteId === usuarioAtual.usuarioId &&
+                        !pl.parecerEmitido
+                    );
+
+                    if (temPropostasLiberadas) {
+                        status = 'parecer-pendente';
+                        statusTexto = 'Aguardando Parecer';
+                        statusClass = 'status-parecer-pendente';
+                    } else if (propostasLiberadas.some(pl => 
+                        pl.processoId === processoVinculado.numero && 
+                        pl.requisitanteId === usuarioAtual.usuarioId &&
+                        pl.parecerEmitido
+                    )) {
+                        status = 'concluido';
+                        statusTexto = 'Parecer Emitido';
+                        statusClass = 'status-concluido';
+                    }
+                }
+
                 return `
-                    <div class="tr-item">
-                        <div class="tr-title">${tr.titulo}</div>
-                        <div class="tr-info">
-                            <span><strong>Modalidade:</strong> ${tr.modalidade}</span>
-                            <span><strong>Prazo:</strong> ${tr.prazo}</span>
-                            <span><strong>Data:</strong> ${dataCriacao.toLocaleDateString('pt-BR')}</span>
-                            <span><strong>Status:</strong> ${tr.status}</span>
+                    <div class="tr-card">
+                        <div class="tr-header">
+                            <div>
+                                <div class="tr-title">${tr.titulo}</div>
+                                <p style="color: #6c757d; margin-top: 5px;">${tr.objeto || 'Sem descrição'}</p>
+                            </div>
+                            <span class="tr-status ${statusClass}">${statusTexto}</span>
                         </div>
-                        <p style="color: #6c757d; margin-bottom: 15px;">${tr.objeto.substring(0, 150)}...</p>
-                        <button class="btn btn-info" onclick="visualizarTR('${tr.id}')">
-                            👁️ Visualizar
-                        </button>
-                        <button class="btn btn-primary" onclick="editarTR('${tr.id}')">
-                            ✏️ Editar
-                        </button>
+                        <div class="tr-info">
+                            <div>
+                                <strong>Modalidade:</strong> ${tr.modalidade || 'Não definida'}
+                            </div>
+                            <div>
+                                <strong>Prazo:</strong> ${tr.prazo_execucao || 'Não definido'}
+                            </div>
+                            <div>
+                                <strong>Data de Criação:</strong> ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}
+                            </div>
+                            ${processoVinculado ? `
+                                <div>
+                                    <strong>Processo:</strong> ${processoVinculado.numero}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-info" onclick="visualizarTR('${tr.id}')">
+                                👁️ Visualizar
+                            </button>
+                            ${status === 'parecer-pendente' ? `
+                                <button class="btn btn-primary" onclick="mostrarPagina('emitir-parecer')">
+                                    📄 Emitir Parecer
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
                 `;
             }).join('');
         }
 
         function carregarPropostasParaParecer() {
-            const container = document.getElementById('propostasParaParecer');
+            const container = document.getElementById('listaPropostasParaParecer');
+            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
             const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            
-            // Filtrar propostas que precisam de parecer técnico
-            const propostasParaParecer = propostas.filter(p => !p.parecerTecnico);
-            
-            if (propostasParaParecer.length === 0) {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+
+            // Filtrar propostas liberadas para este requisitante
+            const minhasPropostasParaParecer = propostasLiberadas.filter(pl => 
+                pl.requisitanteId === usuarioAtual.usuarioId && !pl.parecerEmitido
+            );
+
+            if (minhasPropostasParaParecer.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">📄</div>
-                        <p>Não há propostas pendentes de parecer técnico</p>
+                        <h3>Nenhuma proposta para análise</h3>
+                        <p>Não há propostas liberadas pelo comprador para seu parecer técnico</p>
                     </div>
                 `;
                 return;
             }
-            
-            container.innerHTML = propostasParaParecer.map(proposta => {
-                const data = new Date(proposta.data);
-                
-                return `
-                    <div class="tr-item">
-                        <div class="tr-title">Proposta: ${proposta.empresa}</div>
-                        <div class="tr-info">
-                            <span><strong>Processo:</strong> ${proposta.processo}</span>
-                            <span><strong>CNPJ:</strong> ${proposta.cnpj}</span>
-                            <span><strong>Data:</strong> ${data.toLocaleDateString('pt-BR')}</span>
-                            <span><strong>Valor:</strong> ${proposta.valor || 'Não informado'}</span>
+
+            // Agrupar por processo
+            const propostasPorProcesso = {};
+            minhasPropostasParaParecer.forEach(pl => {
+                if (!propostasPorProcesso[pl.processoId]) {
+                    propostasPorProcesso[pl.processoId] = [];
+                }
+                propostasPorProcesso[pl.processoId].push(pl);
+            });
+
+            container.innerHTML = Object.entries(propostasPorProcesso).map(([processoId, propostasLib]) => {
+                const processo = processos.find(p => p.numero === processoId);
+                if (!processo) return '';
+
+                const propostasHtml = propostasLib.map(pl => {
+                    const proposta = propostas.find(p => p.protocolo === pl.propostaId);
+                    if (!proposta || !proposta.dados) return '';
+
+                    return `
+                        <div class="proposta-tecnica">
+                            <h4>🏢 ${proposta.empresa}</h4>
+                            <div class="dados-tecnicos">
+                                ${proposta.dados.tecnica ? `
+                                    <div class="dado-item">
+                                        <strong>Responsável Técnico:</strong> ${proposta.dados.tecnica.responsavelTecnico || 'Não informado'}
+                                    </div>
+                                    <div class="dado-item">
+                                        <strong>CREA/CAU:</strong> ${proposta.dados.tecnica.crea || 'Não informado'}
+                                    </div>
+                                    <div class="dado-item">
+                                        <strong>Prazo de Execução:</strong> ${proposta.dados.tecnica.prazoExecucao || 'Não informado'}
+                                    </div>
+                                    <div class="dado-item">
+                                        <strong>Metodologia:</strong>
+                                        <p style="margin-top: 10px;">${proposta.dados.tecnica.metodologia || 'Não informada'}</p>
+                                    </div>
+                                    ${proposta.dados.tecnica.equipe ? `
+                                        <div class="dado-item">
+                                            <strong>Equipe Técnica:</strong>
+                                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                                ${proposta.dados.tecnica.equipe.map(membro => 
+                                                    `<li>${membro.nome} - ${membro.funcao} ${membro.crea ? `(CREA: ${membro.crea})` : ''}</li>`
+                                                ).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+                                    ${proposta.dados.tecnica.experiencia ? `
+                                        <div class="dado-item">
+                                            <strong>Experiência:</strong>
+                                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                                ${proposta.dados.tecnica.experiencia.map(exp => 
+                                                    `<li>${exp.obra} - ${exp.ano}</li>`
+                                                ).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+                                ` : '<p>Dados técnicos não disponíveis</p>'}
+                            </div>
+                            
+                            <div class="parecer-form">
+                                <h4>📝 Emitir Parecer Técnico</h4>
+                                <form onsubmit="emitirParecer(event, '${pl.id}', '${proposta.protocolo}')">
+                                    <div class="form-group">
+                                        <label>Parecer:</label>
+                                        <select id="tipoParecer_${pl.id}" required>
+                                            <option value="">Selecione...</option>
+                                            <option value="aprovado">Aprovado - Atende aos requisitos técnicos</option>
+                                            <option value="aprovado_ressalvas">Aprovado com Ressalvas</option>
+                                            <option value="reprovado">Reprovado - Não atende aos requisitos</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Análise Técnica Detalhada:</label>
+                                        <textarea id="analiseTecnica_${pl.id}" required 
+                                                  placeholder="Descreva sua análise técnica detalhada..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        ✅ Emitir Parecer
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <button class="btn btn-primary" onclick="emitirParecer('${proposta.protocolo}')">
-                            📄 Emitir Parecer
-                        </button>
-                        <button class="btn btn-info" onclick="visualizarProposta('${proposta.protocolo}')">
-                            👁️ Ver Detalhes
-                        </button>
+                    `;
+                }).join('');
+
+                return `
+                    <div style="margin-bottom: 40px;">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">
+                            Processo: ${processo.numero} - ${processo.objeto}
+                        </h3>
+                        ${propostasHtml}
                     </div>
                 `;
             }).join('');
         }
 
         function visualizarTR(trId) {
-            const tr = meusTRs.find(t => t.id === trId);
-            if (tr) {
-                alert(`TR: ${tr.titulo}\n\nObjeto: ${tr.objeto}\n\nJustificativa: ${tr.justificativa}`);
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === trId);
+            
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
             }
+
+            // Criar modal ou nova página para visualização
+            alert(`TR: ${tr.titulo}\n\nObjeto: ${tr.objeto}\n\nModalidade: ${tr.modalidade}\n\nPrazo: ${tr.prazo_execucao}\n\nJustificativa: ${tr.justificativa}\n\nEspecificações: ${tr.especificacoes}`);
         }
 
-        function editarTR(trId) {
-            alert('Funcionalidade de edição será implementada em breve.');
-        }
+        function emitirParecer(event, liberacaoId, propostaId) {
+            event.preventDefault();
 
-        function emitirParecer(protocolo) {
-            const parecer = prompt('Digite seu parecer técnico:');
-            if (parecer) {
-                // Atualizar proposta com parecer
-                const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-                const index = propostas.findIndex(p => p.protocolo === protocolo);
-                
-                if (index !== -1) {
-                    propostas[index].parecerTecnico = {
-                        parecer: parecer,
-                        emitidoPor: usuarioAtual.usuarioId,
-                        emitidoPorNome: usuarioAtual.nome,
-                        dataEmissao: new Date().toISOString()
-                    };
-                    
-                    localStorage.setItem('propostas', JSON.stringify(propostas));
-                    alert('Parecer técnico emitido com sucesso!');
-                    
-                    // Recarregar lista
-                    carregarPropostasParaParecer();
-                    carregarDados();
+            const tipoParecer = document.getElementById(`tipoParecer_${liberacaoId}`).value;
+            const analiseTecnica = document.getElementById(`analiseTecnica_${liberacaoId}`).value;
+
+            // Salvar parecer
+            const pareceres = JSON.parse(localStorage.getItem('pareceres_tecnicos') || '[]');
+            const novoParecer = {
+                id: 'parecer_' + Date.now(),
+                propostaId: propostaId,
+                liberacaoId: liberacaoId,
+                requisitanteId: usuarioAtual.usuarioId,
+                requisitanteNome: usuarioAtual.nome,
+                tipo: tipoParecer,
+                analise: analiseTecnica,
+                dataEmissao: new Date().toISOString()
+            };
+
+            pareceres.push(novoParecer);
+            localStorage.setItem('pareceres_tecnicos', JSON.stringify(pareceres));
+
+            // Atualizar status da liberação
+            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
+            const liberacao = propostasLiberadas.find(pl => pl.id === liberacaoId);
+            if (liberacao) {
+                liberacao.parecerEmitido = true;
+                liberacao.parecerId = novoParecer.id;
+                liberacao.dataParecer = novoParecer.dataEmissao;
+                localStorage.setItem('propostas_liberadas_parecer', JSON.stringify(propostasLiberadas));
+            }
+
+            // Criar notificação para o comprador
+            Auth.Notificacoes.criar({
+                tipo: 'parecer_emitido',
+                titulo: '📄 Parecer Técnico Emitido',
+                mensagem: `${usuarioAtual.nome} emitiu parecer técnico para a proposta ${propostaId}`,
+                destinatario: liberacao?.compradorId || 'comp_001',
+                remetente: usuarioAtual.nome,
+                metadata: {
+                    parecerId: novoParecer.id,
+                    propostaId: propostaId,
+                    resultado: tipoParecer
                 }
-            }
-        }
+            });
 
-        function visualizarProposta(protocolo) {
-            alert(`Visualizar detalhes da proposta: ${protocolo}`);
+            alert('✅ Parecer técnico emitido com sucesso!');
+            
+            // Recarregar lista e atualizar estatísticas
+            carregarPropostasParaParecer();
+            atualizarEstatisticas();
         }
     </script>
 </body>
 </html>
-
