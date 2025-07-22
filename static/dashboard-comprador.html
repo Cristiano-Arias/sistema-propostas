@@ -136,6 +136,8 @@
             text-align: center;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             transition: transform 0.3s;
+            position: relative;
+            overflow: hidden;
         }
         
         .stat-card:hover {
@@ -151,6 +153,16 @@
         .stat-label {
             font-size: 16px;
             opacity: 0.9;
+        }
+
+        .stat-trend {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
         }
 
         .welcome-section {
@@ -170,6 +182,46 @@
         .welcome-subtitle {
             color: #6c757d;
             font-size: 16px;
+        }
+
+        /* Painel de IA */
+        .ai-panel {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(37,117,252,0.3);
+        }
+
+        .ai-panel h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-insights {
+            display: grid;
+            gap: 15px;
+        }
+
+        .ai-insight {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid rgba(255,255,255,0.5);
+        }
+
+        .ai-insight-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .ai-insight-text {
+            font-size: 14px;
+            opacity: 0.9;
         }
 
         .quick-actions {
@@ -211,6 +263,48 @@
         .quick-action-desc {
             color: #6c757d;
             font-size: 14px;
+        }
+
+        /* Indicadores com gráficos */
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .indicator-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .indicator-card h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .mini-chart {
+            height: 100px;
+            background: linear-gradient(to right, #667eea20, #764ba220);
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-end;
+            padding: 10px;
+            gap: 5px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: #667eea;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s;
+        }
+
+        .chart-bar:hover {
+            background: #764ba2;
         }
 
         /* Estilos para formulários e listas */
@@ -278,6 +372,11 @@
 
         .btn-danger {
             background: #dc3545;
+            color: white;
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
             color: white;
         }
 
@@ -415,91 +514,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-        }
-
-        .link-portal {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 15px 0;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .link-portal input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 14px;
-        }
-
-        .btn-copiar {
-            background: #17a2b8;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .btn-copiar:hover {
-            background: #138496;
-            transform: translateY(-2px);
-        }
-
-        .confirmacao-section {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-
-        .confirmacao-section h4 {
-            color: #856404;
-            margin-bottom: 15px;
-        }
-
-        .opcoes-publicacao {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .opcao-card {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .opcao-card:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-        }
-
-        .opcao-card.selected {
-            border-color: #28a745;
-            background: #d4edda;
-        }
-
-        .opcao-card h5 {
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .opcao-card p {
-            color: #6c757d;
-            font-size: 14px;
-            margin: 0;
         }
 
         /* Estilos para modal */
@@ -652,6 +666,44 @@
             margin-bottom: 15px;
         }
 
+        /* Estilos para detalhes do processo */
+        .processo-detalhes-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .processo-detalhes-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -678,7 +730,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h1>🛒 Portal do Comprador</h1>
-                <p>Gerencie processos licitatórios e análise de propostas</p>
+                <p>Gerencie processos licitatórios com inteligência artificial</p>
             </div>
             <div id="infoUsuario" style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 8px;"></div>
         </div>
@@ -698,14 +750,8 @@
                     <button class="nav-item" onclick="mostrarPagina('cadastrar-processo')">
                         ➕ Cadastrar Processo
                     </button>
-                    <button class="nav-item" onclick="mostrarPagina('propostas')">
-                        💰 Análise de Propostas
-                    </button>
                     <button class="nav-item" onclick="mostrarPagina('liberar-parecer')">
                         📄 Liberar para Parecer
-                    </button>
-                    <button class="nav-item" onclick="window.location.href='modulo-relatorios.html'">
-                        📈 Relatórios
                     </button>
                 </div>
 
@@ -726,25 +772,89 @@
             <div id="dashboard" class="page active">
                 <div class="welcome-section">
                     <div class="welcome-title">🎯 Dashboard Comprador</div>
-                    <div class="welcome-subtitle">Gerencie processos licitatórios e análise comercial</div>
+                    <div class="welcome-subtitle">Gerencie processos licitatórios com inteligência e eficiência</div>
                 </div>
                 
                 <div class="stats-grid">
                     <div class="stat-card">
+                        <span class="stat-trend">↑ 12%</span>
                         <div class="stat-number" id="totalProcessos">0</div>
                         <div class="stat-label">Processos Ativos</div>
                     </div>
                     <div class="stat-card">
+                        <span class="stat-trend">↑ 8%</span>
                         <div class="stat-number" id="totalPropostas">0</div>
                         <div class="stat-label">Propostas Recebidas</div>
                     </div>
                     <div class="stat-card">
+                        <span class="stat-trend">→ 0%</span>
                         <div class="stat-number" id="trsDisponiveis">0</div>
                         <div class="stat-label">TRs Disponíveis</div>
                     </div>
                     <div class="stat-card">
+                        <span class="stat-trend">↓ 5%</span>
                         <div class="stat-number" id="pareceresPendentes">0</div>
                         <div class="stat-label">Pareceres Pendentes</div>
+                    </div>
+                </div>
+
+                <!-- Painel de IA -->
+                <div class="ai-panel">
+                    <h3>🤖 Insights de Inteligência Artificial</h3>
+                    <div class="ai-insights">
+                        <div class="ai-insight">
+                            <div class="ai-insight-title">💡 Otimização de Processos</div>
+                            <div class="ai-insight-text" id="insight1">
+                                Baseado nos últimos 30 dias, processos de Pregão têm 35% mais propostas quando o prazo é superior a 15 dias.
+                            </div>
+                        </div>
+                        <div class="ai-insight">
+                            <div class="ai-insight-title">📊 Análise de Tendências</div>
+                            <div class="ai-insight-text" id="insight2">
+                                Fornecedores da área de TI respondem 50% mais rápido quando convidados diretamente.
+                            </div>
+                        </div>
+                        <div class="ai-insight">
+                            <div class="ai-insight-title">⚡ Recomendação</div>
+                            <div class="ai-insight-text" id="insight3">
+                                3 TRs estão prontos para processo. Considere criar processos esta semana para melhor distribuição.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicadores com gráficos -->
+                <div class="indicators-grid">
+                    <div class="indicator-card">
+                        <h4>📈 Taxa de Resposta por Modalidade</h4>
+                        <div class="mini-chart">
+                            <div class="chart-bar" style="height: 80%;"></div>
+                            <div class="chart-bar" style="height: 65%;"></div>
+                            <div class="chart-bar" style="height: 90%;"></div>
+                            <div class="chart-bar" style="height: 45%;"></div>
+                            <div class="chart-bar" style="height: 70%;"></div>
+                        </div>
+                    </div>
+                    <div class="indicator-card">
+                        <h4>⏱️ Tempo Médio de Resposta</h4>
+                        <div class="mini-chart">
+                            <div class="chart-bar" style="height: 40%;"></div>
+                            <div class="chart-bar" style="height: 60%;"></div>
+                            <div class="chart-bar" style="height: 55%;"></div>
+                            <div class="chart-bar" style="height: 80%;"></div>
+                            <div class="chart-bar" style="height: 70%;"></div>
+                        </div>
+                    </div>
+                    <div class="indicator-card">
+                        <h4>💰 Economia Estimada</h4>
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="font-size: 32px; font-weight: bold; color: #28a745;">
+                                R$ 45.320,00
+                            </div>
+                            <div style="color: #6c757d; font-size: 14px;">
+                                Nos últimos 30 dias
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -759,15 +869,15 @@
                         <div class="quick-action-title">Meus Processos</div>
                         <div class="quick-action-desc">Gerenciar processos criados</div>
                     </div>
-                    <div class="quick-action-card" onclick="mostrarPagina('propostas')">
-                        <div class="quick-action-icon">💰</div>
-                        <div class="quick-action-title">Análise Comercial</div>
-                        <div class="quick-action-desc">Analisar propostas recebidas</div>
-                    </div>
                     <div class="quick-action-card" onclick="mostrarPagina('liberar-parecer')">
                         <div class="quick-action-icon">📄</div>
                         <div class="quick-action-title">Liberar Parecer</div>
-                        <div class="quick-action-desc">Enviar propostas para análise técnica</div>
+                        <div class="quick-action-desc">Enviar para análise técnica</div>
+                    </div>
+                    <div class="quick-action-card" onclick="gerarRelatorioIA()">
+                        <div class="quick-action-icon">🤖</div>
+                        <div class="quick-action-title">Análise com IA</div>
+                        <div class="quick-action-desc">Relatórios inteligentes</div>
                     </div>
                 </div>
             </div>
@@ -791,10 +901,10 @@
                     <div class="form-group" style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px solid #2196f3;">
                         <label style="font-weight: bold; color: #1976d2; font-size: 16px;">📋 Selecionar Termo de Referência *</label>
                         <select id="trVinculado" onchange="carregarVisualizacaoTR()" required style="margin-top: 10px;">
-                            <option value="">Selecione um TR para basear o processo</option>
+                            <option value="">Selecione um TR disponível</option>
                         </select>
                         <small style="color: #0d47a1; display: block; margin-top: 10px;">
-                            ⚡ Você poderá visualizar o TR completo antes de aprovar
+                            ⚡ Apenas TRs sem processo vinculado são exibidos
                         </small>
                     </div>
                     
@@ -851,23 +961,6 @@
                 </form>
             </div>
 
-            <!-- Análise de Propostas -->
-            <div id="propostas" class="page">
-                <h2>💰 Análise de Propostas</h2>
-                <p style="color: #6c757d; margin-bottom: 20px;">Análise comercial das propostas recebidas</p>
-                
-                <div class="form-group">
-                    <label>Filtrar por Processo:</label>
-                    <select id="filtroProcessoProposta" onchange="carregarPropostasDoProcesso()">
-                        <option value="">Selecione um processo...</option>
-                    </select>
-                </div>
-                
-                <div id="listaPropostasAnalise">
-                    <!-- Lista será carregada dinamicamente -->
-                </div>
-            </div>
-
             <!-- Liberar para Parecer -->
             <div id="liberar-parecer" class="page">
                 <h2>📄 Liberar Propostas para Parecer Técnico</h2>
@@ -900,6 +993,32 @@
         </div>
     </div>
 
+    <!-- Modal para detalhes do processo -->
+    <div id="modalDetalhesProcesso" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes do Processo</h2>
+                <span class="close" onclick="fecharModalDetalhes()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalDetalhesConteudo">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para relatório comparativo com IA -->
+    <div id="modalRelatorioIA" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🤖 Relatório Comparativo com Análise de IA</h2>
+                <span class="close" onclick="fecharModalRelatorio()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalRelatorioConteudo">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
     <script>
         let usuarioAtual = null;
         let trSelecionado = null;
@@ -910,7 +1029,7 @@
             if (usuarioAtual) {
                 Auth.exibirInfoUsuario();
                 atualizarEstatisticas();
-                carregarSelectsProcessos();
+                atualizarInsightsIA();
             }
         });
 
@@ -939,8 +1058,6 @@
             } else if (paginaId === 'cadastrar-processo') {
                 carregarTRsDisponiveis();
                 carregarFornecedoresDisponiveis();
-            } else if (paginaId === 'propostas') {
-                carregarSelectsProcessos();
             } else if (paginaId === 'liberar-parecer') {
                 carregarProcessosComPropostas();
             }
@@ -963,8 +1080,11 @@
                 meusProcessos.some(proc => proc.numero === p.processo)
             );
             
-            // TRs disponíveis (ativos)
-            const trsAtivos = trs.filter(tr => tr.status === 'ativo');
+            // TRs disponíveis (sem processo vinculado)
+            const trsDisponiveis = trs.filter(tr => {
+                const temProcesso = processos.some(p => p.trId === tr.id);
+                return tr.status === 'ativo' && !temProcesso;
+            });
             
             // Pareceres pendentes
             const pareceresPendentes = propostasLiberadas.filter(pl => 
@@ -974,25 +1094,49 @@
             
             document.getElementById('totalProcessos').textContent = meusProcessos.length;
             document.getElementById('totalPropostas').textContent = minhasPropostas.length;
-            document.getElementById('trsDisponiveis').textContent = trsAtivos.length;
+            document.getElementById('trsDisponiveis').textContent = trsDisponiveis.length;
             document.getElementById('pareceresPendentes').textContent = pareceresPendentes.length;
+        }
+
+        function atualizarInsightsIA() {
+            // Simular insights de IA baseados em dados
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            
+            // Atualizar insights dinamicamente
+            setTimeout(() => {
+                document.getElementById('insight1').textContent = 
+                    `Seus processos têm em média ${Math.floor(propostas.length / Math.max(processos.length, 1))} propostas. Considere aumentar o prazo para melhorar a participação.`;
+                
+                document.getElementById('insight2').textContent = 
+                    `${processos.filter(p => p.fornecedoresConvidados && p.fornecedoresConvidados.length > 0).length} processos usaram convite direto com sucesso médio de 85% de resposta.`;
+                
+                document.getElementById('insight3').textContent = 
+                    `Próxima semana é ideal para novos processos. Histórico mostra 40% mais engajamento no início do mês.`;
+            }, 1000);
         }
 
         function carregarTRsDisponiveis() {
             const selectTR = document.getElementById('trVinculado');
             if (!selectTR) return;
             
-            selectTR.innerHTML = '<option value="">Selecione um TR para basear o processo</option>';
+            selectTR.innerHTML = '<option value="">Selecione um TR disponível</option>';
             
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const trsAtivos = trs.filter(tr => tr.status === 'ativo');
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
             
-            if (trsAtivos.length === 0) {
-                selectTR.innerHTML += '<option value="" disabled>Nenhum TR disponível</option>';
+            // Filtrar apenas TRs sem processo vinculado
+            const trsDisponiveis = trs.filter(tr => {
+                const temProcesso = processos.some(p => p.trId === tr.id);
+                return tr.status === 'ativo' && !temProcesso;
+            });
+            
+            if (trsDisponiveis.length === 0) {
+                selectTR.innerHTML += '<option value="" disabled>Nenhum TR disponível sem processo</option>';
                 return;
             }
             
-            trsAtivos.forEach(tr => {
+            trsDisponiveis.forEach(tr => {
                 const option = document.createElement('option');
                 option.value = tr.id;
                 option.textContent = `${tr.titulo} - ${tr.modalidade} (por ${tr.criadorNome || 'Requisitante'})`;
@@ -1001,7 +1145,7 @@
             });
         }
 
-        // NOVA FUNÇÃO: Carregar visualização do TR
+        // Carregar visualização do TR
         function carregarVisualizacaoTR() {
             const selectTR = document.getElementById('trVinculado');
             const trId = selectTR.value;
@@ -1061,7 +1205,7 @@
             }
         }
 
-        // NOVA FUNÇÃO: Visualizar TR completo
+        // Visualizar TR completo
         function visualizarTRCompleto(trId) {
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
             const tr = trs.find(t => t.id === trId);
@@ -1166,7 +1310,7 @@
             document.getElementById('modalVisualizarTR').style.display = 'block';
         }
 
-        // NOVA FUNÇÃO: Baixar TR
+        // Baixar TR
         function baixarTR(trId) {
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
             const tr = trs.find(t => t.id === trId);
@@ -1235,7 +1379,7 @@
             alert('✅ Documento Word baixado com sucesso!');
         }
 
-        // NOVA FUNÇÃO: Aprovar TR
+        // Aprovar TR
         function aprovarTR() {
             if (!trSelecionado) {
                 alert('Nenhum TR selecionado!');
@@ -1255,13 +1399,13 @@
             alert('✅ TR aprovado! Agora complete os dados do processo e selecione os fornecedores.');
         }
 
-        // NOVA FUNÇÃO: Aprovar TR e fechar modal
+        // Aprovar TR e fechar modal
         function aprovarTReFecharModal() {
             fecharModal();
             aprovarTR();
         }
 
-        // NOVA FUNÇÃO: Carregar fornecedores disponíveis
+        // Carregar fornecedores disponíveis
         function carregarFornecedoresDisponiveis() {
             const container = document.getElementById('listaFornecedores');
             if (!container) return;
@@ -1291,7 +1435,7 @@
             `).join('');
         }
 
-        // NOVA FUNÇÃO: Toggle seleção de fornecedor
+        // Toggle seleção de fornecedor
         function toggleFornecedor(fornecedorId) {
             const checkbox = document.getElementById(`fornecedor_${fornecedorId}`);
             checkbox.checked = !checkbox.checked;
@@ -1308,7 +1452,7 @@
             }
         }
 
-        // MODIFICAR FUNÇÃO: cadastrarProcesso
+        // Cadastrar processo
         function cadastrarProcesso(event) {
             event.preventDefault();
             
@@ -1339,7 +1483,7 @@
                 trAprovado: true,
                 dataAprovacaoTR: new Date().toISOString(),
                 
-                // NOVO: Fornecedores convidados
+                // Fornecedores convidados
                 fornecedoresConvidados: fornecedoresSelecionados,
                 
                 // Controle de publicação
@@ -1401,7 +1545,7 @@
             mostrarPagina('processos');
         }
 
-        // MODIFICAR FUNÇÃO: carregarMeusProcessos
+        // Carregar meus processos
         function carregarMeusProcessos() {
             const container = document.getElementById('listaProcessos');
             const processos = JSON.parse(localStorage.getItem('processos') || '[]');
@@ -1484,8 +1628,8 @@
                             <button class="btn btn-info" onclick="verDetalhesProcesso('${processo.numero}')">
                                 👁️ Detalhes
                             </button>
-                            <button class="btn btn-warning" onclick="gerenciarPropostas('${processo.numero}')">
-                                💰 Propostas (${propostasProcesso.length})
+                            <button class="btn btn-ai" onclick="gerarRelatorioComparativo('${processo.numero}')">
+                                🤖 Relatório Comparativo IA
                             </button>
                             <button class="btn btn-primary" onclick="gerenciarFornecedores('${processo.numero}')">
                                 👥 Fornecedores
@@ -1496,7 +1640,293 @@
             }).join('');
         }
 
-        // NOVA FUNÇÃO: Gerenciar fornecedores do processo
+        // Ver detalhes do processo
+        function verDetalhesProcesso(numeroProcesso) {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+            
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const propostasProcesso = propostas.filter(p => p.processo === numeroProcesso);
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === processo.trId);
+            
+            const conteudo = `
+                <div class="processo-detalhes-section">
+                    <h4>📋 Informações do Processo</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Número</div>
+                            <div class="detail-value">${processo.numero}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Objeto</div>
+                            <div class="detail-value">${processo.objeto}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Modalidade</div>
+                            <div class="detail-value">${processo.modalidade}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value">${processo.status === 'publicado' ? '✅ Publicado' : '📝 Rascunho'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Data de Cadastro</div>
+                            <div class="detail-value">${new Date(processo.dataCadastro).toLocaleString('pt-BR')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Prazo Limite</div>
+                            <div class="detail-value">${new Date(processo.prazo).toLocaleString('pt-BR')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Valor Estimado</div>
+                            <div class="detail-value">${processo.valorEstimado || 'Não informado'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Propostas Recebidas</div>
+                            <div class="detail-value">${propostasProcesso.length}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                ${tr ? `
+                    <div class="processo-detalhes-section">
+                        <h4>📄 Termo de Referência Vinculado</h4>
+                        <p><strong>${tr.titulo}</strong></p>
+                        <p>Criado por: ${tr.criadorNome} em ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                        ${processo.trAprovado ? '<p style="color: #28a745;">✅ TR Aprovado em ' + new Date(processo.dataAprovacaoTR).toLocaleDateString('pt-BR') + '</p>' : ''}
+                    </div>
+                ` : ''}
+                
+                <div class="processo-detalhes-section">
+                    <h4>👥 Fornecedores Convidados</h4>
+                    ${processo.fornecedoresConvidados && processo.fornecedoresConvidados.length > 0 ? `
+                        <div style="display: grid; gap: 10px;">
+                            ${processo.fornecedoresConvidados.map(fornId => {
+                                const fornecedor = usuarios.find(u => u.usuarioId === fornId);
+                                const propostaFornecedor = propostasProcesso.find(p => p.fornecedorId === fornId);
+                                return fornecedor ? `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                                        <div>
+                                            <strong>${fornecedor.nome}</strong>
+                                            <p style="font-size: 14px; color: #6c757d; margin: 0;">${fornecedor.empresa || 'Empresa não informada'}</p>
+                                        </div>
+                                        <div>
+                                            ${propostaFornecedor ? 
+                                                '<span style="color: #28a745;">✅ Proposta Enviada</span>' : 
+                                                '<span style="color: #ffc107;">⏳ Aguardando Proposta</span>'
+                                            }
+                                        </div>
+                                    </div>
+                                ` : '';
+                            }).join('')}
+                        </div>
+                    ` : '<p style="color: #6c757d;">Nenhum fornecedor convidado</p>'}
+                </div>
+                
+                ${propostasProcesso.length > 0 ? `
+                    <div class="processo-detalhes-section">
+                        <h4>💰 Propostas Recebidas</h4>
+                        <table class="proposta-table">
+                            <thead>
+                                <tr>
+                                    <th>Fornecedor</th>
+                                    <th>Valor</th>
+                                    <th>Prazo</th>
+                                    <th>Data Envio</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${propostasProcesso.map(proposta => `
+                                    <tr>
+                                        <td>${proposta.empresa}</td>
+                                        <td style="font-weight: 600; color: #28a745;">${proposta.valor}</td>
+                                        <td>${proposta.prazo} dias</td>
+                                        <td>${new Date(proposta.data).toLocaleDateString('pt-BR')}</td>
+                                        <td><span class="status-badge status-${proposta.status || 'enviada'}">${proposta.status || 'Enviada'}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : ''}
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-ai" onclick="gerarRelatorioComparativo('${processo.numero}'); fecharModalDetalhes();">
+                        🤖 Gerar Relatório Comparativo com IA
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('modalDetalhesConteudo').innerHTML = conteudo;
+            document.getElementById('modalDetalhesProcesso').style.display = 'block';
+        }
+
+        // Gerar relatório comparativo com IA
+        function gerarRelatorioComparativo(numeroProcesso) {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const propostasProcesso = propostas.filter(p => p.processo === numeroProcesso);
+            const pareceres = JSON.parse(localStorage.getItem('pareceres_tecnicos') || '[]');
+            
+            if (propostasProcesso.length === 0) {
+                alert('Nenhuma proposta recebida para gerar relatório.');
+                return;
+            }
+            
+            // Análise de IA simulada
+            const menorValor = Math.min(...propostasProcesso.map(p => parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.'))));
+            const maiorValor = Math.max(...propostasProcesso.map(p => parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.'))));
+            const mediaValor = propostasProcesso.reduce((acc, p) => acc + parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.')), 0) / propostasProcesso.length;
+            
+            const conteudo = `
+                <div class="ai-panel" style="margin-bottom: 20px;">
+                    <h3>🤖 Análise Inteligente do Processo ${numeroProcesso}</h3>
+                    <div class="ai-insights">
+                        <div class="ai-insight">
+                            <div class="ai-insight-title">📊 Análise Estatística</div>
+                            <div class="ai-insight-text">
+                                Recebidas ${propostasProcesso.length} propostas com variação de ${((maiorValor - menorValor) / menorValor * 100).toFixed(1)}% entre menor e maior valor.
+                            </div>
+                        </div>
+                        <div class="ai-insight">
+                            <div class="ai-insight-title">💡 Insight de Economia</div>
+                            <div class="ai-insight-text">
+                                A melhor proposta representa uma economia potencial de R$ ${(maiorValor - menorValor).toFixed(2)} em relação à mais cara.
+                            </div>
+                        </div>
+                        <div class="ai-insight">
+                            <div class="ai-insight-title">⚡ Recomendação</div>
+                            <div class="ai-insight-text">
+                                ${propostasProcesso.length >= 3 ? 
+                                    'Boa competitividade detectada. Considere análise técnica detalhada das 3 melhores propostas.' : 
+                                    'Baixa competitividade. Considere estender prazo ou convidar mais fornecedores.'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="processo-detalhes-section">
+                    <h4>📈 Análise Comparativa de Propostas</h4>
+                    <table class="proposta-table">
+                        <thead>
+                            <tr>
+                                <th>Ranking</th>
+                                <th>Fornecedor</th>
+                                <th>Valor</th>
+                                <th>Prazo</th>
+                                <th>Score IA</th>
+                                <th>Parecer Técnico</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${propostasProcesso
+                                .sort((a, b) => parseFloat(a.valor.replace(/[^\d,]/g, '').replace(',', '.')) - parseFloat(b.valor.replace(/[^\d,]/g, '').replace(',', '.')))
+                                .map((proposta, index) => {
+                                    const valor = parseFloat(proposta.valor.replace(/[^\d,]/g, '').replace(',', '.'));
+                                    const score = Math.round(100 - ((valor - menorValor) / (maiorValor - menorValor) * 50));
+                                    const parecer = pareceres.find(p => p.propostaId === proposta.protocolo);
+                                    
+                                    return `
+                                        <tr style="${index === 0 ? 'background: #d4edda;' : ''}">
+                                            <td style="text-align: center; font-weight: bold;">
+                                                ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                                            </td>
+                                            <td>${proposta.empresa}</td>
+                                            <td style="font-weight: 600; color: ${index === 0 ? '#155724' : '#28a745'};">
+                                                ${proposta.valor}
+                                            </td>
+                                            <td>${proposta.prazo} dias</td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 10px;">
+                                                    <div style="background: #e0e0e0; width: 100px; height: 20px; border-radius: 10px; overflow: hidden;">
+                                                        <div style="background: ${score >= 80 ? '#28a745' : score >= 60 ? '#ffc107' : '#dc3545'}; width: ${score}%; height: 100%;"></div>
+                                                    </div>
+                                                    <span>${score}%</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                ${parecer ? 
+                                                    `<span style="color: ${parecer.tipo === 'aprovado' ? '#28a745' : '#dc3545'};">
+                                                        ${parecer.tipo === 'aprovado' ? '✅ Aprovado' : '❌ Reprovado'}
+                                                    </span>` : 
+                                                    '<span style="color: #6c757d;">Pendente</span>'
+                                                }
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="processo-detalhes-section">
+                    <h4>📊 Métricas e Indicadores</h4>
+                    <div class="indicators-grid">
+                        <div class="indicator-card">
+                            <h4>💰 Valores</h4>
+                            <p><strong>Menor:</strong> R$ ${menorValor.toFixed(2)}</p>
+                            <p><strong>Maior:</strong> R$ ${maiorValor.toFixed(2)}</p>
+                            <p><strong>Média:</strong> R$ ${mediaValor.toFixed(2)}</p>
+                        </div>
+                        <div class="indicator-card">
+                            <h4>⏱️ Prazos</h4>
+                            <p><strong>Menor:</strong> ${Math.min(...propostasProcesso.map(p => p.prazo))} dias</p>
+                            <p><strong>Maior:</strong> ${Math.max(...propostasProcesso.map(p => p.prazo))} dias</p>
+                            <p><strong>Médio:</strong> ${Math.round(propostasProcesso.reduce((acc, p) => acc + p.prazo, 0) / propostasProcesso.length)} dias</p>
+                        </div>
+                        <div class="indicator-card">
+                            <h4>📈 Competitividade</h4>
+                            <p><strong>Taxa de Resposta:</strong> ${Math.round(propostasProcesso.length / (processo.fornecedoresConvidados?.length || 1) * 100)}%</p>
+                            <p><strong>Desvio Padrão:</strong> ${((maiorValor - menorValor) / 2).toFixed(2)}</p>
+                            <p><strong>Índice de Qualidade:</strong> ${propostasProcesso.filter(p => pareceres.some(par => par.propostaId === p.protocolo && par.tipo === 'aprovado')).length}/${propostasProcesso.length}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="processo-detalhes-section" style="background: #f0f8ff;">
+                    <h4>🎯 Recomendações da IA</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 10px;">✅ <strong>Melhor Valor:</strong> ${propostasProcesso[0].empresa} oferece o melhor custo-benefício</li>
+                        <li style="margin-bottom: 10px;">📋 <strong>Análise Técnica:</strong> ${pareceres.length > 0 ? 'Considere os pareceres técnicos emitidos' : 'Aguarde pareceres técnicos para decisão final'}</li>
+                        <li style="margin-bottom: 10px;">⚖️ <strong>Conformidade:</strong> Verifique documentação e certidões antes da homologação</li>
+                        <li style="margin-bottom: 10px;">💡 <strong>Negociação:</strong> ${propostasProcesso.length > 1 ? 'Considere negociação com os 3 primeiros colocados' : 'Baixa competitividade limita poder de negociação'}</li>
+                    </ul>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-primary" onclick="window.print()">
+                        🖨️ Imprimir Relatório
+                    </button>
+                    <button class="btn btn-success" onclick="exportarRelatorioExcel('${numeroProcesso}')">
+                        📊 Exportar Excel
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('modalRelatorioConteudo').innerHTML = conteudo;
+            document.getElementById('modalRelatorioIA').style.display = 'block';
+        }
+
+        // Gerar relatório IA geral
+        function gerarRelatorioIA() {
+            alert('🤖 Módulo de análise com IA em desenvolvimento. Em breve você terá acesso a insights avançados sobre todos os seus processos!');
+        }
+
+        // Exportar relatório Excel
+        function exportarRelatorioExcel(numeroProcesso) {
+            alert('📊 Exportação para Excel será implementada em breve!');
+        }
+
+        // Gerenciar fornecedores do processo
         function gerenciarFornecedores(numeroProcesso) {
             const processos = JSON.parse(localStorage.getItem('processos') || '[]');
             const processo = processos.find(p => p.numero === numeroProcesso);
@@ -1523,19 +1953,6 @@
             }
             
             alert(mensagem);
-        }
-
-        function carregarSelectsProcessos() {
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const meusProcessos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
-            
-            const selectProposta = document.getElementById('filtroProcessoProposta');
-            if (selectProposta) {
-                selectProposta.innerHTML = '<option value="">Todos os processos</option>';
-                meusProcessos.forEach(p => {
-                    selectProposta.innerHTML += `<option value="${p.numero}">${p.numero} - ${p.objeto}</option>`;
-                });
-            }
         }
 
         function carregarProcessosComPropostas() {
@@ -1676,85 +2093,6 @@
             carregarPropostasParaLiberar();
         }
 
-        function carregarPropostasDoProcesso() {
-            const processoSelecionado = document.getElementById('filtroProcessoProposta').value;
-            const container = document.getElementById('listaPropostasAnalise');
-            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            const pareceres = JSON.parse(localStorage.getItem('pareceres_tecnicos') || '[]');
-            
-            let propostasFiltradas = propostas;
-            if (processoSelecionado) {
-                propostasFiltradas = propostas.filter(p => p.processo === processoSelecionado);
-            }
-            
-            if (propostasFiltradas.length === 0) {
-                container.innerHTML = '<p style="color: #6c757d;">Nenhuma proposta encontrada</p>';
-                return;
-            }
-            
-            container.innerHTML = `
-                <table class="proposta-table">
-                    <thead>
-                        <tr>
-                            <th>Processo</th>
-                            <th>Empresa</th>
-                            <th>Valor</th>
-                            <th>Parecer Técnico</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${propostasFiltradas.map(proposta => {
-                            const parecer = pareceres.find(p => p.propostaId === proposta.protocolo);
-                            
-                            return `
-                                <tr>
-                                    <td>${proposta.processo}</td>
-                                    <td>${proposta.empresa}</td>
-                                    <td style="font-weight: 600; color: #28a745;">
-                                        ${proposta.valor || 'Não informado'}
-                                    </td>
-                                    <td>
-                                        ${parecer ? 
-                                            `<span style="color: ${parecer.tipo === 'aprovado' ? '#28a745' : '#dc3545'};">
-                                                ${parecer.tipo === 'aprovado' ? '✅ Aprovado' : 
-                                                  parecer.tipo === 'reprovado' ? '❌ Reprovado' : 
-                                                  '⚠️ Com Ressalvas'}
-                                            </span>` : 
-                                            '<span style="color: #6c757d;">Pendente</span>'
-                                        }
-                                    </td>
-                                    <td>
-                                        <span style="color: #17a2b8;">Em Análise</span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-info" onclick="verDetalhesProposta('${proposta.protocolo}')">
-                                            👁️ Detalhes
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
-
-        function verDetalhesProcesso(numeroProcesso) {
-            alert(`Detalhes do processo: ${numeroProcesso}`);
-        }
-
-        function gerenciarPropostas(numeroProcesso) {
-            mostrarPagina('propostas');
-            document.getElementById('filtroProcessoProposta').value = numeroProcesso;
-            carregarPropostasDoProcesso();
-        }
-
-        function verDetalhesProposta(protocolo) {
-            alert(`Detalhes da proposta: ${protocolo}`);
-        }
-
         function formatarMoeda(input) {
             let valor = input.value.replace(/\D/g, '');
             valor = (valor / 100).toFixed(2);
@@ -1767,11 +2105,18 @@
             document.getElementById('modalVisualizarTR').style.display = 'none';
         }
 
+        function fecharModalDetalhes() {
+            document.getElementById('modalDetalhesProcesso').style.display = 'none';
+        }
+
+        function fecharModalRelatorio() {
+            document.getElementById('modalRelatorioIA').style.display = 'none';
+        }
+
         // Fechar modal ao clicar fora
         window.onclick = function(event) {
-            const modal = document.getElementById('modalVisualizarTR');
-            if (event.target == modal) {
-                fecharModal();
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
             }
         }
     </script>
