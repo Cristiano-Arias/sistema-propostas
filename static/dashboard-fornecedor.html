@@ -595,21 +595,21 @@
         <div class="sidebar">
             <div class="menu-section">
                 <div class="menu-section-title">Principal</div>
-                <button class="nav-item active" onclick="showPage('home')">
+                <button class="nav-item active" data-page="home">
                     🏠 Início
                 </button>
-                <button class="nav-item" onclick="showPage('processos')">
+                <button class="nav-item" data-page="processos">
                     📋 Processos Disponíveis
                 </button>
-                <button class="nav-item" onclick="showPage('propostas')">
+                <button class="nav-item" data-page="propostas">
                     📄 Minhas Propostas
                 </button>
             </div>
             
             <div class="menu-section">
                 <div class="menu-section-title">Cadastro</div>
-                <button class="nav-item" onclick="showPage('empresa')">
-                    🏢 Minha Empresa
+                <button class="nav-item" data-page="empresa">
+                    🏢 Meu Cadastro
                 </button>
             </div>
             
@@ -645,19 +645,19 @@
                 </div>
 
                 <div class="quick-actions">
-                    <div class="quick-action-card" onclick="showPage('processos')">
+                    <div class="quick-action-card" data-action="processos">
                         <div class="quick-action-icon">📋</div>
                         <div class="quick-action-title">Ver Processos</div>
                         <div class="quick-action-desc">Explore processos disponíveis para participação</div>
                     </div>
-                    <div class="quick-action-card" onclick="showPage('propostas')">
+                    <div class="quick-action-card" data-action="propostas">
                         <div class="quick-action-icon">📄</div>
                         <div class="quick-action-title">Minhas Propostas</div>
                         <div class="quick-action-desc">Acompanhe o status das suas propostas</div>
                     </div>
-                    <div class="quick-action-card" onclick="showPage('empresa')">
+                    <div class="quick-action-card" data-action="empresa">
                         <div class="quick-action-icon">🏢</div>
-                        <div class="quick-action-title">Dados da Empresa</div>
+                        <div class="quick-action-title">Meu Cadastro</div>
                         <div class="quick-action-desc">Atualize as informações da sua empresa</div>
                     </div>
                 </div>
@@ -691,7 +691,7 @@
 
             <!-- Empresa Page -->
             <div id="empresa" class="page">
-                <h2>🏢 Dados da Empresa</h2>
+                <h2>🏢 Meu Cadastro</h2>
                 
                 <div class="info-panel">
                     <h4>ℹ️ Informações Importantes</h4>
@@ -701,12 +701,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label>CNPJ</label>
+                    <label>CNPJ *</label>
                     <input type="text" id="cnpj" placeholder="00.000.000/0000-00" onblur="formatCNPJ(this)">
                 </div>
 
                 <div class="form-group">
-                    <label>Razão Social</label>
+                    <label>Razão Social *</label>
                     <input type="text" id="razaoSocial" placeholder="Nome completo da empresa">
                 </div>
 
@@ -716,12 +716,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label>E-mail</label>
+                    <label>E-mail *</label>
                     <input type="email" id="email" placeholder="email@empresa.com">
                 </div>
 
                 <div class="form-group">
-                    <label>Telefone</label>
+                    <label>Telefone *</label>
                     <input type="text" id="telefone" placeholder="(00) 0000-0000" onblur="formatPhone(this)">
                 </div>
 
@@ -762,18 +762,18 @@
                     <h3>📤 Enviar Proposta</h3>
                     
                     <div class="form-group">
-                        <label>Valor Total da Proposta (R$)</label>
-                        <input type="text" id="valorProposta" placeholder="0,00" onblur="formatCurrency(this)">
+                        <label>Valor Total da Proposta (R$) *</label>
+                        <input type="text" id="valorProposta" placeholder="0,00" onblur="formatCurrency(this)" required>
                     </div>
 
                     <div class="form-group">
-                        <label>Prazo de Entrega (dias)</label>
-                        <input type="number" id="prazoEntrega" placeholder="30">
+                        <label>Prazo de Entrega (dias) *</label>
+                        <input type="number" id="prazoEntrega" placeholder="30" required>
                     </div>
 
                     <div class="form-group">
-                        <label>Validade da Proposta (dias)</label>
-                        <input type="number" id="validadeProposta" value="60">
+                        <label>Validade da Proposta (dias) *</label>
+                        <input type="number" id="validadeProposta" value="60" required>
                     </div>
 
                     <div class="form-group">
@@ -835,19 +835,75 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Verificar autenticação
             currentUser = Auth.verificarAutenticacao(['fornecedor', 'admin']);
-            if (currentUser) {
-                Auth.exibirInfoUsuario();
-                document.getElementById('fornecedorNome').textContent = currentUser.nome;
-                
-                // Verificar se está acessando via link direto
-                checkAccess();
-                
-                // Carregar dados
-                loadDashboardData();
-                loadEmpresaData();
-                setupFileUpload();
+            if (!currentUser) {
+                window.location.href = 'index.html';
+                return;
             }
+            
+            // Configurar interface
+            document.getElementById('fornecedorNome').textContent = currentUser.nome;
+            
+            // Configurar navegação
+            configurarNavegacao();
+            
+            // Carregar dados
+            loadDashboardData();
+            loadEmpresaData();
+            setupFileUpload();
+            
+            // Verificar se está acessando via link direto
+            checkAccess();
         });
+
+        // Configurar sistema de navegação
+        function configurarNavegacao() {
+            // Configurar botões do menu
+            document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const page = this.getAttribute('data-page');
+                    showPage(page);
+                });
+            });
+            
+            // Configurar quick actions
+            document.querySelectorAll('.quick-action-card[data-action]').forEach(card => {
+                card.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    showPage(action);
+                });
+            });
+        }
+
+        // Navegação entre páginas
+        function showPage(pageId) {
+            // Ocultar todas as páginas
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Mostrar página selecionada
+            const selectedPage = document.getElementById(pageId);
+            if (selectedPage) {
+                selectedPage.classList.add('active');
+            }
+            
+            // Atualizar menu ativo
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active');
+            });
+            
+            const activeButton = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+            if (activeButton) {
+                activeButton.classList.add('active');
+            }
+            
+            // Carregar dados específicos da página
+            if (pageId === 'processos') {
+                loadProcessos();
+            } else if (pageId === 'propostas') {
+                loadPropostas();
+            }
+        }
 
         // Verificar acesso via link do processo
         function checkAccess() {
@@ -861,11 +917,11 @@
         }
 
         // Carregar processo para o portal
-        async function loadProcessoPortal(processoId) {
+        function loadProcessoPortal(processoId) {
             try {
                 // Buscar processo no localStorage
-                const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-                const processo = processos.find(p => p.numero === processoId);
+                const processosData = JSON.parse(localStorage.getItem('processos') || '[]');
+                const processo = processosData.find(p => p.numero === processoId);
                 
                 if (processo && processo.status === 'publicado') {
                     // Verificar se o fornecedor foi convidado
@@ -918,49 +974,39 @@
             window.processoSelecionado = processo;
         }
 
-        // Navegação entre páginas
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            document.getElementById(pageId).classList.add('active');
-            
-            document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Carregar dados específicos da página
-            if (pageId === 'processos') {
-                loadProcessos();
-            } else if (pageId === 'propostas') {
-                loadPropostas();
-            }
-        }
-
         // Carregar dados do dashboard
-        async function loadDashboardData() {
+        function loadDashboardData() {
             try {
                 // Carregar processos direcionados
                 const processosData = JSON.parse(localStorage.getItem('processos') || '[]');
                 const processosDirecionados = processosData.filter(p => 
                     p.status === 'publicado' && 
                     p.fornecedoresConvidados && 
-                    p.fornecedoresConvidados.includes(currentUser.usuarioId)
+                    p.fornecedoresConvidados.includes(currentUser.usuarioId) &&
+                    new Date(p.prazo) > new Date()
+                );
+                
+                // Carregar propostas do fornecedor
+                const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
+                const minhasPropostas = propostasData.filter(p => 
+                    p.fornecedorId === currentUser.usuarioId
+                );
+                
+                // Contar propostas aprovadas (simulado)
+                const propostasAprovadas = minhasPropostas.filter(p => 
+                    p.status === 'aprovada'
                 );
                 
                 document.getElementById('processosCount').textContent = processosDirecionados.length;
-                
-                // Simular contadores de propostas (substituir por API real)
-                document.getElementById('propostasCount').textContent = '0';
-                document.getElementById('aprovadasCount').textContent = '0';
+                document.getElementById('propostasCount').textContent = minhasPropostas.length;
+                document.getElementById('aprovadasCount').textContent = propostasAprovadas.length;
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
             }
         }
 
         // Carregar processos disponíveis
-        async function loadProcessos() {
+        function loadProcessos() {
             const container = document.getElementById('processosList');
             container.innerHTML = '<div class="loading">Carregando processos...</div>';
             
@@ -972,7 +1018,8 @@
                 processos = processosData.filter(p => 
                     p.status === 'publicado' && 
                     p.fornecedoresConvidados && 
-                    p.fornecedoresConvidados.includes(currentUser.usuarioId)
+                    p.fornecedoresConvidados.includes(currentUser.usuarioId) &&
+                    new Date(p.prazo) > new Date()
                 );
                 
                 if (processos.length === 0) {
@@ -996,9 +1043,8 @@
                         </div>
                         <div class="process-info" style="margin-top: 15px;">
                             <span><strong>Modalidade:</strong> ${processo.modalidade}</span>
-                            <span><strong>Tipo:</strong> ${processo.tipo || 'Padrão'}</span>
                             <span><strong>Valor Estimado:</strong> ${processo.valorEstimado || 'Não informado'}</span>
-                            <span><strong>Abertura:</strong> ${formatarData(processo.prazo)}</span>
+                            <span><strong>Prazo:</strong> ${formatarData(processo.prazo)}</span>
                         </div>
                         <div style="margin-top: 15px;">
                             <button class="btn btn-info" onclick="verDetalhesProcesso('${processo.numero}')">
@@ -1017,7 +1063,7 @@
         }
 
         // Ver detalhes do processo
-        async function verDetalhesProcesso(numeroProcesso) {
+        function verDetalhesProcesso(numeroProcesso) {
             const processo = processos.find(p => p.numero === numeroProcesso);
             if (!processo) return;
             
@@ -1039,16 +1085,16 @@
                             <div class="detail-value">${processo.modalidade}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">Tipo</div>
-                            <div class="detail-value">${processo.tipo || 'Padrão'}</div>
-                        </div>
-                        <div class="detail-item">
                             <div class="detail-label">Valor Estimado</div>
                             <div class="detail-value">${processo.valorEstimado || 'Não informado'}</div>
                         </div>
                         <div class="detail-item">
-                            <div class="detail-label">Data de Abertura</div>
+                            <div class="detail-label">Data Limite</div>
                             <div class="detail-value">${formatarData(processo.prazo)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Hora Limite</div>
+                            <div class="detail-value">${new Date(processo.prazo).toLocaleTimeString('pt-BR')}</div>
                         </div>
                     </div>
                     ${processo.descricao ? `
@@ -1082,7 +1128,7 @@
         }
 
         // Carregar propostas enviadas
-        async function loadPropostas() {
+        function loadPropostas() {
             const container = document.getElementById('propostasList');
             container.innerHTML = '<div class="loading">Carregando propostas...</div>';
             
@@ -1108,11 +1154,11 @@
                     <div class="process-title">Processo: ${proposta.processo}</div>
                     <div class="process-info">
                         <span><strong>Data de Envio:</strong> ${formatarData(proposta.data)}</span>
-                        <span><strong>Valor:</strong> R$ ${formatarMoeda(proposta.valor)}</span>
+                        <span><strong>Valor:</strong> ${proposta.valor}</span>
                         <span><strong>Prazo:</strong> ${proposta.prazo} dias</span>
                         <span><strong>Status:</strong> <span class="status-badge status-${proposta.status || 'enviada'}">${getStatusLabel(proposta.status)}</span></span>
                     </div>
-                    <div>
+                    <div style="margin-top: 10px;">
                         <button class="btn btn-info" onclick="verDetalhesProposta('${proposta.protocolo}')">
                             👁️ Ver Detalhes
                         </button>
@@ -1123,20 +1169,69 @@
 
         // Ver detalhes da proposta
         function verDetalhesProposta(protocolo) {
-            // Implementar visualização de detalhes
-            alert('Funcionalidade em desenvolvimento');
+            const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const proposta = propostasData.find(p => p.protocolo === protocolo);
+            
+            if (!proposta) return;
+            
+            const modalBody = document.getElementById('modalPropostaBody');
+            modalBody.innerHTML = `
+                <div class="proposta-details">
+                    <h4>Informações da Proposta</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Protocolo</div>
+                            <div class="detail-value">${proposta.protocolo}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Processo</div>
+                            <div class="detail-value">${proposta.processo}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Data de Envio</div>
+                            <div class="detail-value">${formatarData(proposta.data)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Valor</div>
+                            <div class="detail-value">${proposta.valor}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Prazo</div>
+                            <div class="detail-value">${proposta.prazo} dias</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Validade</div>
+                            <div class="detail-value">${proposta.validade} dias</div>
+                        </div>
+                    </div>
+                    ${proposta.observacoes ? `
+                        <h4 style="margin-top: 20px;">Observações</h4>
+                        <p>${proposta.observacoes}</p>
+                    ` : ''}
+                    ${proposta.arquivos && proposta.arquivos.length > 0 ? `
+                        <h4 style="margin-top: 20px;">Arquivos Anexados</h4>
+                        <ul>
+                            ${proposta.arquivos.map(arquivo => `<li>📎 ${arquivo}</li>`).join('')}
+                        </ul>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('modalProposta').style.display = 'block';
         }
 
         // Carregar dados da empresa
         function loadEmpresaData() {
             // Carregar dados salvos do localStorage
-            const empresaData = localStorage.getItem('fornecedorData_' + currentUser.usuarioId);
+            const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
+            const empresaData = localStorage.getItem(empresaKey);
+            
             if (empresaData) {
                 const data = JSON.parse(empresaData);
                 document.getElementById('cnpj').value = data.cnpj || '';
                 document.getElementById('razaoSocial').value = data.razaoSocial || '';
                 document.getElementById('nomeFantasia').value = data.nomeFantasia || '';
-                document.getElementById('email').value = data.email || '';
+                document.getElementById('email').value = data.email || currentUser.email || '';
                 document.getElementById('telefone').value = data.telefone || '';
                 document.getElementById('endereco').value = data.endereco || '';
                 document.getElementById('areaAtuacao').value = data.areaAtuacao || '';
@@ -1145,6 +1240,9 @@
                 if (data.nomeFantasia) {
                     document.getElementById('fornecedorNome').textContent = data.nomeFantasia;
                 }
+            } else {
+                // Preencher com dados do usuário se disponível
+                document.getElementById('email').value = currentUser.email || '';
             }
         }
 
@@ -1161,20 +1259,21 @@
             };
             
             // Validações básicas
-            if (!data.cnpj || !data.razaoSocial || !data.email) {
-                alert('Por favor, preencha os campos obrigatórios: CNPJ, Razão Social e E-mail.');
+            if (!data.cnpj || !data.razaoSocial || !data.email || !data.telefone) {
+                alert('Por favor, preencha os campos obrigatórios: CNPJ, Razão Social, E-mail e Telefone.');
                 return;
             }
             
             // Salvar no localStorage
-            localStorage.setItem('fornecedorData_' + currentUser.usuarioId, JSON.stringify(data));
+            const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
+            localStorage.setItem(empresaKey, JSON.stringify(data));
             
             // Atualizar nome no header
             if (data.nomeFantasia) {
                 document.getElementById('fornecedorNome').textContent = data.nomeFantasia;
             }
             
-            alert('Dados salvos com sucesso!');
+            alert('✅ Dados salvos com sucesso!');
         }
 
         // Setup de upload de arquivos
@@ -1247,23 +1346,28 @@
         }
 
         // Enviar proposta
-        async function enviarProposta() {
-            const empresaData = localStorage.getItem('fornecedorData_' + currentUser.usuarioId);
+        function enviarProposta() {
+            const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
+            const empresaData = localStorage.getItem(empresaKey);
+            
             if (!empresaData) {
                 alert('Por favor, complete o cadastro da sua empresa antes de enviar propostas.');
                 showPage('empresa');
                 return;
             }
             
-            const valor = document.getElementById('valorProposta').value.replace(/\D/g, '') / 100;
+            const valorInput = document.getElementById('valorProposta').value;
             const prazo = document.getElementById('prazoEntrega').value;
             const validade = document.getElementById('validadeProposta').value;
             const observacoes = document.getElementById('observacoes').value;
             
-            if (!valor || !prazo || !validade) {
+            if (!valorInput || !prazo || !validade) {
                 alert('Por favor, preencha todos os campos obrigatórios.');
                 return;
             }
+            
+            // Converter valor para número
+            const valor = parseFloat(valorInput.replace(/[^\d,]/g, '').replace(',', '.'));
             
             const empresaInfo = JSON.parse(empresaData);
             
@@ -1295,9 +1399,9 @@
             
             try {
                 // Salvar proposta no localStorage
-                const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-                propostas.push(proposta);
-                localStorage.setItem('propostas', JSON.stringify(propostas));
+                const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
+                propostasData.push(proposta);
+                localStorage.setItem('propostas', JSON.stringify(propostasData));
                 
                 // Notificar comprador
                 const processos = JSON.parse(localStorage.getItem('processos') || '[]');
@@ -1317,7 +1421,7 @@
                     });
                 }
                 
-                alert('Proposta enviada com sucesso! Você pode acompanhar o status em "Minhas Propostas".');
+                alert('✅ Proposta enviada com sucesso! Você pode acompanhar o status em "Minhas Propostas".');
                 
                 // Limpar formulário
                 document.getElementById('valorProposta').value = '';
@@ -1337,7 +1441,7 @@
 
         // Funções auxiliares
         function formatarMoeda(valor) {
-            return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+            return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function formatarData(data) {
