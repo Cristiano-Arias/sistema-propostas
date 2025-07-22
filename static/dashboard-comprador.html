@@ -213,76 +213,34 @@
             font-size: 14px;
         }
 
-        .info-panel {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
+        /* Estilos para formulários e listas */
+        .form-group {
+            margin-bottom: 20px;
         }
 
-        .info-panel h4 {
-            color: #1976d2;
-            margin-bottom: 10px;
-        }
-
-        .info-panel p {
-            color: #0d47a1;
-            margin: 5px 0;
-        }
-
-        .recent-activity {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 30px;
-        }
-
-        .recent-activity h3 {
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
             color: #2c3e50;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 10px 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .activity-item:last-child {
-            border-bottom: none;
-        }
-
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            background: #667eea;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-
-        .activity-content {
-            flex: 1;
-        }
-
-        .activity-title {
             font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 5px;
         }
 
-        .activity-time {
-            color: #6c757d;
-            font-size: 12px;
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
         }
 
         .btn {
@@ -303,19 +261,100 @@
             color: white;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
         .btn-success {
             background: #28a745;
             color: white;
         }
 
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
         .btn-info {
             background: #17a2b8;
             color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Estilos para cards de processo */
+        .processo-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .processo-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+
+        .processo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .processo-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .tr-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Estilos para tabela de propostas */
+        .proposta-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .proposta-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .proposta-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .proposta-table tr:hover {
+            background: #f8f9fa;
         }
 
         @media (max-width: 768px) {
@@ -332,25 +371,8 @@
                 padding: 10px;
             }
             
-            .menu-section {
-                min-width: 200px;
-                margin-bottom: 0;
-            }
-            
-            .nav-item {
-                white-space: nowrap;
-            }
-            
             .main-content {
                 padding: 20px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .quick-actions {
-                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -373,26 +395,32 @@
                 <div class="menu-section">
                     <div class="menu-section-title">Comprador</div>
                     <button class="nav-item active" onclick="mostrarPagina('dashboard')">
-                        🛒 2.1 Dashboard Comprador
+                        🛒 Dashboard Comprador
                     </button>
-                    <button class="nav-item" onclick="window.location.href='sistema-gestao-corrigido2.html#processos'">
-                        📋 2.2 Processos (listar todos)
+                    <button class="nav-item" onclick="mostrarPagina('processos')">
+                        📋 Processos
                     </button>
-                    <button class="nav-item" onclick="window.location.href='sistema-gestao-corrigido2.html#cadastrar-processos'">
-                        ➕ 2.3 Cadastrar Processos
+                    <button class="nav-item" onclick="mostrarPagina('cadastrar-processo')">
+                        ➕ Cadastrar Processo
                     </button>
-                    <button class="nav-item" onclick="window.location.href='sistema-gestao-corrigido2.html#propostas'">
-                        💰 2.4 Propostas (análise comercial)
+                    <button class="nav-item" onclick="mostrarPagina('propostas')">
+                        💰 Análise de Propostas
+                    </button>
+                    <button class="nav-item" onclick="mostrarPagina('liberar-parecer')">
+                        📄 Liberar para Parecer
                     </button>
                     <button class="nav-item" onclick="window.location.href='modulo-relatorios.html'">
-                        📈 2.5 Relatórios
+                        📈 Relatórios
                     </button>
                 </div>
 
                 <div class="menu-section">
                     <div class="menu-section-title">Sistema</div>
                     <button class="nav-item" onclick="window.location.href='sistema-gestao-corrigido2.html'">
-                        🏠 Voltar ao Sistema Principal
+                        🏠 Sistema Principal
+                    </button>
+                    <button class="nav-item" onclick="Auth.logout()">
+                        🚪 Sair
                     </button>
                 </div>
             </nav>
@@ -416,43 +444,138 @@
                         <div class="stat-label">Propostas Recebidas</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="processosHoje">0</div>
-                        <div class="stat-label">Vencem Hoje</div>
+                        <div class="stat-number" id="trsDisponiveis">0</div>
+                        <div class="stat-label">TRs Disponíveis</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="valorTotal">R$ 0</div>
-                        <div class="stat-label">Valor Total</div>
+                        <div class="stat-number" id="pareceresPendentes">0</div>
+                        <div class="stat-label">Pareceres Pendentes</div>
                     </div>
                 </div>
 
                 <div class="quick-actions">
-                    <div class="quick-action-card" onclick="window.location.href='sistema-gestao-atualizado.html#cadastrar-processos'">
+                    <div class="quick-action-card" onclick="mostrarPagina('cadastrar-processo')">
                         <div class="quick-action-icon">➕</div>
                         <div class="quick-action-title">Novo Processo</div>
-                        <div class="quick-action-desc">Cadastrar processo licitatório</div>
+                        <div class="quick-action-desc">Criar processo baseado em TR</div>
                     </div>
-                    <div class="quick-action-card" onclick="window.location.href='sistema-gestao-atualizado.html#processos'">
+                    <div class="quick-action-card" onclick="mostrarPagina('processos')">
                         <div class="quick-action-icon">📋</div>
                         <div class="quick-action-title">Meus Processos</div>
                         <div class="quick-action-desc">Gerenciar processos criados</div>
                     </div>
-                    <div class="quick-action-card" onclick="window.location.href='sistema-gestao-atualizado.html#propostas'">
+                    <div class="quick-action-card" onclick="mostrarPagina('propostas')">
                         <div class="quick-action-icon">💰</div>
                         <div class="quick-action-title">Análise Comercial</div>
                         <div class="quick-action-desc">Analisar propostas recebidas</div>
                     </div>
-                    <div class="quick-action-card" onclick="window.location.href='modulo-relatorios.html'">
-                        <div class="quick-action-icon">📈</div>
-                        <div class="quick-action-title">Relatórios</div>
-                        <div class="quick-action-desc">Gerar relatórios detalhados</div>
+                    <div class="quick-action-card" onclick="mostrarPagina('liberar-parecer')">
+                        <div class="quick-action-icon">📄</div>
+                        <div class="quick-action-title">Liberar Parecer</div>
+                        <div class="quick-action-desc">Enviar propostas para análise técnica</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="recent-activity">
-                    <h3>📊 Atividades Recentes</h3>
-                    <div id="atividadesRecentes">
-                        <!-- Atividades serão carregadas dinamicamente -->
+            <!-- Lista de Processos -->
+            <div id="processos" class="page">
+                <h2>📋 Meus Processos</h2>
+                <p style="color: #6c757d; margin-bottom: 20px;">Gerencie todos os processos licitatórios criados</p>
+                <div id="listaProcessos">
+                    <!-- Lista será carregada dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Cadastrar Processo -->
+            <div id="cadastrar-processo" class="page">
+                <h2>➕ Cadastrar Novo Processo</h2>
+                <p style="color: #6c757d; margin-bottom: 20px;">Crie um processo baseado em um Termo de Referência aprovado</p>
+                
+                <form id="formCadastroProcesso" onsubmit="cadastrarProcesso(event)" style="background: #f8f9fa; padding: 30px; border-radius: 10px;">
+                    <!-- Seleção de TR -->
+                    <div class="form-group" style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px solid #2196f3;">
+                        <label style="font-weight: bold; color: #1976d2; font-size: 16px;">📋 Selecionar Termo de Referência *</label>
+                        <select id="trVinculado" onchange="preencherDadosDoTR()" required style="margin-top: 10px;">
+                            <option value="">Selecione um TR para basear o processo</option>
+                        </select>
+                        <small style="color: #0d47a1; display: block; margin-top: 10px;">
+                            ⚡ Os dados do processo serão preenchidos automaticamente com base no TR selecionado
+                        </small>
                     </div>
+                    
+                    <div class="form-group">
+                        <label>Número do Processo *</label>
+                        <input type="text" id="numeroProc" required placeholder="Ex: LIC-2025-001">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Objeto *</label>
+                        <input type="text" id="objetoProc" required placeholder="Será preenchido com dados do TR" readonly style="background: #f0f0f0;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Modalidade *</label>
+                        <select id="modalidadeProc" required>
+                            <option value="">Selecione...</option>
+                            <option value="Pregão">Pregão</option>
+                            <option value="Concorrência">Concorrência</option>
+                            <option value="Tomada de Preços">Tomada de Preços</option>
+                            <option value="Convite">Convite</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Data e Hora Limite *</label>
+                        <input type="datetime-local" id="prazoProc" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Valor Estimado</label>
+                        <input type="text" id="valorEstimado" placeholder="R$ 0,00" onkeyup="formatarMoeda(this)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="notificarFornecedores" style="width: auto; margin-right: 10px;">
+                            Notificar fornecedores cadastrados por e-mail
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">💾 Cadastrar Processo</button>
+                </form>
+            </div>
+
+            <!-- Análise de Propostas -->
+            <div id="propostas" class="page">
+                <h2>💰 Análise de Propostas</h2>
+                <p style="color: #6c757d; margin-bottom: 20px;">Análise comercial das propostas recebidas</p>
+                
+                <div class="form-group">
+                    <label>Filtrar por Processo:</label>
+                    <select id="filtroProcessoProposta" onchange="carregarPropostasDoProcesso()">
+                        <option value="">Selecione um processo...</option>
+                    </select>
+                </div>
+                
+                <div id="listaPropostasAnalise">
+                    <!-- Lista será carregada dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Liberar para Parecer -->
+            <div id="liberar-parecer" class="page">
+                <h2>📄 Liberar Propostas para Parecer Técnico</h2>
+                <p style="color: #6c757d; margin-bottom: 20px;">Selecione propostas para enviar para análise técnica do requisitante</p>
+                
+                <div class="form-group">
+                    <label>Processo:</label>
+                    <select id="processoParaParecer" onchange="carregarPropostasParaLiberar()">
+                        <option value="">Selecione um processo...</option>
+                    </select>
+                </div>
+                
+                <div id="propostasParaLiberar">
+                    <!-- Lista será carregada dinamicamente -->
                 </div>
             </div>
         </div>
@@ -460,148 +583,480 @@
 
     <script>
         let usuarioAtual = null;
-        let processos = [];
-        let propostas = [];
 
         window.addEventListener('DOMContentLoaded', function() {
             usuarioAtual = Auth.verificarAutenticacao(['comprador', 'admin']);
             if (usuarioAtual) {
                 Auth.exibirInfoUsuario();
-                carregarDados();
-                carregarAtividadesRecentes();
+                atualizarEstatisticas();
+                carregarSelectsProcessos();
             }
         });
 
         function mostrarPagina(paginaId) {
+            // Ocultar todas as páginas
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             
+            // Mostrar página selecionada
             const pagina = document.getElementById(paginaId);
             if (pagina) {
                 pagina.classList.add('active');
             }
             
-            // Ativar o botão do menu correspondente
+            // Ativar botão do menu
             const botoesMenu = document.querySelectorAll('.nav-item');
             botoesMenu.forEach(botao => {
                 if (botao.onclick && botao.onclick.toString().includes(paginaId)) {
                     botao.classList.add('active');
                 }
             });
-        }
 
-        async function carregarDados() {
-            try {
-                // Tentar carregar dados da API
-                const [processosResponse, propostasResponse] = await Promise.all([
-                    fetch(`${API_URL}/api/processos`),
-                    fetch(`${API_URL}/api/propostas`)
-                ]);
-
-                if (processosResponse.ok && propostasResponse.ok) {
-                    const processosData = await processosResponse.json();
-                    const propostasData = await propostasResponse.json();
-                    
-                    if (processosData.success) processos = processosData.processos;
-                    if (propostasData.success) propostas = propostasData.propostas;
-                } else {
-                    throw new Error('API não disponível');
-                }
-            } catch (error) {
-                console.warn('Usando dados locais:', error);
-                carregarDadosLocais();
-            }
-
-            atualizarEstatisticas();
-        }
-
-        function carregarDadosLocais() {
-            processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            
-            // Filtrar processos do usuário se não for admin
-            if (usuarioAtual.tipo !== 'admin') {
-                processos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
+            // Carregar conteúdo específico
+            if (paginaId === 'processos') {
+                carregarMeusProcessos();
+            } else if (paginaId === 'cadastrar-processo') {
+                carregarTRsDisponiveis();
+            } else if (paginaId === 'propostas') {
+                carregarSelectsProcessos();
+            } else if (paginaId === 'liberar-parecer') {
+                carregarProcessosComPropostas();
             }
         }
 
         function atualizarEstatisticas() {
-            const agora = new Date();
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
             
-            // Processos ativos
-            const processosAtivos = processos.filter(p => {
-                const prazo = new Date(p.prazo);
-                return prazo > agora;
-            });
-            document.getElementById('totalProcessos').textContent = processosAtivos.length;
+            // Filtrar processos do usuário
+            const meusProcessos = processos.filter(p => 
+                p.criadoPor === usuarioAtual.usuarioId && 
+                new Date(p.prazo) > new Date()
+            );
             
-            // Total de propostas
-            document.getElementById('totalPropostas').textContent = propostas.length;
+            // Contar propostas dos meus processos
+            const minhasPropostas = propostas.filter(p => 
+                meusProcessos.some(proc => proc.numero === p.processo)
+            );
             
-            // Processos que vencem hoje
-            const processosHoje = processos.filter(p => {
-                const prazo = new Date(p.prazo);
-                return prazo.toDateString() === agora.toDateString();
-            });
-            document.getElementById('processosHoje').textContent = processosHoje.length;
+            // TRs disponíveis (ativos)
+            const trsAtivos = trs.filter(tr => tr.status === 'ativo');
             
-            // Valor total das propostas
-            let valorTotal = 0;
-            propostas.forEach(p => {
-                if (p.valor) {
-                    const valor = parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
-                    valorTotal += valor;
-                }
-            });
-            document.getElementById('valorTotal').textContent = valorTotal.toLocaleString('pt-BR', { 
-                style: 'currency', 
-                currency: 'BRL' 
+            // Pareceres pendentes
+            const pareceresPendentes = propostasLiberadas.filter(pl => 
+                !pl.parecerEmitido && 
+                meusProcessos.some(proc => proc.numero === pl.processoId)
+            );
+            
+            document.getElementById('totalProcessos').textContent = meusProcessos.length;
+            document.getElementById('totalPropostas').textContent = minhasPropostas.length;
+            document.getElementById('trsDisponiveis').textContent = trsAtivos.length;
+            document.getElementById('pareceresPendentes').textContent = pareceresPendentes.length;
+        }
+
+        function carregarTRsDisponiveis() {
+            const selectTR = document.getElementById('trVinculado');
+            if (!selectTR) return;
+            
+            selectTR.innerHTML = '<option value="">Selecione um TR para basear o processo</option>';
+            
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const trsAtivos = trs.filter(tr => tr.status === 'ativo');
+            
+            if (trsAtivos.length === 0) {
+                selectTR.innerHTML += '<option value="" disabled>Nenhum TR disponível</option>';
+                return;
+            }
+            
+            trsAtivos.forEach(tr => {
+                const option = document.createElement('option');
+                option.value = tr.id;
+                option.textContent = `${tr.titulo} - ${tr.modalidade} (por ${tr.criadorNome || 'Requisitante'})`;
+                option.dataset.trData = JSON.stringify(tr);
+                selectTR.appendChild(option);
             });
         }
 
-        function carregarAtividadesRecentes() {
-            const container = document.getElementById('atividadesRecentes');
+        function preencherDadosDoTR() {
+            const selectTR = document.getElementById('trVinculado');
+            const trSelecionado = selectTR.value;
             
-            // Simular atividades recentes
-            const atividades = [
-                {
-                    icon: '📋',
-                    titulo: 'Novo processo criado',
-                    descricao: 'Processo LIC-2025-001 foi cadastrado',
-                    tempo: '2 horas atrás'
-                },
-                {
-                    icon: '📨',
-                    titulo: 'Proposta recebida',
-                    descricao: 'Construtora Alpha enviou proposta',
-                    tempo: '4 horas atrás'
-                },
-                {
-                    icon: '📄',
-                    titulo: 'Parecer técnico emitido',
-                    descricao: 'Parecer técnico para processo LIC-2025-002',
-                    tempo: '1 dia atrás'
-                },
-                {
-                    icon: '📊',
-                    titulo: 'Relatório gerado',
-                    descricao: 'Relatório mensal de propostas',
-                    tempo: '2 dias atrás'
-                }
-            ];
+            if (!trSelecionado) {
+                document.getElementById('objetoProc').value = '';
+                document.getElementById('modalidadeProc').value = '';
+                document.getElementById('objetoProc').removeAttribute('readonly');
+                document.getElementById('objetoProc').style.background = '';
+                return;
+            }
+            
+            const option = selectTR.querySelector(`option[value="${trSelecionado}"]`);
+            if (option && option.dataset.trData) {
+                const tr = JSON.parse(option.dataset.trData);
+                
+                document.getElementById('objetoProc').value = tr.titulo || '';
+                document.getElementById('modalidadeProc').value = tr.modalidade || '';
+                document.getElementById('objetoProc').setAttribute('readonly', true);
+                document.getElementById('objetoProc').style.background = '#f0f0f0';
+                
+                alert(`✅ Dados do TR "${tr.titulo}" foram carregados!`);
+            }
+        }
 
-            container.innerHTML = atividades.map(atividade => `
-                <div class="activity-item">
-                    <div class="activity-icon">${atividade.icon}</div>
-                    <div class="activity-content">
-                        <div class="activity-title">${atividade.titulo}</div>
-                        <div style="color: #6c757d; font-size: 14px;">${atividade.descricao}</div>
-                        <div class="activity-time">${atividade.tempo}</div>
+        function cadastrarProcesso(event) {
+            event.preventDefault();
+            
+            const trId = document.getElementById('trVinculado').value;
+            if (!trId) {
+                alert('❌ Por favor, selecione um Termo de Referência!');
+                return;
+            }
+            
+            const novoProcesso = {
+                numero: document.getElementById('numeroProc').value,
+                objeto: document.getElementById('objetoProc').value,
+                modalidade: document.getElementById('modalidadeProc').value,
+                prazo: document.getElementById('prazoProc').value,
+                valorEstimado: document.getElementById('valorEstimado').value,
+                dataCadastro: new Date().toISOString(),
+                criadoPor: usuarioAtual.usuarioId,
+                criadorNome: usuarioAtual.nome,
+                trId: trId,
+                status: 'ativo'
+            };
+            
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            processos.push(novoProcesso);
+            localStorage.setItem('processos', JSON.stringify(processos));
+            
+            // Notificar requisitante
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === trId);
+            
+            if (tr && tr.criadoPor) {
+                Auth.Notificacoes.criar({
+                    tipo: 'processo_criado_com_tr',
+                    titulo: '📋 Processo criado com seu TR',
+                    mensagem: `O processo ${novoProcesso.numero} foi criado baseado no TR "${tr.titulo}"`,
+                    destinatario: tr.criadoPor,
+                    remetente: usuarioAtual.nome,
+                    metadata: {
+                        processoId: novoProcesso.numero,
+                        trId: novoProcesso.trId
+                    }
+                });
+            }
+            
+            alert('✅ Processo cadastrado com sucesso!');
+            document.getElementById('formCadastroProcesso').reset();
+            mostrarPagina('processos');
+        }
+
+        function carregarMeusProcessos() {
+            const container = document.getElementById('listaProcessos');
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            
+            const meusProcessos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
+            
+            if (meusProcessos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>Nenhum processo cadastrado</h3>
+                        <p>Crie seu primeiro processo baseado em um TR</p>
+                        <button class="btn btn-primary" onclick="mostrarPagina('cadastrar-processo')">
+                            ➕ Cadastrar Processo
+                        </button>
                     </div>
-                </div>
-            `).join('');
+                `;
+                return;
+            }
+            
+            container.innerHTML = meusProcessos.map(processo => {
+                const propostasProcesso = propostas.filter(p => p.processo === processo.numero);
+                const dataPrazo = new Date(processo.prazo);
+                const diasRestantes = Math.ceil((dataPrazo - new Date()) / (1000 * 60 * 60 * 24));
+                
+                return `
+                    <div class="processo-card">
+                        <div class="processo-header">
+                            <div>
+                                <h3 style="color: #2c3e50;">${processo.numero}</h3>
+                                <p style="color: #6c757d; margin-top: 5px;">${processo.objeto}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                ${processo.trId ? '<span class="tr-badge">📋 Com TR</span>' : ''}
+                                <p style="color: ${diasRestantes > 0 ? '#28a745' : '#dc3545'}; margin-top: 10px; font-weight: 600;">
+                                    ${diasRestantes > 0 ? `${diasRestantes} dias restantes` : 'Encerrado'}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="processo-info">
+                            <div>
+                                <strong>Modalidade:</strong> ${processo.modalidade}
+                            </div>
+                            <div>
+                                <strong>Propostas:</strong> ${propostasProcesso.length}
+                            </div>
+                            <div>
+                                <strong>Valor Estimado:</strong> ${processo.valorEstimado || 'Não informado'}
+                            </div>
+                            <div>
+                                <strong>Prazo:</strong> ${dataPrazo.toLocaleString('pt-BR')}
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-info" onclick="verDetalhesProcesso('${processo.numero}')">
+                                👁️ Detalhes
+                            </button>
+                            <button class="btn btn-warning" onclick="gerenciarPropostas('${processo.numero}')">
+                                💰 Propostas (${propostasProcesso.length})
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function carregarSelectsProcessos() {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const meusProcessos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
+            
+            const selectProposta = document.getElementById('filtroProcessoProposta');
+            if (selectProposta) {
+                selectProposta.innerHTML = '<option value="">Todos os processos</option>';
+                meusProcessos.forEach(p => {
+                    selectProposta.innerHTML += `<option value="${p.numero}">${p.numero} - ${p.objeto}</option>`;
+                });
+            }
+        }
+
+        function carregarProcessosComPropostas() {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const meusProcessos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
+            
+            const selectProcesso = document.getElementById('processoParaParecer');
+            selectProcesso.innerHTML = '<option value="">Selecione um processo...</option>';
+            
+            meusProcessos.forEach(processo => {
+                const propostasProcesso = propostas.filter(p => p.processo === processo.numero);
+                if (propostasProcesso.length > 0) {
+                    selectProcesso.innerHTML += `
+                        <option value="${processo.numero}">
+                            ${processo.numero} - ${processo.objeto} (${propostasProcesso.length} propostas)
+                        </option>
+                    `;
+                }
+            });
+        }
+
+        function carregarPropostasParaLiberar() {
+            const processoSelecionado = document.getElementById('processoParaParecer').value;
+            const container = document.getElementById('propostasParaLiberar');
+            
+            if (!processoSelecionado) {
+                container.innerHTML = '<p style="color: #6c757d;">Selecione um processo para ver as propostas</p>';
+                return;
+            }
+            
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
+            const propostasProcesso = propostas.filter(p => p.processo === processoSelecionado);
+            
+            if (propostasProcesso.length === 0) {
+                container.innerHTML = '<p style="color: #6c757d;">Nenhuma proposta recebida para este processo</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <table class="proposta-table">
+                    <thead>
+                        <tr>
+                            <th>Empresa</th>
+                            <th>CNPJ</th>
+                            <th>Valor</th>
+                            <th>Data</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${propostasProcesso.map(proposta => {
+                            const jaLiberada = propostasLiberadas.some(pl => 
+                                pl.propostaId === proposta.protocolo
+                            );
+                            
+                            return `
+                                <tr>
+                                    <td>${proposta.empresa}</td>
+                                    <td>${proposta.cnpj}</td>
+                                    <td>${proposta.valor || 'Não informado'}</td>
+                                    <td>${new Date(proposta.data).toLocaleDateString('pt-BR')}</td>
+                                    <td>
+                                        ${jaLiberada ? 
+                                            '<span style="color: #28a745;">✅ Liberada</span>' : 
+                                            '<span style="color: #ffc107;">⏳ Pendente</span>'
+                                        }
+                                    </td>
+                                    <td>
+                                        ${!jaLiberada ? `
+                                            <button class="btn btn-primary" onclick="liberarParaParecer('${proposta.protocolo}', '${processoSelecionado}')">
+                                                📄 Liberar para Parecer
+                                            </button>
+                                        ` : `
+                                            <button class="btn btn-info" disabled>
+                                                ✅ Já Liberada
+                                            </button>
+                                        `}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function liberarParaParecer(propostaId, processoId) {
+            // Buscar TR vinculado ao processo
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === processoId);
+            
+            if (!processo || !processo.trId) {
+                alert('❌ Este processo não tem TR vinculado!');
+                return;
+            }
+            
+            // Buscar requisitante do TR
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === processo.trId);
+            
+            if (!tr || !tr.criadoPor) {
+                alert('❌ TR não encontrado ou sem requisitante!');
+                return;
+            }
+            
+            // Criar liberação
+            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
+            const novaLiberacao = {
+                id: 'lib_' + Date.now(),
+                propostaId: propostaId,
+                processoId: processoId,
+                compradorId: usuarioAtual.usuarioId,
+                requisitanteId: tr.criadoPor,
+                dataLiberacao: new Date().toISOString(),
+                parecerEmitido: false
+            };
+            
+            propostasLiberadas.push(novaLiberacao);
+            localStorage.setItem('propostas_liberadas_parecer', JSON.stringify(propostasLiberadas));
+            
+            // Notificar requisitante
+            Auth.Notificacoes.criar({
+                tipo: 'proposta_liberada_parecer',
+                titulo: '📄 Nova proposta para análise',
+                mensagem: `Uma proposta do processo ${processoId} foi liberada para seu parecer técnico`,
+                destinatario: tr.criadoPor,
+                remetente: usuarioAtual.nome,
+                metadata: {
+                    propostaId: propostaId,
+                    processoId: processoId
+                }
+            });
+            
+            alert('✅ Proposta liberada para parecer técnico!');
+            carregarPropostasParaLiberar();
+        }
+
+        function carregarPropostasDoProcesso() {
+            const processoSelecionado = document.getElementById('filtroProcessoProposta').value;
+            const container = document.getElementById('listaPropostasAnalise');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const pareceres = JSON.parse(localStorage.getItem('pareceres_tecnicos') || '[]');
+            
+            let propostasFiltradas = propostas;
+            if (processoSelecionado) {
+                propostasFiltradas = propostas.filter(p => p.processo === processoSelecionado);
+            }
+            
+            if (propostasFiltradas.length === 0) {
+                container.innerHTML = '<p style="color: #6c757d;">Nenhuma proposta encontrada</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <table class="proposta-table">
+                    <thead>
+                        <tr>
+                            <th>Processo</th>
+                            <th>Empresa</th>
+                            <th>Valor</th>
+                            <th>Parecer Técnico</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${propostasFiltradas.map(proposta => {
+                            const parecer = pareceres.find(p => p.propostaId === proposta.protocolo);
+                            
+                            return `
+                                <tr>
+                                    <td>${proposta.processo}</td>
+                                    <td>${proposta.empresa}</td>
+                                    <td style="font-weight: 600; color: #28a745;">
+                                        ${proposta.valor || 'Não informado'}
+                                    </td>
+                                    <td>
+                                        ${parecer ? 
+                                            `<span style="color: ${parecer.tipo === 'aprovado' ? '#28a745' : '#dc3545'};">
+                                                ${parecer.tipo === 'aprovado' ? '✅ Aprovado' : 
+                                                  parecer.tipo === 'reprovado' ? '❌ Reprovado' : 
+                                                  '⚠️ Com Ressalvas'}
+                                            </span>` : 
+                                            '<span style="color: #6c757d;">Pendente</span>'
+                                        }
+                                    </td>
+                                    <td>
+                                        <span style="color: #17a2b8;">Em Análise</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-info" onclick="verDetalhesProposta('${proposta.protocolo}')">
+                                            👁️ Detalhes
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function verDetalhesProcesso(numeroProcesso) {
+            alert(`Detalhes do processo: ${numeroProcesso}`);
+        }
+
+        function gerenciarPropostas(numeroProcesso) {
+            mostrarPagina('propostas');
+            document.getElementById('filtroProcessoProposta').value = numeroProcesso;
+            carregarPropostasDoProcesso();
+        }
+
+        function verDetalhesProposta(protocolo) {
+            alert(`Detalhes da proposta: ${protocolo}`);
+        }
+
+        function formatarMoeda(input) {
+            let valor = input.value.replace(/\D/g, '');
+            valor = (valor / 100).toFixed(2);
+            valor = valor.replace('.', ',');
+            valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+            input.value = 'R$ ' + valor;
         }
     </script>
 </body>
 </html>
-
