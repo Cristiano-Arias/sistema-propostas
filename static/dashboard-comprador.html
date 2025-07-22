@@ -4,6 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Comprador - Sistema de Gestão de Propostas</title>
+    
+    <!-- Modal para Visualizar TR -->
+    <div id="modalVisualizarTR" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTRTitulo">Visualizar Termo de Referência</h2>
+                <span class="close" onclick="fecharModalTR()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalTRConteudo">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Selecionar Fornecedores -->
+    <div id="modalFornecedores" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Selecionar Fornecedores</h2>
+                <span class="close" onclick="fecharModalFornecedores()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalFornecedoresConteudo">
+                <!-- Lista de fornecedores será carregada aqui -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // Configuração da API
         const API_URL = window.location.hostname === 'localhost' 
@@ -320,6 +347,158 @@
             font-weight: 600;
         }
 
+        .tr-preview {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 3px solid #667eea;
+        }
+
+        .tr-preview h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .tr-preview-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        /* Estilos para modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 1200px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: modalFadeIn 0.3s;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: white;
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .close:hover {
+            transform: scale(1.2);
+        }
+
+        .tr-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .tr-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .tr-field {
+            margin-bottom: 15px;
+        }
+
+        .tr-field-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .tr-field-value {
+            color: #212529;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        /* Estilos para seleção de fornecedores */
+        .fornecedor-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+
+        .fornecedor-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .fornecedor-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .fornecedor-info {
+            flex: 1;
+        }
+
+        .fornecedor-nome {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .fornecedor-detalhes {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -460,41 +639,32 @@
             margin-bottom: 15px;
         }
 
-        .opcoes-publicacao {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+        .fornecedores-selecionados {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 8px;
             margin-top: 15px;
         }
 
-        .opcao-card {
+        .fornecedores-selecionados h5 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+
+        .lista-fornecedores-selecionados {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .fornecedor-chip {
             background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .opcao-card:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-        }
-
-        .opcao-card.selected {
-            border-color: #28a745;
-            background: #d4edda;
-        }
-
-        .opcao-card h5 {
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .opcao-card p {
-            color: #6c757d;
+            padding: 5px 12px;
+            border-radius: 20px;
             font-size: 14px;
-            margin: 0;
+            border: 1px solid #28a745;
+            color: #155724;
         }
 
         @media (max-width: 768px) {
@@ -641,6 +811,11 @@
                         <small style="color: #0d47a1; display: block; margin-top: 10px;">
                             ⚡ Os dados do processo serão preenchidos automaticamente com base no TR selecionado
                         </small>
+                        
+                        <!-- Preview do TR selecionado -->
+                        <div id="previewTR" style="display: none; margin-top: 20px;">
+                            <!-- Preview será carregado aqui -->
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -674,14 +849,7 @@
                         <input type="text" id="valorEstimado" placeholder="R$ 0,00" onkeyup="formatarMoeda(this)">
                     </div>
                     
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="notificarFornecedores" style="width: auto; margin-right: 10px;">
-                            Notificar fornecedores cadastrados por e-mail
-                        </label>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">💾 Cadastrar Processo</button>
+                    <button type="submit" class="btn btn-primary">💾 Criar Processo (Rascunho)</button>
                 </form>
             </div>
 
@@ -723,6 +891,8 @@
 
     <script>
         let usuarioAtual = null;
+        let fornecedoresSelecionados = [];
+        let processoEmPublicacao = null;
 
         window.addEventListener('DOMContentLoaded', function() {
             usuarioAtual = Auth.verificarAutenticacao(['comprador', 'admin']);
@@ -828,6 +998,7 @@
                 document.getElementById('modalidadeProc').value = '';
                 document.getElementById('objetoProc').removeAttribute('readonly');
                 document.getElementById('objetoProc').style.background = '';
+                document.getElementById('previewTR').style.display = 'none';
                 return;
             }
             
@@ -840,7 +1011,337 @@
                 document.getElementById('objetoProc').setAttribute('readonly', true);
                 document.getElementById('objetoProc').style.background = '#f0f0f0';
                 
+                // Mostrar preview do TR
+                const previewDiv = document.getElementById('previewTR');
+                previewDiv.style.display = 'block';
+                previewDiv.innerHTML = `
+                    <div class="tr-preview">
+                        <h4>📄 Preview do Termo de Referência</h4>
+                        <div class="tr-preview-info">
+                            <div>
+                                <strong>Título:</strong> ${tr.titulo}
+                            </div>
+                            <div>
+                                <strong>Modalidade:</strong> ${tr.modalidade}
+                            </div>
+                            <div>
+                                <strong>Criado por:</strong> ${tr.criadorNome}
+                            </div>
+                            <div>
+                                <strong>Data:</strong> ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <button type="button" class="btn btn-info" onclick="visualizarTRCompleto('${tr.id}')">
+                                👁️ Visualizar TR Completo
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="baixarTR('${tr.id}')">
+                                📥 Baixar PDF
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="baixarTRWord('${tr.id}')">
+                                📄 Baixar Word
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
                 alert(`✅ Dados do TR "${tr.titulo}" foram carregados!`);
+            }
+        }
+
+        function visualizarTRCompleto(trId) {
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === trId);
+            
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
+
+            // Preencher o modal
+            document.getElementById('modalTRTitulo').textContent = tr.titulo;
+            
+            const conteudo = `
+                <!-- Informações Básicas -->
+                <div class="tr-section">
+                    <h4>📋 Informações Básicas</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Modalidade:</span>
+                        <span class="tr-field-value">${tr.modalidade || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Objetivo:</span>
+                        <span class="tr-field-value">${tr.objetivo || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Justificativa:</span>
+                        <span class="tr-field-value">${tr.justificativa || 'Não especificada'}</span>
+                    </div>
+                </div>
+
+                <!-- Escopo Técnico -->
+                <div class="tr-section">
+                    <h4>🔧 Escopo Técnico</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Especificação Técnica:</span>
+                        <span class="tr-field-value">${tr.especificacaoTecnica || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Requisitos Técnicos:</span>
+                        <span class="tr-field-value">${tr.requisitos || 'Não especificados'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Prazos:</span>
+                        <span class="tr-field-value">${tr.prazos || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Critérios de Avaliação -->
+                <div class="tr-section">
+                    <h4>📊 Critérios de Avaliação</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Critérios de Avaliação de Propostas:</span>
+                        <span class="tr-field-value">${tr.criteriosAvaliacao || 'Não especificados'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Documentos Exigidos:</span>
+                        <span class="tr-field-value">${tr.documentosExigidos || 'Não especificados'}</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="aprovarTRParaProcesso('${tr.id}')">
+                        ✅ Aprovar e Usar Este TR
+                    </button>
+                    <button class="btn btn-warning" onclick="solicitarRevisaoTR('${tr.id}')">
+                        📝 Solicitar Revisão
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('modalTRConteudo').innerHTML = conteudo;
+            document.getElementById('modalVisualizarTR').style.display = 'block';
+            
+            // Registrar visualização
+            registrarAcaoTR(trId, 'visualizado');
+        }
+
+        function fecharModalTR() {
+            document.getElementById('modalVisualizarTR').style.display = 'none';
+        }
+
+        function registrarAcaoTR(trId, acao) {
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === trId);
+            
+            if (tr) {
+                tr.historicoAcoes = tr.historicoAcoes || [];
+                tr.historicoAcoes.push({
+                    acao: acao,
+                    usuario: usuarioAtual.nome,
+                    usuarioId: usuarioAtual.usuarioId,
+                    data: new Date().toISOString()
+                });
+                
+                if (acao === 'baixado_pdf' || acao === 'baixado_word') {
+                    tr.downloads = (tr.downloads || 0) + 1;
+                }
+                
+                localStorage.setItem('termos_referencia', JSON.stringify(trs));
+            }
+        }
+
+        function baixarTR(trId) {
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === trId);
+            
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
+
+            // Registrar download
+            registrarAcaoTR(trId, 'baixado_pdf');
+
+            // Criar conteúdo HTML para PDF
+            const conteudoPDF = `
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; }
+                        h1 { color: #2c3e50; text-align: center; }
+                        h2 { color: #34495e; margin-top: 30px; }
+                        .field { margin-bottom: 20px; }
+                        .label { font-weight: bold; color: #495057; }
+                        .value { margin-top: 5px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>TERMO DE REFERÊNCIA</h1>
+                    <h2>${tr.titulo}</h2>
+                    
+                    <div class="field">
+                        <div class="label">Modalidade:</div>
+                        <div class="value">${tr.modalidade}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="label">Objetivo:</div>
+                        <div class="value">${tr.objetivo}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="label">Justificativa:</div>
+                        <div class="value">${tr.justificativa}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="label">Especificação Técnica:</div>
+                        <div class="value">${tr.especificacaoTecnica}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="label">Requisitos Técnicos:</div>
+                        <div class="value">${tr.requisitos}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="label">Prazos:</div>
+                        <div class="value">${tr.prazos}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="label">Critérios de Avaliação:</div>
+                        <div class="value">${tr.criteriosAvaliacao}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="label">Documentos Exigidos:</div>
+                        <div class="value">${tr.documentosExigidos}</div>
+                    </div>
+                    
+                    <hr style="margin-top: 50px;">
+                    <p style="text-align: center; color: #6c757d; font-size: 12px;">
+                        Documento baixado em ${new Date().toLocaleString('pt-BR')} por ${usuarioAtual.nome}
+                    </p>
+                </body>
+                </html>
+            `;
+
+            // Abrir em nova janela para impressão/download
+            const janela = window.open('', '_blank');
+            janela.document.write(conteudoPDF);
+            janela.document.close();
+            janela.print();
+            
+            alert('✅ Download do PDF iniciado!');
+        }
+
+        function baixarTRWord(trId) {
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === trId);
+            
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
+
+            // Registrar download
+            registrarAcaoTR(trId, 'baixado_word');
+
+            // Criar conteúdo Word
+            const conteudoWord = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+                        h2 { color: #34495e; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+                        p { margin-bottom: 10px; text-align: justify; }
+                        @page { margin: 2cm; }
+                    </style>
+                </head>
+                <body>
+                    <h1>TERMO DE REFERÊNCIA</h1>
+                    <p style="text-align: center;"><strong>${tr.titulo}</strong></p>
+                    <p style="text-align: center;">Modalidade: ${tr.modalidade}</p>
+                    <p style="text-align: center;">Data: ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
+
+                    <h2>1. OBJETIVO</h2>
+                    <p>${tr.objetivo}</p>
+
+                    <h2>2. JUSTIFICATIVA</h2>
+                    <p>${tr.justificativa}</p>
+
+                    <h2>3. ESPECIFICAÇÃO TÉCNICA</h2>
+                    <p>${tr.especificacaoTecnica}</p>
+
+                    <h2>4. REQUISITOS TÉCNICOS</h2>
+                    <p>${tr.requisitos}</p>
+
+                    <h2>5. PRAZOS DE EXECUÇÃO</h2>
+                    <p>${tr.prazos}</p>
+
+                    <h2>6. CRITÉRIOS DE AVALIAÇÃO</h2>
+                    <p>${tr.criteriosAvaliacao}</p>
+
+                    <h2>7. DOCUMENTOS EXIGIDOS</h2>
+                    <p>${tr.documentosExigidos}</p>
+
+                    <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #7f8c8d;">
+                        <p>Documento baixado em ${new Date().toLocaleString('pt-BR')}</p>
+                        <p>Por: ${usuarioAtual.nome}</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Criar blob e fazer download
+            const blob = new Blob([conteudoWord], { type: 'application/msword' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `TR_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.doc`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            alert('✅ Documento Word baixado com sucesso!');
+        }
+
+        function aprovarTRParaProcesso(trId) {
+            fecharModalTR();
+            alert('✅ TR aprovado! Continue preenchendo os dados do processo.');
+            registrarAcaoTR(trId, 'aprovado_para_processo');
+        }
+
+        function solicitarRevisaoTR(trId) {
+            const motivo = prompt('Por favor, descreva o motivo da solicitação de revisão:');
+            if (motivo) {
+                const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+                const tr = trs.find(t => t.id === trId);
+                
+                if (tr) {
+                    // Criar notificação para o requisitante
+                    Auth.Notificacoes.criar({
+                        tipo: 'revisao_tr_solicitada',
+                        titulo: '📝 Revisão de TR Solicitada',
+                        mensagem: `O comprador ${usuarioAtual.nome} solicitou revisão do TR "${tr.titulo}". Motivo: ${motivo}`,
+                        destinatario: tr.criadoPor,
+                        remetente: usuarioAtual.nome,
+                        metadata: {
+                            trId: trId,
+                            motivo: motivo
+                        }
+                    });
+                    
+                    registrarAcaoTR(trId, 'revisao_solicitada');
+                    alert('✅ Solicitação de revisão enviada ao requisitante!');
+                    fecharModalTR();
+                }
             }
         }
 
@@ -864,19 +1365,16 @@
                 criadorNome: usuarioAtual.nome,
                 trId: trId,
                 
-                // NOVO: Controle de publicação
+                // Controle de publicação
                 status: 'rascunho',
                 publicacao: {
                     confirmado: false,
                     dataConfirmacao: null,
-                    tipoPublicacao: null,
-                    dataPublicacao: null,
-                    linkPortal: null,
-                    tokenAcesso: null
+                    fornecedoresNotificados: [],
+                    linkPortal: null
                 },
                 visibilidade: {
                     publico: false,
-                    fornecedoresNotificados: [],
                     totalVisualizacoes: 0
                 }
             };
@@ -884,6 +1382,9 @@
             const processos = JSON.parse(localStorage.getItem('processos') || '[]');
             processos.push(novoProcesso);
             localStorage.setItem('processos', JSON.stringify(processos));
+            
+            // Registrar uso do TR
+            registrarAcaoTR(trId, 'usado_em_processo');
             
             // Notificar requisitante
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
@@ -903,204 +1404,9 @@
                 });
             }
             
-            alert('✅ Processo criado como rascunho! Você precisa confirmar a publicação para que fique disponível aos fornecedores.');
+            alert('✅ Processo criado como rascunho! Agora você precisa selecionar os fornecedores e publicar.');
             document.getElementById('formCadastroProcesso').reset();
             mostrarPagina('processos');
-        }
-
-        // Função para gerar link do portal
-        function gerarLinkPortal(processo) {
-            const token = btoa(JSON.stringify({
-                processoId: processo.numero,
-                validadeToken: new Date(Date.now() + 30*24*60*60*1000),
-                tipo: 'acesso_portal'
-            }));
-            
-            const baseUrl = window.location.origin;
-            const link = `${baseUrl}/portal-propostas-novo.html?processo=${encodeURIComponent(processo.numero)}&token=${token}`;
-            
-            return { link, token };
-        }
-
-        // Renderizar seção de publicação
-        function renderizarSecaoPublicacao(processo) {
-            return `
-                <div class="confirmacao-section">
-                    <h4>⚠️ Confirmar Publicação do Processo</h4>
-                    <p>Este processo ainda não foi publicado. Escolha como deseja disponibilizá-lo:</p>
-                    
-                    <div class="opcoes-publicacao">
-                        <div class="opcao-card" onclick="selecionarOpcaoPublicacao('${processo.numero}', 'imediata')">
-                            <h5>🚀 Publicação Imediata</h5>
-                            <p>O processo ficará disponível imediatamente para fornecedores</p>
-                        </div>
-                        <div class="opcao-card" onclick="selecionarOpcaoPublicacao('${processo.numero}', 'programada')">
-                            <h5>📅 Agendar Publicação</h5>
-                            <p>Defina uma data/hora para publicação automática</p>
-                        </div>
-                    </div>
-                    
-                    <div id="opcoes-${processo.numero}" style="margin-top: 20px;"></div>
-                    
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn btn-success" onclick="confirmarPublicacao('${processo.numero}')">
-                            ✅ Confirmar e Publicar Processo
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Renderizar portal quando publicado
-        function renderizarPortalPublicado(processo) {
-            const linkInfo = processo.publicacao.linkPortal || gerarLinkPortal(processo).link;
-            
-            return `
-                <div class="portal-section">
-                    <h4>🌐 Portal de Propostas Ativo</h4>
-                    <p>O processo está publicado e disponível para receber propostas.</p>
-                    
-                    <div class="link-portal">
-                        <input type="text" id="link-${processo.numero}" value="${linkInfo}" readonly>
-                        <button class="btn-copiar" onclick="copiarLink('${processo.numero}')">
-                            📋 Copiar Link
-                        </button>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
-                        <div style="text-align: center;">
-                            <p style="font-size: 24px; font-weight: bold; color: #667eea;">
-                                ${processo.visibilidade.totalVisualizacoes || 0}
-                            </p>
-                            <p style="color: #6c757d; font-size: 14px;">Visualizações</p>
-                        </div>
-                        <div style="text-align: center;">
-                            <p style="font-size: 24px; font-weight: bold; color: #28a745;">
-                                ${contarPropostasProcesso(processo.numero)}
-                            </p>
-                            <p style="color: #6c757d; font-size: 14px;">Propostas Recebidas</p>
-                        </div>
-                        <div style="text-align: center;">
-                            <p style="font-size: 24px; font-weight: bold; color: #ffc107;">
-                                ${diasRestantesProcesso(processo.prazo)}
-                            </p>
-                            <p style="color: #6c757d; font-size: 14px;">Dias Restantes</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Selecionar opção de publicação
-        function selecionarOpcaoPublicacao(numeroProcesso, tipo) {
-            const container = document.getElementById(`opcoes-${numeroProcesso}`);
-            
-            if (tipo === 'programada') {
-                container.innerHTML = `
-                    <div class="form-group">
-                        <label>Data e Hora da Publicação:</label>
-                        <input type="datetime-local" id="dataPublicacao-${numeroProcesso}" 
-                               min="${new Date().toISOString().slice(0, 16)}"
-                               class="form-control">
-                    </div>
-                `;
-            } else {
-                container.innerHTML = '<p style="color: #28a745;">✅ O processo será publicado imediatamente após confirmação.</p>';
-            }
-            
-            document.querySelectorAll('.opcao-card').forEach(card => card.classList.remove('selected'));
-            event.target.closest('.opcao-card').classList.add('selected');
-        }
-
-        // Confirmar publicação
-        function confirmarPublicacao(numeroProcesso) {
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const processo = processos.find(p => p.numero === numeroProcesso);
-            
-            if (!processo) {
-                alert('Processo não encontrado!');
-                return;
-            }
-            
-            const opcaoSelecionada = document.querySelector('.opcao-card.selected');
-            if (!opcaoSelecionada) {
-                alert('Por favor, selecione uma opção de publicação!');
-                return;
-            }
-            
-            const tipoPublicacao = opcaoSelecionada.textContent.includes('Imediata') ? 'imediata' : 'programada';
-            const { link, token } = gerarLinkPortal(processo);
-            
-            processo.status = tipoPublicacao === 'imediata' ? 'publicado' : 'agendado';
-            processo.publicacao = {
-                confirmado: true,
-                dataConfirmacao: new Date().toISOString(),
-                tipoPublicacao: tipoPublicacao,
-                dataPublicacao: tipoPublicacao === 'imediata' ? 
-                    new Date().toISOString() : 
-                    document.getElementById(`dataPublicacao-${numeroProcesso}`)?.value,
-                linkPortal: link,
-                tokenAcesso: token
-            };
-            processo.visibilidade.publico = tipoPublicacao === 'imediata';
-            
-            localStorage.setItem('processos', JSON.stringify(processos));
-            
-            if (tipoPublicacao === 'imediata') {
-                notificarFornecedoresAutomaticamente(processo);
-            }
-            
-            alert('✅ Processo publicado com sucesso!');
-            carregarMeusProcessos();
-        }
-
-        // Notificar fornecedores
-        function notificarFornecedoresAutomaticamente(processo) {
-            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
-            const fornecedores = usuarios.filter(u => u.tipo === 'fornecedor');
-            
-            fornecedores.forEach(fornecedor => {
-                Auth.Notificacoes.criar({
-                    tipo: 'processo_publicado',
-                    titulo: '📋 Novo Processo Disponível',
-                    mensagem: `${processo.numero} - ${processo.objeto} está aberto para propostas até ${new Date(processo.prazo).toLocaleDateString('pt-BR')}`,
-                    destinatario: fornecedor.usuarioId,
-                    remetente: processo.criadorNome,
-                    metadata: {
-                        processoId: processo.numero,
-                        linkPortal: processo.publicacao.linkPortal,
-                        prazo: processo.prazo
-                    }
-                });
-            });
-        }
-
-        // Copiar link
-        function copiarLink(numeroProcesso) {
-            const input = document.getElementById(`link-${numeroProcesso}`);
-            input.select();
-            document.execCommand('copy');
-            
-            const btn = event.target;
-            const textoOriginal = btn.textContent;
-            btn.textContent = '✅ Copiado!';
-            btn.style.background = '#28a745';
-            
-            setTimeout(() => {
-                btn.textContent = textoOriginal;
-                btn.style.background = '#17a2b8';
-            }, 2000);
-        }
-
-        // Funções auxiliares
-        function contarPropostasProcesso(numeroProcesso) {
-            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            return propostas.filter(p => p.processo === numeroProcesso).length;
-        }
-
-        function diasRestantesProcesso(prazo) {
-            const dias = Math.ceil((new Date(prazo) - new Date()) / (1000 * 60 * 60 * 24));
-            return dias > 0 ? dias : 0;
         }
 
         function carregarMeusProcessos() {
@@ -1129,10 +1435,10 @@
                 const dataPrazo = new Date(processo.prazo);
                 const diasRestantes = Math.ceil((dataPrazo - new Date()) / (1000 * 60 * 60 * 24));
                 
-                // NOVO: Verificar status do processo
+                // Status do processo
                 const statusBadge = processo.status === 'rascunho' ? 
-                    '<span style="background: #e9ecef; color: #6c757d; padding: 5px 12px; border-radius: 20px; font-size: 12px;">📝 Rascunho</span>' :
-                    '<span style="background: #d4edda; color: #155724; padding: 5px 12px; border-radius: 20px; font-size: 12px;">✅ Publicado</span>';
+                    '<span class="status-processo status-rascunho">📝 Rascunho</span>' :
+                    '<span class="status-processo status-publicado">✅ Publicado</span>';
                 
                 return `
                     <div class="processo-card">
@@ -1164,7 +1470,7 @@
                             </div>
                         </div>
                         
-                        ${processo.status === 'rascunho' ? renderizarSecaoPublicacao(processo) : ''}
+                        ${processo.status === 'rascunho' ? renderizarOpcaoPublicacao(processo) : ''}
                         ${processo.status === 'publicado' ? renderizarPortalPublicado(processo) : ''}
                         
                         <div style="margin-top: 15px;">
@@ -1174,10 +1480,342 @@
                             <button class="btn btn-warning" onclick="gerenciarPropostas('${processo.numero}')">
                                 💰 Propostas (${propostasProcesso.length})
                             </button>
+                            ${processo.trId ? `
+                                <button class="btn btn-primary" onclick="visualizarTRCompleto('${processo.trId}')">
+                                    📄 Ver TR
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function renderizarOpcaoPublicacao(processo) {
+            return `
+                <div class="confirmacao-section">
+                    <h4>⚠️ Publicar Processo</h4>
+                    <p>Este processo está em rascunho. Para receber propostas, você precisa:</p>
+                    <ol style="margin: 15px 0; padding-left: 30px;">
+                        <li>Selecionar os fornecedores que serão notificados</li>
+                        <li>Confirmar a publicação do processo</li>
+                    </ol>
+                    
+                    ${processo.publicacao.fornecedoresNotificados && processo.publicacao.fornecedoresNotificados.length > 0 ? `
+                        <div class="fornecedores-selecionados">
+                            <h5>✅ Fornecedores Selecionados (${processo.publicacao.fornecedoresNotificados.length})</h5>
+                            <div class="lista-fornecedores-selecionados">
+                                ${processo.publicacao.fornecedoresNotificados.map(f => 
+                                    `<span class="fornecedor-chip">${f.nome}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn btn-warning" onclick="selecionarFornecedores('${processo.numero}')">
+                            👥 ${processo.publicacao.fornecedoresNotificados && processo.publicacao.fornecedoresNotificados.length > 0 ? 'Alterar' : 'Selecionar'} Fornecedores
+                        </button>
+                        ${processo.publicacao.fornecedoresNotificados && processo.publicacao.fornecedoresNotificados.length > 0 ? `
+                            <button class="btn btn-success" onclick="confirmarPublicacao('${processo.numero}')">
+                                ✅ Confirmar e Publicar
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderizarPortalPublicado(processo) {
+            const linkPortal = processo.publicacao.linkPortal || gerarLinkPortal(processo);
+            
+            return `
+                <div class="portal-section">
+                    <h4>🌐 Portal de Propostas Ativo</h4>
+                    <p>O processo está publicado e disponível para receber propostas dos fornecedores selecionados.</p>
+                    
+                    <div class="link-portal">
+                        <input type="text" id="link-${processo.numero}" value="${linkPortal}" readonly>
+                        <button class="btn-copiar" onclick="copiarLink('${processo.numero}')">
+                            📋 Copiar Link
+                        </button>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
+                        <div style="text-align: center;">
+                            <p style="font-size: 24px; font-weight: bold; color: #667eea;">
+                                ${processo.publicacao.fornecedoresNotificados ? processo.publicacao.fornecedoresNotificados.length : 0}
+                            </p>
+                            <p style="color: #6c757d; font-size: 14px;">Fornecedores Notificados</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="font-size: 24px; font-weight: bold; color: #28a745;">
+                                ${contarPropostasProcesso(processo.numero)}
+                            </p>
+                            <p style="color: #6c757d; font-size: 14px;">Propostas Recebidas</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="font-size: 24px; font-weight: bold; color: #ffc107;">
+                                ${diasRestantesProcesso(processo.prazo)}
+                            </p>
+                            <p style="color: #6c757d; font-size: 14px;">Dias Restantes</p>
+                        </div>
+                    </div>
+                    
+                    <div class="fornecedores-selecionados" style="margin-top: 20px;">
+                        <h5>Fornecedores com acesso ao processo:</h5>
+                        <div class="lista-fornecedores-selecionados">
+                            ${processo.publicacao.fornecedoresNotificados.map(f => 
+                                `<span class="fornecedor-chip">${f.nome}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selecionarFornecedores(numeroProcesso) {
+            processoEmPublicacao = numeroProcesso;
+            
+            // Carregar processo atual
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            
+            if (processo && processo.publicacao.fornecedoresNotificados) {
+                fornecedoresSelecionados = processo.publicacao.fornecedoresNotificados.map(f => f.id);
+            } else {
+                fornecedoresSelecionados = [];
+            }
+            
+            // Carregar fornecedores cadastrados
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            const fornecedores = usuarios.filter(u => u.tipo === 'fornecedor');
+            
+            const modalContent = document.getElementById('modalFornecedoresConteudo');
+            
+            if (fornecedores.length === 0) {
+                modalContent.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <h3>Nenhum fornecedor cadastrado</h3>
+                        <p>Não há fornecedores cadastrados no sistema</p>
+                    </div>
+                `;
+            } else {
+                modalContent.innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <p>Selecione os fornecedores que receberão acesso a este processo:</p>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="btn btn-info" onclick="selecionarTodosFornecedores()">
+                                ✅ Selecionar Todos
+                            </button>
+                            <button class="btn btn-warning" onclick="limparSelecaoFornecedores()">
+                                ❌ Limpar Seleção
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${fornecedores.map(fornecedor => {
+                            const isSelected = fornecedoresSelecionados.includes(fornecedor.usuarioId);
+                            return `
+                                <div class="fornecedor-item">
+                                    <input type="checkbox" 
+                                           id="forn_${fornecedor.usuarioId}" 
+                                           value="${fornecedor.usuarioId}"
+                                           ${isSelected ? 'checked' : ''}
+                                           onchange="toggleFornecedor('${fornecedor.usuarioId}')">
+                                    <div class="fornecedor-info">
+                                        <div class="fornecedor-nome">${fornecedor.nome}</div>
+                                        <div class="fornecedor-detalhes">
+                                            ${fornecedor.email || 'Email não informado'} | 
+                                            ${fornecedor.empresa || 'Empresa não informada'}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <p style="margin-bottom: 15px;">
+                            <strong>${fornecedoresSelecionados.length}</strong> fornecedor(es) selecionado(s)
+                        </p>
+                        <button class="btn btn-success" onclick="confirmarSelecaoFornecedores()">
+                            ✅ Confirmar Seleção
+                        </button>
+                        <button class="btn btn-warning" onclick="fecharModalFornecedores()">
+                            ❌ Cancelar
+                        </button>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('modalFornecedores').style.display = 'block';
+        }
+
+        function toggleFornecedor(fornecedorId) {
+            const index = fornecedoresSelecionados.indexOf(fornecedorId);
+            if (index > -1) {
+                fornecedoresSelecionados.splice(index, 1);
+            } else {
+                fornecedoresSelecionados.push(fornecedorId);
+            }
+            
+            // Atualizar contador
+            const contador = document.querySelector('#modalFornecedoresConteudo p strong');
+            if (contador) {
+                contador.textContent = fornecedoresSelecionados.length;
+            }
+        }
+
+        function selecionarTodosFornecedores() {
+            const checkboxes = document.querySelectorAll('#modalFornecedoresConteudo input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                if (!fornecedoresSelecionados.includes(cb.value)) {
+                    fornecedoresSelecionados.push(cb.value);
+                }
+            });
+            
+            // Atualizar contador
+            const contador = document.querySelector('#modalFornecedoresConteudo p strong');
+            if (contador) {
+                contador.textContent = fornecedoresSelecionados.length;
+            }
+        }
+
+        function limparSelecaoFornecedores() {
+            const checkboxes = document.querySelectorAll('#modalFornecedoresConteudo input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            fornecedoresSelecionados = [];
+            
+            // Atualizar contador
+            const contador = document.querySelector('#modalFornecedoresConteudo p strong');
+            if (contador) {
+                contador.textContent = '0';
+            }
+        }
+
+        function confirmarSelecaoFornecedores() {
+            if (fornecedoresSelecionados.length === 0) {
+                alert('❌ Por favor, selecione pelo menos um fornecedor!');
+                return;
+            }
+            
+            // Salvar fornecedores selecionados no processo
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === processoEmPublicacao);
+            
+            if (processo) {
+                const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                processo.publicacao.fornecedoresNotificados = fornecedoresSelecionados.map(id => {
+                    const usuario = usuarios.find(u => u.usuarioId === id);
+                    return {
+                        id: id,
+                        nome: usuario.nome,
+                        email: usuario.email,
+                        empresa: usuario.empresa
+                    };
+                });
+                
+                localStorage.setItem('processos', JSON.stringify(processos));
+                
+                alert(`✅ ${fornecedoresSelecionados.length} fornecedor(es) selecionado(s) com sucesso!`);
+                fecharModalFornecedores();
+                carregarMeusProcessos();
+            }
+        }
+
+        function fecharModalFornecedores() {
+            document.getElementById('modalFornecedores').style.display = 'none';
+            fornecedoresSelecionados = [];
+            processoEmPublicacao = null;
+        }
+
+        function confirmarPublicacao(numeroProcesso) {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+            
+            if (!processo.publicacao.fornecedoresNotificados || processo.publicacao.fornecedoresNotificados.length === 0) {
+                alert('❌ Por favor, selecione os fornecedores antes de publicar!');
+                return;
+            }
+            
+            // Gerar link do portal
+            const linkPortal = gerarLinkPortal(processo);
+            
+            // Atualizar status do processo
+            processo.status = 'publicado';
+            processo.publicacao.confirmado = true;
+            processo.publicacao.dataConfirmacao = new Date().toISOString();
+            processo.publicacao.linkPortal = linkPortal;
+            processo.visibilidade.publico = true;
+            
+            localStorage.setItem('processos', JSON.stringify(processos));
+            
+            // Notificar fornecedores selecionados
+            processo.publicacao.fornecedoresNotificados.forEach(fornecedor => {
+                // Buscar TR vinculado
+                const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+                const tr = trs.find(t => t.id === processo.trId);
+                
+                Auth.Notificacoes.criar({
+                    tipo: 'processo_disponivel',
+                    titulo: '📋 Novo Processo Disponível',
+                    mensagem: `${processo.numero} - ${processo.objeto} está aberto para propostas até ${new Date(processo.prazo).toLocaleDateString('pt-BR')}`,
+                    destinatario: fornecedor.id,
+                    remetente: processo.criadorNome,
+                    metadata: {
+                        processoId: processo.numero,
+                        linkPortal: linkPortal,
+                        prazo: processo.prazo,
+                        trId: processo.trId,
+                        temTR: !!tr,
+                        trTitulo: tr ? tr.titulo : null
+                    }
+                });
+            });
+            
+            alert(`✅ Processo publicado com sucesso! ${processo.publicacao.fornecedoresNotificados.length} fornecedor(es) foram notificados.`);
+            carregarMeusProcessos();
+        }
+
+        function gerarLinkPortal(processo) {
+            const baseUrl = window.location.origin + window.location.pathname.replace('dashboard-comprador.html', '');
+            return `${baseUrl}dashboard-fornecedor.html?processo=${encodeURIComponent(processo.numero)}`;
+        }
+
+        function copiarLink(numeroProcesso) {
+            const input = document.getElementById(`link-${numeroProcesso}`);
+            input.select();
+            document.execCommand('copy');
+            
+            const btn = event.target;
+            const textoOriginal = btn.textContent;
+            btn.textContent = '✅ Copiado!';
+            btn.style.background = '#28a745';
+            
+            setTimeout(() => {
+                btn.textContent = textoOriginal;
+                btn.style.background = '#17a2b8';
+            }, 2000);
+        }
+
+        // Funções auxiliares
+        function contarPropostasProcesso(numeroProcesso) {
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            return propostas.filter(p => p.processo === numeroProcesso).length;
+        }
+
+        function diasRestantesProcesso(prazo) {
+            const dias = Math.ceil((new Date(prazo) - new Date()) / (1000 * 60 * 60 * 24));
+            return dias > 0 ? dias : 0;
         }
 
         function carregarSelectsProcessos() {
@@ -1416,6 +2054,17 @@
             valor = valor.replace('.', ',');
             valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
             input.value = 'R$ ' + valor;
+        }
+
+        // Fechar modais ao clicar fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+                if (event.target.id === 'modalFornecedores') {
+                    fornecedoresSelecionados = [];
+                    processoEmPublicacao = null;
+                }
+            }
         }
     </script>
 </body>
