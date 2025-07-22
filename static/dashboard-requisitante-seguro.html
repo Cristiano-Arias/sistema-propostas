@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Requisitante - Sistema de Gestão de Propostas</title>
+    <div id="modalVisualizarTR" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTRTitulo">Visualizar Termo de Referência</h2>
+                <span class="close" onclick="fecharModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalTRConteudo">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // Configuração da API
         const API_URL = window.location.hostname === 'localhost' 
@@ -274,6 +286,105 @@
             gap: 15px;
             color: #6c757d;
             font-size: 14px;
+        }
+
+        /* Modal de Visualização */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 1200px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: modalFadeIn 0.3s;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: white;
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .close:hover {
+            transform: scale(1.2);
+        }
+
+        .tr-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .tr-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .tr-field {
+            margin-bottom: 15px;
+        }
+
+        .tr-field-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .tr-field-value {
+            color: #212529;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
         }
 
         /* Estilos para Emitir Parecer */
@@ -556,48 +667,335 @@
                 <h2>📝 Criar Termo de Referência</h2>
                 <div class="info-panel">
                     <h4>Novo Termo de Referência</h4>
-                    <p>Elabore um TR detalhado para orientar o processo licitatório.</p>
+                    <p>Preencha todos os campos obrigatórios para criar um TR completo e detalhado.</p>
                 </div>
                 
                 <form class="tr-form" onsubmit="salvarTR(event)">
-                    <div class="form-group">
-                        <label for="trTitulo">Título do TR</label>
-                        <input type="text" id="trTitulo" required placeholder="Ex: Construção de Escola Municipal">
+                    <!-- Informações Básicas -->
+                    <div style="background: #f0f4ff; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">📋 Informações Básicas</h3>
+                        
+                        <div class="form-group">
+                            <label for="trTitulo">Título do TR *</label>
+                            <input type="text" id="trTitulo" required placeholder="Ex: Construção de Escola Municipal">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trModalidade">Modalidade Sugerida *</label>
+                            <select id="trModalidade" required>
+                                <option value="">Selecione...</option>
+                                <option value="Pregão">Pregão</option>
+                                <option value="Concorrência">Concorrência</option>
+                                <option value="Tomada de Preços">Tomada de Preços</option>
+                                <option value="Convite">Convite</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trObjetivo">Objetivo *</label>
+                            <textarea id="trObjetivo" required placeholder="Descreva o objetivo principal da contratação..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trConformidade">Conformidade ao Termo de Referência *</label>
+                            <textarea id="trConformidade" required placeholder="Descreva os requisitos de conformidade..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Local e Acesso -->
+                    <div style="background: #fff9e6; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">📍 Local e Acesso</h3>
+                        
+                        <div class="form-group">
+                            <label for="trVisitaLocal">Visita ao Local *</label>
+                            <select id="trVisitaLocal" required>
+                                <option value="">Selecione...</option>
+                                <option value="Obrigatória">Obrigatória</option>
+                                <option value="Facultativa">Facultativa</option>
+                                <option value="Não se aplica">Não se aplica</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trLocalAcesso">Local/Acesso *</label>
+                            <textarea id="trLocalAcesso" required placeholder="Descreva o local e condições de acesso..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Escopo Técnico -->
+                    <div style="background: #f0fff4; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">🔧 Escopo Técnico</h3>
+                        
+                        <div class="form-group">
+                            <label for="trEscopoTecnico">Escopo Técnico *</label>
+                            <textarea id="trEscopoTecnico" required placeholder="Detalhe o escopo técnico do projeto..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trSituacaoAtual">Situação Atual *</label>
+                            <textarea id="trSituacaoAtual" required placeholder="Descreva a situação atual..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trSituacaoProposta">Situação Proposta *</label>
+                            <textarea id="trSituacaoProposta" required placeholder="Descreva a situação proposta após a execução..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trEspecificacaoTecnica">Especificação Técnica *</label>
+                            <textarea id="trEspecificacaoTecnica" required placeholder="Detalhe as especificações técnicas necessárias..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trPremissas">Premissas, Requisitos e Restrições *</label>
+                            <textarea id="trPremissas" required placeholder="Liste premissas, requisitos e restrições do projeto..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trPlanilhaQuantidade">Planilha de Quantidade *</label>
+                            <textarea id="trPlanilhaQuantidade" required placeholder="Descreva os quantitativos necessários..."></textarea>
+                        </div>
+                        
+                        <!-- Tabela de Serviços -->
+                        <div class="form-group">
+                            <label>Tabela de Serviços *</label>
+                            <div style="background: white; padding: 15px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                                <table id="tabelaServicos" style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: #667eea; color: white;">
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Item</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Descrição do Serviço</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Unidade</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Quantidade</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="corpoTabelaServicos">
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">1</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                                <input type="text" class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;" placeholder="Descrição do serviço">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                                <select class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                                                    <option>UN</option>
+                                                    <option>M²</option>
+                                                    <option>M³</option>
+                                                    <option>ML</option>
+                                                    <option>KG</option>
+                                                    <option>VB</option>
+                                                </select>
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                                <input type="number" class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;" placeholder="0">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <button type="button" class="btn btn-sm" onclick="removerLinhaServico(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <button type="button" class="btn btn-success" onclick="adicionarLinhaServico()" style="margin-top: 10px;">
+                                    ➕ Adicionar Serviço
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trEscopoGeral">Escopo Geral *</label>
+                            <textarea id="trEscopoGeral" required placeholder="Descreva o escopo geral do projeto..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Prazos e Responsabilidades -->
+                    <div style="background: #fff0f5; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">⏰ Prazos e Responsabilidades</h3>
+                        
+                        <div class="form-group">
+                            <label for="trPrazos">Prazos *</label>
+                            <textarea id="trPrazos" required placeholder="Detalhe os prazos de execução, entregas parciais, etc..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Matriz de Responsabilidade *</label>
+                            <div style="background: white; padding: 15px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                                <table id="matrizResponsabilidade" style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: #764ba2; color: white;">
+                                            <th style="padding: 10px; border: 1px solid #ddd; width: 50%;">Item/Atividade</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd; width: 15%;">Contratada</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd; width: 15%;">Contratante</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd; width: 15%;">N/A</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd; width: 5%;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="corpoMatrizResponsabilidade">
+                                        <!-- Itens padrão -->
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                                <input type="text" class="form-control" value="Fornecimento de materiais" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <input type="radio" name="resp_1" value="contratada" checked>
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <input type="radio" name="resp_1" value="contratante">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <input type="radio" name="resp_1" value="na">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <button type="button" class="btn btn-sm" onclick="removerLinhaMatriz(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                                <input type="text" class="form-control" value="Mão de obra especializada" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <input type="radio" name="resp_2" value="contratada" checked>
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <input type="radio" name="resp_2" value="contratante">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <input type="radio" name="resp_2" value="na">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <button type="button" class="btn btn-sm" onclick="removerLinhaMatriz(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                                <input type="text" class="form-control" value="Licenças e autorizações" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <input type="radio" name="resp_3" value="contratada">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <input type="radio" name="resp_3" value="contratante" checked>
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <input type="radio" name="resp_3" value="na">
+                                            </td>
+                                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                                <button type="button" class="btn btn-sm" onclick="removerLinhaMatriz(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                                    <button type="button" class="btn btn-success" onclick="adicionarLinhaMatriz()">
+                                        ➕ Adicionar Item
+                                    </button>
+                                    <button type="button" class="btn btn-info" onclick="adicionarItensPadrao()">
+                                        📋 Adicionar Itens Padrão
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobilização e Segurança -->
+                    <div style="background: #f5f0ff; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">🦺 Mobilização e Segurança</h3>
+                        
+                        <div class="form-group">
+                            <label for="trSegurancaTrabalho">Mobilização Segurança e Saúde do Trabalho *</label>
+                            <textarea id="trSegurancaTrabalho" required placeholder="Descreva requisitos de segurança e saúde..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trCanteiro">Canteiro de Obras e Infraestrutura Temporárias *</label>
+                            <textarea id="trCanteiro" required placeholder="Detalhe requisitos para canteiro e infraestrutura..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trCredenciamento">Credenciamento Aeroportuário</label>
+                            <textarea id="trCredenciamento" placeholder="Se aplicável, descreva requisitos de credenciamento..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trMeioAmbiente">Meio Ambiente *</label>
+                            <textarea id="trMeioAmbiente" required placeholder="Descreva requisitos ambientais e sustentabilidade..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Gestão e Planejamento -->
+                    <div style="background: #e6f7ff; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">📊 Gestão e Planejamento</h3>
+                        
+                        <div class="form-group">
+                            <label for="trEngenharia">Engenharia *</label>
+                            <textarea id="trEngenharia" required placeholder="Descreva requisitos de engenharia..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trAquisicoes">Aquisições *</label>
+                            <textarea id="trAquisicoes" required placeholder="Detalhe processos de aquisições necessárias..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trGestaoContratos">Planejamento/Gestão de Contratos *</label>
+                            <textarea id="trGestaoContratos" required placeholder="Descreva requisitos de gestão contratual..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trPlanejamentoExecutivo">Planejamento Executivo *</label>
+                            <textarea id="trPlanejamentoExecutivo" required placeholder="Detalhe o planejamento executivo necessário..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Testes e Encerramento -->
+                    <div style="background: #fff5f0; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">✅ Testes e Encerramento</h3>
+                        
+                        <div class="form-group">
+                            <label for="trTestes">Testes, Comissionamento, Treinamento *</label>
+                            <textarea id="trTestes" required placeholder="Descreva procedimentos de testes e treinamentos..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trEncerramentoObra">Ao Encerramento da Obra *</label>
+                            <textarea id="trEncerramentoObra" required placeholder="Descreva procedimentos de encerramento..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trCAP">Certificado de Aceitação Provisória (CAP) *</label>
+                            <textarea id="trCAP" required placeholder="Descreva requisitos para emissão do CAP..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trCAF">Certificado de Aceitação Final (CAF) *</label>
+                            <textarea id="trCAF" required placeholder="Descreva requisitos para emissão do CAF..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trGarantia">Garantia *</label>
+                            <textarea id="trGarantia" required placeholder="Detalhe prazos e condições de garantia..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Avaliação e Anexos -->
+                    <div style="background: #f0f8ff; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h3 style="color: #2c3e50; margin-bottom: 20px;">📎 Avaliação e Anexos</h3>
+                        
+                        <div class="form-group">
+                            <label for="trCriteriosAvaliacao">Critérios de Avaliação de Propostas *</label>
+                            <textarea id="trCriteriosAvaliacao" required placeholder="Descreva os critérios de avaliação técnica e pontuação..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="trAnexos">Anexos (Links)</label>
+                            <textarea id="trAnexos" placeholder="Insira links para documentos anexos, separados por linha..."></textarea>
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="trObjeto">Objeto</label>
-                        <textarea id="trObjeto" required placeholder="Descreva detalhadamente o objeto do TR..."></textarea>
+                    <div style="display: flex; gap: 10px; margin-top: 30px;">
+                        <button type="submit" class="btn btn-primary">💾 Salvar TR</button>
+                        <button type="button" class="btn btn-info" onclick="limparFormulario()">🔄 Limpar Formulário</button>
+                        <button type="button" class="btn btn-success" onclick="salvarRascunho()">📋 Salvar Rascunho</button>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="trJustificativa">Justificativa</label>
-                        <textarea id="trJustificativa" required placeholder="Justifique a necessidade da contratação..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="trEspecificacoes">Especificações Técnicas</label>
-                        <textarea id="trEspecificacoes" required placeholder="Detalhe as especificações técnicas necessárias..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="trPrazo">Prazo de Execução</label>
-                        <input type="text" id="trPrazo" required placeholder="Ex: 180 dias">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="trModalidade">Modalidade Sugerida</label>
-                        <select id="trModalidade" required>
-                            <option value="">Selecione...</option>
-                            <option value="Pregão">Pregão</option>
-                            <option value="Concorrência">Concorrência</option>
-                            <option value="Tomada de Preços">Tomada de Preços</option>
-                            <option value="Convite">Convite</option>
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">💾 Salvar TR</button>
-                    <button type="button" class="btn btn-info" onclick="limparFormulario()">🔄 Limpar</button>
                 </form>
             </div>
 
@@ -698,14 +1096,97 @@
         function salvarTR(event) {
             event.preventDefault();
             
+            // Coletar dados da tabela de serviços
+            const servicos = [];
+            const linhasServicos = document.querySelectorAll('#corpoTabelaServicos tr');
+            linhasServicos.forEach((linha, index) => {
+                const descricao = linha.querySelector('input[type="text"]').value;
+                const unidade = linha.querySelector('select').value;
+                const quantidade = linha.querySelector('input[type="number"]').value;
+                
+                if (descricao) {
+                    servicos.push({
+                        item: index + 1,
+                        descricao: descricao,
+                        unidade: unidade,
+                        quantidade: quantidade || 0
+                    });
+                }
+            });
+            
+            // Coletar dados da matriz de responsabilidade
+            const matrizResp = [];
+            const linhasMatriz = document.querySelectorAll('#corpoMatrizResponsabilidade tr');
+            linhasMatriz.forEach((linha, index) => {
+                const atividade = linha.querySelector('input[type="text"]').value;
+                const radios = linha.querySelectorAll('input[type="radio"]');
+                let responsavel = '';
+                
+                radios.forEach(radio => {
+                    if (radio.checked) {
+                        responsavel = radio.value;
+                    }
+                });
+                
+                if (atividade) {
+                    matrizResp.push({
+                        atividade: atividade,
+                        responsavel: responsavel
+                    });
+                }
+            });
+            
             const novoTR = {
                 id: 'tr_' + Date.now(),
                 titulo: document.getElementById('trTitulo').value,
-                objeto: document.getElementById('trObjeto').value,
-                justificativa: document.getElementById('trJustificativa').value,
-                especificacoes: document.getElementById('trEspecificacoes').value,
-                prazo_execucao: document.getElementById('trPrazo').value,
                 modalidade: document.getElementById('trModalidade').value,
+                
+                // Informações Básicas
+                objetivo: document.getElementById('trObjetivo').value,
+                conformidade: document.getElementById('trConformidade').value,
+                
+                // Local e Acesso
+                visitaLocal: document.getElementById('trVisitaLocal').value,
+                localAcesso: document.getElementById('trLocalAcesso').value,
+                
+                // Escopo Técnico
+                escopoTecnico: document.getElementById('trEscopoTecnico').value,
+                situacaoAtual: document.getElementById('trSituacaoAtual').value,
+                situacaoProposta: document.getElementById('trSituacaoProposta').value,
+                especificacaoTecnica: document.getElementById('trEspecificacaoTecnica').value,
+                premissas: document.getElementById('trPremissas').value,
+                planilhaQuantidade: document.getElementById('trPlanilhaQuantidade').value,
+                tabelaServicos: servicos,
+                escopoGeral: document.getElementById('trEscopoGeral').value,
+                
+                // Prazos e Responsabilidades
+                prazos: document.getElementById('trPrazos').value,
+                matrizResponsabilidade: matrizResp,
+                
+                // Mobilização e Segurança
+                segurancaTrabalho: document.getElementById('trSegurancaTrabalho').value,
+                canteiro: document.getElementById('trCanteiro').value,
+                credenciamento: document.getElementById('trCredenciamento').value,
+                meioAmbiente: document.getElementById('trMeioAmbiente').value,
+                
+                // Gestão e Planejamento
+                engenharia: document.getElementById('trEngenharia').value,
+                aquisicoes: document.getElementById('trAquisicoes').value,
+                gestaoContratos: document.getElementById('trGestaoContratos').value,
+                planejamentoExecutivo: document.getElementById('trPlanejamentoExecutivo').value,
+                
+                // Testes e Encerramento
+                testes: document.getElementById('trTestes').value,
+                encerramentoObra: document.getElementById('trEncerramentoObra').value,
+                cap: document.getElementById('trCAP').value,
+                caf: document.getElementById('trCAF').value,
+                garantia: document.getElementById('trGarantia').value,
+                
+                // Avaliação e Anexos
+                criteriosAvaliacao: document.getElementById('trCriteriosAvaliacao').value,
+                anexos: document.getElementById('trAnexos').value,
+                
+                // Metadados
                 criadoPor: usuarioAtual.usuarioId,
                 criadorNome: usuarioAtual.nome,
                 dataCriacao: new Date().toISOString(),
@@ -738,15 +1219,43 @@
             
             // Atualizar estatísticas
             atualizarEstatisticas();
+            
+            // Ir para a página de Meus TRs
+            mostrarPagina('meus-trs');
         }
 
         function limparFormulario() {
-            document.getElementById('trTitulo').value = '';
-            document.getElementById('trObjeto').value = '';
-            document.getElementById('trJustificativa').value = '';
-            document.getElementById('trEspecificacoes').value = '';
-            document.getElementById('trPrazo').value = '';
-            document.getElementById('trModalidade').value = '';
+            // Limpar todos os campos do formulário
+            const campos = [
+                'trTitulo', 'trModalidade', 'trObjetivo', 'trConformidade',
+                'trVisitaLocal', 'trLocalAcesso', 'trEscopoTecnico', 'trSituacaoAtual',
+                'trSituacaoProposta', 'trEspecificacaoTecnica', 'trPremissas',
+                'trPlanilhaQuantidade', 'trEscopoGeral', 'trPrazos', 'trMatrizResponsabilidade',
+                'trSegurancaTrabalho', 'trCanteiro', 'trCredenciamento', 'trMeioAmbiente',
+                'trEngenharia', 'trAquisicoes', 'trGestaoContratos', 'trPlanejamentoExecutivo',
+                'trTestes', 'trEncerramentoObra', 'trCAP', 'trCAF', 'trGarantia',
+                'trCriteriosAvaliacao', 'trAnexos'
+            ];
+            
+            campos.forEach(campo => {
+                const elemento = document.getElementById(campo);
+                if (elemento) {
+                    elemento.value = '';
+                }
+            });
+        }
+        
+        function salvarRascunho() {
+            const rascunho = {
+                titulo: document.getElementById('trTitulo').value,
+                modalidade: document.getElementById('trModalidade').value,
+                objetivo: document.getElementById('trObjetivo').value,
+                // ... incluir todos os campos
+                dataRascunho: new Date().toISOString()
+            };
+            
+            localStorage.setItem('tr_rascunho_' + usuarioAtual.usuarioId, JSON.stringify(rascunho));
+            alert('📋 Rascunho salvo com sucesso!');
         }
 
         function carregarMeusTRs() {
@@ -814,7 +1323,7 @@
                         <div class="tr-header">
                             <div>
                                 <div class="tr-title">${tr.titulo}</div>
-                                <p style="color: #6c757d; margin-top: 5px;">${tr.objeto || 'Sem descrição'}</p>
+                                <p style="color: #6c757d; margin-top: 5px;">${tr.objetivo || tr.objeto || 'Sem descrição'}</p>
                             </div>
                             <span class="tr-status ${statusClass}">${statusTexto}</span>
                         </div>
@@ -823,7 +1332,7 @@
                                 <strong>Modalidade:</strong> ${tr.modalidade || 'Não definida'}
                             </div>
                             <div>
-                                <strong>Prazo:</strong> ${tr.prazo_execucao || 'Não definido'}
+                                <strong>Prazo:</strong> ${tr.prazos || tr.prazo_execucao || 'Não definido'}
                             </div>
                             <div>
                                 <strong>Data de Criação:</strong> ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}
@@ -975,8 +1484,316 @@
                 return;
             }
 
-            // Criar modal ou nova página para visualização
-            alert(`TR: ${tr.titulo}\n\nObjeto: ${tr.objeto}\n\nModalidade: ${tr.modalidade}\n\nPrazo: ${tr.prazo_execucao}\n\nJustificativa: ${tr.justificativa}\n\nEspecificações: ${tr.especificacoes}`);
+            // Preencher o modal
+            document.getElementById('modalTRTitulo').textContent = tr.titulo;
+            
+            const conteudo = `
+                <!-- Informações Básicas -->
+                <div class="tr-section">
+                    <h4>📋 Informações Básicas</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Modalidade:</span>
+                        <span class="tr-field-value">${tr.modalidade || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Objetivo:</span>
+                        <span class="tr-field-value">${tr.objetivo || tr.objeto || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Conformidade:</span>
+                        <span class="tr-field-value">${tr.conformidade || 'Não especificada'}</span>
+                    </div>
+                </div>
+
+                <!-- Local e Acesso -->
+                <div class="tr-section">
+                    <h4>📍 Local e Acesso</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Visita ao Local:</span>
+                        <span class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Local/Acesso:</span>
+                        <span class="tr-field-value">${tr.localAcesso || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Escopo Técnico -->
+                <div class="tr-section">
+                    <h4>🔧 Escopo Técnico</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Escopo Técnico:</span>
+                        <span class="tr-field-value">${tr.escopoTecnico || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Situação Atual:</span>
+                        <span class="tr-field-value">${tr.situacaoAtual || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Situação Proposta:</span>
+                        <span class="tr-field-value">${tr.situacaoProposta || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Especificação Técnica:</span>
+                        <span class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</span>
+                    </div>
+                    ${tr.tabelaServicos && tr.tabelaServicos.length > 0 ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Tabela de Serviços:</span>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #667eea; color: white;">
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Item</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Descrição</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Unidade</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.tabelaServicos.map(servico => `
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.item}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.descricao}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.unidade}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.quantidade}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Prazos e Responsabilidades -->
+                <div class="tr-section">
+                    <h4>⏰ Prazos e Responsabilidades</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Prazos:</span>
+                        <span class="tr-field-value">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Matriz de Responsabilidade:</span>
+                        ${tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0 ? `
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #764ba2; color: white;">
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Atividade</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Responsável</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.matrizResponsabilidade.map(item => `
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${item.atividade}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                                ${item.responsavel === 'contratada' ? '✅ Contratada' : 
+                                                  item.responsavel === 'contratante' ? '✅ Contratante' : 
+                                                  '❌ N/A'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : `<span class="tr-field-value">${tr.matrizResponsabilidade || 'Não especificada'}</span>`}
+                    </div>
+                </div>
+
+                <!-- Critérios de Avaliação -->
+                <div class="tr-section">
+                    <h4>📊 Critérios de Avaliação</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Critérios:</span>
+                        <span class="tr-field-value">${tr.criteriosAvaliacao || 'Não especificados'}</span>
+                    </div>
+                </div>
+
+                <!-- Metadados -->
+                <div class="tr-section" style="background: #e3f2fd; border-left-color: #2196f3;">
+                    <h4>ℹ️ Informações do Documento</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Criado por:</span>
+                        <span class="tr-field-value">${tr.criadorNome || 'Não identificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Data de Criação:</span>
+                        <span class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Status:</span>
+                        <span class="tr-field-value">${tr.status || 'Ativo'}</span>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="imprimirTR('${tr.id}')">
+                        🖨️ Imprimir
+                    </button>
+                    <button class="btn btn-info" onclick="exportarTR('${tr.id}')">
+                        📥 Exportar PDF
+                    </button>
+                    <button class="btn btn-success" onclick="compartilharTR('${tr.id}')">
+                        📤 Compartilhar
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('modalTRConteudo').innerHTML = conteudo;
+            document.getElementById('modalVisualizarTR').style.display = 'block';
+        }
+
+        function fecharModal() {
+            document.getElementById('modalVisualizarTR').style.display = 'none';
+        }
+
+        function imprimirTR(trId) {
+            window.print();
+        }
+
+        function exportarTR(trId) {
+            alert('Funcionalidade de exportação PDF será implementada em breve.');
+        }
+
+        function compartilharTR(trId) {
+            alert('Funcionalidade de compartilhamento será implementada em breve.');
+        }
+
+        // Fechar modal ao clicar fora dele
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalVisualizarTR');
+            if (event.target == modal) {
+                fecharModal();
+            }
+        }
+
+        // Funções para Tabela de Serviços
+        let contadorServico = 1;
+        
+        function adicionarLinhaServico() {
+            contadorServico++;
+            const tbody = document.getElementById('corpoTabelaServicos');
+            const novaLinha = document.createElement('tr');
+            
+            novaLinha.innerHTML = `
+                <td style="padding: 8px; border: 1px solid #ddd;">${contadorServico}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">
+                    <input type="text" class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;" placeholder="Descrição do serviço">
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd;">
+                    <select class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                        <option>UN</option>
+                        <option>M²</option>
+                        <option>M³</option>
+                        <option>ML</option>
+                        <option>KG</option>
+                        <option>VB</option>
+                    </select>
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd;">
+                    <input type="number" class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;" placeholder="0">
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                    <button type="button" class="btn btn-sm" onclick="removerLinhaServico(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                </td>
+            `;
+            
+            tbody.appendChild(novaLinha);
+        }
+        
+        function removerLinhaServico(btn) {
+            const linha = btn.closest('tr');
+            linha.remove();
+            renumerarServicos();
+        }
+        
+        function renumerarServicos() {
+            const linhas = document.querySelectorAll('#corpoTabelaServicos tr');
+            linhas.forEach((linha, index) => {
+                linha.cells[0].textContent = index + 1;
+            });
+            contadorServico = linhas.length;
+        }
+
+        // Funções para Matriz de Responsabilidade
+        let contadorMatriz = 3;
+        
+        function adicionarLinhaMatriz() {
+            contadorMatriz++;
+            const tbody = document.getElementById('corpoMatrizResponsabilidade');
+            const novaLinha = document.createElement('tr');
+            
+            novaLinha.innerHTML = `
+                <td style="padding: 8px; border: 1px solid #ddd;">
+                    <input type="text" class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;" placeholder="Descreva o item/atividade">
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                    <input type="radio" name="resp_${contadorMatriz}" value="contratada">
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                    <input type="radio" name="resp_${contadorMatriz}" value="contratante">
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                    <input type="radio" name="resp_${contadorMatriz}" value="na" checked>
+                </td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                    <button type="button" class="btn btn-sm" onclick="removerLinhaMatriz(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                </td>
+            `;
+            
+            tbody.appendChild(novaLinha);
+        }
+        
+        function removerLinhaMatriz(btn) {
+            const linha = btn.closest('tr');
+            linha.remove();
+        }
+        
+        function adicionarItensPadrao() {
+            const itensPadrao = [
+                { item: 'Equipamentos de proteção individual (EPI)', resp: 'contratada' },
+                { item: 'Equipamentos de proteção coletiva (EPC)', resp: 'contratada' },
+                { item: 'Transporte de pessoal', resp: 'contratada' },
+                { item: 'Alimentação', resp: 'contratada' },
+                { item: 'Ferramentas e equipamentos', resp: 'contratada' },
+                { item: 'Energia elétrica provisória', resp: 'contratante' },
+                { item: 'Água para obra', resp: 'contratante' },
+                { item: 'Acesso ao local', resp: 'contratante' },
+                { item: 'Área para canteiro', resp: 'contratante' },
+                { item: 'Descarte de resíduos', resp: 'contratada' },
+                { item: 'Seguro da obra', resp: 'contratada' },
+                { item: 'ART/RRT', resp: 'contratada' },
+                { item: 'Diário de obra', resp: 'contratada' },
+                { item: 'As built', resp: 'contratada' },
+                { item: 'Testes e ensaios', resp: 'contratada' }
+            ];
+            
+            const tbody = document.getElementById('corpoMatrizResponsabilidade');
+            
+            itensPadrao.forEach(item => {
+                contadorMatriz++;
+                const novaLinha = document.createElement('tr');
+                
+                novaLinha.innerHTML = `
+                    <td style="padding: 8px; border: 1px solid #ddd;">
+                        <input type="text" class="form-control" value="${item.item}" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_${contadorMatriz}" value="contratada" ${item.resp === 'contratada' ? 'checked' : ''}>
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_${contadorMatriz}" value="contratante" ${item.resp === 'contratante' ? 'checked' : ''}>
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_${contadorMatriz}" value="na" ${item.resp === 'na' ? 'checked' : ''}>
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <button type="button" class="btn btn-sm" onclick="removerLinhaMatriz(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(novaLinha);
+            });
+            
+            alert('✅ Itens padrão adicionados com sucesso!');
         }
 
         function emitirParecer(event, liberacaoId, propostaId) {
