@@ -1069,6 +1069,19 @@
                 carregarMeusTRs();
             } else if (paginaId === 'emitir-parecer') {
                 carregarPropostasParaParecer();
+            } else if (paginaId === 'cadastrar-processos') {
+                carregarTRsDisponiveis();
+            } else if (paginaId === 'processos') {
+                carregarListaProcessos();
+            }
+        }
+
+        function verificarPermissaoEMostrar(paginaId) {
+            // Verificar se o usuário tem permissão de comprador
+            if (usuarioAtual.tipo === 'comprador' || usuarioAtual.tipo === 'admin') {
+                mostrarPagina(paginaId);
+            } else {
+                alert('⚠️ Acesso restrito! Apenas compradores podem cadastrar processos.');
             }
         }
 
@@ -2079,6 +2092,176 @@
             });
             
             alert('✅ Itens padrão adicionados com sucesso!');
+        }
+
+        // Função para carregar TRs disponíveis no select
+        function carregarTRsDisponiveis() {
+            const selectTR = document.getElementById('trVinculado');
+            if (!selectTR) return;
+            
+            // Limpar opções existentes
+            selectTR.innerHTML = '<option value="">Selecione um TR para basear o processo</option>';
+            
+            // Carregar TRs do localStorage
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            
+            // Filtrar apenas TRs ativos
+            const trsAtivos = trs.filter(tr => tr.status === 'ativo');
+            
+            if (trsAtivos.length === 0) {
+                selectTR.innerHTML += '<option value="" disabled>Nenhum TR disponível</option>';
+                return;
+            }
+            
+            // Adicionar TRs como opções
+            trsAtivos.forEach(tr => {
+                const option = document.createElement('option');
+                option.value = tr.id;
+                option.textContent = `${tr.titulo} - ${tr.modalidade} (por ${tr.criadorNome || 'Requisitante'})`;
+                option.dataset.trData = JSON.stringify(tr);
+                selectTR.appendChild(option);
+            });
+        }
+
+        // Função para preencher campos do formulário com dados do TR
+        function preencherDadosDoTR() {
+            const selectTR = document.getElementById('trVinculado');
+            const trSelecionado = selectTR.value;
+            
+            if (!trSelecionado) {
+                // Limpar campos se nenhum TR selecionado
+                document.getElementById('objetoProc').value = '';
+                document.getElementById('modalidadeProc').value = '';
+                return;
+            }
+            
+            // Buscar dados do TR
+            const option = selectTR.querySelector(`option[value="${trSelecionado}"]`);
+            if (option && option.dataset.trData) {
+                const tr = JSON.parse(option.dataset.trData);
+                
+                // Preencher campos com dados do TR
+                document.getElementById('objetoProc').value = tr.titulo || '';
+                document.getElementById('modalidadeProc').value = tr.modalidade || '';
+                
+                // Informar ao usuário
+                alert(`✅ Dados do TR "${tr.titulo}" foram carregados no formulário!`);
+            }
+        }
+
+        // Função para cadastrar processo
+        function cadastrarProcesso(event) {
+            event.preventDefault();
+            
+            const trId = document.getElementById('trVinculado').value;
+            if (!trId) {
+                alert('❌ Por favor, selecione um Termo de Referência!');
+                return;
+            }
+            
+            const novoProcesso = {
+                numero: document.getElementById('numeroProc').value,
+                objeto: document.getElementById('objetoProc').value,
+                modalidade: document.getElementById('modalidadeProc').value,
+                prazo: document.getElementById('prazoProc').value,
+                dataCadastro: new Date().toISOString(),
+                criadoPor: usuarioAtual.usuarioId,
+                criadorNome: usuarioAtual.nome,
+                trId: trId, // ID do TR vinculado
+                status: 'ativo'
+            };
+            
+            // Salvar processo
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            processos.push(novoProcesso);
+            localStorage.setItem('processos', JSON.stringify(processos));
+            
+            // Buscar dados do TR para notificação
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === trId);
+            
+            if (tr && tr.criadoPor) {
+                // Notificar o requisitante que criou o TR
+                Auth.Notificacoes.criar({
+                    tipo: 'processo_criado_com_tr',
+                    titulo: '📋 Processo criado com seu TR',
+                    mensagem: `O processo ${novoProcesso.numero} foi criado baseado no TR "${tr.titulo}"`,
+                    destinatario: tr.criadoPor,
+                    remetente: usuarioAtual.nome,
+                    metadata: {
+                        processoId: novoProcesso.numero,
+                        trId: novoProcesso.trId
+                    }
+                });
+            }
+            
+            alert('✅ Processo cadastrado com sucesso!');
+            
+            // Limpar formulário
+            document.getElementById('formCadastroProcesso').reset();
+            
+            // Recarregar dados e ir para lista de processos
+            mostrarPagina('processos');
+        }
+
+        // Função para carregar lista de processos
+        function carregarListaProcessos() {
+            const container = document.getElementById('listaProcessos');
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            
+            if (processos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>Nenhum processo cadastrado</h3>
+                        <p>Os processos criados aparecerão aqui</p>
+                        <button class="btn btn-primary" onclick="mostrarPagina('cadastrar-processos')">
+                            ➕ Cadastrar Primeiro Processo
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="tr-list">
+                    ${processos.map(processo => {
+                        const dataCadastro = new Date(processo.dataCadastro);
+                        const dataPrazo = new Date(processo.prazo);
+                        const diasRestantes = Math.ceil((dataPrazo - new Date()) / (1000 * 60 * 60 * 24));
+                        
+                        return `
+                            <div class="tr-card">
+                                <div class="tr-header">
+                                    <div>
+                                        <div class="tr-title">${processo.numero} - ${processo.objeto}</div>
+                                        <p style="color: #6c757d; margin-top: 5px;">Modalidade: ${processo.modalidade}</p>
+                                    </div>
+                                    <span class="tr-status ${diasRestantes > 0 ? 'status-processo' : 'status-concluido'}">
+                                        ${diasRestantes > 0 ? `${diasRestantes} dias restantes` : 'Encerrado'}
+                                    </span>
+                                </div>
+                                <div class="tr-info">
+                                    <div>
+                                        <strong>Criado por:</strong> ${processo.criadorNome || 'Sistema'}
+                                    </div>
+                                    <div>
+                                        <strong>Data de Cadastro:</strong> ${dataCadastro.toLocaleDateString('pt-BR')}
+                                    </div>
+                                    <div>
+                                        <strong>Prazo:</strong> ${dataPrazo.toLocaleString('pt-BR')}
+                                    </div>
+                                    ${processo.trId ? `
+                                        <div>
+                                            <strong>TR Vinculado:</strong> ✅ Sim
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
         }
 
         function emitirParecer(event, liberacaoId, propostaId) {
