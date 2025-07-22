@@ -1071,11 +1071,24 @@
                     </div>
                     <div class="tr-field">
                         <span class="tr-field-label">Objetivo:</span>
-                        <span class="tr-field-value">${tr.objetivo || 'Não especificado'}</span>
+                        <span class="tr-field-value">${tr.objetivo || tr.objeto || 'Não especificado'}</span>
                     </div>
                     <div class="tr-field">
-                        <span class="tr-field-label">Justificativa:</span>
-                        <span class="tr-field-value">${tr.justificativa || 'Não especificada'}</span>
+                        <span class="tr-field-label">Conformidade:</span>
+                        <span class="tr-field-value">${tr.conformidade || 'Não especificada'}</span>
+                    </div>
+                </div>
+
+                <!-- Local e Acesso -->
+                <div class="tr-section">
+                    <h4>📍 Local e Acesso</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Visita ao Local:</span>
+                        <span class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Local/Acesso:</span>
+                        <span class="tr-field-value">${tr.localAcesso || 'Não especificado'}</span>
                     </div>
                 </div>
 
@@ -1083,16 +1096,165 @@
                 <div class="tr-section">
                     <h4>🔧 Escopo Técnico</h4>
                     <div class="tr-field">
-                        <span class="tr-field-label">Especificação Técnica:</span>
-                        <span class="tr-field-value">${tr.especificacaoTecnica || 'Não especificada'}</span>
+                        <span class="tr-field-label">Escopo Técnico:</span>
+                        <span class="tr-field-value">${tr.escopoTecnico || 'Não especificado'}</span>
                     </div>
                     <div class="tr-field">
-                        <span class="tr-field-label">Requisitos Técnicos:</span>
-                        <span class="tr-field-value">${tr.requisitos || 'Não especificados'}</span>
+                        <span class="tr-field-label">Situação Atual:</span>
+                        <span class="tr-field-value">${tr.situacaoAtual || 'Não especificada'}</span>
                     </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Situação Proposta:</span>
+                        <span class="tr-field-value">${tr.situacaoProposta || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Especificação Técnica:</span>
+                        <span class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Premissas, Requisitos e Restrições:</span>
+                        <span class="tr-field-value">${tr.premissas || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Planilha de Quantidade:</span>
+                        <span class="tr-field-value">${tr.planilhaQuantidade || 'Não especificada'}</span>
+                    </div>
+                    ${tr.tabelaServicos && tr.tabelaServicos.length > 0 ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Tabela de Serviços:</span>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #667eea; color: white;">
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Item</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Descrição</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Unidade</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.tabelaServicos.map(servico => `
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.item}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.descricao}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.unidade}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.quantidade}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : ''}
+                    <div class="tr-field">
+                        <span class="tr-field-label">Escopo Geral:</span>
+                        <span class="tr-field-value">${tr.escopoGeral || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Prazos e Responsabilidades -->
+                <div class="tr-section">
+                    <h4>⏰ Prazos e Responsabilidades</h4>
                     <div class="tr-field">
                         <span class="tr-field-label">Prazos:</span>
-                        <span class="tr-field-value">${tr.prazos || 'Não especificado'}</span>
+                        <span class="tr-field-value">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</span>
+                    </div>
+                    ${tr.matrizResponsabilidade && typeof tr.matrizResponsabilidade === 'object' && tr.matrizResponsabilidade.length > 0 ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Matriz de Responsabilidade:</span>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #764ba2; color: white;">
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Atividade</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Responsável</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.matrizResponsabilidade.map(item => `
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${item.atividade}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                                ${item.responsavel === 'contratada' ? '✅ Contratada' : 
+                                                  item.responsavel === 'contratante' ? '✅ Contratante' : 
+                                                  '❌ N/A'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Matriz de Responsabilidade:</span>
+                            <span class="tr-field-value">${tr.matrizResponsabilidade || 'Não especificada'}</span>
+                        </div>
+                    `}
+                </div>
+
+                <!-- Mobilização e Segurança -->
+                <div class="tr-section">
+                    <h4>🦺 Mobilização e Segurança</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Mobilização Segurança e Saúde do Trabalho:</span>
+                        <span class="tr-field-value">${tr.segurancaTrabalho || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Canteiro de Obras e Infraestrutura:</span>
+                        <span class="tr-field-value">${tr.canteiro || 'Não especificado'}</span>
+                    </div>
+                    ${tr.credenciamento ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Credenciamento Aeroportuário:</span>
+                            <span class="tr-field-value">${tr.credenciamento}</span>
+                        </div>
+                    ` : ''}
+                    <div class="tr-field">
+                        <span class="tr-field-label">Meio Ambiente:</span>
+                        <span class="tr-field-value">${tr.meioAmbiente || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Gestão e Planejamento -->
+                <div class="tr-section">
+                    <h4>📊 Gestão e Planejamento</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Engenharia:</span>
+                        <span class="tr-field-value">${tr.engenharia || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Aquisições:</span>
+                        <span class="tr-field-value">${tr.aquisicoes || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Planejamento/Gestão de Contratos:</span>
+                        <span class="tr-field-value">${tr.gestaoContratos || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Planejamento Executivo:</span>
+                        <span class="tr-field-value">${tr.planejamentoExecutivo || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Testes e Encerramento -->
+                <div class="tr-section">
+                    <h4>✅ Testes e Encerramento</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Testes, Comissionamento, Treinamento:</span>
+                        <span class="tr-field-value">${tr.testes || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Ao Encerramento da Obra:</span>
+                        <span class="tr-field-value">${tr.encerramentoObra || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Certificado de Aceitação Provisória (CAP):</span>
+                        <span class="tr-field-value">${tr.cap || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Certificado de Aceitação Final (CAF):</span>
+                        <span class="tr-field-value">${tr.caf || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Garantia:</span>
+                        <span class="tr-field-value">${tr.garantia || 'Não especificado'}</span>
                     </div>
                 </div>
 
@@ -1103,9 +1265,32 @@
                         <span class="tr-field-label">Critérios de Avaliação de Propostas:</span>
                         <span class="tr-field-value">${tr.criteriosAvaliacao || 'Não especificados'}</span>
                     </div>
+                    ${tr.anexos ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Anexos:</span>
+                            <span class="tr-field-value">${tr.anexos}</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Metadados -->
+                <div class="tr-section" style="background: #e3f2fd; border-left-color: #2196f3;">
+                    <h4>ℹ️ Informações do Documento</h4>
                     <div class="tr-field">
-                        <span class="tr-field-label">Documentos Exigidos:</span>
-                        <span class="tr-field-value">${tr.documentosExigidos || 'Não especificados'}</span>
+                        <span class="tr-field-label">Criado por:</span>
+                        <span class="tr-field-value">${tr.criadorNome || 'Não identificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Data de Criação:</span>
+                        <span class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Status:</span>
+                        <span class="tr-field-value">${tr.status || 'Ativo'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Total de Downloads:</span>
+                        <span class="tr-field-value">${tr.downloads || 0}</span>
                     </div>
                 </div>
 
@@ -1249,7 +1434,7 @@
             // Registrar download
             registrarAcaoTR(trId, 'baixado_word');
 
-            // Criar conteúdo Word
+            // Criar conteúdo HTML formatado para Word com TODOS os campos
             const conteudoWord = `
                 <!DOCTYPE html>
                 <html>
@@ -1259,40 +1444,167 @@
                         body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
                         h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
                         h2 { color: #34495e; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+                        h3 { color: #7f8c8d; margin-top: 20px; margin-bottom: 10px; }
                         p { margin-bottom: 10px; text-align: justify; }
+                        .info-box { background: #ecf0f1; padding: 15px; margin: 20px 0; border-left: 4px solid #3498db; }
+                        .field { margin-bottom: 15px; }
+                        .field-label { font-weight: bold; color: #2c3e50; }
+                        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                        th { background: #3498db; color: white; padding: 10px; text-align: left; }
+                        td { border: 1px solid #ddd; padding: 8px; }
+                        .header-info { text-align: center; margin-bottom: 30px; }
+                        .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #7f8c8d; }
                         @page { margin: 2cm; }
                     </style>
                 </head>
                 <body>
-                    <h1>TERMO DE REFERÊNCIA</h1>
-                    <p style="text-align: center;"><strong>${tr.titulo}</strong></p>
-                    <p style="text-align: center;">Modalidade: ${tr.modalidade}</p>
-                    <p style="text-align: center;">Data: ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                    <div class="header-info">
+                        <h1>TERMO DE REFERÊNCIA</h1>
+                        <p><strong>${tr.titulo}</strong></p>
+                        <p>Modalidade: ${tr.modalidade}</p>
+                        <p>Data: ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                    </div>
 
                     <h2>1. OBJETIVO</h2>
-                    <p>${tr.objetivo}</p>
+                    <p>${tr.objetivo || 'Não especificado'}</p>
 
-                    <h2>2. JUSTIFICATIVA</h2>
-                    <p>${tr.justificativa}</p>
+                    <h2>2. CONFORMIDADE AO TERMO DE REFERÊNCIA</h2>
+                    <p>${tr.conformidade || 'Não especificada'}</p>
 
-                    <h2>3. ESPECIFICAÇÃO TÉCNICA</h2>
-                    <p>${tr.especificacaoTecnica}</p>
+                    <h2>3. LOCAL E ACESSO</h2>
+                    <div class="field">
+                        <span class="field-label">Visita ao Local:</span> ${tr.visitaLocal || 'Não especificado'}
+                    </div>
+                    <div class="field">
+                        <span class="field-label">Local/Acesso:</span> ${tr.localAcesso || 'Não especificado'}
+                    </div>
 
-                    <h2>4. REQUISITOS TÉCNICOS</h2>
-                    <p>${tr.requisitos}</p>
+                    <h2>4. ESCOPO TÉCNICO</h2>
+                    <h3>4.1. Escopo Técnico</h3>
+                    <p>${tr.escopoTecnico || 'Não especificado'}</p>
+                    
+                    <h3>4.2. Situação Atual</h3>
+                    <p>${tr.situacaoAtual || 'Não especificada'}</p>
+                    
+                    <h3>4.3. Situação Proposta</h3>
+                    <p>${tr.situacaoProposta || 'Não especificada'}</p>
+                    
+                    <h3>4.4. Especificação Técnica</h3>
+                    <p>${tr.especificacaoTecnica || 'Não especificada'}</p>
+                    
+                    <h3>4.5. Premissas, Requisitos e Restrições</h3>
+                    <p>${tr.premissas || 'Não especificado'}</p>
+                    
+                    <h3>4.6. Planilha de Quantidade</h3>
+                    <p>${tr.planilhaQuantidade || 'Não especificada'}</p>
+                    
+                    ${tr.tabelaServicos && tr.tabelaServicos.length > 0 ? `
+                        <h3>4.7. Tabela de Serviços</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Descrição</th>
+                                    <th>Unidade</th>
+                                    <th>Quantidade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tr.tabelaServicos.map(servico => `
+                                    <tr>
+                                        <td>${servico.item}</td>
+                                        <td>${servico.descricao}</td>
+                                        <td>${servico.unidade}</td>
+                                        <td>${servico.quantidade}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : ''}
+                    
+                    <h3>4.8. Escopo Geral</h3>
+                    <p>${tr.escopoGeral || 'Não especificado'}</p>
 
-                    <h2>5. PRAZOS DE EXECUÇÃO</h2>
-                    <p>${tr.prazos}</p>
+                    <h2>5. PRAZOS</h2>
+                    <p>${tr.prazos || 'Não especificado'}</p>
 
-                    <h2>6. CRITÉRIOS DE AVALIAÇÃO</h2>
-                    <p>${tr.criteriosAvaliacao}</p>
+                    <h2>6. MATRIZ DE RESPONSABILIDADE</h2>
+                    ${tr.matrizResponsabilidade && typeof tr.matrizResponsabilidade === 'object' && tr.matrizResponsabilidade.length > 0 ? `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Atividade</th>
+                                    <th>Responsável</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tr.matrizResponsabilidade.map(item => `
+                                    <tr>
+                                        <td>${item.atividade}</td>
+                                        <td>${item.responsavel === 'contratada' ? 'Contratada' : 
+                                             item.responsavel === 'contratante' ? 'Contratante' : 'N/A'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : `<p>${tr.matrizResponsabilidade || 'Não especificada'}</p>`}
 
-                    <h2>7. DOCUMENTOS EXIGIDOS</h2>
-                    <p>${tr.documentosExigidos}</p>
+                    <h2>7. MOBILIZAÇÃO E SEGURANÇA</h2>
+                    <h3>7.1. Segurança e Saúde do Trabalho</h3>
+                    <p>${tr.segurancaTrabalho || 'Não especificado'}</p>
+                    
+                    <h3>7.2. Canteiro de Obras e Infraestrutura</h3>
+                    <p>${tr.canteiro || 'Não especificado'}</p>
+                    
+                    ${tr.credenciamento ? `
+                        <h3>7.3. Credenciamento Aeroportuário</h3>
+                        <p>${tr.credenciamento}</p>
+                    ` : ''}
+                    
+                    <h3>7.4. Meio Ambiente</h3>
+                    <p>${tr.meioAmbiente || 'Não especificado'}</p>
 
-                    <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #7f8c8d;">
-                        <p>Documento baixado em ${new Date().toLocaleString('pt-BR')}</p>
-                        <p>Por: ${usuarioAtual.nome}</p>
+                    <h2>8. GESTÃO E PLANEJAMENTO</h2>
+                    <h3>8.1. Engenharia</h3>
+                    <p>${tr.engenharia || 'Não especificado'}</p>
+                    
+                    <h3>8.2. Aquisições</h3>
+                    <p>${tr.aquisicoes || 'Não especificado'}</p>
+                    
+                    <h3>8.3. Planejamento/Gestão de Contratos</h3>
+                    <p>${tr.gestaoContratos || 'Não especificado'}</p>
+                    
+                    <h3>8.4. Planejamento Executivo</h3>
+                    <p>${tr.planejamentoExecutivo || 'Não especificado'}</p>
+
+                    <h2>9. TESTES E ENCERRAMENTO</h2>
+                    <h3>9.1. Testes, Comissionamento e Treinamento</h3>
+                    <p>${tr.testes || 'Não especificado'}</p>
+                    
+                    <h3>9.2. Ao Encerramento da Obra</h3>
+                    <p>${tr.encerramentoObra || 'Não especificado'}</p>
+                    
+                    <h3>9.3. Certificado de Aceitação Provisória (CAP)</h3>
+                    <p>${tr.cap || 'Não especificado'}</p>
+                    
+                    <h3>9.4. Certificado de Aceitação Final (CAF)</h3>
+                    <p>${tr.caf || 'Não especificado'}</p>
+                    
+                    <h3>9.5. Garantia</h3>
+                    <p>${tr.garantia || 'Não especificado'}</p>
+
+                    <h2>10. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</h2>
+                    <p>${tr.criteriosAvaliacao || 'Não especificados'}</p>
+
+                    ${tr.anexos ? `
+                        <h2>11. ANEXOS</h2>
+                        <p>${tr.anexos}</p>
+                    ` : ''}
+
+                    <div class="footer">
+                        <p>Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
+                        <p>Elaborado por: ${tr.criadorNome || 'Não identificado'}</p>
+                        <p>Baixado por: ${usuarioAtual.nome}</p>
                     </div>
                 </body>
                 </html>
