@@ -1229,27 +1229,73 @@
             return parseFloat(numero) || 0;
         }
 
-        // Inicialização
+        // Inicialização - AJUSTADA PARA AUTENTICAÇÃO
         window.addEventListener('DOMContentLoaded', async function() {
             console.log('Portal de propostas carregado!');
             console.log('API URL:', API_URL);
+            
+            // Verificar autenticação
+            const authData = localStorage.getItem('auth');
+            if (!authData) {
+                alert('Você precisa estar autenticado para acessar esta página.');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            const currentUser = JSON.parse(authData);
             
             // Carregar dados do processo da URL
             const urlParams = new URLSearchParams(window.location.search);
             const numeroProcesso = urlParams.get('processo');
             
             if (numeroProcesso) {
-                document.getElementById('numeroProcesso').value = numeroProcesso;
+                // Carregar processo do localStorage
+                const processosData = JSON.parse(localStorage.getItem('processos') || '[]');
+                const processo = processosData.find(p => p.numero === numeroProcesso);
                 
-                // Tentar carregar do API
-                const processo = await carregarProcessoAPI(numeroProcesso);
                 if (processo) {
-                    document.getElementById('objetoProcesso').value = processo.objeto || '';
-                    if (processo.prazo) {
-                        const prazoDate = new Date(processo.prazo);
-                        document.getElementById('prazoEnvio').value = prazoDate.toLocaleString('pt-BR');
+                    // Verificar se o fornecedor foi convidado
+                    if (processo.fornecedoresConvidados && 
+                        processo.fornecedoresConvidados.includes(currentUser.usuarioId)) {
+                        
+                        document.getElementById('numeroProcesso').value = processo.numero;
+                        document.getElementById('objetoProcesso').value = processo.objeto || '';
+                        
+                        if (processo.prazo) {
+                            const prazoDate = new Date(processo.prazo);
+                            document.getElementById('prazoEnvio').value = prazoDate.toLocaleString('pt-BR');
+                        }
+                        
+                        // Carregar dados da empresa do fornecedor
+                        const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
+                        const empresaData = localStorage.getItem(empresaKey);
+                        
+                        if (empresaData) {
+                            const empresa = JSON.parse(empresaData);
+                            // Pré-preencher dados cadastrais
+                            document.getElementById('razaoSocial').value = empresa.razaoSocial || '';
+                            document.getElementById('cnpj').value = empresa.cnpj || '';
+                            document.getElementById('endereco').value = empresa.endereco || '';
+                            document.getElementById('cidade').value = empresa.cidade || '';
+                            document.getElementById('telefone').value = empresa.telefone || '';
+                            document.getElementById('email').value = empresa.email || '';
+                            document.getElementById('respTecnico').value = empresa.respTecnico || '';
+                            document.getElementById('crea').value = empresa.crea || '';
+                        }
+                    } else {
+                        alert('Você não tem permissão para acessar este processo.');
+                        window.location.href = 'dashboard-fornecedor.html';
+                        return;
                     }
+                } else {
+                    alert('Processo não encontrado.');
+                    window.location.href = 'dashboard-fornecedor.html';
+                    return;
                 }
+            } else {
+                alert('Nenhum processo especificado.');
+                window.location.href = 'dashboard-fornecedor.html';
+                return;
             }
             
             // Verificar status da API
@@ -1267,7 +1313,8 @@
             updateProgress();
             
             // Carregar dados salvos se existir
-            const dadosSalvos = localStorage.getItem('proposta_rascunho');
+            const rascunhoKey = `proposta_rascunho_${currentUser.usuarioId}_${numeroProcesso}`;
+            const dadosSalvos = localStorage.getItem(rascunhoKey);
             if (dadosSalvos) {
                 if (confirm('Há um rascunho salvo. Deseja recuperá-lo?')) {
                     carregarRascunho(JSON.parse(dadosSalvos));
@@ -2079,25 +2126,75 @@
             }
         }
 
+        // FUNÇÃO AJUSTADA PARA ENVIO COMPLETO
         async function confirmarEnvioFinal() {
             fecharModalRevisao();
             
             const dados = coletarDados();
             const protocolo = gerarProtocolo();
             
+            // Obter dados do usuário autenticado
+            const authData = localStorage.getItem('auth');
+            if (!authData) {
+                alert('Erro: Usuário não autenticado.');
+                return;
+            }
+            
+            const currentUser = JSON.parse(authData);
+            const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
+            const empresaData = JSON.parse(localStorage.getItem(empresaKey) || '{}');
+            
             mostrarMensagem('<span class="loading"></span> Enviando proposta...', 'info');
             
-            // Enviar para API
-            const resultado = await enviarPropostaAPI({
+            // Criar objeto da proposta completo
+            const propostaCompleta = {
                 protocolo: protocolo,
                 processo: dados.processo,
-                dados: dados.dados,
-                resumo: dados.resumo,
-                tecnica: dados.tecnica,
-                comercial: dados.comercial
-            });
+                dataEnvio: new Date().toISOString(),
+                status: 'enviada',
+                dados: {
+                    fornecedorId: currentUser.usuarioId,
+                    fornecedorNome: currentUser.nome,
+                    empresa: empresaData.nomeFantasia || empresaData.razaoSocial || dados.dados.razaoSocial,
+                    cnpj: dados.dados.cnpj
+                },
+                ...dados // Inclui todos os dados coletados (dados, resumo, tecnica, comercial)
+            };
+            
+            // Enviar para API
+            const resultado = await enviarPropostaAPI(propostaCompleta);
             
             if (resultado.success) {
+                // Salvar também no localStorage
+                const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+                propostas.push(propostaCompleta);
+                localStorage.setItem('propostas', JSON.stringify(propostas));
+                
+                // Notificar o comprador
+                const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+                const processo = processos.find(p => p.numero === dados.processo);
+                
+                if (processo && processo.criadoPor) {
+                    // Criar notificação para o comprador
+                    const notificacoes = JSON.parse(localStorage.getItem('notificacoes') || '[]');
+                    notificacoes.push({
+                        id: 'notif_' + Date.now(),
+                        tipo: 'nova_proposta',
+                        titulo: '📄 Nova Proposta Recebida',
+                        mensagem: `${propostaCompleta.dados.empresa} enviou proposta para ${processo.numero}`,
+                        destinatario: processo.criadoPor,
+                        remetente: currentUser.nome,
+                        data: new Date().toISOString(),
+                        lida: false,
+                        metadata: {
+                            processoId: processo.numero,
+                            propostaId: protocolo,
+                            valor: dados.comercial.valorTotal
+                        }
+                    });
+                    localStorage.setItem('notificacoes', JSON.stringify(notificacoes));
+                }
+                
                 mostrarMensagem(`
                     <strong>✅ Proposta enviada com sucesso!</strong><br>
                     <strong>Protocolo:</strong> ${protocolo}<br>
@@ -2106,27 +2203,28 @@
                 `, 'success');
                 
                 // Limpar rascunho
-                localStorage.removeItem('proposta_rascunho');
+                const rascunhoKey = `proposta_rascunho_${currentUser.usuarioId}_${dados.processo}`;
+                localStorage.removeItem(rascunhoKey);
                 
                 // Adicionar botões de ação
                 setTimeout(() => {
                     const mensagemDiv = document.getElementById('mensagem');
                     mensagemDiv.innerHTML += `
                         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #27ae60;">
-                            <button onclick="window.location.reload();" 
+                            <button onclick="window.location.href='dashboard-fornecedor.html?page=propostas'" 
                                     style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px; font-weight: 600;">
-                                📝 Nova Proposta
+                                📄 Ver Minhas Propostas
                             </button>
-                            <button onclick="window.location.href='${window.location.origin}'" 
+                            <button onclick="window.location.href='dashboard-fornecedor.html'" 
                                     style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600;">
-                                🏠 Voltar ao Início
+                                🏠 Voltar ao Dashboard
                             </button>
                         </div>
                     `;
                 }, 3000);
             } else {
                 // Em caso de erro, salvar localmente
-                salvarPropostaLocal(protocolo, dados);
+                salvarPropostaLocal(protocolo, propostaCompleta);
                 
                 mostrarMensagem(`
                     <strong>⚠️ Proposta salva localmente!</strong><br>
@@ -2150,6 +2248,7 @@
         function carregarRascunho(dados) {
             // Implementar carregamento dos dados salvos
             console.log('Carregando rascunho...', dados);
+            // TODO: Preencher todos os campos com os dados salvos
         }
 
         function mostrarMensagem(texto, tipo) {
@@ -2165,11 +2264,21 @@
             }
         }
 
-        // Auto-save
+        // Auto-save - AJUSTADO PARA SALVAR POR USUÁRIO E PROCESSO
         setInterval(() => {
-            const dados = coletarDados();
-            localStorage.setItem('proposta_rascunho', JSON.stringify(dados));
-            console.log('Rascunho salvo automaticamente');
+            const authData = localStorage.getItem('auth');
+            if (authData) {
+                const currentUser = JSON.parse(authData);
+                const urlParams = new URLSearchParams(window.location.search);
+                const numeroProcesso = urlParams.get('processo');
+                
+                if (numeroProcesso) {
+                    const dados = coletarDados();
+                    const rascunhoKey = `proposta_rascunho_${currentUser.usuarioId}_${numeroProcesso}`;
+                    localStorage.setItem(rascunhoKey, JSON.stringify(dados));
+                    console.log('Rascunho salvo automaticamente');
+                }
+            }
         }, 30000);
         
         // Aplicar formatação aos campos de moeda ao carregar
