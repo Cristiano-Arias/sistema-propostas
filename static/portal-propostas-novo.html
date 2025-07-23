@@ -1117,8 +1117,61 @@
     </div>
 
     <script>
+        // ===== VARIÁVEIS GLOBAIS =====
         let currentTab = 'dados';
-        
+        let currentUser = null;
+        let trSelecionado = null;
+        let fornecedoresSelecionados = [];
+
+        // ===== FUNÇÕES DE NAVEGAÇÃO =====
+        function showTab(tabName, buttonElement) {
+            // Ocultar todas as seções
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remover classe active de todas as abas
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar seção selecionada
+            document.getElementById(tabName).classList.add('active');
+            buttonElement.classList.add('active');
+            
+            currentTab = tabName;
+            updateProgress();
+            
+            // Ações específicas por aba
+            if (tabName === 'comercial') {
+                copiarObjetoParaComercial();
+                copiarDadosTecnicaParaComercial();
+            }
+            
+            if (tabName === 'revisao') {
+                gerarRevisao();
+            }
+        }
+
+        function updateProgress() {
+            const tabs = ['dados', 'resumo', 'tecnica', 'comercial', 'revisao'];
+            const currentIndex = tabs.indexOf(currentTab);
+            const progress = ((currentIndex + 1) / tabs.length) * 100;
+            
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.round(progress) + '%';
+        }
+
+        function atualizarResumo() {
+            const prazo = document.getElementById('prazoExecucaoResumo').value;
+            const pagamento = document.getElementById('formaPagamentoResumo').value;
+            const valorTotal = document.getElementById('valorTotalCalculado').textContent;
+            
+            document.getElementById('prazoResumo').textContent = prazo || '-- dias';
+            document.getElementById('pagamentoResumo').textContent = pagamento || 'A definir';
+            document.getElementById('precoTotalResumo').textContent = valorTotal;
+        }
+
         // ===== FUNÇÕES DE INTEGRAÇÃO COM API =====
         async function enviarPropostaAPI(dados) {
             try {
@@ -1193,7 +1246,7 @@
             calcularCronograma();
         }
 
-        // Funções de formatação de moeda
+        // ===== FUNÇÕES DE FORMATAÇÃO =====
         function formatarMoeda(valor) {
             if (!valor && valor !== 0) return '';
             let numero = parseFloat(valor);
@@ -1229,167 +1282,151 @@
             return parseFloat(numero) || 0;
         }
 
-        // Verificar autenticação
-        const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser') || '{}');
-        if (!currentUser.usuarioId) {
-            alert('Você precisa estar autenticado para acessar esta página.');
-            window.location.href = 'index.html';
-            return;
-        }
-            
-            // Carregar dados do processo da URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const numeroProcesso = urlParams.get('processo');
-            
-            if (numeroProcesso) {
-                // Carregar processo do localStorage
-                const processosData = JSON.parse(localStorage.getItem('processos') || '[]');
-                const processo = processosData.find(p => p.numero === numeroProcesso);
-                
-                if (processo) {
-                    // Verificar se o fornecedor foi convidado
-                    if (processo.fornecedoresConvidados && 
-                        processo.fornecedoresConvidados.includes(currentUser.usuarioId)) {
-                        
-                        document.getElementById('numeroProcesso').value = processo.numero;
-                        document.getElementById('objetoProcesso').value = processo.objeto || '';
-                        
-                        if (processo.prazo) {
-                            const prazoDate = new Date(processo.prazo);
-                            document.getElementById('prazoEnvio').value = prazoDate.toLocaleString('pt-BR');
-                        }
-                        
-                        // Carregar dados da empresa do fornecedor
-                        const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
-                        const empresaData = localStorage.getItem(empresaKey);
-                        
-                        if (empresaData) {
-                            const empresa = JSON.parse(empresaData);
-                            // Pré-preencher dados cadastrais
-                            document.getElementById('razaoSocial').value = empresa.razaoSocial || '';
-                            document.getElementById('cnpj').value = empresa.cnpj || '';
-                            document.getElementById('endereco').value = empresa.endereco || '';
-                            document.getElementById('cidade').value = empresa.cidade || '';
-                            document.getElementById('telefone').value = empresa.telefone || '';
-                            document.getElementById('email').value = empresa.email || '';
-                            document.getElementById('respTecnico').value = empresa.respTecnico || '';
-                            document.getElementById('crea').value = empresa.crea || '';
-                        }
-                    } else {
-                        alert('Você não tem permissão para acessar este processo.');
-                        window.location.href = 'dashboard-fornecedor.html';
-                        return;
-                    }
-                } else {
-                    alert('Processo não encontrado.');
-                    window.location.href = 'dashboard-fornecedor.html';
-                    return;
-                }
-            } else {
-                alert('Nenhum processo especificado.');
-                window.location.href = 'dashboard-fornecedor.html';
-                return;
-            }
-            
-            // Verificar status da API
-            try {
-                const response = await fetch(`${API_URL}/api/status`);
-                const status = await response.json();
-                console.log('Status da API:', status);
-            } catch (error) {
-                console.error('Erro ao conectar com API:', error);
-                mostrarMensagem('⚠️ Servidor offline. Dados serão salvos localmente.', 'error');
-            }
-            
-            // Inicializar cronograma
-            calcularCronograma();
-            updateProgress();
-            
-            // Carregar dados salvos se existir
-            const rascunhoKey = `proposta_rascunho_${currentUser.usuarioId}_${numeroProcesso}`;
-            const dadosSalvos = localStorage.getItem(rascunhoKey);
-            if (dadosSalvos) {
-                if (confirm('Há um rascunho salvo. Deseja recuperá-lo?')) {
-                    carregarRascunho(JSON.parse(dadosSalvos));
-                }
-            }
-        });
-
-        async function enviarProposta() {
-            // Validações básicas
-            const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia', 'metodologia', 'prazoExecucao'];
-            let tudoPreenchido = true;
-            
-            for (const campo of camposObrigatorios) {
-                const elemento = document.getElementById(campo);
-                if (!elemento || !elemento.value.trim()) {
-                    tudoPreenchido = false;
-                    if (elemento) {
-                        elemento.style.borderColor = '#e74c3c';
-                    }
-                }
-            }
-            
-            if (!tudoPreenchido) {
-                mostrarMensagem('Por favor, preencha todos os campos obrigatórios (*)', 'error');
-                return;
-            }
-            
-            // Mostrar modal de revisão
-            gerarRevisaoFinal();
-            document.getElementById('modalRevisao').style.display = 'block';
-        }
-
-        function showTab(tabName, buttonElement) {
-            document.querySelectorAll('.form-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.getElementById(tabName).classList.add('active');
-            buttonElement.classList.add('active');
-            
-            currentTab = tabName;
-            updateProgress();
-            
-            if (tabName === 'comercial') {
-                copiarObjetoParaComercial();
-                copiarDadosTecnicaParaComercial();
-            }
-            
-            if (tabName === 'revisao') {
-                gerarRevisao();
-            }
-        }
-
-        function updateProgress() {
-            const tabs = ['dados', 'resumo', 'tecnica', 'comercial', 'revisao'];
-            const currentIndex = tabs.indexOf(currentTab);
-            const progress = ((currentIndex + 1) / tabs.length) * 100;
-            
-            document.getElementById('progressFill').style.width = progress + '%';
-            document.getElementById('progressText').textContent = Math.round(progress) + '%';
-        }
-
-        function atualizarResumo() {
-            const prazo = document.getElementById('prazoExecucaoResumo').value;
-            const pagamento = document.getElementById('formaPagamentoResumo').value;
-            const valorTotal = document.getElementById('valorTotalCalculado').textContent;
-            
-            document.getElementById('prazoResumo').textContent = prazo || '-- dias';
-            document.getElementById('pagamentoResumo').textContent = pagamento || 'A definir';
-            document.getElementById('precoTotalResumo').textContent = valorTotal;
-        }
-
+        // ===== FUNÇÕES DE CÓPIA ENTRE ABAS =====
         function copiarObjetoParaComercial() {
             const objetoTecnico = document.getElementById('objetoConcorrencia').value;
             document.getElementById('objetoComercial').value = objetoTecnico;
         }
 
-        // Funções para adicionar linhas nas tabelas
+        function copiarServicosTecnicaParaComercial() {
+            const servicosTecnica = coletarTabela('servicosTecnicaTable');
+            const tbody = document.querySelector('#servicosTable tbody');
+            
+            const valoresAtuais = {};
+            document.querySelectorAll('#servicosTable tbody tr').forEach((row, index) => {
+                const qtd = row.cells[3].querySelector('input')?.value;
+                const preco = row.cells[4].querySelector('input')?.value;
+                if (qtd || preco) {
+                    valoresAtuais[index] = { qtd, preco };
+                }
+            });
+            
+            tbody.innerHTML = '';
+            
+            servicosTecnica.forEach((servico, index) => {
+                const newRow = tbody.insertRow();
+                const valores = valoresAtuais[index] || {};
+                const quantidadeTecnica = servico[3] || '';
+                const quantidadeComercial = valores.qtd || quantidadeTecnica;
+                newRow.innerHTML = `
+                    <td><input type="text" value="${index + 1}" readonly></td>
+                    <td><input type="text" value="${servico[1]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="text" value="${servico[2]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="number" placeholder="100" value="${quantidadeComercial}" onchange="calcTotal(this)"></td>
+                    <td><input type="number" placeholder="50.00" step="0.01" value="${valores.preco || ''}" onchange="calcTotal(this)"></td>
+                    <td><input type="text" readonly></td>
+                    <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                `;
+                
+                if (quantidadeComercial && valores.preco) {
+                    calcTotal(newRow.cells[3].querySelector('input'));
+                }
+            });
+        }
+
+        function copiarDadosTecnicaParaComercial() {
+            copiarServicosTecnicaParaComercial();
+            
+            // Copiar Mão de Obra
+            const maoObraTecnica = coletarTabela('equipeTable');
+            const tbodyMO = document.querySelector('#maoObraTable tbody');
+            
+            const salariosAtuais = {};
+            document.querySelectorAll('#maoObraTable tbody tr').forEach((row, index) => {
+                const salario = row.cells[3].querySelector('input')?.value;
+                const encargos = row.cells[4].querySelector('input')?.value;
+                if (salario) {
+                    salariosAtuais[index] = { salario, encargos: encargos || '80' };
+                }
+            });
+            
+            tbodyMO.innerHTML = '';
+            
+            maoObraTecnica.forEach((item, index) => {
+                const valores = salariosAtuais[index] || {};
+                const newRow = tbodyMO.insertRow();
+                newRow.innerHTML = `
+                    <td><input type="text" value="${item[0]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="number" value="${item[1]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="number" value="${item[2]}" readonly style="background: #f8f9fa;" step="0.1"></td>
+                    <td><input type="number" placeholder="3500" value="${valores.salario || ''}" onchange="calcMaoObra(this)" step="0.01"></td>
+                    <td><input type="number" placeholder="80" value="${valores.encargos || '80'}" onchange="calcMaoObra(this)" step="0.1"></td>
+                    <td><input type="text" readonly></td>
+                    <td><input type="text" readonly></td>
+                    <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                `;
+                
+                if (valores.salario) {
+                    calcMaoObra(newRow.cells[3].querySelector('input'));
+                }
+            });
+            
+            // Copiar Materiais
+            const materiaisTecnica = coletarTabela('materiaisTable');
+            const tbodyMat = document.querySelector('#materiaisComercialTable tbody');
+            
+            const precosMateriais = {};
+            document.querySelectorAll('#materiaisComercialTable tbody tr').forEach((row, index) => {
+                const preco = row.cells[4].querySelector('input')?.value;
+                if (preco) {
+                    precosMateriais[index] = preco;
+                }
+            });
+            
+            tbodyMat.innerHTML = '';
+            
+            materiaisTecnica.forEach((item, index) => {
+                const preco = precosMateriais[index] || '';
+                const newRow = tbodyMat.insertRow();
+                newRow.innerHTML = `
+                    <td><input type="text" value="${item[0]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="text" value="${item[1]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="text" value="${item[2]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="text" value="${item[3]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="number" placeholder="50.00" step="0.01" value="${preco}" onchange="calcMaterial(this)"></td>
+                    <td><input type="text" readonly></td>
+                    <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                `;
+                
+                if (preco) {
+                    calcMaterial(newRow.cells[4].querySelector('input'));
+                }
+            });
+            
+            // Copiar Equipamentos
+            const equipamentosTecnica = coletarTabela('equipamentosTable');
+            const tbodyEq = document.querySelector('#equipamentosComercialTable tbody');
+            
+            const precosEquipamentos = {};
+            document.querySelectorAll('#equipamentosComercialTable tbody tr').forEach((row, index) => {
+                const preco = row.cells[4].querySelector('input')?.value;
+                if (preco) {
+                    precosEquipamentos[index] = preco;
+                }
+            });
+            
+            tbodyEq.innerHTML = '';
+            
+            equipamentosTecnica.forEach((item, index) => {
+                const preco = precosEquipamentos[index] || '';
+                const newRow = tbodyEq.insertRow();
+                newRow.innerHTML = `
+                    <td><input type="text" value="${item[0]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="text" value="${item[1]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="text" value="${item[3]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="text" value="${item[4]}" readonly style="background: #f8f9fa;"></td>
+                    <td><input type="number" placeholder="800" step="0.01" value="${preco}" onchange="calcEquipamento(this)"></td>
+                    <td><input type="text" readonly></td>
+                    <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                `;
+                
+                if (preco) {
+                    calcEquipamento(newRow.cells[4].querySelector('input'));
+                }
+            });
+        }
+
+        // ===== FUNÇÕES PARA ADICIONAR LINHAS NAS TABELAS =====
         function addEquipeRow() {
             const tbody = document.querySelector('#equipeTable tbody');
             const newRow = tbody.insertRow();
@@ -1464,152 +1501,6 @@
             renumerarTabela('servicosTecnicaTable');
         }
 
-        function renumerarTabela(tableId) {
-            const tbody = document.querySelector(`#${tableId} tbody`);
-            const rows = tbody.rows;
-            for (let i = 0; i < rows.length; i++) {
-                const firstInput = rows[i].cells[0].querySelector('input');
-                if (firstInput && firstInput.readOnly) {
-                    firstInput.value = i + 1;
-                }
-            }
-        }
-
-        function copiarServicosTecnicaParaComercial() {
-            const servicosTecnica = coletarTabela('servicosTecnicaTable');
-            const tbody = document.querySelector('#servicosTable tbody');
-            
-            const valoresAtuais = {};
-            document.querySelectorAll('#servicosTable tbody tr').forEach((row, index) => {
-                const qtd = row.cells[3].querySelector('input')?.value;
-                const preco = row.cells[4].querySelector('input')?.value;
-                if (qtd || preco) {
-                    valoresAtuais[index] = { qtd, preco };
-                }
-            });
-            
-            tbody.innerHTML = '';
-            
-            servicosTecnica.forEach((servico, index) => {
-                const newRow = tbody.insertRow();
-                const valores = valoresAtuais[index] || {};
-                const quantidadeTecnica = servico[3] || '';
-                const quantidadeComercial = valores.qtd || quantidadeTecnica;
-                newRow.innerHTML = `
-                    <td><input type="text" value="${index + 1}" readonly></td>
-                    <td><input type="text" value="${servico[1]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="text" value="${servico[2]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="number" placeholder="100" value="${quantidadeComercial}" onchange="calcTotal(this)"></td>
-                    <td><input type="number" placeholder="50.00" step="0.01" value="${valores.preco || ''}" onchange="calcTotal(this)"></td>
-                    <td><input type="text" readonly></td>
-                    <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
-                `;
-                
-                if (quantidadeComercial && valores.preco) {
-                    calcTotal(newRow.cells[3].querySelector('input'));
-                }
-            });
-        }
-
-        function copiarDadosTecnicaParaComercial() {
-            copiarServicosTecnicaParaComercial();
-            
-            const maoObraTecnica = coletarTabela('equipeTable');
-            const tbodyMO = document.querySelector('#maoObraTable tbody');
-            
-            const salariosAtuais = {};
-            document.querySelectorAll('#maoObraTable tbody tr').forEach((row, index) => {
-                const salario = row.cells[3].querySelector('input')?.value;
-                const encargos = row.cells[4].querySelector('input')?.value;
-                if (salario) {
-                    salariosAtuais[index] = { salario, encargos: encargos || '80' };
-                }
-            });
-            
-            tbodyMO.innerHTML = '';
-            
-            maoObraTecnica.forEach((item, index) => {
-                const valores = salariosAtuais[index] || {};
-                const newRow = tbodyMO.insertRow();
-                newRow.innerHTML = `
-                    <td><input type="text" value="${item[0]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="number" value="${item[1]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="number" value="${item[2]}" readonly style="background: #f8f9fa;" step="0.1"></td>
-                    <td><input type="number" placeholder="3500" value="${valores.salario || ''}" onchange="calcMaoObra(this)" step="0.01"></td>
-                    <td><input type="number" placeholder="80" value="${valores.encargos || '80'}" onchange="calcMaoObra(this)" step="0.1"></td>
-                    <td><input type="text" readonly></td>
-                    <td><input type="text" readonly></td>
-                    <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
-                `;
-                
-                if (valores.salario) {
-                    calcMaoObra(newRow.cells[3].querySelector('input'));
-                }
-            });
-            
-            const materiaisTecnica = coletarTabela('materiaisTable');
-            const tbodyMat = document.querySelector('#materiaisComercialTable tbody');
-            
-            const precosMateriais = {};
-            document.querySelectorAll('#materiaisComercialTable tbody tr').forEach((row, index) => {
-                const preco = row.cells[4].querySelector('input')?.value;
-                if (preco) {
-                    precosMateriais[index] = preco;
-                }
-            });
-            
-            tbodyMat.innerHTML = '';
-            
-            materiaisTecnica.forEach((item, index) => {
-                const preco = precosMateriais[index] || '';
-                const newRow = tbodyMat.insertRow();
-                newRow.innerHTML = `
-                    <td><input type="text" value="${item[0]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="text" value="${item[1]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="text" value="${item[2]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="text" value="${item[3]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="number" placeholder="50.00" step="0.01" value="${preco}" onchange="calcMaterial(this)"></td>
-                    <td><input type="text" readonly></td>
-                    <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
-                `;
-                
-                if (preco) {
-                    calcMaterial(newRow.cells[4].querySelector('input'));
-                }
-            });
-            
-            const equipamentosTecnica = coletarTabela('equipamentosTable');
-            const tbodyEq = document.querySelector('#equipamentosComercialTable tbody');
-            
-            const precosEquipamentos = {};
-            document.querySelectorAll('#equipamentosComercialTable tbody tr').forEach((row, index) => {
-                const preco = row.cells[4].querySelector('input')?.value;
-                if (preco) {
-                    precosEquipamentos[index] = preco;
-                }
-            });
-            
-            tbodyEq.innerHTML = '';
-            
-            equipamentosTecnica.forEach((item, index) => {
-                const preco = precosEquipamentos[index] || '';
-                const newRow = tbodyEq.insertRow();
-                newRow.innerHTML = `
-                    <td><input type="text" value="${item[0]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="text" value="${item[1]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="text" value="${item[3]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="text" value="${item[4]}" readonly style="background: #f8f9fa;"></td>
-                    <td><input type="number" placeholder="800" step="0.01" value="${preco}" onchange="calcEquipamento(this)"></td>
-                    <td><input type="text" readonly></td>
-                    <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
-                `;
-                
-                if (preco) {
-                    calcEquipamento(newRow.cells[4].querySelector('input'));
-                }
-            });
-        }
-
         function addServicoRow() {
             const tbody = document.querySelector('#servicosTable tbody');
             const nextItem = tbody.rows.length + 1;
@@ -1680,6 +1571,17 @@
             adicionarFormatacaoMoeda(precoInput);
         }
 
+        function renumerarTabela(tableId) {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            const rows = tbody.rows;
+            for (let i = 0; i < rows.length; i++) {
+                const firstInput = rows[i].cells[0].querySelector('input');
+                if (firstInput && firstInput.readOnly) {
+                    firstInput.value = i + 1;
+                }
+            }
+        }
+
         function removeRow(button) {
             const row = button.closest('tr');
             const table = row.closest('table');
@@ -1692,7 +1594,7 @@
             calcularTotais();
         }
 
-        // Cálculos financeiros
+        // ===== CÁLCULOS FINANCEIROS =====
         function calcMaoObra(input) {
             const row = input.closest('tr');
             const cells = row.cells;
@@ -1850,6 +1752,7 @@
             calcBDI();
         }
 
+        // ===== FUNÇÕES AUXILIARES =====
         function coletarTabela(tableId) {
             const dados = [];
             const rows = document.querySelectorAll(`#${tableId} tbody tr`);
@@ -1865,86 +1768,6 @@
             });
             
             return dados;
-        }
-
-        function gerarRevisao() {
-            const valorTotal = document.getElementById('valorTotalCalculado').textContent;
-            const prazo = document.getElementById('prazoExecucao').value || 'Não informado';
-            const empresa = document.getElementById('razaoSocial').value || 'Não informado';
-            
-            const html = `
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <h3 style="color: #2c3e50; margin-bottom: 15px;">📊 Resumo da Proposta</h3>
-                    <p><strong>Empresa:</strong> ${empresa}</p>
-                    <p><strong>Processo:</strong> ${document.getElementById('numeroProcesso').value}</p>
-                    <p><strong>Objeto:</strong> ${document.getElementById('objetoProcesso').value}</p>
-                    <p><strong>Prazo de Execução:</strong> ${prazo}</p>
-                    <p><strong>Valor Total:</strong> R$ ${valorTotal}</p>
-                </div>
-                
-                <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; border-left: 5px solid #27ae60;">
-                    <h4 style="color: #27ae60;">✅ Checklist de Documentos</h4>
-                    <ul style="list-style: none; padding-left: 0;">
-                        <li>☑️ Dados cadastrais completos</li>
-                        <li>☑️ Proposta técnica detalhada</li>
-                        <li>☑️ Proposta comercial com valores</li>
-                        <li>☑️ BDI calculado</li>
-                    </ul>
-                </div>
-            `;
-            
-            document.getElementById('resumoProposta').innerHTML = html;
-        }
-
-        function gerarPreview() {
-            const dados = coletarDados();
-            const protocolo = gerarProtocolo();
-            
-            const preview = window.open('', '_blank');
-            preview.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Preview - Proposta ${protocolo}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; }
-                        h1, h2, h3 { color: #2c3e50; }
-                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background: #3498db; color: white; }
-                        .section { margin: 30px 0; }
-                        .total { font-weight: bold; color: #27ae60; }
-                    </style>
-                </head>
-                <body>
-                    <h1>PROPOSTA TÉCNICA E COMERCIAL</h1>
-                    <p><strong>Protocolo:</strong> ${protocolo}</p>
-                    <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
-                    
-                    <div class="section">
-                        <h2>1. DADOS DA EMPRESA</h2>
-                        <p><strong>Razão Social:</strong> ${dados.dados.razaoSocial}</p>
-                        <p><strong>CNPJ:</strong> ${dados.dados.cnpj}</p>
-                        <p><strong>E-mail:</strong> ${dados.dados.email}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <h2>2. OBJETO</h2>
-                        <p>${dados.tecnica.objetoConcorrencia}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <h2>3. VALOR TOTAL</h2>
-                        <p class="total">R$ ${dados.comercial.valorTotal}</p>
-                    </div>
-                    
-                    <p style="text-align: center; margin-top: 50px;">
-                        <button onclick="window.print()">🖨️ Imprimir</button>
-                        <button onclick="window.close()">❌ Fechar</button>
-                    </p>
-                </body>
-                </html>
-            `);
         }
 
         function coletarDados() {
@@ -2015,6 +1838,36 @@
             const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
             
             return `PROP-${ano}${mes}${dia}-${hora}${minuto}-${random}`;
+        }
+
+        // ===== FUNÇÕES DE REVISÃO E ENVIO =====
+        function gerarRevisao() {
+            const valorTotal = document.getElementById('valorTotalCalculado').textContent;
+            const prazo = document.getElementById('prazoExecucao').value || 'Não informado';
+            const empresa = document.getElementById('razaoSocial').value || 'Não informado';
+            
+            const html = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">📊 Resumo da Proposta</h3>
+                    <p><strong>Empresa:</strong> ${empresa}</p>
+                    <p><strong>Processo:</strong> ${document.getElementById('numeroProcesso').value}</p>
+                    <p><strong>Objeto:</strong> ${document.getElementById('objetoProcesso').value}</p>
+                    <p><strong>Prazo de Execução:</strong> ${prazo}</p>
+                    <p><strong>Valor Total:</strong> R$ ${valorTotal}</p>
+                </div>
+                
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; border-left: 5px solid #27ae60;">
+                    <h4 style="color: #27ae60;">✅ Checklist de Documentos</h4>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li>☑️ Dados cadastrais completos</li>
+                        <li>☑️ Proposta técnica detalhada</li>
+                        <li>☑️ Proposta comercial com valores</li>
+                        <li>☑️ BDI calculado</li>
+                    </ul>
+                </div>
+            `;
+            
+            document.getElementById('resumoProposta').innerHTML = html;
         }
 
         function gerarRevisaoFinal() {
@@ -2099,6 +1952,82 @@
             document.getElementById('conteudoRevisao').innerHTML = html;
         }
 
+        function gerarPreview() {
+            const dados = coletarDados();
+            const protocolo = gerarProtocolo();
+            
+            const preview = window.open('', '_blank');
+            preview.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Preview - Proposta ${protocolo}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; }
+                        h1, h2, h3 { color: #2c3e50; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background: #3498db; color: white; }
+                        .section { margin: 30px 0; }
+                        .total { font-weight: bold; color: #27ae60; }
+                    </style>
+                </head>
+                <body>
+                    <h1>PROPOSTA TÉCNICA E COMERCIAL</h1>
+                    <p><strong>Protocolo:</strong> ${protocolo}</p>
+                    <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                    
+                    <div class="section">
+                        <h2>1. DADOS DA EMPRESA</h2>
+                        <p><strong>Razão Social:</strong> ${dados.dados.razaoSocial}</p>
+                        <p><strong>CNPJ:</strong> ${dados.dados.cnpj}</p>
+                        <p><strong>E-mail:</strong> ${dados.dados.email}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <h2>2. OBJETO</h2>
+                        <p>${dados.tecnica.objetoConcorrencia}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <h2>3. VALOR TOTAL</h2>
+                        <p class="total">R$ ${dados.comercial.valorTotal}</p>
+                    </div>
+                    
+                    <p style="text-align: center; margin-top: 50px;">
+                        <button onclick="window.print()">🖨️ Imprimir</button>
+                        <button onclick="window.close()">❌ Fechar</button>
+                    </p>
+                </body>
+                </html>
+            `);
+        }
+
+        async function enviarProposta() {
+            // Validações básicas
+            const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia', 'metodologia', 'prazoExecucao'];
+            let tudoPreenchido = true;
+            
+            for (const campo of camposObrigatorios) {
+                const elemento = document.getElementById(campo);
+                if (!elemento || !elemento.value.trim()) {
+                    tudoPreenchido = false;
+                    if (elemento) {
+                        elemento.style.borderColor = '#e74c3c';
+                    }
+                }
+            }
+            
+            if (!tudoPreenchido) {
+                mostrarMensagem('Por favor, preencha todos os campos obrigatórios (*)', 'error');
+                return;
+            }
+            
+            // Mostrar modal de revisão
+            gerarRevisaoFinal();
+            document.getElementById('modalRevisao').style.display = 'block';
+        }
+
         function fecharModalRevisao() {
             document.getElementById('modalRevisao').style.display = 'none';
             document.getElementById('confirmacaoFinal').checked = false;
@@ -2119,21 +2048,12 @@
             }
         }
 
-        // FUNÇÃO AJUSTADA PARA ENVIO COMPLETO
         async function confirmarEnvioFinal() {
             fecharModalRevisao();
             
             const dados = coletarDados();
             const protocolo = gerarProtocolo();
             
-            // Obter dados do usuário autenticado
-            const authData = localStorage.getItem('auth');
-            if (!authData) {
-                alert('Erro: Usuário não autenticado.');
-                return;
-            }
-            
-            const currentUser = JSON.parse(authData);
             const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
             const empresaData = JSON.parse(localStorage.getItem(empresaKey) || '{}');
             
@@ -2144,25 +2064,25 @@
                 protocolo: protocolo,
                 processo: dados.processo,
                 dataEnvio: new Date().toISOString(),
+                data: new Date().toISOString(),
                 status: 'enviada',
-                dados: {
-                    fornecedorId: currentUser.usuarioId,
-                    fornecedorNome: currentUser.nome,
-                    empresa: empresaData.nomeFantasia || empresaData.razaoSocial || dados.dados.razaoSocial,
-                    cnpj: dados.dados.cnpj
-                },
-                ...dados // Inclui todos os dados coletados (dados, resumo, tecnica, comercial)
+                fornecedorId: currentUser.usuarioId,
+                empresa: empresaData.nomeFantasia || empresaData.razaoSocial || dados.dados.razaoSocial,
+                cnpj: dados.dados.cnpj,
+                valor: dados.comercial.valorTotal,
+                prazo: parseInt(dados.tecnica.prazoExecucao) || 0,
+                dados: dados
             };
+            
+            // Salvar no localStorage
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            propostas.push(propostaCompleta);
+            localStorage.setItem('propostas', JSON.stringify(propostas));
             
             // Enviar para API
             const resultado = await enviarPropostaAPI(propostaCompleta);
             
             if (resultado.success) {
-                // Salvar também no localStorage
-                const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-                propostas.push(propostaCompleta);
-                localStorage.setItem('propostas', JSON.stringify(propostas));
-                
                 // Notificar o comprador
                 const processos = JSON.parse(localStorage.getItem('processos') || '[]');
                 const processo = processos.find(p => p.numero === dados.processo);
@@ -2174,7 +2094,7 @@
                         id: 'notif_' + Date.now(),
                         tipo: 'nova_proposta',
                         titulo: '📄 Nova Proposta Recebida',
-                        mensagem: `${propostaCompleta.dados.empresa} enviou proposta para ${processo.numero}`,
+                        mensagem: `${propostaCompleta.empresa} enviou proposta para ${processo.numero}`,
                         destinatario: processo.criadoPor,
                         remetente: currentUser.nome,
                         data: new Date().toISOString(),
@@ -2257,25 +2177,101 @@
             }
         }
 
-        // Auto-save - AJUSTADO PARA SALVAR POR USUÁRIO E PROCESSO
-        setInterval(() => {
-            const authData = localStorage.getItem('auth');
-            if (authData) {
-                const currentUser = JSON.parse(authData);
-                const urlParams = new URLSearchParams(window.location.search);
-                const numeroProcesso = urlParams.get('processo');
+        // ===== INICIALIZAÇÃO =====
+        window.addEventListener('DOMContentLoaded', async function() {
+            // Verificar autenticação
+            currentUser = JSON.parse(sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser') || '{}');
+            if (!currentUser.usuarioId) {
+                alert('Você precisa estar autenticado para acessar esta página.');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Carregar dados do processo da URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const numeroProcesso = urlParams.get('processo');
+            
+            if (numeroProcesso) {
+                // Carregar processo do localStorage
+                const processosData = JSON.parse(localStorage.getItem('processos') || '[]');
+                const processo = processosData.find(p => p.numero === numeroProcesso);
                 
-                if (numeroProcesso) {
-                    const dados = coletarDados();
-                    const rascunhoKey = `proposta_rascunho_${currentUser.usuarioId}_${numeroProcesso}`;
-                    localStorage.setItem(rascunhoKey, JSON.stringify(dados));
-                    console.log('Rascunho salvo automaticamente');
+                if (processo) {
+                    // Verificar se o fornecedor foi convidado
+                    if (processo.fornecedoresConvidados && 
+                        processo.fornecedoresConvidados.includes(currentUser.usuarioId)) {
+                        
+                        document.getElementById('numeroProcesso').value = processo.numero;
+                        document.getElementById('objetoProcesso').value = processo.objeto || '';
+                        
+                        if (processo.prazo) {
+                            const prazoDate = new Date(processo.prazo);
+                            document.getElementById('prazoEnvio').value = prazoDate.toLocaleString('pt-BR');
+                        }
+                        
+                        // Carregar dados da empresa do fornecedor
+                        const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
+                        const empresaData = localStorage.getItem(empresaKey);
+                        
+                        if (empresaData) {
+                            const empresa = JSON.parse(empresaData);
+                            // Pré-preencher dados cadastrais
+                            document.getElementById('razaoSocial').value = empresa.razaoSocial || '';
+                            document.getElementById('cnpj').value = empresa.cnpj || '';
+                            document.getElementById('endereco').value = empresa.endereco || '';
+                            document.getElementById('cidade').value = empresa.cidade || '';
+                            document.getElementById('telefone').value = empresa.telefone || '';
+                            document.getElementById('email').value = empresa.email || '';
+                            document.getElementById('respTecnico').value = empresa.respTecnico || '';
+                            document.getElementById('crea').value = empresa.crea || '';
+                        }
+                    } else {
+                        alert('Você não tem permissão para acessar este processo.');
+                        window.location.href = 'dashboard-fornecedor.html';
+                        return;
+                    }
+                } else {
+                    alert('Processo não encontrado.');
+                    window.location.href = 'dashboard-fornecedor.html';
+                    return;
+                }
+            } else {
+                alert('Nenhum processo especificado.');
+                window.location.href = 'dashboard-fornecedor.html';
+                return;
+            }
+            
+            // Verificar status da API
+            try {
+                const response = await fetch(`${API_URL}/api/status`);
+                const status = await response.json();
+                console.log('Status da API:', status);
+            } catch (error) {
+                console.error('Erro ao conectar com API:', error);
+                mostrarMensagem('⚠️ Servidor offline. Dados serão salvos localmente.', 'error');
+            }
+            
+            // Inicializar cronograma
+            calcularCronograma();
+            updateProgress();
+            
+            // Carregar dados salvos se existir
+            const rascunhoKey = `proposta_rascunho_${currentUser.usuarioId}_${numeroProcesso}`;
+            const dadosSalvos = localStorage.getItem(rascunhoKey);
+            if (dadosSalvos) {
+                if (confirm('Há um rascunho salvo. Deseja recuperá-lo?')) {
+                    carregarRascunho(JSON.parse(dadosSalvos));
                 }
             }
-        }, 30000);
-        
-        // Aplicar formatação aos campos de moeda ao carregar
-        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Auto-save
+            setInterval(() => {
+                const dados = coletarDados();
+                localStorage.setItem(rascunhoKey, JSON.stringify(dados));
+                console.log('Rascunho salvo automaticamente');
+            }, 30000);
+            
+            // Aplicar formatação aos campos de moeda
             document.querySelectorAll('#servicosTable input[onchange*="calcTotal"]').forEach(input => {
                 if (input.closest('td').cellIndex === 4) {
                     adicionarFormatacaoMoeda(input);
