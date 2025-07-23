@@ -1234,15 +1234,25 @@
             console.log('Portal de propostas carregado!');
             console.log('API URL:', API_URL);
             
-            // Verificar autenticação
-            const authData = localStorage.getItem('auth');
-            if (!authData) {
-                alert('Você precisa estar autenticado para acessar esta página.');
-                window.location.href = 'index.html';
-                return;
-            }
+            // Verificar autenticação - CORRIGIDO
+            let currentUser = null;
             
-            const currentUser = JSON.parse(authData);
+            // Tentar buscar do sessionStorage primeiro (compatibilidade com auth.js)
+            const sessionAuth = sessionStorage.getItem('currentUser');
+            if (sessionAuth) {
+                currentUser = JSON.parse(sessionAuth);
+            } else {
+                // Fallback para localStorage
+                const authData = localStorage.getItem('auth');
+                if (authData) {
+                    currentUser = JSON.parse(authData);
+                } else {
+                    // Se não encontrar autenticação
+                    alert('Você precisa estar autenticado para acessar esta página.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+            }
             
             // Carregar dados do processo da URL
             const urlParams = new URLSearchParams(window.location.search);
