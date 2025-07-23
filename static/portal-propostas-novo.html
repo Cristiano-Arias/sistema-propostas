@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal de Envio de Propostas</title>
     
+    <!-- Carregar sistema de autenticação -->
+    <script src="auth.js"></script>
+    
     <!-- Configuração da API -->
     <script>
         // Detecta automaticamente se está local ou em produção
@@ -1120,28 +1123,17 @@
         let currentTab = 'dados';
         let currentUser = null;
         
-        // ===== CORREÇÃO 1: Verificar e carregar usuário corretamente =====
+        // ===== INTEGRAÇÃO COM SISTEMA DE AUTENTICAÇÃO EXISTENTE =====
         document.addEventListener('DOMContentLoaded', async function() {
-            // Tentar carregar usuário de múltiplas fontes
-            const authData = sessionStorage.getItem('currentUser') || 
-                           localStorage.getItem('currentUser') || 
-                           localStorage.getItem('auth');
+            // Usar o sistema de autenticação existente
+            currentUser = Auth.verificarAutenticacao(['fornecedor', 'admin']);
             
-            if (!authData) {
-                alert('Você precisa estar autenticado para acessar esta página.');
-                window.location.href = 'index.html';
+            if (!currentUser) {
+                // A função verificarAutenticacao já redireciona se não autenticado
                 return;
             }
             
-            try {
-                currentUser = JSON.parse(authData);
-                console.log('Usuário carregado:', currentUser);
-            } catch (e) {
-                console.error('Erro ao carregar dados do usuário:', e);
-                alert('Erro ao carregar dados do usuário. Por favor, faça login novamente.');
-                window.location.href = 'index.html';
-                return;
-            }
+            console.log('Usuário autenticado:', currentUser);
             
             // Carregar dados do processo da URL
             const urlParams = new URLSearchParams(window.location.search);
@@ -1165,25 +1157,27 @@
                             document.getElementById('prazoEnvio').value = prazoDate.toLocaleString('pt-BR');
                         }
                         
-                        // CORREÇÃO 2: Carregar dados da empresa do fornecedor
-                        const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
-                        const empresaData = localStorage.getItem(empresaKey);
+                        // CORREÇÃO: Usar função do Auth.js para carregar dados da empresa
+                        const empresaData = Auth.obterDadosEmpresa(currentUser.usuarioId);
                         
                         if (empresaData) {
-                            const empresa = JSON.parse(empresaData);
-                            console.log('Dados da empresa carregados:', empresa);
+                            console.log('Dados da empresa carregados:', empresaData);
                             
                             // Pré-preencher dados cadastrais
-                            document.getElementById('razaoSocial').value = empresa.razaoSocial || '';
-                            document.getElementById('cnpj').value = empresa.cnpj || '';
-                            document.getElementById('endereco').value = empresa.endereco || '';
-                            document.getElementById('cidade').value = empresa.cidade || '';
-                            document.getElementById('telefone').value = empresa.telefone || '';
-                            document.getElementById('email').value = empresa.email || '';
-                            document.getElementById('respTecnico').value = empresa.respTecnico || '';
-                            document.getElementById('crea').value = empresa.crea || '';
+                            document.getElementById('razaoSocial').value = empresaData.razaoSocial || '';
+                            document.getElementById('cnpj').value = empresaData.cnpj || '';
+                            document.getElementById('endereco').value = empresaData.endereco || '';
+                            document.getElementById('cidade').value = empresaData.cidade || '';
+                            document.getElementById('telefone').value = empresaData.telefone || '';
+                            document.getElementById('email').value = empresaData.email || '';
+                            document.getElementById('respTecnico').value = empresaData.respTecnico || '';
+                            document.getElementById('crea').value = empresaData.crea || '';
                         } else {
-                            console.log('Dados da empresa não encontrados para:', empresaKey);
+                            console.log('Dados da empresa não encontrados');
+                            // Se não tiver dados da empresa, usar dados do usuário
+                            if (currentUser.email) {
+                                document.getElementById('email').value = currentUser.email;
+                            }
                         }
                     } else {
                         alert('Você não tem permissão para acessar este processo.');
@@ -2169,8 +2163,7 @@
                 return;
             }
             
-            const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
-            const empresaData = JSON.parse(localStorage.getItem(empresaKey) || '{}');
+            const empresaData = Auth.obterDadosEmpresa(currentUser.usuarioId);
             
             mostrarMensagem('<span class="loading"></span> Enviando proposta...', 'info');
             
@@ -2183,7 +2176,7 @@
                 status: 'enviada',
                 
                 // Dados da empresa
-                empresa: empresaData.nomeFantasia || empresaData.razaoSocial || dados.dados.razaoSocial,
+                empresa: empresaData?.nomeFantasia || empresaData?.razaoSocial || dados.dados.razaoSocial,
                 cnpj: dados.dados.cnpj,
                 fornecedorId: currentUser.usuarioId,
                 
@@ -2195,7 +2188,7 @@
                 dados: {
                     fornecedorId: currentUser.usuarioId,
                     fornecedorNome: currentUser.nome,
-                    empresa: empresaData.nomeFantasia || empresaData.razaoSocial || dados.dados.razaoSocial,
+                    empresa: empresaData?.nomeFantasia || empresaData?.razaoSocial || dados.dados.razaoSocial,
                     cnpj: dados.dados.cnpj,
                     
                     // Dados cadastrais
@@ -2236,24 +2229,19 @@
                 const processo = processos.find(p => p.numero === dados.processo);
                 
                 if (processo && processo.criadoPor) {
-                    // Criar notificação para o comprador
-                    const notificacoes = JSON.parse(localStorage.getItem('notificacoes') || '[]');
-                    notificacoes.push({
-                        id: 'notif_' + Date.now(),
+                    // Usar sistema de notificações do Auth.js
+                    Auth.Notificacoes.criar({
                         tipo: 'nova_proposta',
                         titulo: '📄 Nova Proposta Recebida',
                         mensagem: `${propostaCompleta.empresa} enviou proposta para ${processo.numero}`,
                         destinatario: processo.criadoPor,
                         remetente: currentUser.nome,
-                        data: new Date().toISOString(),
-                        lida: false,
                         metadata: {
                             processoId: processo.numero,
                             propostaId: protocolo,
                             valor: dados.comercial.valorTotal
                         }
                     });
-                    localStorage.setItem('notificacoes', JSON.stringify(notificacoes));
                 }
                 
                 mostrarMensagem(`
