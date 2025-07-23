@@ -380,11 +380,6 @@
             color: white;
         }
 
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -427,14 +422,6 @@
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
-        }
-
-        .status-devolvido {
-            background: #fff3cd;
-            color: #856404;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
         }
 
         .empty-state {
@@ -591,36 +578,119 @@
             transform: scale(1.2);
         }
 
-        /* Estilos para visualização de TR */
-        .tr-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
+        /* Estilos melhorados para visualização de TR */
+        .tr-completo-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .tr-section h4 {
+        .tr-header-info {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tr-header-info h3 {
             color: #2c3e50;
             margin-bottom: 15px;
-            font-size: 18px;
+            font-size: 24px;
         }
 
-        .tr-field {
-            margin-bottom: 15px;
+        .tr-meta-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
         }
 
-        .tr-field-label {
-            font-weight: 600;
-            color: #495057;
+        .tr-meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tr-meta-label {
+            font-size: 12px;
+            color: #6c757d;
             margin-bottom: 5px;
-            display: block;
         }
 
-        .tr-field-value {
-            color: #212529;
-            line-height: 1.6;
+        .tr-meta-value {
+            font-size: 16px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .tr-content-section {
+            padding: 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tr-content-section:last-child {
+            border-bottom: none;
+        }
+
+        .tr-section-title {
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tr-section-content {
+            color: #495057;
+            line-height: 1.8;
             white-space: pre-wrap;
+        }
+
+        .tr-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            margin: 0 -30px 20px -30px;
+            padding: 0 30px;
+        }
+
+        .tr-tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tr-tab:hover {
+            color: #495057;
+        }
+
+        .tr-tab.active {
+            color: #667eea;
+        }
+
+        .tr-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+
+        .tr-tab-content {
+            display: none;
+        }
+
+        .tr-tab-content.active {
+            display: block;
         }
 
         /* Estilos para seleção de fornecedores */
@@ -679,6 +749,14 @@
             margin-bottom: 15px;
         }
 
+        .tr-approval-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+
         /* Estilos para detalhes do processo */
         .processo-detalhes-section {
             background: #f8f9fa;
@@ -717,18 +795,37 @@
             font-weight: 600;
         }
 
-        /* Estilos para área de devolução */
-        .devolucao-section {
-            background: #fff3cd;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border: 2px solid #ffc107;
+        /* Estilos para campos do TR completo */
+        .tr-field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
         }
 
-        .devolucao-section h4 {
-            color: #856404;
-            margin-bottom: 15px;
+        .tr-field-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .tr-field-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .tr-field-value {
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .tr-empty-field {
+            color: #adb5bd;
+            font-style: italic;
         }
 
         @media (max-width: 768px) {
@@ -1054,61 +1151,6 @@
         </div>
     </div>
 
-    <!-- Modal para devolução de TR -->
-    <div id="modalDevolverTR" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>↩️ Devolver TR para Requisitante</h2>
-                <span class="close" onclick="fecharModalDevolucao()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="formDevolucaoTR" onsubmit="confirmarDevolucaoTR(event)">
-                    <input type="hidden" id="trIdDevolucao">
-                    
-                    <div class="devolucao-section">
-                        <h4>⚠️ Atenção</h4>
-                        <p>Você está prestes a devolver este Termo de Referência para o requisitante. 
-                        Por favor, forneça observações detalhadas sobre os ajustes necessários.</p>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Motivo da Devolução *</label>
-                        <select id="motivoDevolucao" required>
-                            <option value="">Selecione o motivo...</option>
-                            <option value="especificacao_incompleta">Especificação Técnica Incompleta</option>
-                            <option value="valor_inadequado">Valor Estimado Inadequado</option>
-                            <option value="prazo_inexequivel">Prazo Inexequível</option>
-                            <option value="objeto_mal_definido">Objeto Mal Definido</option>
-                            <option value="documentacao_faltante">Documentação Faltante</option>
-                            <option value="outros">Outros</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Observações Detalhadas *</label>
-                        <textarea id="observacoesDevolucao" rows="6" required 
-                                  placeholder="Descreva detalhadamente os ajustes necessários no TR..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Sugestões de Melhoria</label>
-                        <textarea id="sugestoesDevolucao" rows="4" 
-                                  placeholder="Opcional: Forneça sugestões específicas para melhorar o TR..."></textarea>
-                    </div>
-                    
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button type="submit" class="btn btn-danger">
-                            ↩️ Confirmar Devolução
-                        </button>
-                        <button type="button" class="btn btn-secondary" onclick="fecharModalDevolucao()">
-                            Cancelar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <script>
         let usuarioAtual = null;
         let trSelecionado = null;
@@ -1170,10 +1212,10 @@
                 meusProcessos.some(proc => proc.numero === p.processo)
             );
             
-            // TRs disponíveis (sem processo vinculado e não devolvidos)
+            // TRs disponíveis (sem processo vinculado)
             const trsDisponiveis = trs.filter(tr => {
                 const temProcesso = processos.some(p => p.trId === tr.id);
-                return tr.status === 'ativo' && !temProcesso && !tr.devolvido;
+                return tr.status === 'ativo' && !temProcesso;
             });
             
             // Pareceres pendentes
@@ -1215,10 +1257,10 @@
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
             const processos = JSON.parse(localStorage.getItem('processos') || '[]');
             
-            // Filtrar apenas TRs sem processo vinculado e não devolvidos
+            // Filtrar apenas TRs sem processo vinculado
             const trsDisponiveis = trs.filter(tr => {
                 const temProcesso = processos.some(p => p.trId === tr.id);
-                return tr.status === 'ativo' && !temProcesso && !tr.devolvido;
+                return tr.status === 'ativo' && !temProcesso;
             });
             
             if (trsDisponiveis.length === 0) {
@@ -1235,7 +1277,7 @@
             });
         }
 
-        // Carregar visualização do TR
+        // Carregar visualização do TR com todos os campos
         function carregarVisualizacaoTR() {
             const selectTR = document.getElementById('trVinculado');
             const trId = selectTR.value;
@@ -1254,39 +1296,149 @@
                 const tr = JSON.parse(option.dataset.trData);
                 trSelecionado = tr;
                 
-                // Criar área de visualização resumida
+                // Criar área de visualização completa
                 areaVisualizacao.innerHTML = `
                     <div class="tr-aprovacao-section">
                         <h4>📋 Termo de Referência Selecionado</h4>
-                        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h3 style="color: #2c3e50; margin-bottom: 15px;">${tr.titulo}</h3>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                                <div>
-                                    <strong>Modalidade:</strong> ${tr.modalidade}
-                                </div>
-                                <div>
-                                    <strong>Criado por:</strong> ${tr.criadorNome}
-                                </div>
-                                <div>
-                                    <strong>Data de Criação:</strong> ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}
+                        <div class="tr-completo-container">
+                            <div class="tr-header-info">
+                                <h3>${tr.titulo}</h3>
+                                <div class="tr-meta-info">
+                                    <div class="tr-meta-item">
+                                        <span class="tr-meta-label">Modalidade</span>
+                                        <span class="tr-meta-value">${tr.modalidade}</span>
+                                    </div>
+                                    <div class="tr-meta-item">
+                                        <span class="tr-meta-label">Criado por</span>
+                                        <span class="tr-meta-value">${tr.criadorNome || 'Não identificado'}</span>
+                                    </div>
+                                    <div class="tr-meta-item">
+                                        <span class="tr-meta-label">Data de Criação</span>
+                                        <span class="tr-meta-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</span>
+                                    </div>
+                                    <div class="tr-meta-item">
+                                        <span class="tr-meta-label">Status</span>
+                                        <span class="tr-meta-value" style="color: #28a745;">✅ ${tr.status || 'Ativo'}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div style="margin-bottom: 20px;">
-                                <strong>Objetivo:</strong>
-                                <p style="margin-top: 5px; color: #6c757d;">${tr.objetivo || 'Não especificado'}</p>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button type="button" class="btn btn-info" onclick="visualizarTRCompleto('${tr.id}')">
-                                    👁️ Visualizar TR Completo
+                            
+                            <!-- Tabs para organizar conteúdo -->
+                            <div class="tr-tabs">
+                                <button class="tr-tab active" onclick="mostrarTabTR('informacoes')">
+                                    📋 Informações Básicas
                                 </button>
+                                <button class="tr-tab" onclick="mostrarTabTR('escopo')">
+                                    🔧 Escopo Técnico
+                                </button>
+                                <button class="tr-tab" onclick="mostrarTabTR('especificacoes')">
+                                    📝 Especificações
+                                </button>
+                                <button class="tr-tab" onclick="mostrarTabTR('prazos')">
+                                    ⏰ Prazos e Local
+                                </button>
+                                <button class="tr-tab" onclick="mostrarTabTR('completo')">
+                                    📄 Visualização Completa
+                                </button>
+                            </div>
+                            
+                            <!-- Conteúdo das tabs -->
+                            <div id="tab-informacoes" class="tr-tab-content active">
+                                <div class="tr-content-section">
+                                    <div class="tr-field-grid">
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Objeto/Objetivo</div>
+                                            <div class="tr-field-value">${tr.objetivo || tr.objeto || '<span class="tr-empty-field">Não especificado</span>'}</div>
+                                        </div>
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Conformidade</div>
+                                            <div class="tr-field-value">${tr.conformidade || '<span class="tr-empty-field">Não especificada</span>'}</div>
+                                        </div>
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Justificativa</div>
+                                            <div class="tr-field-value">${tr.justificativa || '<span class="tr-empty-field">Não especificada</span>'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="tab-escopo" class="tr-tab-content">
+                                <div class="tr-content-section">
+                                    <div class="tr-field-grid">
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Escopo Técnico</div>
+                                            <div class="tr-field-value">${tr.escopoTecnico || '<span class="tr-empty-field">Não especificado</span>'}</div>
+                                        </div>
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Situação Atual</div>
+                                            <div class="tr-field-value">${tr.situacaoAtual || '<span class="tr-empty-field">Não especificada</span>'}</div>
+                                        </div>
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Situação Proposta</div>
+                                            <div class="tr-field-value">${tr.situacaoProposta || '<span class="tr-empty-field">Não especificada</span>'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="tab-especificacoes" class="tr-tab-content">
+                                <div class="tr-content-section">
+                                    <div class="tr-field-grid">
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Especificação Técnica</div>
+                                            <div class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || '<span class="tr-empty-field">Não especificada</span>'}</div>
+                                        </div>
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Premissas</div>
+                                            <div class="tr-field-value">${tr.premissas || '<span class="tr-empty-field">Não especificadas</span>'}</div>
+                                        </div>
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Garantia</div>
+                                            <div class="tr-field-value">${tr.garantia || '<span class="tr-empty-field">Não especificada</span>'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="tab-prazos" class="tr-tab-content">
+                                <div class="tr-content-section">
+                                    <div class="tr-field-grid">
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Prazos</div>
+                                            <div class="tr-field-value">${tr.prazos || tr.prazo_execucao || '<span class="tr-empty-field">Não especificado</span>'}</div>
+                                        </div>
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Visita ao Local</div>
+                                            <div class="tr-field-value">${tr.visitaLocal || '<span class="tr-empty-field">Não especificado</span>'}</div>
+                                        </div>
+                                        <div class="tr-field-item">
+                                            <div class="tr-field-label">Local/Acesso</div>
+                                            <div class="tr-field-value">${tr.localAcesso || '<span class="tr-empty-field">Não especificado</span>'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="tab-completo" class="tr-tab-content">
+                                <div class="tr-content-section">
+                                    <button class="btn btn-info" onclick="visualizarTRCompletoModal('${tr.id}')">
+                                        👁️ Abrir em Tela Cheia
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="tr-approval-actions">
                                 <button type="button" class="btn btn-primary" onclick="baixarTR('${tr.id}')">
-                                    📥 Baixar TR
+                                    📥 Baixar TR (Word)
+                                </button>
+                                <button type="button" class="btn btn-info" onclick="baixarTRPDF('${tr.id}')">
+                                    📄 Baixar TR (PDF)
                                 </button>
                                 <button type="button" class="btn btn-success" onclick="aprovarTR()">
-                                    ✅ Aprovar e Continuar
+                                    ✅ Aprovar TR e Continuar
                                 </button>
-                                <button type="button" class="btn btn-warning" onclick="abrirModalDevolucao('${tr.id}')">
-                                    ↩️ Devolver ao Requisitante
+                                <button type="button" class="btn btn-danger" onclick="rejeitarTR()">
+                                    ❌ Rejeitar TR
                                 </button>
                             </div>
                         </div>
@@ -1298,8 +1450,30 @@
             }
         }
 
-        // Visualizar TR completo
-        function visualizarTRCompleto(trId) {
+        // Função para mostrar tabs do TR
+        function mostrarTabTR(tabId) {
+            // Ocultar todas as tabs
+            document.querySelectorAll('.tr-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tr-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar tab selecionada
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            
+            // Ativar botão da tab
+            const tabs = document.querySelectorAll('.tr-tab');
+            tabs.forEach(tab => {
+                if (tab.onclick && tab.onclick.toString().includes(tabId)) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+
+        // Visualizar TR completo em modal
+        function visualizarTRCompletoModal(trId) {
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
             const tr = trs.find(t => t.id === trId);
             
@@ -1308,1454 +1482,224 @@
                 return;
             }
 
-            // Preencher o modal
+            // Preencher o modal com TODOS os campos disponíveis
             document.getElementById('modalTRTitulo').textContent = tr.titulo;
             
-            const conteudo = `
-                <!-- Informações Básicas -->
-                <div class="tr-section">
-                    <h4>📋 Informações Básicas</h4>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Modalidade:</span>
-                        <span class="tr-field-value">${tr.modalidade || 'Não especificada'}</span>
+            // Função para renderizar um campo
+            const renderizarCampo = (label, value) => {
+                if (!value || value === '') return '';
+                return `
+                    <div class="tr-field-item">
+                        <div class="tr-field-label">${label}</div>
+                        <div class="tr-field-value">${value}</div>
                     </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Objetivo:</span>
-                        <span class="tr-field-value">${tr.objetivo || tr.objeto || 'Não especificado'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Conformidade:</span>
-                        <span class="tr-field-value">${tr.conformidade || 'Não especificada'}</span>
-                    </div>
-                </div>
-
-                <!-- Local e Acesso -->
-                <div class="tr-section">
-                    <h4>📍 Local e Acesso</h4>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Visita ao Local:</span>
-                        <span class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Local/Acesso:</span>
-                        <span class="tr-field-value">${tr.localAcesso || 'Não especificado'}</span>
-                    </div>
-                </div>
-
-                <!-- Escopo Técnico -->
-                <div class="tr-section">
-                    <h4>🔧 Escopo Técnico</h4>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Escopo Técnico:</span>
-                        <span class="tr-field-value">${tr.escopoTecnico || 'Não especificado'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Situação Atual:</span>
-                        <span class="tr-field-value">${tr.situacaoAtual || 'Não especificada'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Situação Proposta:</span>
-                        <span class="tr-field-value">${tr.situacaoProposta || 'Não especificada'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Especificação Técnica:</span>
-                        <span class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</span>
-                    </div>
-                </div>
-
-                <!-- Prazos e demais seções -->
-                <div class="tr-section">
-                    <h4>⏰ Prazos</h4>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Prazos:</span>
-                        <span class="tr-field-value">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</span>
-                    </div>
-                </div>
-
-                <!-- Metadados -->
-                <div class="tr-section" style="background: #e3f2fd; border-left-color: #2196f3;">
-                    <h4>ℹ️ Informações do Documento</h4>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Criado por:</span>
-                        <span class="tr-field-value">${tr.criadorNome || 'Não identificado'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Data de Criação:</span>
-                        <span class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Status:</span>
-                        <span class="tr-field-value">${tr.status || 'Ativo'}</span>
-                    </div>
-                </div>
-
-                <div class="btn-group" style="margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="baixarTR('${tr.id}')">
-                        📄 Baixar Word
-                    </button>
-                    <button class="btn btn-success" onclick="aprovarTReFecharModal()">
-                        ✅ Aprovar TR
-                    </button>
-                    <button class="btn btn-warning" onclick="fecharModal(); abrirModalDevolucao('${tr.id}')">
-                        ↩️ Devolver ao Requisitante
-                    </button>
-                </div>
-            `;
-            
-            document.getElementById('modalTRConteudo').innerHTML = conteudo;
-            document.getElementById('modalVisualizarTR').style.display = 'block';
-        }
-
-        // Abrir modal de devolução
-        function abrirModalDevolucao(trId) {
-            document.getElementById('trIdDevolucao').value = trId;
-            document.getElementById('modalDevolverTR').style.display = 'block';
-            document.getElementById('formDevolucaoTR').reset();
-        }
-
-        // Confirmar devolução do TR
-        function confirmarDevolucaoTR(event) {
-            event.preventDefault();
-            
-            const trId = document.getElementById('trIdDevolucao').value;
-            const motivo = document.getElementById('motivoDevolucao').value;
-            const observacoes = document.getElementById('observacoesDevolucao').value;
-            const sugestoes = document.getElementById('sugestoesDevolucao').value;
-            
-            // Buscar TR
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const trIndex = trs.findIndex(t => t.id === trId);
-            
-            if (trIndex === -1) {
-                alert('❌ TR não encontrado!');
-                return;
-            }
-            
-            const tr = trs[trIndex];
-            
-            // Criar registro de devolução
-            const devolucao = {
-                id: 'dev_' + Date.now(),
-                trId: trId,
-                compradorId: usuarioAtual.usuarioId,
-                compradorNome: usuarioAtual.nome,
-                motivo: motivo,
-                observacoes: observacoes,
-                sugestoes: sugestoes,
-                dataDevolucao: new Date().toISOString()
-            };
-            
-            // Atualizar TR
-            tr.devolvido = true;
-            tr.statusDevolucao = 'devolvido';
-            tr.ultimaDevolucao = devolucao;
-            
-            // Salvar TR atualizado
-            trs[trIndex] = tr;
-            localStorage.setItem('termos_referencia', JSON.stringify(trs));
-            
-            // Salvar histórico de devoluções
-            const devolucoes = JSON.parse(localStorage.getItem('tr_devolucoes') || '[]');
-            devolucoes.push(devolucao);
-            localStorage.setItem('tr_devolucoes', JSON.stringify(devolucoes));
-            
-            // Notificar requisitante
-            if (tr.criadoPor) {
-                Auth.Notificacoes.criar({
-                    tipo: 'tr_devolvido',
-                    titulo: '↩️ TR Devolvido para Ajustes',
-                    mensagem: `O TR "${tr.titulo}" foi devolvido pelo comprador. Motivo: ${motivo}`,
-                    destinatario: tr.criadoPor,
-                    remetente: usuarioAtual.nome,
-                    metadata: {
-                        trId: trId,
-                        motivo: motivo,
-                        observacoes: observacoes
-                    }
-                });
-            }
-            
-            alert('✅ TR devolvido ao requisitante com sucesso!');
-            
-            // Fechar modal e recarregar TRs
-            fecharModalDevolucao();
-            carregarTRsDisponiveis();
-            
-            // Limpar seleção
-            document.getElementById('areaVisualizacaoTR').style.display = 'none';
-            document.getElementById('formularioProcesso').style.display = 'none';
-            trSelecionado = null;
-        }
-
-        // Baixar TR
-        function baixarTR(trId) {
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const tr = trs.find(t => t.id === trId);
-            
-            if (!tr) {
-                alert('TR não encontrado!');
-                return;
-            }
-
-            // Criar conteúdo HTML formatado para Word
-            const conteudoWord = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-                        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
-                        h2 { color: #34495e; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
-                        h3 { color: #7f8c8d; margin-top: 20px; margin-bottom: 10px; }
-                        p { margin-bottom: 10px; text-align: justify; }
-                        .info-box { background: #ecf0f1; padding: 15px; margin: 20px 0; border-left: 4px solid #3498db; }
-                        .field { margin-bottom: 15px; }
-                        .field-label { font-weight: bold; color: #2c3e50; }
-                        .header-info { text-align: center; margin-bottom: 30px; }
-                        .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #7f8c8d; }
-                        @page { margin: 2cm; }
-                    </style>
-                </head>
-                <body>
-                    <div class="header-info">
-                        <h1>TERMO DE REFERÊNCIA</h1>
-                        <p><strong>${tr.titulo}</strong></p>
-                        <p>Modalidade: ${tr.modalidade}</p>
-                        <p>Data: ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
-                    </div>
-
-                    <h2>1. OBJETIVO</h2>
-                    <p>${tr.objetivo || 'Não especificado'}</p>
-
-                    <h2>2. ESCOPO TÉCNICO</h2>
-                    <p>${tr.escopoTecnico || 'Não especificado'}</p>
-
-                    <h2>3. SITUAÇÃO ATUAL</h2>
-                    <p>${tr.situacaoAtual || 'Não especificada'}</p>
-
-                    <h2>4. SITUAÇÃO PROPOSTA</h2>
-                    <p>${tr.situacaoProposta || 'Não especificada'}</p>
-
-                    <h2>5. ESPECIFICAÇÕES TÉCNICAS</h2>
-                    <p>${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</p>
-
-                    <h2>6. LOCAL E ACESSO</h2>
-                    <p><strong>Visita ao Local:</strong> ${tr.visitaLocal || 'Não especificado'}</p>
-                    <p><strong>Local/Acesso:</strong> ${tr.localAcesso || 'Não especificado'}</p>
-
-                    <h2>7. PRAZOS</h2>
-                    <p>${tr.prazos || tr.prazo_execucao || 'Não especificado'}</p>
-
-                    <h2>8. CONFORMIDADE</h2>
-                    <p>${tr.conformidade || 'Não especificada'}</p>
-
-                    <div class="footer">
-                        <p>Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
-                        <p>Elaborado por: ${tr.criadorNome || 'Não identificado'}</p>
-                    </div>
-                </body>
-                </html>
-            `;
-
-            // Criar blob e fazer download
-            const blob = new Blob([conteudoWord], { type: 'application/msword' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `TR_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.doc`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-            
-            alert('✅ Documento Word baixado com sucesso!');
-        }
-
-        // Baixar dados do processo
-        function baixarProcesso(numeroProcesso) {
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const processo = processos.find(p => p.numero === numeroProcesso);
-            
-            if (!processo) {
-                alert('Processo não encontrado!');
-                return;
-            }
-
-            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            const propostasProcesso = propostas.filter(p => p.processo === numeroProcesso);
-            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const tr = processo.trId ? trs.find(t => t.id === processo.trId) : null;
-
-            // Criar conteúdo HTML formatado para Word
-            const conteudoWord = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-                        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
-                        h2 { color: #34495e; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
-                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background-color: #f2f2f2; font-weight: bold; }
-                        .info-box { background: #ecf0f1; padding: 15px; margin: 20px 0; border-left: 4px solid #3498db; }
-                        .header-info { text-align: center; margin-bottom: 30px; }
-                        .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #7f8c8d; }
-                        @page { margin: 2cm; }
-                    </style>
-                </head>
-                <body>
-                    <div class="header-info">
-                        <h1>PROCESSO LICITATÓRIO</h1>
-                        <p><strong>Número: ${processo.numero}</strong></p>
-                        <p>Data de Criação: ${new Date(processo.dataCadastro).toLocaleDateString('pt-BR')}</p>
-                    </div>
-
-                    <h2>1. INFORMAÇÕES GERAIS</h2>
-                    <div class="info-box">
-                        <p><strong>Objeto:</strong> ${processo.objeto}</p>
-                        <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
-                        <p><strong>Prazo Limite:</strong> ${new Date(processo.prazo).toLocaleString('pt-BR')}</p>
-                        <p><strong>Valor Estimado:</strong> ${processo.valorEstimado || 'Não informado'}</p>
-                        <p><strong>Status:</strong> ${processo.status === 'publicado' ? 'Publicado' : 'Rascunho'}</p>
-                        <p><strong>Criado por:</strong> ${processo.criadorNome || usuarioAtual.nome}</p>
-                    </div>
-
-                    ${tr ? `
-                        <h2>2. TERMO DE REFERÊNCIA VINCULADO</h2>
-                        <div class="info-box">
-                            <p><strong>Título:</strong> ${tr.titulo}</p>
-                            <p><strong>Criado por:</strong> ${tr.criadorNome}</p>
-                            <p><strong>Data de Criação:</strong> ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
-                            ${processo.trAprovado ? `<p><strong>Status:</strong> ✅ Aprovado em ${new Date(processo.dataAprovacaoTR).toLocaleDateString('pt-BR')}</p>` : ''}
-                        </div>
-                    ` : ''}
-
-                    <h2>${tr ? '3' : '2'}. FORNECEDORES CONVIDADOS</h2>
-                    ${processo.fornecedoresConvidados && processo.fornecedoresConvidados.length > 0 ? `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Fornecedor</th>
-                                    <th>Empresa</th>
-                                    <th>E-mail</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${processo.fornecedoresConvidados.map((fornId, index) => {
-                                    const fornecedor = usuarios.find(u => u.usuarioId === fornId);
-                                    const propostaFornecedor = propostasProcesso.find(p => p.fornecedorId === fornId);
-                                    return fornecedor ? `
-                                        <tr>
-                                            <td>${index + 1}</td>
-                                            <td>${fornecedor.nome}</td>
-                                            <td>${fornecedor.empresa || 'Não informada'}</td>
-                                            <td>${fornecedor.email}</td>
-                                            <td>${propostaFornecedor ? '✅ Proposta Enviada' : '⏳ Aguardando'}</td>
-                                        </tr>
-                                    ` : '';
-                                }).join('')}
-                            </tbody>
-                        </table>
-                    ` : '<p>Nenhum fornecedor convidado</p>'}
-
-                    <h2>${tr ? '4' : '3'}. PROPOSTAS RECEBIDAS</h2>
-                    ${propostasProcesso.length > 0 ? `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Empresa</th>
-                                    <th>CNPJ</th>
-                                    <th>Valor</th>
-                                    <th>Prazo</th>
-                                    <th>Data de Envio</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${propostasProcesso.map((proposta, index) => `
-                                    <tr>
-                                        <td>${index + 1}</td>
-                                        <td>${proposta.empresa}</td>
-                                        <td>${proposta.cnpj}</td>
-                                        <td>${proposta.valor}</td>
-                                        <td>${proposta.prazo} dias</td>
-                                        <td>${new Date(proposta.data).toLocaleDateString('pt-BR')}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                        <p><strong>Total de Propostas:</strong> ${propostasProcesso.length}</p>
-                    ` : '<p>Nenhuma proposta recebida até o momento</p>'}
-
-                    <div class="footer">
-                        <p>Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
-                        <p>Gerado por: ${usuarioAtual.nome}</p>
-                        <p>Sistema de Gestão de Propostas</p>
-                    </div>
-                </body>
-                </html>
-            `;
-
-            // Criar blob e fazer download
-            const blob = new Blob([conteudoWord], { type: 'application/msword' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Processo_${processo.numero}_${new Date().getTime()}.doc`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-            
-            alert('✅ Documento do processo baixado com sucesso!');
-        }
-
-        // Aprovar TR
-        function aprovarTR() {
-            if (!trSelecionado) {
-                alert('Nenhum TR selecionado!');
-                return;
-            }
-            
-            // Preencher dados do formulário
-            document.getElementById('objetoProc').value = trSelecionado.titulo || '';
-            document.getElementById('modalidadeProc').value = trSelecionado.modalidade || '';
-            
-            // Mostrar formulário
-            document.getElementById('formularioProcesso').style.display = 'block';
-            
-            // Scroll para o formulário
-            document.getElementById('formularioProcesso').scrollIntoView({ behavior: 'smooth' });
-            
-            alert('✅ TR aprovado! Agora complete os dados do processo e selecione os fornecedores.');
-        }
-
-        // Aprovar TR e fechar modal
-        function aprovarTReFecharModal() {
-            fecharModal();
-            aprovarTR();
-        }
-
-        // Carregar fornecedores disponíveis
-        function carregarFornecedoresDisponiveis() {
-            const container = document.getElementById('listaFornecedores');
-            if (!container) return;
-            
-            console.log('Carregando fornecedores...');
-            
-            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
-            console.log('Total de usuários:', usuarios.length);
-            
-            const fornecedores = usuarios.filter(u => u.tipo === 'fornecedor');
-            console.log('Fornecedores encontrados:', fornecedores);
-            
-            if (fornecedores.length === 0) {
-                // Criar fornecedores de exemplo se não houver nenhum
-                const fornecedoresExemplo = [
-                    {
-                        usuarioId: 'forn_001',
-                        nome: 'Fornecedor Exemplo 1',
-                        email: 'fornecedor1@exemplo.com',
-                        empresa: 'Empresa Exemplo 1 Ltda',
-                        tipo: 'fornecedor'
-                    },
-                    {
-                        usuarioId: 'forn_002',
-                        nome: 'Fornecedor Exemplo 2',
-                        email: 'fornecedor2@exemplo.com',
-                        empresa: 'Empresa Exemplo 2 S.A.',
-                        tipo: 'fornecedor'
-                    }
-                ];
-                
-                container.innerHTML = `
-                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <p style="color: #856404; margin-bottom: 10px;">
-                            <strong>⚠️ Nenhum fornecedor cadastrado no sistema.</strong>
-                        </p>
-                        <p style="color: #856404; font-size: 14px;">
-                            Para cadastrar fornecedores, use o módulo de <a href="cadastro-fornecedor.html" style="color: #0066cc;">Cadastro de Fornecedores</a>.
-                        </p>
-                        <p style="color: #856404; font-size: 14px; margin-top: 10px;">
-                            Para fins de demonstração, você pode usar os fornecedores de exemplo abaixo:
-                        </p>
-                    </div>
-                    ${fornecedoresExemplo.map(fornecedor => `
-                        <div class="fornecedor-item" onclick="toggleFornecedor('${fornecedor.usuarioId}')">
-                            <input type="checkbox" 
-                                   class="fornecedor-checkbox" 
-                                   id="fornecedor_${fornecedor.usuarioId}"
-                                   value="${fornecedor.usuarioId}"
-                                   onclick="event.stopPropagation()">
-                            <div class="fornecedor-info">
-                                <div class="fornecedor-nome">${fornecedor.nome} <span style="color: #28a745; font-size: 12px;">(Exemplo)</span></div>
-                                <div class="fornecedor-detalhes">
-                                    ${fornecedor.empresa} | ${fornecedor.email}
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
                 `;
-                return;
-            }
-            
-            // Carregar dados adicionais dos fornecedores
-            const fornecedoresComDados = fornecedores.map(fornecedor => {
-                // Buscar dados da empresa salvos
-                const empresaKey = `fornecedorData_${fornecedor.usuarioId}`;
-                const empresaData = localStorage.getItem(empresaKey);
-                
-                if (empresaData) {
-                    try {
-                        const dados = JSON.parse(empresaData);
-                        return {
-                            ...fornecedor,
-                            empresa: dados.nomeFantasia || dados.razaoSocial || fornecedor.empresa || 'Empresa não informada',
-                            cnpj: dados.cnpj || ''
-                        };
-                    } catch (e) {
-                        console.error('Erro ao carregar dados da empresa:', e);
-                    }
-                }
-                
-                return fornecedor;
-            });
-            
-            container.innerHTML = fornecedoresComDados.map(fornecedor => `
-                <div class="fornecedor-item" onclick="toggleFornecedor('${fornecedor.usuarioId}')">
-                    <input type="checkbox" 
-                           class="fornecedor-checkbox" 
-                           id="fornecedor_${fornecedor.usuarioId}"
-                           value="${fornecedor.usuarioId}"
-                           onclick="event.stopPropagation()">
-                    <div class="fornecedor-info">
-                        <div class="fornecedor-nome">${fornecedor.nome}</div>
-                        <div class="fornecedor-detalhes">
-                            ${fornecedor.empresa || 'Empresa não informada'} | ${fornecedor.email}
-                            ${fornecedor.cnpj ? ` | CNPJ: ${fornecedor.cnpj}` : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            
-            // Adicionar informação adicional
-            container.innerHTML += `
-                <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 5px; font-size: 14px; color: #1976d2;">
-                    <strong>ℹ️ Dica:</strong> Selecione os fornecedores que deseja convidar para este processo. 
-                    Apenas os fornecedores selecionados poderão visualizar e enviar propostas.
-                    <br><br>
-                    <a href="cadastro-fornecedor.html" style="color: #0066cc; font-weight: bold;">
-                        ➕ Cadastrar Novo Fornecedor
-                    </a>
-                </div>
-            `;
-        }
-
-        // Toggle seleção de fornecedor
-        function toggleFornecedor(fornecedorId) {
-            const checkbox = document.getElementById(`fornecedor_${fornecedorId}`);
-            if (!checkbox) {
-                console.error('Checkbox não encontrado para fornecedor:', fornecedorId);
-                return;
-            }
-            
-            checkbox.checked = !checkbox.checked;
-            
-            const fornecedorItem = checkbox.closest('.fornecedor-item');
-            if (checkbox.checked) {
-                fornecedorItem.classList.add('selected');
-                if (!fornecedoresSelecionados.includes(fornecedorId)) {
-                    fornecedoresSelecionados.push(fornecedorId);
-                }
-            } else {
-                fornecedorItem.classList.remove('selected');
-                fornecedoresSelecionados = fornecedoresSelecionados.filter(id => id !== fornecedorId);
-            }
-            
-            console.log('Fornecedores selecionados:', fornecedoresSelecionados);
-        }
-
-        // Cadastrar processo
-        function cadastrarProcesso(event) {
-            event.preventDefault();
-            
-            if (!trSelecionado) {
-                alert('❌ Por favor, selecione e aprove um Termo de Referência!');
-                return;
-            }
-            
-            // Verificar fornecedores selecionados
-            const checkboxes = document.querySelectorAll('.fornecedor-checkbox:checked');
-            fornecedoresSelecionados = Array.from(checkboxes).map(cb => cb.value);
-            
-            console.log('Fornecedores selecionados para o processo:', fornecedoresSelecionados);
-            
-            if (fornecedoresSelecionados.length === 0) {
-                alert('❌ Por favor, selecione pelo menos um fornecedor!');
-                return;
-            }
-            
-            const novoProcesso = {
-                numero: document.getElementById('numeroProc').value,
-                objeto: document.getElementById('objetoProc').value,
-                modalidade: document.getElementById('modalidadeProc').value,
-                prazo: document.getElementById('prazoProc').value,
-                valorEstimado: document.getElementById('valorEstimado').value,
-                dataCadastro: new Date().toISOString(),
-                criadoPor: usuarioAtual.usuarioId,
-                criadorNome: usuarioAtual.nome,
-                
-                // ARMAZENAR O TR COMPLETO DENTRO DO PROCESSO
-                trId: trSelecionado.id,
-                trCompleto: {
-                    ...trSelecionado,  // Copia todos os campos do TR
-                    aprovadoEm: new Date().toISOString(),
-                    aprovadoPor: usuarioAtual.nome
-                },
-                trAprovado: true,
-                dataAprovacaoTR: new Date().toISOString(),
-                
-                // Fornecedores convidados
-                fornecedoresConvidados: fornecedoresSelecionados,
-                
-                // Controle de publicação
-                status: 'publicado',
-                publicacao: {
-                    confirmado: true,
-                    dataConfirmacao: new Date().toISOString(),
-                    tipoPublicacao: 'direcionada',
-                    dataPublicacao: new Date().toISOString()
-                },
-                visibilidade: {
-                    publico: false,
-                    direcionado: true,
-                    fornecedoresNotificados: fornecedoresSelecionados,
-                    totalVisualizacoes: 0
-                }
             };
             
-            console.log('Novo processo a ser criado com TR completo:', novoProcesso);
-            
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            processos.push(novoProcesso);
-            localStorage.setItem('processos', JSON.stringify(processos));
-            
-            // Notificar requisitante
-            if (trSelecionado && trSelecionado.criadoPor) {
-                Auth.Notificacoes.criar({
-                    tipo: 'processo_criado_com_tr',
-                    titulo: '📋 Processo criado com seu TR',
-                    mensagem: `O processo ${novoProcesso.numero} foi criado baseado no TR "${trSelecionado.titulo}"`,
-                    destinatario: trSelecionado.criadoPor,
-                    remetente: usuarioAtual.nome,
-                    metadata: {
-                        processoId: novoProcesso.numero,
-                        trId: novoProcesso.trId
-                    }
-                });
-            }
-            
-            // Notificar fornecedores selecionados
-            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
-            let fornecedoresNotificados = 0;
-            
-            fornecedoresSelecionados.forEach(fornecedorId => {
-                // Se for fornecedor de exemplo, não notificar
-                if (fornecedorId.startsWith('forn_00')) {
-                    console.log('Fornecedor de exemplo, não será notificado:', fornecedorId);
-                    return;
-                }
-                
-                const fornecedor = usuarios.find(u => u.usuarioId === fornecedorId);
-                if (fornecedor) {
-                    Auth.Notificacoes.criar({
-                        tipo: 'processo_direcionado',
-                        titulo: '📋 Novo Processo Disponível',
-                        mensagem: `Você foi convidado para o processo ${novoProcesso.numero} - ${novoProcesso.objeto}`,
-                        destinatario: fornecedorId,
-                        remetente: usuarioAtual.nome,
-                        metadata: {
-                            processoId: novoProcesso.numero,
-                            prazo: novoProcesso.prazo
-                        }
-                    });
-                    fornecedoresNotificados++;
-                }
-            });
-            
-            alert(`✅ Processo criado e enviado para ${fornecedoresSelecionados.length} fornecedor(es)!\n${fornecedoresNotificados > 0 ? `${fornecedoresNotificados} fornecedor(es) foram notificados.` : ''}`);
-            document.getElementById('formCadastroProcesso').reset();
-            fornecedoresSelecionados = [];
-            mostrarPagina('processos');
-        }
+            const conteudo = `
+                <div class="tr-completo-container">
+                    <!-- Informações Básicas -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">📋 Informações Básicas</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Título', tr.titulo)}
+                            ${renderizarCampo('Modalidade', tr.modalidade)}
+                            ${renderizarCampo('Objeto/Objetivo', tr.objetivo || tr.objeto)}
+                            ${renderizarCampo('Conformidade', tr.conformidade)}
+                            ${renderizarCampo('Justificativa', tr.justificativa)}
+                        </div>
+                    </div>
 
-        // Carregar meus processos
-        function carregarMeusProcessos() {
-            const container = document.getElementById('listaProcessos');
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            
-            const meusProcessos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
-            
-            if (meusProcessos.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📋</div>
-                        <h3>Nenhum processo cadastrado</h3>
-                        <p>Crie seu primeiro processo baseado em um TR</p>
-                        <button class="btn btn-primary" onclick="mostrarPagina('cadastrar-processo')">
-                            ➕ Cadastrar Processo
+                    <!-- Escopo Técnico -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">🔧 Escopo Técnico</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Escopo Técnico', tr.escopoTecnico)}
+                            ${renderizarCampo('Situação Atual', tr.situacaoAtual)}
+                            ${renderizarCampo('Situação Proposta', tr.situacaoProposta)}
+                            ${renderizarCampo('Tipo de Solução', tr.tipoSolucao)}
+                        </div>
+                    </div>
+
+                    <!-- Especificações -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">📝 Especificações</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Especificação Técnica', tr.especificacaoTecnica || tr.especificacoes)}
+                            ${renderizarCampo('Premissas', tr.premissas)}
+                            ${renderizarCampo('Garantia', tr.garantia)}
+                            ${renderizarCampo('Requisitos Técnicos', tr.requisitosTecnicos)}
+                            ${renderizarCampo('Requisitos Funcionais', tr.requisitosFuncionais)}
+                            ${renderizarCampo('Requisitos Não Funcionais', tr.requisitosNaoFuncionais)}
+                        </div>
+                    </div>
+
+                    <!-- Prazos e Local -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">⏰ Prazos e Local</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Prazos', tr.prazos || tr.prazo_execucao)}
+                            ${renderizarCampo('Prazo de Entrega', tr.prazoEntrega)}
+                            ${renderizarCampo('Cronograma', tr.cronograma)}
+                            ${renderizarCampo('Visita ao Local', tr.visitaLocal)}
+                            ${renderizarCampo('Local/Acesso', tr.localAcesso)}
+                            ${renderizarCampo('Endereço de Entrega', tr.enderecoEntrega)}
+                        </div>
+                    </div>
+
+                    <!-- Obrigações e Responsabilidades -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">📋 Obrigações e Responsabilidades</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Obrigações do Contratante', tr.obrigacoesContratante)}
+                            ${renderizarCampo('Obrigações do Contratado', tr.obrigacoesContratado)}
+                            ${renderizarCampo('Responsabilidades', tr.responsabilidades)}
+                            ${renderizarCampo('Fiscalização', tr.fiscalizacao)}
+                        </div>
+                    </div>
+
+                    <!-- Condições Comerciais -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">💰 Condições Comerciais</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Forma de Pagamento', tr.formaPagamento)}
+                            ${renderizarCampo('Condições de Pagamento', tr.condicoesPagamento)}
+                            ${renderizarCampo('Valor Estimado', tr.valorEstimado)}
+                            ${renderizarCampo('Dotação Orçamentária', tr.dotacaoOrcamentaria)}
+                            ${renderizarCampo('Reajuste', tr.reajuste)}
+                        </div>
+                    </div>
+
+                    <!-- Documentação e Qualificação -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">📄 Documentação e Qualificação</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Documentação Técnica', tr.documentacaoTecnica)}
+                            ${renderizarCampo('Qualificação Técnica', tr.qualificacaoTecnica)}
+                            ${renderizarCampo('Atestados', tr.atestados)}
+                            ${renderizarCampo('Certidões', tr.certidoes)}
+                        </div>
+                    </div>
+
+                    <!-- Informações Adicionais -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">ℹ️ Informações Adicionais</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Observações', tr.observacoes)}
+                            ${renderizarCampo('Anexos', tr.anexos)}
+                            ${renderizarCampo('Referências', tr.referencias)}
+                            ${renderizarCampo('Sanções', tr.sancoes)}
+                            ${renderizarCampo('Disposições Gerais', tr.disposicoesGerais)}
+                        </div>
+                    </div>
+
+                    <!-- Metadados -->
+                    <div class="tr-content-section" style="background: #e3f2fd;">
+                        <h3 class="tr-section-title">📊 Informações do Documento</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('ID do Documento', tr.id)}
+                            ${renderizarCampo('Criado por', tr.criadorNome)}
+                            ${renderizarCampo('ID do Criador', tr.criadoPor)}
+                            ${renderizarCampo('Data de Criação', new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR'))}
+                            ${renderizarCampo('Status', tr.status)}
+                            ${renderizarCampo('Última Atualização', tr.ultimaAtualizacao ? new Date(tr.ultimaAtualizacao).toLocaleString('pt-BR') : 'N/A')}
+                        </div>
+                    </div>
+
+                    <!-- Ações -->
+                    <div class="tr-approval-actions">
+                        <button class="btn btn-primary" onclick="baixarTR('${tr.id}')">
+                            📄 Baixar Word
+                        </button>
+                        <button class="btn btn-info" onclick="baixarTRPDF('${tr.id}')">
+                            📄 Baixar PDF
+                        </button>
+                        <button class="btn btn-success" onclick="aprovarTReFecharModal()">
+                            ✅ Aprovar TR
+                        </button>
+                        <button class="btn btn-warning" onclick="imprimirTR()">
+                            🖨️ Imprimir
                         </button>
                     </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = meusProcessos.map(processo => {
-                const propostasProcesso = propostas.filter(p => p.processo === processo.numero);
-                const dataPrazo = new Date(processo.prazo);
-                const diasRestantes = Math.ceil((dataPrazo - new Date()) / (1000 * 60 * 60 * 24));
-                const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
-                
-                // Status do processo
-                let statusBadge = '<span style="background: #d4edda; color: #155724; padding: 5px 12px; border-radius: 20px; font-size: 12px;">✅ Publicado</span>';
-                
-                // Verificar se o TR foi devolvido
-                if (processo.trId) {
-                    const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-                    const tr = trs.find(t => t.id === processo.trId);
-                    if (tr && tr.devolvido) {
-                        statusBadge += ' <span class="status-devolvido">↩️ TR Devolvido</span>';
-                    }
-                }
-                
-                return `
-                    <div class="processo-card">
-                        <div class="processo-header">
-                            <div>
-                                <h3 style="color: #2c3e50;">${processo.numero}</h3>
-                                <p style="color: #6c757d; margin-top: 5px;">${processo.objeto}</p>
-                            </div>
-                            <div style="text-align: right;">
-                                ${statusBadge}
-                                ${processo.trId ? '<span class="tr-badge">📋 Com TR</span>' : ''}
-                                <p style="color: ${diasRestantes > 0 ? '#28a745' : '#dc3545'}; margin-top: 10px; font-weight: 600;">
-                                    ${diasRestantes > 0 ? `${diasRestantes} dias restantes` : 'Encerrado'}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="processo-info">
-                            <div>
-                                <strong>Modalidade:</strong> ${processo.modalidade}
-                            </div>
-                            <div>
-                                <strong>Propostas:</strong> ${propostasProcesso.length}
-                            </div>
-                            <div>
-                                <strong>Valor Estimado:</strong> ${processo.valorEstimado || 'Não informado'}
-                            </div>
-                            <div>
-                                <strong>Prazo:</strong> ${dataPrazo.toLocaleString('pt-BR')}
-                            </div>
-                        </div>
-                        
-                        ${processo.fornecedoresConvidados ? `
-                            <div style="margin-top: 15px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
-                                <p style="color: #1976d2; font-weight: 600; margin-bottom: 10px;">
-                                    👥 ${processo.fornecedoresConvidados.length} Fornecedor(es) Convidado(s)
-                                </p>
-                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                    ${processo.fornecedoresConvidados.map(fornId => {
-                                        const fornecedor = usuarios.find(u => u.usuarioId === fornId);
-                                        return fornecedor ? `
-                                            <span style="background: white; padding: 5px 12px; border-radius: 20px; font-size: 12px;">
-                                                ${fornecedor.nome}
-                                            </span>
-                                        ` : '';
-                                    }).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        <div style="margin-top: 15px;">
-                            <button class="btn btn-info" onclick="verDetalhesProcesso('${processo.numero}')">
-                                👁️ Detalhes
-                            </button>
-                            ${processo.trId ? `
-                                <button class="btn btn-warning" onclick="abrirTRDoProcesso('${processo.trId}', '${processo.numero}')">
-                                    📋 Ver TR
-                                </button>
-                            ` : ''}
-                            <button class="btn btn-primary" onclick="baixarProcesso('${processo.numero}')">
-                                📥 Baixar Processo
-                            </button>
-                            <button class="btn btn-ai" onclick="gerarRelatorioComparativo('${processo.numero}')">
-                                🤖 Relatório IA
-                            </button>
-                            <button class="btn btn-success" onclick="gerenciarFornecedores('${processo.numero}')">
-                                👥 Fornecedores
-                            </button>
+                            ${renderizarCampo('Prazo de Entrega', tr.prazoEntrega)}
+                            ${renderizarCampo('Cronograma', tr.cronograma)}
+                            ${renderizarCampo('Visita ao Local', tr.visitaLocal)}
+                            ${renderizarCampo('Local/Acesso', tr.localAcesso)}
+                            ${renderizarCampo('Endereço de Entrega', tr.enderecoEntrega)}
                         </div>
                     </div>
-                `;
-            }).join('');
-        }
 
-        // Ver detalhes do processo
-        function verDetalhesProcesso(numeroProcesso) {
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const processo = processos.find(p => p.numero === numeroProcesso);
-            
-            if (!processo) {
-                alert('Processo não encontrado!');
-                return;
-            }
-            
-            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            const propostasProcesso = propostas.filter(p => p.processo === numeroProcesso);
-            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const tr = trs.find(t => t.id === processo.trId);
-            
-            const conteudo = `
-                <div class="processo-detalhes-section">
-                    <h4>📋 Informações do Processo</h4>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">Número</div>
-                            <div class="detail-value">${processo.numero}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Objeto</div>
-                            <div class="detail-value">${processo.objeto}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Modalidade</div>
-                            <div class="detail-value">${processo.modalidade}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Status</div>
-                            <div class="detail-value">${processo.status === 'publicado' ? '✅ Publicado' : '📝 Rascunho'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Data de Cadastro</div>
-                            <div class="detail-value">${new Date(processo.dataCadastro).toLocaleString('pt-BR')}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Prazo Limite</div>
-                            <div class="detail-value">${new Date(processo.prazo).toLocaleString('pt-BR')}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Valor Estimado</div>
-                            <div class="detail-value">${processo.valorEstimado || 'Não informado'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Propostas Recebidas</div>
-                            <div class="detail-value">${propostasProcesso.length}</div>
+                    <!-- Obrigações e Responsabilidades -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">📋 Obrigações e Responsabilidades</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Obrigações do Contratante', tr.obrigacoesContratante)}
+                            ${renderizarCampo('Obrigações do Contratado', tr.obrigacoesContratado)}
+                            ${renderizarCampo('Responsabilidades', tr.responsabilidades)}
+                            ${renderizarCampo('Fiscalização', tr.fiscalizacao)}
                         </div>
                     </div>
-                </div>
-                
-                ${tr ? `
-                    <div class="processo-detalhes-section">
-                        <h4>📄 Termo de Referência Vinculado</h4>
-                        <p><strong>${tr.titulo}</strong></p>
-                        <p>Criado por: ${tr.criadorNome} em ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
-                        ${processo.trAprovado ? '<p style="color: #28a745;">✅ TR Aprovado em ' + new Date(processo.dataAprovacaoTR).toLocaleDateString('pt-BR') + '</p>' : ''}
-                        ${tr.devolvido ? '<p style="color: #dc3545;">↩️ TR foi devolvido ao requisitante</p>' : ''}
-                        <div style="margin-top: 15px;">
-                            <button class="btn btn-info" onclick="abrirTRDoProcesso('${processo.trId}', '${processo.numero}')">
-                                📋 Visualizar TR Completo
-                            </button>
-                            <button class="btn btn-primary" onclick="baixarTRDoProcesso('${processo.trId}', '${processo.numero}')">
-                                📥 Baixar TR
-                            </button>
+
+                    <!-- Condições Comerciais -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">💰 Condições Comerciais</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Forma de Pagamento', tr.formaPagamento)}
+                            ${renderizarCampo('Condições de Pagamento', tr.condicoesPagamento)}
+                            ${renderizarCampo('Valor Estimado', tr.valorEstimado)}
+                            ${renderizarCampo('Dotação Orçamentária', tr.dotacaoOrcamentaria)}
+                            ${renderizarCampo('Reajuste', tr.reajuste)}
                         </div>
                     </div>
-                ` : ''}
-                
-                <div class="processo-detalhes-section">
-                    <h4>👥 Fornecedores Convidados</h4>
-                    ${processo.fornecedoresConvidados && processo.fornecedoresConvidados.length > 0 ? `
-                        <div style="display: grid; gap: 10px;">
-                            ${processo.fornecedoresConvidados.map(fornId => {
-                                const fornecedor = usuarios.find(u => u.usuarioId === fornId);
-                                const propostaFornecedor = propostasProcesso.find(p => p.fornecedorId === fornId);
-                                return fornecedor ? `
-                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 5px;">
-                                        <div>
-                                            <strong>${fornecedor.nome}</strong>
-                                            <p style="font-size: 14px; color: #6c757d; margin: 0;">${fornecedor.empresa || 'Empresa não informada'}</p>
-                                        </div>
-                                        <div>
-                                            ${propostaFornecedor ? 
-                                                '<span style="color: #28a745;">✅ Proposta Enviada</span>' : 
-                                                '<span style="color: #ffc107;">⏳ Aguardando Proposta</span>'
-                                            }
-                                        </div>
-                                    </div>
-                                ` : '';
-                            }).join('')}
-                        </div>
-                    ` : '<p style="color: #6c757d;">Nenhum fornecedor convidado</p>'}
-                </div>
-                
-                ${propostasProcesso.length > 0 ? `
-                    <div class="processo-detalhes-section">
-                        <h4>💰 Propostas Recebidas</h4>
-                        <table class="proposta-table">
-                            <thead>
-                                <tr>
-                                    <th>Fornecedor</th>
-                                    <th>Valor</th>
-                                    <th>Prazo</th>
-                                    <th>Data Envio</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${propostasProcesso.map(proposta => `
-                                    <tr>
-                                        <td>${proposta.empresa}</td>
-                                        <td style="font-weight: 600; color: #28a745;">${proposta.valor}</td>
-                                        <td>${proposta.prazo} dias</td>
-                                        <td>${new Date(proposta.data).toLocaleDateString('pt-BR')}</td>
-                                        <td><span class="status-badge status-${proposta.status || 'enviada'}">${proposta.status || 'Enviada'}</span></td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                ` : ''}
-                
-                <div style="margin-top: 20px; text-align: center;">
-                    <button class="btn btn-primary" onclick="baixarProcesso('${processo.numero}'); fecharModalDetalhes();">
-                        📥 Baixar Processo Completo
-                    </button>
-                    <button class="btn btn-ai" onclick="gerarRelatorioComparativo('${processo.numero}'); fecharModalDetalhes();">
-                        🤖 Gerar Relatório Comparativo com IA
-                    </button>
-                </div>
-            `;
-            
-            document.getElementById('modalDetalhesConteudo').innerHTML = conteudo;
-            document.getElementById('modalDetalhesProcesso').style.display = 'block';
-        }
 
-        // Gerar relatório comparativo com IA
-        function gerarRelatorioComparativo(numeroProcesso) {
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const processo = processos.find(p => p.numero === numeroProcesso);
-            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            const propostasProcesso = propostas.filter(p => p.processo === numeroProcesso);
-            const pareceres = JSON.parse(localStorage.getItem('pareceres_tecnicos') || '[]');
-            
-            if (propostasProcesso.length === 0) {
-                alert('Nenhuma proposta recebida para gerar relatório.');
-                return;
-            }
-            
-            // Análise de IA simulada
-            const menorValor = Math.min(...propostasProcesso.map(p => parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.'))));
-            const maiorValor = Math.max(...propostasProcesso.map(p => parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.'))));
-            const mediaValor = propostasProcesso.reduce((acc, p) => acc + parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.')), 0) / propostasProcesso.length;
-            
-            const conteudo = `
-                <div class="ai-panel" style="margin-bottom: 20px;">
-                    <h3>🤖 Análise Inteligente do Processo ${numeroProcesso}</h3>
-                    <div class="ai-insights">
-                        <div class="ai-insight">
-                            <div class="ai-insight-title">📊 Análise Estatística</div>
-                            <div class="ai-insight-text">
-                                Recebidas ${propostasProcesso.length} propostas com variação de ${((maiorValor - menorValor) / menorValor * 100).toFixed(1)}% entre menor e maior valor.
-                            </div>
-                        </div>
-                        <div class="ai-insight">
-                            <div class="ai-insight-title">💡 Insight de Economia</div>
-                            <div class="ai-insight-text">
-                                A melhor proposta representa uma economia potencial de R$ ${(maiorValor - menorValor).toFixed(2)} em relação à mais cara.
-                            </div>
-                        </div>
-                        <div class="ai-insight">
-                            <div class="ai-insight-title">⚡ Recomendação</div>
-                            <div class="ai-insight-text">
-                                ${propostasProcesso.length >= 3 ? 
-                                    'Boa competitividade detectada. Considere análise técnica detalhada das 3 melhores propostas.' : 
-                                    'Baixa competitividade. Considere estender prazo ou convidar mais fornecedores.'}
-                            </div>
+                    <!-- Documentação e Qualificação -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">📄 Documentação e Qualificação</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Documentação Técnica', tr.documentacaoTecnica)}
+                            ${renderizarCampo('Qualificação Técnica', tr.qualificacaoTecnica)}
+                            ${renderizarCampo('Atestados', tr.atestados)}
+                            ${renderizarCampo('Certidões', tr.certidoes)}
                         </div>
                     </div>
-                </div>
-                
-                <div class="processo-detalhes-section">
-                    <h4>📈 Análise Comparativa de Propostas</h4>
-                    <table class="proposta-table">
-                        <thead>
-                            <tr>
-                                <th>Ranking</th>
-                                <th>Fornecedor</th>
-                                <th>Valor</th>
-                                <th>Prazo</th>
-                                <th>Score IA</th>
-                                <th>Parecer Técnico</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${propostasProcesso
-                                .sort((a, b) => parseFloat(a.valor.replace(/[^\d,]/g, '').replace(',', '.')) - parseFloat(b.valor.replace(/[^\d,]/g, '').replace(',', '.')))
-                                .map((proposta, index) => {
-                                    const valor = parseFloat(proposta.valor.replace(/[^\d,]/g, '').replace(',', '.'));
-                                    const score = Math.round(100 - ((valor - menorValor) / (maiorValor - menorValor) * 50));
-                                    const parecer = pareceres.find(p => p.propostaId === proposta.protocolo);
-                                    
-                                    return `
-                                        <tr style="${index === 0 ? 'background: #d4edda;' : ''}">
-                                            <td style="text-align: center; font-weight: bold;">
-                                                ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
-                                            </td>
-                                            <td>${proposta.empresa}</td>
-                                            <td style="font-weight: 600; color: ${index === 0 ? '#155724' : '#28a745'};">
-                                                ${proposta.valor}
-                                            </td>
-                                            <td>${proposta.prazo} dias</td>
-                                            <td>
-                                                <div style="display: flex; align-items: center; gap: 10px;">
-                                                    <div style="background: #e0e0e0; width: 100px; height: 20px; border-radius: 10px; overflow: hidden;">
-                                                        <div style="background: ${score >= 80 ? '#28a745' : score >= 60 ? '#ffc107' : '#dc3545'}; width: ${score}%; height: 100%;"></div>
-                                                    </div>
-                                                    <span>${score}%</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                ${parecer ? 
-                                                    `<span style="color: ${parecer.tipo === 'aprovado' ? '#28a745' : '#dc3545'};">
-                                                        ${parecer.tipo === 'aprovado' ? '✅ Aprovado' : '❌ Reprovado'}
-                                                    </span>` : 
-                                                    '<span style="color: #6c757d;">Pendente</span>'
-                                                }
-                                            </td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div class="processo-detalhes-section">
-                    <h4>📊 Métricas e Indicadores</h4>
-                    <div class="indicators-grid">
-                        <div class="indicator-card">
-                            <h4>💰 Valores</h4>
-                            <p><strong>Menor:</strong> R$ ${menorValor.toFixed(2)}</p>
-                            <p><strong>Maior:</strong> R$ ${maiorValor.toFixed(2)}</p>
-                            <p><strong>Média:</strong> R$ ${mediaValor.toFixed(2)}</p>
-                        </div>
-                        <div class="indicator-card">
-                            <h4>⏱️ Prazos</h4>
-                            <p><strong>Menor:</strong> ${Math.min(...propostasProcesso.map(p => p.prazo))} dias</p>
-                            <p><strong>Maior:</strong> ${Math.max(...propostasProcesso.map(p => p.prazo))} dias</p>
-                            <p><strong>Médio:</strong> ${Math.round(propostasProcesso.reduce((acc, p) => acc + p.prazo, 0) / propostasProcesso.length)} dias</p>
-                        </div>
-                        <div class="indicator-card">
-                            <h4>📈 Competitividade</h4>
-                            <p><strong>Taxa de Resposta:</strong> ${Math.round(propostasProcesso.length / (processo.fornecedoresConvidados?.length || 1) * 100)}%</p>
-                            <p><strong>Desvio Padrão:</strong> ${((maiorValor - menorValor) / 2).toFixed(2)}</p>
-                            <p><strong>Índice de Qualidade:</strong> ${propostasProcesso.filter(p => pareceres.some(par => par.propostaId === p.protocolo && par.tipo === 'aprovado')).length}/${propostasProcesso.length}</p>
+
+                    <!-- Informações Adicionais -->
+                    <div class="tr-content-section">
+                        <h3 class="tr-section-title">ℹ️ Informações Adicionais</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('Observações', tr.observacoes)}
+                            ${renderizarCampo('Anexos', tr.anexos)}
+                            ${renderizarCampo('Referências', tr.referencias)}
+                            ${renderizarCampo('Sanções', tr.sancoes)}
+                            ${renderizarCampo('Disposições Gerais', tr.disposicoesGerais)}
                         </div>
                     </div>
-                </div>
-                
-                <div class="processo-detalhes-section" style="background: #f0f8ff;">
-                    <h4>🎯 Recomendações da IA</h4>
-                    <ul style="list-style: none; padding: 0;">
-                        <li style="margin-bottom: 10px;">✅ <strong>Melhor Valor:</strong> ${propostasProcesso[0].empresa} oferece o melhor custo-benefício</li>
-                        <li style="margin-bottom: 10px;">📋 <strong>Análise Técnica:</strong> ${pareceres.length > 0 ? 'Considere os pareceres técnicos emitidos' : 'Aguarde pareceres técnicos para decisão final'}</li>
-                        <li style="margin-bottom: 10px;">⚖️ <strong>Conformidade:</strong> Verifique documentação e certidões antes da homologação</li>
-                        <li style="margin-bottom: 10px;">💡 <strong>Negociação:</strong> ${propostasProcesso.length > 1 ? 'Considere negociação com os 3 primeiros colocados' : 'Baixa competitividade limita poder de negociação'}</li>
-                    </ul>
-                </div>
-                
-                <div style="margin-top: 20px; text-align: center;">
-                    <button class="btn btn-primary" onclick="window.print()">
-                        🖨️ Imprimir Relatório
-                    </button>
-                    <button class="btn btn-success" onclick="exportarRelatorioExcel('${numeroProcesso}')">
-                        📊 Exportar Excel
-                    </button>
-                </div>
-            `;
-            
-            document.getElementById('modalRelatorioConteudo').innerHTML = conteudo;
-            document.getElementById('modalRelatorioIA').style.display = 'block';
-        }
 
-        // Gerar relatório IA geral
-        function gerarRelatorioIA() {
-            alert('🤖 Módulo de análise com IA em desenvolvimento. Em breve você terá acesso a insights avançados sobre todos os seus processos!');
-        }
-
-        // Exportar relatório Excel
-        function exportarRelatorioExcel(numeroProcesso) {
-            alert('📊 Exportação para Excel será implementada em breve!');
-        }
-
-        // Gerenciar fornecedores do processo
-        function gerenciarFornecedores(numeroProcesso) {
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const processo = processos.find(p => p.numero === numeroProcesso);
-            
-            if (!processo) {
-                alert('Processo não encontrado!');
-                return;
-            }
-            
-            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
-            const fornecedoresConvidados = processo.fornecedoresConvidados || [];
-            
-            let mensagem = `Fornecedores convidados para o processo ${numeroProcesso}:\n\n`;
-            
-            fornecedoresConvidados.forEach(fornId => {
-                const fornecedor = usuarios.find(u => u.usuarioId === fornId);
-                if (fornecedor) {
-                    mensagem += `• ${fornecedor.nome} (${fornecedor.empresa || 'Empresa não informada'})\n`;
-                }
-            });
-            
-            if (fornecedoresConvidados.length === 0) {
-                mensagem = `Nenhum fornecedor foi convidado para este processo.`;
-            }
-            
-            alert(mensagem);
-        }
-
-        function carregarProcessosComPropostas() {
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            const meusProcessos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
-            
-            const selectProcesso = document.getElementById('processoParaParecer');
-            selectProcesso.innerHTML = '<option value="">Selecione um processo...</option>';
-            
-            meusProcessos.forEach(processo => {
-                const propostasProcesso = propostas.filter(p => p.processo === processo.numero);
-                if (propostasProcesso.length > 0) {
-                    selectProcesso.innerHTML += `
-                        <option value="${processo.numero}">
-                            ${processo.numero} - ${processo.objeto} (${propostasProcesso.length} propostas)
-                        </option>
-                    `;
-                }
-            });
-        }
-
-        function carregarPropostasParaLiberar() {
-            const processoSelecionado = document.getElementById('processoParaParecer').value;
-            const container = document.getElementById('propostasParaLiberar');
-            
-            if (!processoSelecionado) {
-                container.innerHTML = '<p style="color: #6c757d;">Selecione um processo para ver as propostas</p>';
-                return;
-            }
-            
-            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
-            const propostasProcesso = propostas.filter(p => p.processo === processoSelecionado);
-            
-            if (propostasProcesso.length === 0) {
-                container.innerHTML = '<p style="color: #6c757d;">Nenhuma proposta recebida para este processo</p>';
-                return;
-            }
-            
-            container.innerHTML = `
-                <table class="proposta-table">
-                    <thead>
-                        <tr>
-                            <th>Empresa</th>
-                            <th>CNPJ</th>
-                            <th>Valor</th>
-                            <th>Data</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${propostasProcesso.map(proposta => {
-                            const jaLiberada = propostasLiberadas.some(pl => 
-                                pl.propostaId === proposta.protocolo
-                            );
-                            
-                            return `
-                                <tr>
-                                    <td>${proposta.empresa}</td>
-                                    <td>${proposta.cnpj}</td>
-                                    <td>${proposta.valor || 'Não informado'}</td>
-                                    <td>${new Date(proposta.data).toLocaleDateString('pt-BR')}</td>
-                                    <td>
-                                        ${jaLiberada ? 
-                                            '<span style="color: #28a745;">✅ Liberada</span>' : 
-                                            '<span style="color: #ffc107;">⏳ Pendente</span>'
-                                        }
-                                    </td>
-                                    <td>
-                                        ${!jaLiberada ? `
-                                            <button class="btn btn-primary" onclick="liberarParaParecer('${proposta.protocolo}', '${processoSelecionado}')">
-                                                📄 Liberar para Parecer
-                                            </button>
-                                        ` : `
-                                            <button class="btn btn-info" disabled>
-                                                ✅ Já Liberada
-                                            </button>
-                                        `}
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
-
-        function liberarParaParecer(propostaId, processoId) {
-            // Buscar TR vinculado ao processo
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const processo = processos.find(p => p.numero === processoId);
-            
-            if (!processo || !processo.trId) {
-                alert('❌ Este processo não tem TR vinculado!');
-                return;
-            }
-            
-            // Buscar requisitante do TR
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const tr = trs.find(t => t.id === processo.trId);
-            
-            if (!tr || !tr.criadoPor) {
-                alert('❌ TR não encontrado ou sem requisitante!');
-                return;
-            }
-            
-            // Criar liberação
-            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
-            const novaLiberacao = {
-                id: 'lib_' + Date.now(),
-                propostaId: propostaId,
-                processoId: processoId,
-                compradorId: usuarioAtual.usuarioId,
-                requisitanteId: tr.criadoPor,
-                dataLiberacao: new Date().toISOString(),
-                parecerEmitido: false
-            };
-            
-            propostasLiberadas.push(novaLiberacao);
-            localStorage.setItem('propostas_liberadas_parecer', JSON.stringify(propostasLiberadas));
-            
-            // Notificar requisitante
-            Auth.Notificacoes.criar({
-                tipo: 'proposta_liberada_parecer',
-                titulo: '📄 Nova proposta para análise',
-                mensagem: `Uma proposta do processo ${processoId} foi liberada para seu parecer técnico`,
-                destinatario: tr.criadoPor,
-                remetente: usuarioAtual.nome,
-                metadata: {
-                    propostaId: propostaId,
-                    processoId: processoId
-                }
-            });
-            
-            alert('✅ Proposta liberada para parecer técnico!');
-            carregarPropostasParaLiberar();
-        }
-
-        function formatarMoeda(input) {
-            let valor = input.value.replace(/\D/g, '');
-            valor = (valor / 100).toFixed(2);
-            valor = valor.replace('.', ',');
-            valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-            input.value = 'R$ ' + valor;
-        }
-
-        function fecharModal() {
-            document.getElementById('modalVisualizarTR').style.display = 'none';
-        }
-
-        function fecharModalDetalhes() {
-            document.getElementById('modalDetalhesProcesso').style.display = 'none';
-        }
-
-        function fecharModalRelatorio() {
-            document.getElementById('modalRelatorioIA').style.display = 'none';
-        }
-
-        function fecharModalDevolucao() {
-            document.getElementById('modalDevolverTR').style.display = 'none';
-        }
-
-        // Fechar modal ao clicar fora
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        }
-
-        // Função para abrir TR diretamente do processo
-        function abrirTRDoProcesso(trId, numeroProcesso) {
-            // Primeiro tenta buscar o TR dentro do processo (mais confiável)
-            if (numeroProcesso) {
-                const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-                const processo = processos.find(p => p.numero === numeroProcesso);
-                
-                if (processo && processo.trCompleto) {
-                    // Usa o TR armazenado no processo
-                    visualizarTRCompletoDoProcesso(processo.trCompleto);
-                    return;
-                }
-            }
-            
-            // Fallback: busca o TR no localStorage (compatibilidade)
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const tr = trs.find(t => t.id === trId);
-            
-            if (!tr) {
-                alert('❌ TR não encontrado! Pode ter sido removido ou estar com problema de sincronização.');
-                return;
-            }
-            
-            visualizarTRCompleto(trId);
-        }
-
-        // Função para visualizar TR armazenado no processo
-        function visualizarTRCompletoDoProcesso(tr) {
-            document.getElementById('modalTRTitulo').textContent = tr.titulo;
-            
-            const conteudo = `
-                <!-- Informações Básicas -->
-                <div class="tr-section">
-                    <h4>📋 Informações Básicas</h4>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Modalidade:</span>
-                        <span class="tr-field-value">${tr.modalidade || 'Não especificada'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Objetivo:</span>
-                        <span class="tr-field-value">${tr.objetivo || tr.objeto || 'Não especificado'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Conformidade:</span>
-                        <span class="tr-field-value">${tr.conformidade || 'Não especificada'}</span>
-                    </div>
-                </div>
-
-                <!-- Local e Acesso -->
-                <div class="tr-section">
-                    <h4>📍 Local e Acesso</h4>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Visita ao Local:</span>
-                        <span class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Local/Acesso:</span>
-                        <span class="tr-field-value">${tr.localAcesso || 'Não especificado'}</span>
-                    </div>
-                </div>
-
-                <!-- Escopo Técnico -->
-                <div class="tr-section">
-                    <h4>🔧 Escopo Técnico</h4>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Escopo Técnico:</span>
-                        <span class="tr-field-value">${tr.escopoTecnico || 'Não especificado'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Situação Atual:</span>
-                        <span class="tr-field-value">${tr.situacaoAtual || 'Não especificada'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Situação Proposta:</span>
-                        <span class="tr-field-value">${tr.situacaoProposta || 'Não especificada'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Especificação Técnica:</span>
-                        <span class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</span>
-                    </div>
-                </div>
-
-                <!-- Prazos -->
-                <div class="tr-section">
-                    <h4>⏰ Prazos</h4>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Prazos:</span>
-                        <span class="tr-field-value">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</span>
-                    </div>
-                </div>
-
-                <!-- Metadados -->
-                <div class="tr-section" style="background: #e3f2fd; border-left-color: #2196f3;">
-                    <h4>ℹ️ Informações do Documento</h4>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Criado por:</span>
-                        <span class="tr-field-value">${tr.criadorNome || 'Não identificado'}</span>
-                    </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Data de Criação:</span>
-                        <span class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</span>
-                    </div>
-                    ${tr.aprovadoEm ? `
-                        <div class="tr-field">
-                            <span class="tr-field-label">Aprovado em:</span>
-                            <span class="tr-field-value">${new Date(tr.aprovadoEm).toLocaleString('pt-BR')}</span>
+                    <!-- Metadados -->
+                    <div class="tr-content-section" style="background: #e3f2fd;">
+                        <h3 class="tr-section-title">📊 Informações do Documento</h3>
+                        <div class="tr-field-grid">
+                            ${renderizarCampo('ID do Documento', tr.id)}
+                            ${renderizarCampo('Criado por', tr.criadorNome)}
+                            ${renderizarCampo('ID do Criador', tr.criadoPor)}
+                            ${renderizarCampo('Data de Criação', new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR'))}
+                            ${renderizarCampo('Status', tr.status)}
+                            ${renderizarCampo('Última Atualização', tr.ultimaAtualizacao ? new Date(tr.ultimaAtualizacao).toLocaleString('pt-BR') : 'N/A')}
                         </div>
-                        <div class="tr-field">
-                            <span class="tr-field-label">Aprovado por:</span>
-                            <span class="tr-field-value">${tr.aprovadoPor}</span>
-                        </div>
-                    ` : ''}
-                </div>
+                    </div>
 
-                <div style="margin-top: 20px; padding: 20px; background: #d4edda; border-radius: 8px;">
-                    <p style="color: #155724; font-weight: 600;">
-                        ✅ Este é o TR que foi aprovado e vinculado ao processo. 
-                        Esta é uma cópia histórica e não será afetada por alterações no TR original.
-                    </p>
-                </div>
-            `;
-            
-            document.getElementById('modalTRConteudo').innerHTML = conteudo;
-            document.getElementById('modalVisualizarTR').style.display = 'block';
-        }
-
-        // Função para baixar TR diretamente do processo
-        function baixarTRDoProcesso(trId, numeroProcesso) {
-            let tr = null;
-            
-            // Primeiro tenta buscar o TR dentro do processo
-            if (numeroProcesso) {
-                const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-                const processo = processos.find(p => p.numero === numeroProcesso);
-                
-                if (processo && processo.trCompleto) {
-                    tr = processo.trCompleto;
-                }
-            }
-            
-            // Fallback: busca o TR no localStorage
-            if (!tr) {
-                const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-                tr = trs.find(t => t.id === trId);
-            }
-            
-            if (!tr) {
-                alert('❌ TR não encontrado!');
-                return;
-            }
-            
-            baixarTR(trId);
-        }
-    </script>
-</body>
-</html>
+                    <!-- Ações -->
+                    <div class="tr-approval-actions">
+                        <button class="btn btn-primary" onclick="baixarTR('${tr.id}')">
+                            📄 Baixar Word
+                        </button>
+                        <button class="btn btn-info" onclick="baixarTRPDF('${tr.id}')">
+                            📄 Baixar PDF
+                        </button>
+                        <button class="btn btn-success" onclick="aprovarTReFecharModal()">
+                            ✅ Aprovar TR
+                        </button>
+                        <button class="btn btn-warning" onclick="imprimirTR()">
+                            🖨️ Imprimir
+                        </button>
+                    </div>
