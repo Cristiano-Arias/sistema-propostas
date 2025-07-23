@@ -519,6 +519,28 @@
             color: white;
         }
 
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -529,6 +551,46 @@
             font-size: 64px;
             margin-bottom: 20px;
             opacity: 0.5;
+        }
+
+        /* Modal de confirmação */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .confirm-modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 0;
+            width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: modalFadeIn 0.3s;
+        }
+
+        .confirm-modal-header {
+            background: #dc3545;
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .confirm-modal-body {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .confirm-modal-footer {
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
         }
 
         @media (max-width: 768px) {
@@ -664,13 +726,15 @@
 
             <!-- Criar TR -->
             <div id="criar-tr" class="page">
-                <h2>📝 Criar Termo de Referência</h2>
+                <h2>📝 <span id="tituloFormTR">Criar Termo de Referência</span></h2>
                 <div class="info-panel">
-                    <h4>Novo Termo de Referência</h4>
+                    <h4 id="subtituloFormTR">Novo Termo de Referência</h4>
                     <p>Preencha todos os campos obrigatórios para criar um TR completo e detalhado.</p>
                 </div>
                 
                 <form class="tr-form" onsubmit="salvarTR(event)">
+                    <input type="hidden" id="trEditandoId" value="">
+                    
                     <!-- Informações Básicas -->
                     <div style="background: #f0f4ff; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
                         <h3 style="color: #2c3e50; margin-bottom: 20px;">📋 Informações Básicas</h3>
@@ -995,6 +1059,7 @@
                         <button type="submit" class="btn btn-primary">💾 Salvar TR</button>
                         <button type="button" class="btn btn-info" onclick="limparFormulario()">🔄 Limpar Formulário</button>
                         <button type="button" class="btn btn-success" onclick="salvarRascunho()">📋 Salvar Rascunho</button>
+                        <button type="button" class="btn btn-danger" onclick="cancelarEdicao()" id="btnCancelarEdicao" style="display: none;">❌ Cancelar Edição</button>
                     </div>
                 </form>
             </div>
@@ -1034,8 +1099,26 @@
         </div>
     </div>
 
+    <!-- Modal de Confirmação para Exclusão -->
+    <div id="modalConfirmacao" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3>⚠️ Confirmar Exclusão</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p>Tem certeza que deseja excluir este Termo de Referência?</p>
+                <p style="color: #dc3545; font-weight: bold; margin-top: 15px;">Esta ação não pode ser desfeita!</p>
+            </div>
+            <div class="confirm-modal-footer">
+                <button class="btn btn-danger" onclick="confirmarExclusao()">Sim, Excluir</button>
+                <button class="btn btn-info" onclick="cancelarExclusao()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let usuarioAtual = null;
+        let trIdParaExcluir = null;
 
         window.addEventListener('DOMContentLoaded', function() {
             usuarioAtual = Auth.verificarAutenticacao(['requisitante', 'admin']);
@@ -1109,6 +1192,8 @@
         function salvarTR(event) {
             event.preventDefault();
             
+            const trEditandoId = document.getElementById('trEditandoId').value;
+            
             // Coletar dados da tabela de serviços
             const servicos = [];
             const linhasServicos = document.querySelectorAll('#corpoTabelaServicos tr');
@@ -1149,8 +1234,7 @@
                 }
             });
             
-            const novoTR = {
-                id: 'tr_' + Date.now(),
+            const dadosTR = {
                 titulo: document.getElementById('trTitulo').value,
                 modalidade: document.getElementById('trModalidade').value,
                 
@@ -1202,33 +1286,58 @@
                 // Metadados
                 criadoPor: usuarioAtual.usuarioId,
                 criadorNome: usuarioAtual.nome,
-                dataCriacao: new Date().toISOString(),
-                criado_em: new Date().toISOString(),
                 status: 'ativo'
             };
             
-            // Salvar no localStorage
+            // Carregar TRs do localStorage
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            trs.push(novoTR);
+            
+            if (trEditandoId) {
+                // Modo edição - atualizar TR existente
+                const index = trs.findIndex(tr => tr.id === trEditandoId);
+                if (index !== -1) {
+                    // Manter ID e data de criação originais
+                    dadosTR.id = trEditandoId;
+                    dadosTR.dataCriacao = trs[index].dataCriacao || trs[index].criado_em;
+                    dadosTR.criado_em = trs[index].criado_em || trs[index].dataCriacao;
+                    dadosTR.dataAtualizacao = new Date().toISOString();
+                    
+                    // Atualizar no array
+                    trs[index] = dadosTR;
+                    
+                    alert('✅ Termo de Referência atualizado com sucesso!');
+                }
+            } else {
+                // Modo criação - novo TR
+                dadosTR.id = 'tr_' + Date.now();
+                dadosTR.dataCriacao = new Date().toISOString();
+                dadosTR.criado_em = new Date().toISOString();
+                
+                // Adicionar ao array
+                trs.push(dadosTR);
+                
+                // Criar notificação para compradores
+                Auth.Notificacoes.criar({
+                    tipo: 'novo_tr',
+                    titulo: '📝 Novo TR Disponível',
+                    mensagem: `${dadosTR.titulo} foi criado por ${usuarioAtual.nome}`,
+                    destinatarioTipo: 'comprador',
+                    remetente: usuarioAtual.nome,
+                    metadata: {
+                        trId: dadosTR.id,
+                        modalidade: dadosTR.modalidade
+                    }
+                });
+                
+                alert('✅ Termo de Referência salvo com sucesso!');
+            }
+            
+            // Salvar no localStorage
             localStorage.setItem('termos_referencia', JSON.stringify(trs));
             
-            // Criar notificação para compradores
-            Auth.Notificacoes.criar({
-                tipo: 'novo_tr',
-                titulo: '📝 Novo TR Disponível',
-                mensagem: `${novoTR.titulo} foi criado por ${usuarioAtual.nome}`,
-                destinatarioTipo: 'comprador',
-                remetente: usuarioAtual.nome,
-                metadata: {
-                    trId: novoTR.id,
-                    modalidade: novoTR.modalidade
-                }
-            });
-            
-            alert('✅ Termo de Referência salvo com sucesso!');
-            
-            // Limpar formulário
+            // Limpar formulário e resetar modo
             limparFormulario();
+            cancelarEdicao();
             
             // Atualizar estatísticas
             atualizarEstatisticas();
@@ -1243,7 +1352,7 @@
                 'trTitulo', 'trModalidade', 'trObjetivo', 'trConformidade',
                 'trVisitaLocal', 'trLocalAcesso', 'trEscopoTecnico', 'trSituacaoAtual',
                 'trSituacaoProposta', 'trEspecificacaoTecnica', 'trPremissas',
-                'trPlanilhaQuantidade', 'trEscopoGeral', 'trPrazos', 'trMatrizResponsabilidade',
+                'trPlanilhaQuantidade', 'trEscopoGeral', 'trPrazos',
                 'trSegurancaTrabalho', 'trCanteiro', 'trCredenciamento', 'trMeioAmbiente',
                 'trEngenharia', 'trAquisicoes', 'trGestaoContratos', 'trPlanejamentoExecutivo',
                 'trTestes', 'trEncerramentoObra', 'trCAP', 'trCAF', 'trGarantia',
@@ -1256,6 +1365,92 @@
                     elemento.value = '';
                 }
             });
+            
+            // Limpar tabelas dinâmicas
+            document.getElementById('corpoTabelaServicos').innerHTML = `
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">1</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">
+                        <input type="text" class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;" placeholder="Descrição do serviço">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">
+                        <select class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                            <option>UN</option>
+                            <option>M²</option>
+                            <option>M³</option>
+                            <option>ML</option>
+                            <option>KG</option>
+                            <option>VB</option>
+                        </select>
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">
+                        <input type="number" class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;" placeholder="0">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <button type="button" class="btn btn-sm" onclick="removerLinhaServico(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                    </td>
+                </tr>
+            `;
+            
+            // Resetar contador
+            contadorServico = 1;
+            
+            // Limpar matriz de responsabilidade mantendo os 3 primeiros itens
+            const matrizOriginal = `
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">
+                        <input type="text" class="form-control" value="Fornecimento de materiais" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_1" value="contratada" checked>
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_1" value="contratante">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_1" value="na">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <button type="button" class="btn btn-sm" onclick="removerLinhaMatriz(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">
+                        <input type="text" class="form-control" value="Mão de obra especializada" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_2" value="contratada" checked>
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_2" value="contratante">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_2" value="na">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <button type="button" class="btn btn-sm" onclick="removerLinhaMatriz(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">
+                        <input type="text" class="form-control" value="Licenças e autorizações" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_3" value="contratada">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_3" value="contratante" checked>
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <input type="radio" name="resp_3" value="na">
+                    </td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                        <button type="button" class="btn btn-sm" onclick="removerLinhaMatriz(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                    </td>
+                </tr>
+            `;
+            document.getElementById('corpoMatrizResponsabilidade').innerHTML = matrizOriginal;
+            contadorMatriz = 3;
         }
         
         function salvarRascunho() {
@@ -1331,6 +1526,9 @@
                     }
                 }
 
+                // Verificar se pode editar/excluir (apenas se não tem processo vinculado)
+                const podeEditar = !processoVinculado;
+
                 return `
                     <div class="tr-card">
                         <div class="tr-header">
@@ -1355,11 +1553,24 @@
                                     <strong>Processo:</strong> ${processoVinculado.numero}
                                 </div>
                             ` : ''}
+                            ${tr.dataAtualizacao ? `
+                                <div>
+                                    <strong>Última Atualização:</strong> ${new Date(tr.dataAtualizacao).toLocaleDateString('pt-BR')}
+                                </div>
+                            ` : ''}
                         </div>
                         <div style="margin-top: 15px;">
                             <button class="btn btn-info" onclick="visualizarTR('${tr.id}')">
                                 👁️ Visualizar
                             </button>
+                            ${podeEditar ? `
+                                <button class="btn btn-warning" onclick="editarTR('${tr.id}')">
+                                    ✏️ Editar
+                                </button>
+                                <button class="btn btn-danger" onclick="excluirTR('${tr.id}')">
+                                    🗑️ Excluir
+                                </button>
+                            ` : ''}
                             ${status === 'parecer-pendente' ? `
                                 <button class="btn btn-primary" onclick="mostrarPagina('emitir-parecer')">
                                     📄 Emitir Parecer
@@ -1369,6 +1580,196 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function editarTR(trId) {
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === trId);
+            
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
+            
+            // Verificar se tem processo vinculado
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processoVinculado = processos.find(p => p.trId === trId);
+            
+            if (processoVinculado) {
+                alert('⚠️ Este TR não pode ser editado pois já está vinculado ao processo ' + processoVinculado.numero);
+                return;
+            }
+            
+            // Mudar para página de criar/editar
+            mostrarPagina('criar-tr');
+            
+            // Atualizar título e subtítulo
+            document.getElementById('tituloFormTR').textContent = 'Editar Termo de Referência';
+            document.getElementById('subtituloFormTR').textContent = 'Editando: ' + tr.titulo;
+            
+            // Mostrar botão de cancelar edição
+            document.getElementById('btnCancelarEdicao').style.display = 'inline-block';
+            
+            // Preencher o ID do TR sendo editado
+            document.getElementById('trEditandoId').value = trId;
+            
+            // Preencher campos básicos
+            document.getElementById('trTitulo').value = tr.titulo || '';
+            document.getElementById('trModalidade').value = tr.modalidade || '';
+            document.getElementById('trObjetivo').value = tr.objetivo || '';
+            document.getElementById('trConformidade').value = tr.conformidade || '';
+            document.getElementById('trVisitaLocal').value = tr.visitaLocal || '';
+            document.getElementById('trLocalAcesso').value = tr.localAcesso || '';
+            document.getElementById('trEscopoTecnico').value = tr.escopoTecnico || '';
+            document.getElementById('trSituacaoAtual').value = tr.situacaoAtual || '';
+            document.getElementById('trSituacaoProposta').value = tr.situacaoProposta || '';
+            document.getElementById('trEspecificacaoTecnica').value = tr.especificacaoTecnica || '';
+            document.getElementById('trPremissas').value = tr.premissas || '';
+            document.getElementById('trPlanilhaQuantidade').value = tr.planilhaQuantidade || '';
+            document.getElementById('trEscopoGeral').value = tr.escopoGeral || '';
+            document.getElementById('trPrazos').value = tr.prazos || '';
+            document.getElementById('trSegurancaTrabalho').value = tr.segurancaTrabalho || '';
+            document.getElementById('trCanteiro').value = tr.canteiro || '';
+            document.getElementById('trCredenciamento').value = tr.credenciamento || '';
+            document.getElementById('trMeioAmbiente').value = tr.meioAmbiente || '';
+            document.getElementById('trEngenharia').value = tr.engenharia || '';
+            document.getElementById('trAquisicoes').value = tr.aquisicoes || '';
+            document.getElementById('trGestaoContratos').value = tr.gestaoContratos || '';
+            document.getElementById('trPlanejamentoExecutivo').value = tr.planejamentoExecutivo || '';
+            document.getElementById('trTestes').value = tr.testes || '';
+            document.getElementById('trEncerramentoObra').value = tr.encerramentoObra || '';
+            document.getElementById('trCAP').value = tr.cap || '';
+            document.getElementById('trCAF').value = tr.caf || '';
+            document.getElementById('trGarantia').value = tr.garantia || '';
+            document.getElementById('trCriteriosAvaliacao').value = tr.criteriosAvaliacao || '';
+            document.getElementById('trAnexos').value = tr.anexos || '';
+            
+            // Preencher tabela de serviços
+            if (tr.tabelaServicos && tr.tabelaServicos.length > 0) {
+                const tbody = document.getElementById('corpoTabelaServicos');
+                tbody.innerHTML = '';
+                
+                tr.tabelaServicos.forEach((servico, index) => {
+                    const novaLinha = document.createElement('tr');
+                    novaLinha.innerHTML = `
+                        <td style="padding: 8px; border: 1px solid #ddd;">${index + 1}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">
+                            <input type="text" class="form-control" value="${servico.descricao}" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">
+                            <select class="form-control" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                                <option ${servico.unidade === 'UN' ? 'selected' : ''}>UN</option>
+                                <option ${servico.unidade === 'M²' ? 'selected' : ''}>M²</option>
+                                <option ${servico.unidade === 'M³' ? 'selected' : ''}>M³</option>
+                                <option ${servico.unidade === 'ML' ? 'selected' : ''}>ML</option>
+                                <option ${servico.unidade === 'KG' ? 'selected' : ''}>KG</option>
+                                <option ${servico.unidade === 'VB' ? 'selected' : ''}>VB</option>
+                            </select>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">
+                            <input type="number" class="form-control" value="${servico.quantidade}" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                            <button type="button" class="btn btn-sm" onclick="removerLinhaServico(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(novaLinha);
+                });
+                
+                contadorServico = tr.tabelaServicos.length;
+            }
+            
+            // Preencher matriz de responsabilidade
+            if (tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0) {
+                const tbody = document.getElementById('corpoMatrizResponsabilidade');
+                tbody.innerHTML = '';
+                
+                tr.matrizResponsabilidade.forEach((item, index) => {
+                    const radioName = 'resp_' + (index + 1);
+                    const novaLinha = document.createElement('tr');
+                    novaLinha.innerHTML = `
+                        <td style="padding: 8px; border: 1px solid #ddd;">
+                            <input type="text" class="form-control" value="${item.atividade}" style="width: 100%; border: 1px solid #ddd; padding: 5px;">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                            <input type="radio" name="${radioName}" value="contratada" ${item.responsavel === 'contratada' ? 'checked' : ''}>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                            <input type="radio" name="${radioName}" value="contratante" ${item.responsavel === 'contratante' ? 'checked' : ''}>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                            <input type="radio" name="${radioName}" value="na" ${item.responsavel === 'na' ? 'checked' : ''}>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                            <button type="button" class="btn btn-sm" onclick="removerLinhaMatriz(this)" style="background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px;">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(novaLinha);
+                });
+                
+                contadorMatriz = tr.matrizResponsabilidade.length;
+            }
+            
+            // Rolar para o topo da página
+            window.scrollTo(0, 0);
+        }
+
+        function cancelarEdicao() {
+            // Resetar formulário para modo criação
+            document.getElementById('trEditandoId').value = '';
+            document.getElementById('tituloFormTR').textContent = 'Criar Termo de Referência';
+            document.getElementById('subtituloFormTR').textContent = 'Novo Termo de Referência';
+            document.getElementById('btnCancelarEdicao').style.display = 'none';
+            
+            // Limpar formulário
+            limparFormulario();
+        }
+
+        function excluirTR(trId) {
+            // Verificar se tem processo vinculado
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processoVinculado = processos.find(p => p.trId === trId);
+            
+            if (processoVinculado) {
+                alert('⚠️ Este TR não pode ser excluído pois está vinculado ao processo ' + processoVinculado.numero);
+                return;
+            }
+            
+            // Armazenar o ID para exclusão
+            trIdParaExcluir = trId;
+            
+            // Mostrar modal de confirmação
+            document.getElementById('modalConfirmacao').style.display = 'block';
+        }
+
+        function confirmarExclusao() {
+            if (!trIdParaExcluir) return;
+            
+            // Carregar TRs
+            let trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            
+            // Filtrar removendo o TR
+            trs = trs.filter(tr => tr.id !== trIdParaExcluir);
+            
+            // Salvar no localStorage
+            localStorage.setItem('termos_referencia', JSON.stringify(trs));
+            
+            // Limpar variável
+            trIdParaExcluir = null;
+            
+            // Fechar modal
+            document.getElementById('modalConfirmacao').style.display = 'none';
+            
+            // Atualizar lista e estatísticas
+            carregarMeusTRs();
+            atualizarEstatisticas();
+            
+            alert('✅ Termo de Referência excluído com sucesso!');
+        }
+
+        function cancelarExclusao() {
+            trIdParaExcluir = null;
+            document.getElementById('modalConfirmacao').style.display = 'none';
         }
 
         function carregarPropostasParaParecer() {
@@ -1718,6 +2119,12 @@
                         <span class="tr-field-label">Data de Criação:</span>
                         <span class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</span>
                     </div>
+                    ${tr.dataAtualizacao ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Última Atualização:</span>
+                            <span class="tr-field-value">${new Date(tr.dataAtualizacao).toLocaleString('pt-BR')}</span>
+                        </div>
+                    ` : ''}
                     <div class="tr-field">
                         <span class="tr-field-label">Status:</span>
                         <span class="tr-field-value">${tr.status || 'Ativo'}</span>
@@ -1928,6 +2335,7 @@
                     <div class="footer">
                         <p>Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
                         <p>Elaborado por: ${tr.criadorNome || 'Não identificado'}</p>
+                        ${tr.dataAtualizacao ? `<p>Última atualização: ${new Date(tr.dataAtualizacao).toLocaleString('pt-BR')}</p>` : ''}
                     </div>
                 </body>
                 </html>
@@ -1958,8 +2366,13 @@
         // Fechar modal ao clicar fora dele
         window.onclick = function(event) {
             const modal = document.getElementById('modalVisualizarTR');
+            const modalConfirm = document.getElementById('modalConfirmacao');
+            
             if (event.target == modal) {
                 fecharModal();
+            }
+            if (event.target == modalConfirm) {
+                cancelarExclusao();
             }
         }
 
