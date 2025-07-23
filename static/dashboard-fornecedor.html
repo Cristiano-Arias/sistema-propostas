@@ -652,6 +652,15 @@
                     <p>4. Acompanhe o status através do menu "Minhas Propostas"</p>
                 </div>
 
+                <!-- Botão temporário para teste -->
+                <div style="background: #fff3cd; padding: 15px; margin: 15px 0; border-radius: 8px; border: 1px solid #ffeaa7;">
+                    <p><strong>🔧 Área de Teste</strong></p>
+                    <p>Se não há processos visíveis, clique no botão abaixo para criar um processo de teste direcionado a você:</p>
+                    <button class="btn btn-warning" onclick="criarProcessoTeste()">
+                        Criar Processo de Teste
+                    </button>
+                </div>
+
                 <div id="processosList" class="process-list">
                     <div class="loading">Carregando processos...</div>
                 </div>
@@ -776,7 +785,32 @@
             // Carregar dados
             loadDashboardData();
             loadEmpresaData();
+            
+            // Debug - verificar estrutura de dados
+            debugVerificarDados();
         });
+
+        // Função de debug para verificar dados
+        function debugVerificarDados() {
+            console.log('=== DEBUG COMPLETO ===');
+            console.log('Usuário atual:', currentUser);
+            
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            console.log('Processos no sistema:', processos);
+            
+            if (processos.length > 0) {
+                console.log('Exemplo de processo:', processos[0]);
+                console.log('Fornecedores convidados do primeiro processo:', processos[0].fornecedoresConvidados);
+            }
+            
+            // Verificar se há processos para este fornecedor
+            const meusProcessos = processos.filter(p => 
+                p.fornecedoresConvidados && 
+                p.fornecedoresConvidados.includes(currentUser.usuarioId)
+            );
+            
+            console.log('Processos para mim:', meusProcessos);
+        }
 
         // Configurar sistema de navegação
         function configurarNavegacao() {
@@ -836,12 +870,26 @@
             try {
                 // Carregar processos direcionados
                 const processosData = JSON.parse(localStorage.getItem('processos') || '[]');
-                const processosDirecionados = processosData.filter(p => 
-                    p.status === 'publicado' && 
-                    p.fornecedoresConvidados && 
-                    p.fornecedoresConvidados.includes(currentUser.usuarioId) &&
-                    new Date(p.prazo) > new Date()
-                );
+                
+                console.log('=== DEBUG DASHBOARD ===');
+                console.log('Usuário atual:', currentUser);
+                console.log('Total de processos:', processosData.length);
+                
+                const processosDirecionados = processosData.filter(p => {
+                    const isDirecionado = p.status === 'publicado' && 
+                                        p.fornecedoresConvidados && 
+                                        Array.isArray(p.fornecedoresConvidados) &&
+                                        p.fornecedoresConvidados.includes(currentUser.usuarioId) &&
+                                        new Date(p.prazo) > new Date();
+                    
+                    if (isDirecionado) {
+                        console.log('Processo direcionado encontrado:', p.numero);
+                    }
+                    
+                    return isDirecionado;
+                });
+                
+                console.log('Processos direcionados:', processosDirecionados.length);
                 
                 // Carregar propostas do fornecedor
                 const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
