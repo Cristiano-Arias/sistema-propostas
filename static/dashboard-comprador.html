@@ -1910,7 +1910,14 @@
                 dataCadastro: new Date().toISOString(),
                 criadoPor: usuarioAtual.usuarioId,
                 criadorNome: usuarioAtual.nome,
+                
+                // ARMAZENAR O TR COMPLETO DENTRO DO PROCESSO
                 trId: trSelecionado.id,
+                trCompleto: {
+                    ...trSelecionado,  // Copia todos os campos do TR
+                    aprovadoEm: new Date().toISOString(),
+                    aprovadoPor: usuarioAtual.nome
+                },
                 trAprovado: true,
                 dataAprovacaoTR: new Date().toISOString(),
                 
@@ -1933,7 +1940,7 @@
                 }
             };
             
-            console.log('Novo processo a ser criado:', novoProcesso);
+            console.log('Novo processo a ser criado com TR completo:', novoProcesso);
             
             const processos = JSON.parse(localStorage.getItem('processos') || '[]');
             processos.push(novoProcesso);
@@ -2081,7 +2088,7 @@
                                 👁️ Detalhes
                             </button>
                             ${processo.trId ? `
-                                <button class="btn btn-warning" onclick="abrirTRDoProcesso('${processo.trId}')">
+                                <button class="btn btn-warning" onclick="abrirTRDoProcesso('${processo.trId}', '${processo.numero}')">
                                     📋 Ver TR
                                 </button>
                             ` : ''}
@@ -2163,10 +2170,10 @@
                         ${processo.trAprovado ? '<p style="color: #28a745;">✅ TR Aprovado em ' + new Date(processo.dataAprovacaoTR).toLocaleDateString('pt-BR') + '</p>' : ''}
                         ${tr.devolvido ? '<p style="color: #dc3545;">↩️ TR foi devolvido ao requisitante</p>' : ''}
                         <div style="margin-top: 15px;">
-                            <button class="btn btn-info" onclick="abrirTRDoProcesso('${processo.trId}')">
+                            <button class="btn btn-info" onclick="abrirTRDoProcesso('${processo.trId}', '${processo.numero}')">
                                 📋 Visualizar TR Completo
                             </button>
-                            <button class="btn btn-primary" onclick="baixarTRDoProcesso('${processo.trId}')">
+                            <button class="btn btn-primary" onclick="baixarTRDoProcesso('${processo.trId}', '${processo.numero}')">
                                 📥 Baixar TR
                             </button>
                         </div>
@@ -2597,7 +2604,20 @@
         }
 
         // Função para abrir TR diretamente do processo
-        function abrirTRDoProcesso(trId) {
+        function abrirTRDoProcesso(trId, numeroProcesso) {
+            // Primeiro tenta buscar o TR dentro do processo (mais confiável)
+            if (numeroProcesso) {
+                const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+                const processo = processos.find(p => p.numero === numeroProcesso);
+                
+                if (processo && processo.trCompleto) {
+                    // Usa o TR armazenado no processo
+                    visualizarTRCompletoDoProcesso(processo.trCompleto);
+                    return;
+                }
+            }
+            
+            // Fallback: busca o TR no localStorage (compatibilidade)
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
             const tr = trs.find(t => t.id === trId);
             
@@ -2606,21 +2626,134 @@
                 return;
             }
             
-            // Usar a mesma função de visualização completa
             visualizarTRCompleto(trId);
         }
 
+        // Função para visualizar TR armazenado no processo
+        function visualizarTRCompletoDoProcesso(tr) {
+            document.getElementById('modalTRTitulo').textContent = tr.titulo;
+            
+            const conteudo = `
+                <!-- Informações Básicas -->
+                <div class="tr-section">
+                    <h4>📋 Informações Básicas</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Modalidade:</span>
+                        <span class="tr-field-value">${tr.modalidade || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Objetivo:</span>
+                        <span class="tr-field-value">${tr.objetivo || tr.objeto || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Conformidade:</span>
+                        <span class="tr-field-value">${tr.conformidade || 'Não especificada'}</span>
+                    </div>
+                </div>
+
+                <!-- Local e Acesso -->
+                <div class="tr-section">
+                    <h4>📍 Local e Acesso</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Visita ao Local:</span>
+                        <span class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Local/Acesso:</span>
+                        <span class="tr-field-value">${tr.localAcesso || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Escopo Técnico -->
+                <div class="tr-section">
+                    <h4>🔧 Escopo Técnico</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Escopo Técnico:</span>
+                        <span class="tr-field-value">${tr.escopoTecnico || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Situação Atual:</span>
+                        <span class="tr-field-value">${tr.situacaoAtual || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Situação Proposta:</span>
+                        <span class="tr-field-value">${tr.situacaoProposta || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Especificação Técnica:</span>
+                        <span class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</span>
+                    </div>
+                </div>
+
+                <!-- Prazos -->
+                <div class="tr-section">
+                    <h4>⏰ Prazos</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Prazos:</span>
+                        <span class="tr-field-value">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Metadados -->
+                <div class="tr-section" style="background: #e3f2fd; border-left-color: #2196f3;">
+                    <h4>ℹ️ Informações do Documento</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Criado por:</span>
+                        <span class="tr-field-value">${tr.criadorNome || 'Não identificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Data de Criação:</span>
+                        <span class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</span>
+                    </div>
+                    ${tr.aprovadoEm ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Aprovado em:</span>
+                            <span class="tr-field-value">${new Date(tr.aprovadoEm).toLocaleString('pt-BR')}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Aprovado por:</span>
+                            <span class="tr-field-value">${tr.aprovadoPor}</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div style="margin-top: 20px; padding: 20px; background: #d4edda; border-radius: 8px;">
+                    <p style="color: #155724; font-weight: 600;">
+                        ✅ Este é o TR que foi aprovado e vinculado ao processo. 
+                        Esta é uma cópia histórica e não será afetada por alterações no TR original.
+                    </p>
+                </div>
+            `;
+            
+            document.getElementById('modalTRConteudo').innerHTML = conteudo;
+            document.getElementById('modalVisualizarTR').style.display = 'block';
+        }
+
         // Função para baixar TR diretamente do processo
-        function baixarTRDoProcesso(trId) {
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const tr = trs.find(t => t.id === trId);
+        function baixarTRDoProcesso(trId, numeroProcesso) {
+            let tr = null;
+            
+            // Primeiro tenta buscar o TR dentro do processo
+            if (numeroProcesso) {
+                const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+                const processo = processos.find(p => p.numero === numeroProcesso);
+                
+                if (processo && processo.trCompleto) {
+                    tr = processo.trCompleto;
+                }
+            }
+            
+            // Fallback: busca o TR no localStorage
+            if (!tr) {
+                const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+                tr = trs.find(t => t.id === trId);
+            }
             
             if (!tr) {
-                alert('❌ TR não encontrado! Pode ter sido removido ou estar com problema de sincronização.');
+                alert('❌ TR não encontrado!');
                 return;
             }
             
-            // Usar a mesma função de download
             baixarTR(trId);
         }
     </script>
