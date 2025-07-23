@@ -2080,6 +2080,11 @@
                             <button class="btn btn-info" onclick="verDetalhesProcesso('${processo.numero}')">
                                 👁️ Detalhes
                             </button>
+                            ${processo.trId ? `
+                                <button class="btn btn-warning" onclick="abrirTRDoProcesso('${processo.trId}')">
+                                    📋 Ver TR
+                                </button>
+                            ` : ''}
                             <button class="btn btn-primary" onclick="baixarProcesso('${processo.numero}')">
                                 📥 Baixar Processo
                             </button>
@@ -2157,6 +2162,14 @@
                         <p>Criado por: ${tr.criadorNome} em ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
                         ${processo.trAprovado ? '<p style="color: #28a745;">✅ TR Aprovado em ' + new Date(processo.dataAprovacaoTR).toLocaleDateString('pt-BR') + '</p>' : ''}
                         ${tr.devolvido ? '<p style="color: #dc3545;">↩️ TR foi devolvido ao requisitante</p>' : ''}
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-info" onclick="abrirTRDoProcesso('${processo.trId}')">
+                                📋 Visualizar TR Completo
+                            </button>
+                            <button class="btn btn-primary" onclick="baixarTRDoProcesso('${processo.trId}')">
+                                📥 Baixar TR
+                            </button>
+                        </div>
                     </div>
                 ` : ''}
                 
@@ -2581,6 +2594,34 @@
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
             }
+        }
+
+        // Função para abrir TR diretamente do processo
+        function abrirTRDoProcesso(trId) {
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === trId);
+            
+            if (!tr) {
+                alert('❌ TR não encontrado! Pode ter sido removido ou estar com problema de sincronização.');
+                return;
+            }
+            
+            // Usar a mesma função de visualização completa
+            visualizarTRCompleto(trId);
+        }
+
+        // Função para baixar TR diretamente do processo
+        function baixarTRDoProcesso(trId) {
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === trId);
+            
+            if (!tr) {
+                alert('❌ TR não encontrado! Pode ter sido removido ou estar com problema de sincronização.');
+                return;
+            }
+            
+            // Usar a mesma função de download
+            baixarTR(trId);
         }
     </script>
 </body>
