@@ -394,6 +394,16 @@
             font-weight: bold;
         }
 
+        /* Debug panel */
+        .debug-panel {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 20px 10px;
@@ -478,6 +488,13 @@
                     <div class="info-panel">
                         <h4>Processos Disponíveis</h4>
                         <p>Selecione o processo licitatório para o qual deseja enviar sua proposta.</p>
+                        <p><strong>Nota:</strong> Apenas processos para os quais você foi convidado são exibidos.</p>
+                    </div>
+
+                    <!-- Debug Panel -->
+                    <div id="debugPanel" class="debug-panel" style="display: none;">
+                        <strong>DEBUG INFO:</strong>
+                        <div id="debugInfo"></div>
                     </div>
 
                     <div class="form-group required">
@@ -492,8 +509,8 @@
                     </div>
 
                     <div class="form-actions">
-                        <button type="button" class="btn btn-outline" onclick="window.history.back()">
-                            ← Voltar
+                        <button type="button" class="btn btn-outline" onclick="voltarDashboard()">
+                            ← Voltar ao Dashboard
                         </button>
                         <button type="button" class="btn btn-primary" onclick="proximaEtapa(2)" id="btnProximo1" disabled>
                             Próximo →
@@ -718,8 +735,11 @@
         let processosDisponiveis = [];
         let processoSelecionado = null;
         let etapaAtual = 1;
+        const DEBUG = true; // Ativar modo debug
 
         window.addEventListener('DOMContentLoaded', function() {
+            console.log('=== PORTAL DE PROPOSTAS INICIADO ===');
+            
             usuarioAtual = Auth.verificarAutenticacao(['fornecedor']);
             if (usuarioAtual) {
                 Auth.exibirInfoUsuario();
@@ -729,15 +749,29 @@
                 // Verificar se há processo pré-selecionado na URL
                 const urlParams = new URLSearchParams(window.location.search);
                 const processoParam = urlParams.get('processo');
+                console.log('Parâmetro processo na URL:', processoParam);
+                
                 if (processoParam) {
-                    document.getElementById('processoSelect').value = processoParam;
-                    carregarDadosProcesso();
+                    // Aguardar o carregamento dos processos
+                    setTimeout(() => {
+                        document.getElementById('processoSelect').value = processoParam;
+                        carregarDadosProcesso();
+                    }, 500);
                 }
             }
         });
 
         async function carregarProcessosDisponiveis() {
+            console.log('=== CARREGANDO PROCESSOS ===');
+            console.log('Usuário atual:', usuarioAtual);
+            
+            // Mostrar debug panel
+            if (DEBUG) {
+                document.getElementById('debugPanel').style.display = 'block';
+            }
+            
             try {
+                // Tentar carregar via API primeiro
                 const response = await fetch(`${API_URL}/api/processos/ativos`);
                 if (response.ok) {
                     const data = await response.json();
@@ -749,25 +783,70 @@
                 }
             } catch (error) {
                 console.warn('Usando dados locais para processos');
-                const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-                const agora = new Date();
-                processosDisponiveis = processos.filter(p => new Date(p.prazo) > agora);
+                const todosProcessos = JSON.parse(localStorage.getItem('processos') || '[]');
+                console.log('Total de processos no sistema:', todosProcessos.length);
+                
+                // Debug - mostrar todos os processos
+                let debugInfo = `Total de processos: ${todosProcessos.length}<br>`;
+                debugInfo += `Usuário ID: ${usuarioAtual.usuarioId}<br>`;
+                debugInfo += `Tipo de usuário: ${usuarioAtual.tipo}<br><br>`;
+                
+                // Filtrar apenas processos onde o fornecedor foi convidado
+                processosDisponiveis = todosProcessos.filter(p => {
+                    const isPublicado = p.status === 'publicado';
+                    const temConvidados = p.fornecedoresConvidados && Array.isArray(p.fornecedoresConvidados);
+                    const foiConvidado = temConvidados && p.fornecedoresConvidados.includes(usuarioAtual.usuarioId);
+                    const prazoValido = new Date(p.prazo) > new Date();
+                    
+                    // Debug
+                    if (DEBUG && todosProcessos.indexOf(p) < 3) { // Mostrar apenas os 3 primeiros
+                        debugInfo += `Processo ${p.numero}: `;
+                        debugInfo += `Publicado=${isPublicado}, `;
+                        debugInfo += `Convidados=${temConvidados ? p.fornecedoresConvidados.join(',') : 'nenhum'}, `;
+                        debugInfo += `Foi convidado=${foiConvidado}<br>`;
+                    }
+                    
+                    return isPublicado && foiConvidado && prazoValido;
+                });
+                
+                console.log('Processos filtrados para o fornecedor:', processosDisponiveis.length);
+                
+                if (DEBUG) {
+                    debugInfo += `<br>Processos disponíveis para você: ${processosDisponiveis.length}`;
+                    document.getElementById('debugInfo').innerHTML = debugInfo;
+                }
             }
 
             // Preencher select de processos
             const select = document.getElementById('processoSelect');
             select.innerHTML = '<option value="">Selecione um processo...</option>';
             
-            processosDisponiveis.forEach(processo => {
-                const option = document.createElement('option');
-                option.value = processo.numero;
-                option.textContent = `${processo.numero} - ${processo.objeto}`;
-                select.appendChild(option);
-            });
+            if (processosDisponiveis.length === 0) {
+                select.innerHTML += '<option value="" disabled>Nenhum processo disponível para você</option>';
+                
+                // Mensagem adicional
+                const info = document.createElement('div');
+                info.className = 'warning-panel';
+                info.innerHTML = `
+                    <h4>⚠️ Nenhum processo encontrado</h4>
+                    <p>Você não foi convidado para nenhum processo ativo no momento.</p>
+                    <p>Entre em contato com o setor de compras se acredita que deveria ter acesso a algum processo.</p>
+                `;
+                document.getElementById('processoInfo').parentNode.insertBefore(info, document.getElementById('processoInfo'));
+            } else {
+                processosDisponiveis.forEach(processo => {
+                    const option = document.createElement('option');
+                    option.value = processo.numero;
+                    option.textContent = `${processo.numero} - ${processo.objeto}`;
+                    select.appendChild(option);
+                });
+            }
         }
 
         function carregarDadosProcesso() {
             const numeroProcesso = document.getElementById('processoSelect').value;
+            console.log('Carregando dados do processo:', numeroProcesso);
+            
             if (!numeroProcesso) {
                 document.getElementById('processoInfo').style.display = 'none';
                 document.getElementById('btnProximo1').disabled = true;
@@ -775,7 +854,12 @@
             }
 
             processoSelecionado = processosDisponiveis.find(p => p.numero === numeroProcesso);
-            if (!processoSelecionado) return;
+            console.log('Processo selecionado:', processoSelecionado);
+            
+            if (!processoSelecionado) {
+                alert('Processo não encontrado!');
+                return;
+            }
 
             const prazo = new Date(processoSelecionado.prazo);
             const diasRestantes = Math.ceil((prazo - new Date()) / (1000 * 60 * 60 * 24));
@@ -786,9 +870,17 @@
                     <div class="processo-details">
                         <span><strong>Número:</strong> ${processoSelecionado.numero}</span>
                         <span><strong>Modalidade:</strong> ${processoSelecionado.modalidade}</span>
+                        <span><strong>Valor Estimado:</strong> ${processoSelecionado.valorEstimado || 'Não informado'}</span>
                         <span><strong>Prazo:</strong> ${prazo.toLocaleDateString('pt-BR')} às ${prazo.toLocaleTimeString('pt-BR')}</span>
                         <span><strong>Dias restantes:</strong> ${diasRestantes} dias</span>
+                        ${processoSelecionado.trId ? '<span><strong>TR:</strong> ✅ Disponível</span>' : ''}
                     </div>
+                    ${processoSelecionado.descricao ? `
+                        <div style="margin-top: 15px;">
+                            <strong>Descrição:</strong>
+                            <p>${processoSelecionado.descricao}</p>
+                        </div>
+                    ` : ''}
                 </div>
             `;
             
@@ -797,12 +889,32 @@
         }
 
         function preencherDadosEmpresa() {
-            // Preencher com dados do usuário logado
+            // Tentar carregar dados salvos da empresa
             if (usuarioAtual) {
-                document.getElementById('razaoSocial').value = usuarioAtual.nome || '';
-                document.getElementById('cnpj').value = usuarioAtual.cnpj || '';
-                document.getElementById('email').value = usuarioAtual.email || '';
+                const empresaKey = `fornecedorData_${usuarioAtual.usuarioId}`;
+                const empresaData = localStorage.getItem(empresaKey);
+                
+                if (empresaData) {
+                    try {
+                        const dados = JSON.parse(empresaData);
+                        document.getElementById('razaoSocial').value = dados.razaoSocial || '';
+                        document.getElementById('cnpj').value = dados.cnpj || '';
+                        document.getElementById('email').value = dados.email || usuarioAtual.email || '';
+                        document.getElementById('telefone').value = dados.telefone || '';
+                        document.getElementById('endereco').value = dados.endereco || '';
+                    } catch (e) {
+                        console.error('Erro ao carregar dados da empresa:', e);
+                    }
+                } else {
+                    // Preencher com dados básicos do usuário
+                    document.getElementById('razaoSocial').value = usuarioAtual.nome || '';
+                    document.getElementById('email').value = usuarioAtual.email || '';
+                }
             }
+        }
+
+        function voltarDashboard() {
+            window.location.href = 'dashboard-fornecedor.html';
         }
 
         function proximaEtapa(etapa) {
@@ -939,6 +1051,7 @@
             // Coletar dados da proposta
             const dadosProposta = {
                 processo: processoSelecionado.numero,
+                fornecedorId: usuarioAtual.usuarioId,
                 empresa: document.getElementById('razaoSocial').value,
                 cnpj: document.getElementById('cnpj').value,
                 email: document.getElementById('email').value,
@@ -952,6 +1065,8 @@
                 valorTotal: document.getElementById('valorTotalProposta').textContent,
                 validadeProposta: document.getElementById('validadeProposta').value,
                 condicoesPagamento: document.getElementById('condicoesPagamento').value,
+                prazo: parseInt(document.getElementById('prazoExecucao').value),
+                validade: parseInt(document.getElementById('validadeProposta').value),
                 dados: {
                     empresa: {
                         razaoSocial: document.getElementById('razaoSocial').value,
@@ -1014,19 +1129,21 @@
             propostas.push(dadosProposta);
             localStorage.setItem('propostas', JSON.stringify(propostas));
 
-            // Criar notificação para compradores
-            Auth.Notificacoes.criar({
-                tipo: 'nova_proposta',
-                titulo: '📨 Nova Proposta Recebida',
-                mensagem: `${dadosProposta.empresa} enviou proposta para ${dadosProposta.processo}`,
-                destinatarioTipo: 'comprador',
-                remetente: dadosProposta.empresa,
-                metadata: {
-                    protocolo: protocolo,
-                    processo: dadosProposta.processo,
-                    valor: dadosProposta.valorTotal
-                }
-            });
+            // Criar notificação para o comprador que criou o processo
+            if (processoSelecionado && processoSelecionado.criadoPor) {
+                Auth.Notificacoes.criar({
+                    tipo: 'nova_proposta',
+                    titulo: '📨 Nova Proposta Recebida',
+                    mensagem: `${dadosProposta.empresa} enviou proposta para ${dadosProposta.processo}`,
+                    destinatario: processoSelecionado.criadoPor,
+                    remetente: dadosProposta.empresa,
+                    metadata: {
+                        protocolo: protocolo,
+                        processo: dadosProposta.processo,
+                        valor: dadosProposta.valorTotal
+                    }
+                });
+            }
 
             mostrarSucesso(protocolo);
         }
@@ -1053,4 +1170,3 @@
     </script>
 </body>
 </html>
-
