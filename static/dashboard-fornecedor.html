@@ -1000,63 +1000,19 @@
                     ` : ''}
                     
                     ${processo.termoReferencia ? `
-                        <h4 style="margin-top: 20px;">📋 Termo de Referência Completo</h4>
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 15px 0; max-height: 400px; overflow-y: auto;">
-                            ${processo.termoReferencia.objeto ? `
-                                <h5>1. OBJETO</h5>
-                                <p>${processo.termoReferencia.objeto}</p>
-                            ` : ''}
-                            
-                            ${processo.termoReferencia.justificativa ? `
-                                <h5>2. JUSTIFICATIVA</h5>
-                                <p>${processo.termoReferencia.justificativa}</p>
-                            ` : ''}
-                            
-                            ${processo.termoReferencia.escopo ? `
-                                <h5>3. ESCOPO</h5>
-                                <p>${processo.termoReferencia.escopo}</p>
-                            ` : ''}
-                            
-                            ${processo.termoReferencia.requisitos ? `
-                                <h5>4. REQUISITOS</h5>
-                                <p>${processo.termoReferencia.requisitos}</p>
-                            ` : ''}
-                            
-                            ${processo.termoReferencia.qualificacao ? `
-                                <h5>5. QUALIFICAÇÃO TÉCNICA</h5>
-                                <p>${processo.termoReferencia.qualificacao}</p>
-                            ` : ''}
-                            
-                            ${processo.termoReferencia.obrigacoes ? `
-                                <h5>6. OBRIGAÇÕES</h5>
-                                <p>${processo.termoReferencia.obrigacoes}</p>
-                            ` : ''}
-                            
-                            ${processo.termoReferencia.prazoExecucao ? `
-                                <h5>7. PRAZO DE EXECUÇÃO</h5>
-                                <p>${processo.termoReferencia.prazoExecucao}</p>
-                            ` : ''}
-                            
-                            ${processo.termoReferencia.formaPagamento ? `
-                                <h5>8. FORMA DE PAGAMENTO</h5>
-                                <p>${processo.termoReferencia.formaPagamento}</p>
-                            ` : ''}
-                            
-                            ${processo.termoReferencia.garantia ? `
-                                <h5>9. GARANTIA</h5>
-                                <p>${processo.termoReferencia.garantia}</p>
-                            ` : ''}
-                            
-                            ${processo.termoReferencia.penalidades ? `
-                                <h5>10. PENALIDADES</h5>
-                                <p>${processo.termoReferencia.penalidades}</p>
-                            ` : ''}
-                            
-                            ${processo.termoReferencia.disposicoesGerais ? `
-                                <h5>11. DISPOSIÇÕES GERAIS</h5>
-                                <p>${processo.termoReferencia.disposicoesGerais}</p>
-                            ` : ''}
+                        <h4 style="margin-top: 20px;">📋 Termo de Referência Vinculado</h4>
+                        <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 20px; border-radius: 8px; margin: 15px 0;">
+                            <p style="color: #1976d2; margin: 0;">
+                                <strong>${processo.termoReferencia.titulo || 'Contratação Infraestrutura para Cercamento Perimetral'}</strong>
+                            </p>
+                            <p style="color: #0d47a1; margin: 10px 0 0 0; font-size: 14px;">
+                                ✅ TR Aprovado em ${processo.termoReferencia.dataAprovacao || '23/07/2025'}<br>
+                                👤 Criado por: ${processo.termoReferencia.criadoPor || 'Carlos Oliveira'}
+                            </p>
                         </div>
+                        <p style="color: #6c757d; font-size: 14px; margin-top: 10px;">
+                            ℹ️ Para visualizar o conteúdo completo do Termo de Referência, utilize os botões abaixo.
+                        </p>
                     ` : '<p style="margin-top: 20px; color: #6c757d;">Termo de Referência não disponível</p>'}
                 </div>
                 <div style="text-align: center; margin-top: 20px;">
