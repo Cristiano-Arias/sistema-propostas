@@ -850,6 +850,37 @@
             }
         }
 
+        // Função para buscar TR vinculado ao processo
+        function buscarTermoReferencia(numeroProcesso) {
+            // Buscar TR no localStorage
+            const termosReferencia = JSON.parse(localStorage.getItem('termosReferencia') || '[]');
+            
+            // Procurar TR vinculado a este processo
+            const trVinculado = termosReferencia.find(tr => 
+                tr.processoVinculado === numeroProcesso || 
+                tr.processo === numeroProcesso
+            );
+            
+            if (trVinculado) {
+                // Retornar o TR formatado
+                return {
+                    objeto: trVinculado.objeto || trVinculado.titulo || '',
+                    justificativa: trVinculado.justificativa || '',
+                    escopo: trVinculado.escopo || trVinculado.descricao || '',
+                    requisitos: trVinculado.requisitos || trVinculado.requisitosTecnicos || '',
+                    qualificacao: trVinculado.qualificacao || trVinculado.qualificacaoTecnica || '',
+                    obrigacoes: trVinculado.obrigacoes || trVinculado.obrigacoesContratada || '',
+                    prazoExecucao: trVinculado.prazoExecucao || trVinculado.prazo || '',
+                    formaPagamento: trVinculado.formaPagamento || trVinculado.pagamento || '',
+                    garantia: trVinculado.garantia || '',
+                    penalidades: trVinculado.penalidades || trVinculado.sancoes || '',
+                    disposicoesGerais: trVinculado.disposicoesGerais || trVinculado.observacoes || ''
+                };
+            }
+            
+            return null;
+        }
+
         // Carregar processos disponíveis
         function loadProcessos() {
             const container = document.getElementById('processosList');
@@ -866,6 +897,18 @@
                     p.fornecedoresConvidados.includes(currentUser.usuarioId) &&
                     new Date(p.prazo) > new Date()
                 );
+                
+                // Para cada processo, verificar se tem TR vinculado
+                processos = processos.map(processo => {
+                    // Se não tiver TR no processo, buscar TR vinculado
+                    if (!processo.termoReferencia) {
+                        const trVinculado = buscarTermoReferencia(processo.numero);
+                        if (trVinculado) {
+                            processo.termoReferencia = trVinculado;
+                        }
+                    }
+                    return processo;
+                });
                 
                 if (processos.length === 0) {
                     container.innerHTML = `
@@ -890,6 +933,7 @@
                             <span><strong>Modalidade:</strong> ${processo.modalidade}</span>
                             <span><strong>Valor Estimado:</strong> ${processo.valorEstimado || 'Não informado'}</span>
                             <span><strong>Prazo:</strong> ${formatarData(processo.prazo)}</span>
+                            ${processo.termoReferencia ? '<span style="color: #28a745;"><strong>📋 TR Disponível</strong></span>' : ''}
                         </div>
                         <div style="margin-top: 15px;">
                             <button class="btn btn-info" onclick="verDetalhesProcesso('${processo.numero}')">
@@ -911,6 +955,14 @@
         function verDetalhesProcesso(numeroProcesso) {
             const processo = processos.find(p => p.numero === numeroProcesso);
             if (!processo) return;
+            
+            // Verificar se tem TR vinculado
+            if (!processo.termoReferencia) {
+                const trVinculado = buscarTermoReferencia(processo.numero);
+                if (trVinculado) {
+                    processo.termoReferencia = trVinculado;
+                }
+            }
             
             const modalBody = document.getElementById('modalProcessoBody');
             modalBody.innerHTML = `
