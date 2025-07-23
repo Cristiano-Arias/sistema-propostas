@@ -750,6 +750,9 @@
                     <button class="nav-item" onclick="mostrarPagina('cadastrar-processo')">
                         ➕ Cadastrar Processo
                     </button>
+                    <button class="nav-item" onclick="window.location.href='cadastro-fornecedor.html'">
+                        👥 Cadastrar Fornecedores
+                    </button>
                     <button class="nav-item" onclick="mostrarPagina('liberar-parecer')">
                         📄 Liberar para Parecer
                     </button>
@@ -868,6 +871,11 @@
                         <div class="quick-action-icon">📋</div>
                         <div class="quick-action-title">Meus Processos</div>
                         <div class="quick-action-desc">Gerenciar processos criados</div>
+                    </div>
+                    <div class="quick-action-card" onclick="window.location.href='cadastro-fornecedor.html'">
+                        <div class="quick-action-icon">👥</div>
+                        <div class="quick-action-title">Cadastrar Fornecedores</div>
+                        <div class="quick-action-desc">Gerencie fornecedores e credenciais</div>
                     </div>
                     <div class="quick-action-card" onclick="mostrarPagina('liberar-parecer')">
                         <div class="quick-action-icon">📄</div>
@@ -1443,6 +1451,9 @@
                             <strong>⚠️ Nenhum fornecedor cadastrado no sistema.</strong>
                         </p>
                         <p style="color: #856404; font-size: 14px;">
+                            Para cadastrar fornecedores, use o módulo de <a href="cadastro-fornecedor.html" style="color: #0066cc;">Cadastro de Fornecedores</a>.
+                        </p>
+                        <p style="color: #856404; font-size: 14px; margin-top: 10px;">
                             Para fins de demonstração, você pode usar os fornecedores de exemplo abaixo:
                         </p>
                     </div>
@@ -1509,6 +1520,10 @@
                 <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 5px; font-size: 14px; color: #1976d2;">
                     <strong>ℹ️ Dica:</strong> Selecione os fornecedores que deseja convidar para este processo. 
                     Apenas os fornecedores selecionados poderão visualizar e enviar propostas.
+                    <br><br>
+                    <a href="cadastro-fornecedor.html" style="color: #0066cc; font-weight: bold;">
+                        ➕ Cadastrar Novo Fornecedor
+                    </a>
                 </div>
             `;
         }
