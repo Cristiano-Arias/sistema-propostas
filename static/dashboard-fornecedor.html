@@ -3,1344 +3,824 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Fornecedor - Sistema de Gestão de Propostas</title>
-    <script>
-        // Configuração da API
-        const API_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:5000' 
-            : window.location.origin;
-    </script>
+    <title>Dashboard Fornecedor - Sistema de Propostas</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f5f5f5;
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
         }
-
+        
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-
-        .container {
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
-            min-height: calc(100vh - 80px);
+            justify-content: space-between;
+            align-items: center;
         }
-
-        .sidebar {
-            width: 280px;
-            background: white;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .menu-section {
-            margin-bottom: 25px;
-        }
-
-        .menu-section-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 10px;
-            padding-left: 10px;
-        }
-
-        .nav-item {
-            display: block;
-            width: 100%;
-            padding: 12px 16px;
-            margin-bottom: 6px;
-            background: #f8f9fa;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            text-align: left;
-            transition: all 0.3s;
-            color: #333;
-            text-decoration: none;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
-            border-left-color: #667eea;
-        }
-
-        .nav-item.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
-            border-left-color: #fff;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-        }
-
-        .page {
-            display: none;
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            min-height: 500px;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 24px;
+        
+        .user-info {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-
+        
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-
+        
         .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
+            background: white;
             border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-left: 4px solid #667eea;
         }
         
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
         .stat-number {
-            font-size: 42px;
+            font-size: 2.5em;
             font-weight: bold;
-            margin-bottom: 10px;
+            color: #667eea;
+            margin-bottom: 5px;
         }
-
+        
         .stat-label {
-            font-size: 16px;
-            opacity: 0.9;
+            color: #7f8c8d;
+            font-size: 0.95em;
         }
-
-        .welcome-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .welcome-title {
-            font-size: 28px;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .welcome-subtitle {
-            color: #6c757d;
-            font-size: 16px;
-        }
-
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-
-        .quick-action-card {
+        
+        .card {
             background: white;
+            border-radius: 10px;
             padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-        }
-
-        .quick-action-card:hover {
-            transform: translateY(-5px);
-            border-color: #667eea;
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
-        }
-
-        .quick-action-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .quick-action-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 8px;
-        }
-
-        .quick-action-desc {
-            color: #6c757d;
-            font-size: 14px;
-        }
-
-        .info-panel {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
-        .info-panel h4 {
-            color: #1976d2;
-            margin-bottom: 10px;
-        }
-
-        .info-panel p {
-            color: #0d47a1;
-            margin: 5px 0;
-        }
-
-        .process-list {
-            display: grid;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .process-item {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid #28a745;
-            transition: all 0.3s;
-        }
-
-        .process-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
-        }
-
-        .process-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .process-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .process-info span {
-            color: #6c757d;
-            font-size: 14px;
-        }
-
-        .process-info strong {
-            color: #2c3e50;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-            margin-right: 10px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-info {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-        }
-
-        .empty-state-icon {
-            font-size: 64px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             margin-bottom: 20px;
-            opacity: 0.5;
         }
-
-        /* Estilos para modais */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 0;
-            width: 90%;
-            max-width: 800px;
-            border-radius: 10px;
-            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
-        }
-
-        .modal-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 10px 10px 0 0;
+        
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        .modal-body {
-            padding: 30px;
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-
-        .close {
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .close:hover {
-            transform: scale(1.2);
-        }
-
-        /* Estilos para cadastro de empresa */
-        .form-group {
             margin-bottom: 20px;
         }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
             font-size: 14px;
-            transition: border-color 0.3s;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
         }
-
-        /* Estilos para detalhes da proposta */
-        .proposta-details {
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .btn-info {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 5px 15px;
+            font-size: 13px;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #5a6c7d;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-aberto {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-enviada {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-rascunho {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 800px;
+            margin: 50px auto;
+            border-radius: 10px;
+            padding: 30px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #aaa;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .tr-content {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
         }
-
-        .proposta-details h4 {
-            color: #2c3e50;
-            margin-bottom: 15px;
+        
+        .tr-section {
+            margin-bottom: 20px;
         }
-
-        .detail-grid {
+        
+        .tr-section h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .tr-section p {
+            line-height: 1.6;
+            color: #495057;
+        }
+        
+        .tr-info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
+            margin-top: 10px;
         }
-
-        .detail-item {
+        
+        .tr-info-item {
             background: white;
             padding: 10px;
             border-radius: 5px;
             border-left: 3px solid #667eea;
         }
-
-        .detail-label {
+        
+        .tr-info-label {
             font-size: 12px;
             color: #6c757d;
             margin-bottom: 5px;
         }
-
-        .detail-value {
-            font-size: 14px;
+        
+        .tr-info-value {
+            font-weight: 600;
             color: #2c3e50;
-            font-weight: 600;
         }
-
-        /* Status badges */
-        .status-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
         }
-
-        .status-enviada {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-
-        .status-analise {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .status-aprovada {
+        
+        .success-message {
+            display: none;
             background: #d4edda;
+            border: 1px solid #c3e6cb;
             color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
         }
-
-        .status-reprovada {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* Novo estilo para processos direcionados */
-        .processo-direcionado {
-            background: #e3f2fd;
-            border: 2px solid #2196f3;
-            padding: 15px;
-            border-radius: 8px;
+        
+        .success-message h3 {
             margin-bottom: 10px;
         }
-
-        .processo-direcionado-badge {
-            background: #1976d2;
+        
+        .auto-save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #28a745;
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 999;
         }
-
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                max-height: 200px;
-                overflow-x: auto;
-                display: flex;
-                gap: 10px;
-                padding: 10px;
-            }
-            
-            .menu-section {
-                min-width: 200px;
-                margin-bottom: 0;
-            }
-            
-            .nav-item {
-                white-space: nowrap;
-            }
-            
-            .main-content {
-                padding: 20px;
-            }
+        
+        .auto-save-indicator.show {
+            display: flex;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .saving {
+            animation: pulse 1s infinite;
         }
     </style>
-    <script src="auth.js"></script>
 </head>
 <body>
     <div class="header">
-        <h1>Portal do Fornecedor</h1>
-        <p>Sistema de Gestão de Propostas - Bem-vindo, <span id="fornecedorNome">Fornecedor</span></p>
-    </div>
-
-    <div class="container">
-        <div class="sidebar">
-            <div class="menu-section">
-                <div class="menu-section-title">Principal</div>
-                <button class="nav-item active" data-page="home">
-                    🏠 Início
-                </button>
-                <button class="nav-item" data-page="processos">
-                    📋 Processos Disponíveis
-                </button>
-                <button class="nav-item" data-page="propostas">
-                    📄 Minhas Propostas
-                </button>
+        <div class="header-content">
+            <div>
+                <h1>Dashboard Fornecedor</h1>
+                <p>Portal de Propostas</p>
             </div>
-            
-            <div class="menu-section">
-                <div class="menu-section-title">Cadastro</div>
-                <button class="nav-item" data-page="empresa">
-                    🏢 Meu Cadastro
-                </button>
-            </div>
-            
-            <div class="menu-section">
-                <div class="menu-section-title">Sistema</div>
-                <button class="nav-item" onclick="Auth.logout()">
-                    🚪 Sair
+            <div class="user-info">
+                <span>🏭 <strong id="nomeEmpresa">Empresa ABC Ltda</strong></span>
+                <button class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white;" onclick="logout()">
+                    Sair
                 </button>
             </div>
         </div>
+    </div>
 
-        <div class="main-content">
-            <!-- Home Page -->
-            <div id="home" class="page active">
-                <div class="welcome-section">
-                    <h1 class="welcome-title">Bem-vindo ao Portal do Fornecedor</h1>
-                    <p class="welcome-subtitle">Gerencie suas propostas e acompanhe processos de licitação</p>
-                </div>
+    <div class="container">
+        <div id="alertContainer"></div>
 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="processosCount">0</div>
-                        <div class="stat-label">Processos Disponíveis</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="propostasCount">0</div>
-                        <div class="stat-label">Propostas Enviadas</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="aprovadasCount">0</div>
-                        <div class="stat-label">Propostas Aprovadas</div>
-                    </div>
-                </div>
-
-                <div class="quick-actions">
-                    <div class="quick-action-card" data-action="processos">
-                        <div class="quick-action-icon">📋</div>
-                        <div class="quick-action-title">Ver Processos</div>
-                        <div class="quick-action-desc">Explore processos disponíveis para participação</div>
-                    </div>
-                    <div class="quick-action-card" data-action="propostas">
-                        <div class="quick-action-icon">📄</div>
-                        <div class="quick-action-title">Minhas Propostas</div>
-                        <div class="quick-action-desc">Acompanhe o status das suas propostas</div>
-                    </div>
-                    <div class="quick-action-card" data-action="empresa">
-                        <div class="quick-action-icon">🏢</div>
-                        <div class="quick-action-title">Meu Cadastro</div>
-                        <div class="quick-action-desc">Atualize as informações da sua empresa</div>
-                    </div>
-                </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="processosAbertos">0</div>
+                <div class="stat-label">Processos Abertos</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-number" id="propostasEnviadas">0</div>
+                <div class="stat-label">Propostas Enviadas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="propostasRascunho">0</div>
+                <div class="stat-label">Em Elaboração</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="prazoProximo">-</div>
+                <div class="stat-label">Próximo Prazo</div>
+            </div>
+        </div>
 
-            <!-- Processos Page -->
-            <div id="processos" class="page">
+        <div class="card">
+            <div class="card-header">
                 <h2>📋 Processos Disponíveis</h2>
-                
-                <div class="info-panel">
-                    <h4>ℹ️ Como Participar</h4>
-                    <p>1. Navegue pelos processos disponíveis abaixo</p>
-                    <p>2. Clique em "Portal de Proposta" para enviar sua proposta</p>
-                    <p>3. Preencha todos os dados solicitados no portal completo</p>
-                    <p>4. Acompanhe o status através do menu "Minhas Propostas"</p>
-                </div>
-
-                <div id="processosList" class="process-list">
-                    <div class="loading">Carregando processos...</div>
-                </div>
+                <input type="text" placeholder="Buscar processo..." style="padding: 8px 15px; border: 1px solid #ddd; border-radius: 5px;" onkeyup="filtrarProcessos(this.value)">
             </div>
 
-            <!-- Propostas Page -->
-            <div id="propostas" class="page">
-                <h2>📄 Minhas Propostas</h2>
-                
-                <div id="propostasList" class="process-list">
-                    <div class="loading">Carregando propostas...</div>
-                </div>
+            <table class="table" id="tabelaProcessos">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Objeto</th>
+                        <th>Modalidade</th>
+                        <th>Prazo</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyProcessos">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #7f8c8d;">
+                            Carregando processos...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>📝 Minhas Propostas</h2>
             </div>
 
-            <!-- Empresa Page -->
-            <div id="empresa" class="page">
-                <h2>🏢 Meu Cadastro</h2>
-                
-                <div class="info-panel">
-                    <h4>ℹ️ Informações Importantes</h4>
-                    <p>• Mantenha seus dados sempre atualizados</p>
-                    <p>• Certifique-se de que todas as informações estão corretas</p>
-                    <p>• Os dados cadastrados serão utilizados em suas propostas</p>
-                </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Protocolo</th>
+                        <th>Processo</th>
+                        <th>Valor</th>
+                        <th>Data Envio</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyPropostas">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #7f8c8d;">
+                            Nenhuma proposta enviada
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-                <div class="form-group">
-                    <label>CNPJ *</label>
-                    <input type="text" id="cnpj" placeholder="00.000.000/0000-00" onblur="formatCNPJ(this)">
-                </div>
-
-                <div class="form-group">
-                    <label>Razão Social *</label>
-                    <input type="text" id="razaoSocial" placeholder="Nome completo da empresa">
-                </div>
-
-                <div class="form-group">
-                    <label>Nome Fantasia</label>
-                    <input type="text" id="nomeFantasia" placeholder="Nome fantasia da empresa">
-                </div>
-
-                <div class="form-group">
-                    <label>E-mail *</label>
-                    <input type="email" id="email" placeholder="email@empresa.com">
-                </div>
-
-                <div class="form-group">
-                    <label>Telefone *</label>
-                    <input type="text" id="telefone" placeholder="(00) 0000-0000" onblur="formatPhone(this)">
-                </div>
-
-                <div class="form-group">
-                    <label>CEP</label>
-                    <input type="text" id="cep" placeholder="00000-000" onblur="formatCEP(this); buscarCEP(this.value)">
-                </div>
-
-                <div class="form-group">
-                    <label>Endereço</label>
-                    <input type="text" id="endereco" placeholder="Rua, número">
-                </div>
-
-                <div class="form-group">
-                    <label>Cidade/UF</label>
-                    <input type="text" id="cidade" placeholder="Cidade - UF">
-                </div>
-
-                <div class="form-group">
-                    <label>Responsável Técnico</label>
-                    <input type="text" id="respTecnico" placeholder="Nome do responsável técnico">
-                </div>
-
-                <div class="form-group">
-                    <label>CREA/CAU</label>
-                    <input type="text" id="crea" placeholder="Número do registro profissional">
-                </div>
-
-                <div class="form-group">
-                    <label>Área de Atuação</label>
-                    <select id="areaAtuacao">
-                        <option value="">Selecione...</option>
-                        <option value="construcao">Construção Civil</option>
-                        <option value="tecnologia">Tecnologia da Informação</option>
-                        <option value="servicos">Serviços</option>
-                        <option value="comercio">Comércio</option>
-                        <option value="industria">Indústria</option>
-                        <option value="consultoria">Consultoria</option>
-                        <option value="engenharia">Engenharia</option>
-                        <option value="outros">Outros</option>
-                    </select>
-                </div>
-
-                <button class="btn btn-primary" onclick="salvarEmpresa()">💾 Salvar Dados</button>
+    <!-- Modal Visualizar TR -->
+    <div id="modalVisualizarTR" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 Termo de Referência</h2>
+                <span class="close" onclick="fecharModal('modalVisualizarTR')">&times;</span>
+            </div>
+            
+            <div id="conteudoTR" class="tr-content">
+                <!-- Conteúdo do TR será carregado aqui -->
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="baixarTRWord()">
+                    📄 Baixar em Word
+                </button>
+                <button class="btn btn-primary" onclick="iniciarProposta()">
+                    ✏️ Elaborar Proposta
+                </button>
+                <button class="btn btn-sm" style="background: #6c757d; color: white;" onclick="fecharModal('modalVisualizarTR')">
+                    Fechar
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Detalhes do Processo -->
-    <div id="modalProcesso" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Detalhes do Processo</h3>
-                <span class="close" onclick="closeModal('modalProcesso')">&times;</span>
-            </div>
-            <div class="modal-body" id="modalProcessoBody">
-                <!-- Conteúdo será inserido dinamicamente -->
+    <!-- Modal Sucesso Envio -->
+    <div id="modalSucessoEnvio" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="success-message" style="display: block;">
+                <h3>✅ Proposta Enviada com Sucesso!</h3>
+                <p>Protocolo: <strong id="protocoloEnviado">PROP-2025-001</strong></p>
+                <p>Você receberá um e-mail de confirmação em breve.</p>
+                
+                <div class="btn-group" style="justify-content: center;">
+                    <button class="btn btn-primary" onclick="voltarDashboard()">
+                        🏠 Voltar ao Dashboard
+                    </button>
+                    <button class="btn btn-success" onclick="baixarComprovante()">
+                        📥 Baixar Comprovante
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Detalhes da Proposta -->
-    <div id="modalProposta" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Detalhes da Proposta</h3>
-                <span class="close" onclick="closeModal('modalProposta')">&times;</span>
-            </div>
-            <div class="modal-body" id="modalPropostaBody">
-                <!-- Conteúdo será inserido dinamicamente -->
-            </div>
-        </div>
+    <!-- Indicador de Auto-Save -->
+    <div id="autoSaveIndicator" class="auto-save-indicator">
+        <span class="saving">💾</span>
+        <span id="saveStatus">Salvando...</span>
     </div>
 
     <script>
-        // Estado da aplicação
-        let currentUser = null;
-        let processos = [];
-        let propostas = [];
+        // Dados mockados
+        let processos = [
+            {
+                numero: 'LIC-2025-001',
+                objeto: 'Contratação de serviços de desenvolvimento de software',
+                modalidade: 'Pregão Eletrônico',
+                prazo: '2025-02-15T10:00:00',
+                status: 'aberto',
+                tr: {
+                    numero: 'TR-2025-001',
+                    objeto: 'Contratação de serviços de desenvolvimento de software para modernização dos sistemas internos',
+                    justificativa: 'A empresa necessita modernizar seus sistemas legados para melhorar a eficiência operacional e reduzir custos de manutenção.',
+                    modalidade: 'Pregão Eletrônico',
+                    valorEstimado: 'R$ 150.000,00',
+                    prazoExecucao: '6 meses',
+                    localExecucao: 'Sede da empresa - Fortaleza/CE',
+                    requisitos: [
+                        'Experiência mínima de 5 anos em desenvolvimento de software',
+                        'Equipe técnica com certificações relevantes',
+                        'Capacidade de atendimento 24x7'
+                    ],
+                    documentosExigidos: [
+                        'Certidões de regularidade fiscal',
+                        'Atestados de capacidade técnica',
+                        'Balanço patrimonial dos últimos 3 anos'
+                    ],
+                    criteriosAvaliacao: 'Menor preço global com requisitos técnicos atendidos',
+                    observacoes: 'O fornecedor deverá apresentar cronograma detalhado de execução'
+                }
+            },
+            {
+                numero: 'LIC-2025-002',
+                objeto: 'Aquisição de equipamentos de informática',
+                modalidade: 'Pregão Eletrônico',
+                prazo: '2025-02-20T14:00:00',
+                status: 'aberto',
+                tr: {
+                    numero: 'TR-2025-002',
+                    objeto: 'Aquisição de equipamentos de informática para renovação do parque tecnológico',
+                    justificativa: 'Necessidade de atualização dos equipamentos que estão obsoletos e fora de garantia.',
+                    modalidade: 'Pregão Eletrônico',
+                    valorEstimado: 'R$ 80.000,00',
+                    prazoExecucao: '30 dias',
+                    localExecucao: 'Almoxarifado Central - Fortaleza/CE',
+                    requisitos: [
+                        'Assistência técnica local',
+                        'Garantia mínima de 36 meses',
+                        'Certificações de qualidade'
+                    ],
+                    documentosExigidos: [
+                        'Certidões de regularidade fiscal',
+                        'Catálogos técnicos dos produtos'
+                    ],
+                    criteriosAvaliacao: 'Menor preço por item',
+                    observacoes: 'Entrega parcelada conforme solicitação'
+                }
+            }
+        ];
+
+        let propostasEnviadas = [
+            {
+                protocolo: 'PROP-2025-001',
+                processo: 'LIC-2024-010',
+                valor: 'R$ 45.000,00',
+                dataEnvio: '2025-01-10T15:30:00',
+                status: 'enviada'
+            }
+        ];
+
+        let trAtual = null;
+        let processoAtual = null;
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            // Verificar autenticação
-            currentUser = Auth.verificarAutenticacao(['fornecedor', 'admin']);
-            if (!currentUser) {
-                window.location.href = 'index.html';
-                return;
-            }
+            carregarDashboard();
+            carregarProcessos();
+            carregarPropostas();
             
-            // Configurar interface
-            document.getElementById('fornecedorNome').textContent = currentUser.nome;
-            
-            // Configurar navegação
-            configurarNavegacao();
-            
-            // Carregar dados
-            loadDashboardData();
-            loadEmpresaData();
+            // Verificar se há proposta em elaboração no localStorage
+            verificarPropostaEmElaboracao();
         });
 
-        // Configurar sistema de navegação
-        function configurarNavegacao() {
-            // Configurar botões do menu
-            document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const page = this.getAttribute('data-page');
-                    showPage(page);
-                });
-            });
+        function carregarDashboard() {
+            document.getElementById('processosAbertos').textContent = processos.filter(p => p.status === 'aberto').length;
+            document.getElementById('propostasEnviadas').textContent = propostasEnviadas.length;
+            document.getElementById('propostasRascunho').textContent = localStorage.getItem('propostaRascunho') ? 1 : 0;
             
-            // Configurar quick actions
-            document.querySelectorAll('.quick-action-card[data-action]').forEach(card => {
-                card.addEventListener('click', function() {
-                    const action = this.getAttribute('data-action');
-                    showPage(action);
-                });
-            });
-        }
-
-        // Navegação entre páginas
-        function showPage(pageId) {
-            // Ocultar todas as páginas
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
+            // Próximo prazo
+            const processosOrdenados = processos
+                .filter(p => p.status === 'aberto')
+                .sort((a, b) => new Date(a.prazo) - new Date(b.prazo));
             
-            // Mostrar página selecionada
-            const selectedPage = document.getElementById(pageId);
-            if (selectedPage) {
-                selectedPage.classList.add('active');
-            }
-            
-            // Atualizar menu ativo
-            document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.classList.remove('active');
-            });
-            
-            const activeButton = document.querySelector(`.nav-item[data-page="${pageId}"]`);
-            if (activeButton) {
-                activeButton.classList.add('active');
-            }
-            
-            // Carregar dados específicos da página
-            if (pageId === 'processos') {
-                loadProcessos();
-            } else if (pageId === 'propostas') {
-                loadPropostas();
-            } else if (pageId === 'empresa') {
-                loadEmpresaData();
+            if (processosOrdenados.length > 0) {
+                const dias = Math.ceil((new Date(processosOrdenados[0].prazo) - new Date()) / (1000 * 60 * 60 * 24));
+                document.getElementById('prazoProximo').textContent = `${dias} dias`;
             }
         }
 
-        // Carregar dados do dashboard
-        function loadDashboardData() {
-            try {
-                // Carregar processos direcionados
-                const processosData = JSON.parse(localStorage.getItem('processos') || '[]');
-                const processosDirecionados = processosData.filter(p => 
-                    p.status === 'publicado' && 
-                    p.fornecedoresConvidados && 
-                    p.fornecedoresConvidados.includes(currentUser.usuarioId) &&
-                    new Date(p.prazo) > new Date()
-                );
-                
-                // Carregar propostas do fornecedor
-                const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
-                const minhasPropostas = propostasData.filter(p => 
-                    p.fornecedorId === currentUser.usuarioId
-                );
-                
-                // Contar propostas aprovadas
-                const propostasAprovadas = minhasPropostas.filter(p => 
-                    p.status === 'aprovada'
-                );
-                
-                document.getElementById('processosCount').textContent = processosDirecionados.length;
-                document.getElementById('propostasCount').textContent = minhasPropostas.length;
-                document.getElementById('aprovadasCount').textContent = propostasAprovadas.length;
-            } catch (error) {
-                console.error('Erro ao carregar dados:', error);
-            }
-        }
-
-        // Função para buscar TR vinculado ao processo
-        function buscarTermoReferencia(numeroProcesso) {
-            // Buscar TR no localStorage
-            const termosReferencia = JSON.parse(localStorage.getItem('termosReferencia') || '[]');
+        function carregarProcessos() {
+            const tbody = document.getElementById('tbodyProcessos');
             
-            // Procurar TR vinculado a este processo
-            const trVinculado = termosReferencia.find(tr => 
-                tr.processoVinculado === numeroProcesso || 
-                tr.processo === numeroProcesso
-            );
-            
-            if (trVinculado) {
-                // Retornar o TR formatado
-                return {
-                    objeto: trVinculado.objeto || trVinculado.titulo || '',
-                    justificativa: trVinculado.justificativa || '',
-                    escopo: trVinculado.escopo || trVinculado.descricao || '',
-                    requisitos: trVinculado.requisitos || trVinculado.requisitosTecnicos || '',
-                    qualificacao: trVinculado.qualificacao || trVinculado.qualificacaoTecnica || '',
-                    obrigacoes: trVinculado.obrigacoes || trVinculado.obrigacoesContratada || '',
-                    prazoExecucao: trVinculado.prazoExecucao || trVinculado.prazo || '',
-                    formaPagamento: trVinculado.formaPagamento || trVinculado.pagamento || '',
-                    garantia: trVinculado.garantia || '',
-                    penalidades: trVinculado.penalidades || trVinculado.sancoes || '',
-                    disposicoesGerais: trVinculado.disposicoesGerais || trVinculado.observacoes || ''
-                };
-            }
-            
-            return null;
-        }
-
-        // Carregar processos disponíveis
-        function loadProcessos() {
-            const container = document.getElementById('processosList');
-            container.innerHTML = '<div class="loading">Carregando processos...</div>';
-            
-            try {
-                // Buscar processos do localStorage
-                const processosData = JSON.parse(localStorage.getItem('processos') || '[]');
-                
-                // Filtrar apenas processos direcionados para este fornecedor
-                processos = processosData.filter(p => 
-                    p.status === 'publicado' && 
-                    p.fornecedoresConvidados && 
-                    p.fornecedoresConvidados.includes(currentUser.usuarioId) &&
-                    new Date(p.prazo) > new Date()
-                );
-                
-                // Para cada processo, verificar se tem TR vinculado
-                processos = processos.map(processo => {
-                    // Se não tiver TR no processo, buscar TR vinculado
-                    if (!processo.termoReferencia) {
-                        const trVinculado = buscarTermoReferencia(processo.numero);
-                        if (trVinculado) {
-                            processo.termoReferencia = trVinculado;
-                        }
-                    }
-                    return processo;
-                });
-                
-                if (processos.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📋</div>
-                            <h3>Nenhum processo disponível</h3>
-                            <p>Você será notificado quando for convidado para novos processos.</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = processos.map(processo => `
-                    <div class="process-item processo-direcionado">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <div>
-                                <div class="process-title">${processo.numero} - ${processo.objeto}</div>
-                                <span class="processo-direcionado-badge">📧 Convite Direto</span>
-                            </div>
-                        </div>
-                        <div class="process-info" style="margin-top: 15px;">
-                            <span><strong>Modalidade:</strong> ${processo.modalidade}</span>
-                            <span><strong>Valor Estimado:</strong> ${processo.valorEstimado || 'Não informado'}</span>
-                            <span><strong>Prazo:</strong> ${formatarData(processo.prazo)}</span>
-                            ${processo.termoReferencia ? '<span style="color: #28a745;"><strong>📋 TR Disponível</strong></span>' : ''}
-                        </div>
-                        <div style="margin-top: 15px;">
-                            <button class="btn btn-info" onclick="verDetalhesProcesso('${processo.numero}')">
-                                👁️ Ver Detalhes
-                            </button>
-                            <button class="btn btn-primary" onclick="abrirPortalProposta('${processo.numero}')">
-                                📤 Portal de Proposta
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('Erro ao carregar processos:', error);
-                container.innerHTML = '<div class="error">Erro ao carregar processos. Tente novamente.</div>';
-            }
-        }
-
-        // Ver detalhes do processo
-        function verDetalhesProcesso(numeroProcesso) {
-            const processo = processos.find(p => p.numero === numeroProcesso);
-            if (!processo) return;
-            
-            // Verificar se tem TR vinculado
-            if (!processo.termoReferencia) {
-                const trVinculado = buscarTermoReferencia(processo.numero);
-                if (trVinculado) {
-                    processo.termoReferencia = trVinculado;
-                }
-            }
-            
-            const modalBody = document.getElementById('modalProcessoBody');
-            modalBody.innerHTML = `
-                <div class="proposta-details">
-                    <h4>Informações do Processo</h4>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">Número</div>
-                            <div class="detail-value">${processo.numero}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Objeto</div>
-                            <div class="detail-value">${processo.objeto}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Modalidade</div>
-                            <div class="detail-value">${processo.modalidade}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Valor Estimado</div>
-                            <div class="detail-value">${processo.valorEstimado || 'Não informado'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Data Limite</div>
-                            <div class="detail-value">${formatarData(processo.prazo)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Hora Limite</div>
-                            <div class="detail-value">${new Date(processo.prazo).toLocaleTimeString('pt-BR')}</div>
-                        </div>
-                    </div>
-                    ${processo.descricao ? `
-                        <h4 style="margin-top: 20px;">Descrição</h4>
-                        <p>${processo.descricao}</p>
-                    ` : ''}
-                    
-                    ${processo.termoReferencia ? `
-                        <h4 style="margin-top: 20px;">📋 Termo de Referência Vinculado</h4>
-                        <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 20px; border-radius: 8px; margin: 15px 0;">
-                            <p style="color: #1976d2; margin: 0;">
-                                <strong>${processo.termoReferencia.titulo || 'Contratação Infraestrutura para Cercamento Perimetral'}</strong>
-                            </p>
-                            <p style="color: #0d47a1; margin: 10px 0 0 0; font-size: 14px;">
-                                ✅ TR Aprovado em ${processo.termoReferencia.dataAprovacao || '23/07/2025'}<br>
-                                👤 Criado por: ${processo.termoReferencia.criadoPor || 'Carlos Oliveira'}
-                            </p>
-                        </div>
-                        <p style="color: #6c757d; font-size: 14px; margin-top: 10px;">
-                            ℹ️ Para visualizar o conteúdo completo do Termo de Referência, utilize os botões abaixo.
-                        </p>
-                    ` : '<p style="margin-top: 20px; color: #6c757d;">Termo de Referência não disponível</p>'}
-                </div>
-                <div style="text-align: center; margin-top: 20px;">
-                    ${processo.termoReferencia ? `
-                        <button class="btn btn-secondary" onclick="visualizarTR('${processo.numero}')">
-                            👁️ Visualizar TR em Nova Aba
-                        </button>
-                        <button class="btn btn-info" onclick="baixarTR('${processo.numero}')">
-                            📥 Baixar TR (Word)
-                        </button>
-                    ` : ''}
-                    <button class="btn btn-primary" onclick="abrirPortalProposta('${processo.numero}'); closeModal('modalProcesso');">
-                        📤 Ir para Portal de Proposta
-                    </button>
-                </div>
-            `;
-            
-            document.getElementById('modalProcesso').style.display = 'block';
-        }
-
-        // Abrir portal de proposta - NOVA IMPLEMENTAÇÃO
-        function abrirPortalProposta(processoNumero) {
-            // Salvar dados da empresa antes de redirecionar
-            const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
-            const empresaData = localStorage.getItem(empresaKey);
-            
-            if (!empresaData) {
-                if (confirm('Você precisa completar seu cadastro antes de enviar propostas. Deseja fazer isso agora?')) {
-                    showPage('empresa');
-                }
-                return;
-            }
-            
-            // Redirecionar para o portal de propostas completo
-            window.location.href = `portal-propostas-novo.html?processo=${processoNumero}`;
-        }
-
-        // Carregar propostas enviadas
-        function loadPropostas() {
-            const container = document.getElementById('propostasList');
-            container.innerHTML = '<div class="loading">Carregando propostas...</div>';
-            
-            // Buscar propostas do localStorage
-            const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
-            const minhasPropostas = propostasData.filter(p => 
-                p.dados && p.dados.fornecedorId === currentUser.usuarioId
-            );
-            
-            if (minhasPropostas.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📄</div>
-                        <h3>Nenhuma proposta enviada</h3>
-                        <p>Suas propostas aparecerão aqui após o envio.</p>
-                    </div>
+            if (processos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #7f8c8d;">
+                            Nenhum processo disponível
+                        </td>
+                    </tr>
                 `;
                 return;
             }
-            
-            container.innerHTML = minhasPropostas.map(proposta => `
-                <div class="process-item">
-                    <div class="process-title">Protocolo: ${proposta.protocolo}</div>
-                    <div class="process-info">
-                        <span><strong>Processo:</strong> ${proposta.processo}</span>
-                        <span><strong>Data de Envio:</strong> ${formatarData(proposta.dataEnvio || proposta.data)}</span>
-                        <span><strong>Valor Total:</strong> R$ ${proposta.comercial?.valorTotal || '0,00'}</span>
-                        <span><strong>Status:</strong> <span class="status-badge status-${proposta.status || 'enviada'}">${getStatusLabel(proposta.status)}</span></span>
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <button class="btn btn-info" onclick="verDetalhesProposta('${proposta.protocolo}')">
-                            👁️ Ver Detalhes
+
+            tbody.innerHTML = processos.map(processo => `
+                <tr>
+                    <td>${processo.numero}</td>
+                    <td>${processo.objeto}</td>
+                    <td>${processo.modalidade}</td>
+                    <td>${formatarDataHora(processo.prazo)}</td>
+                    <td>
+                        <span class="status-badge status-${processo.status}">
+                            ${processo.status === 'aberto' ? 'Aberto' : processo.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-info btn-sm" onclick="visualizarTR('${processo.numero}')">
+                            📋 Ver TR
                         </button>
-                    </div>
-                </div>
+                        <button class="btn btn-primary btn-sm" onclick="elaborarProposta('${processo.numero}')">
+                            ✏️ Proposta
+                        </button>
+                    </td>
+                </tr>
             `).join('');
         }
 
-        // Ver detalhes da proposta
-        function verDetalhesProposta(protocolo) {
-            const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
-            const proposta = propostasData.find(p => p.protocolo === protocolo);
+        function carregarPropostas() {
+            const tbody = document.getElementById('tbodyPropostas');
             
-            if (!proposta) return;
-            
-            const modalBody = document.getElementById('modalPropostaBody');
-            modalBody.innerHTML = `
-                <div class="proposta-details">
-                    <h4>Informações da Proposta</h4>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">Protocolo</div>
-                            <div class="detail-value">${proposta.protocolo}</div>
+            if (propostasEnviadas.length === 0) {
+                return;
+            }
+
+            tbody.innerHTML = propostasEnviadas.map(proposta => `
+                <tr>
+                    <td>${proposta.protocolo}</td>
+                    <td>${proposta.processo}</td>
+                    <td>${proposta.valor}</td>
+                    <td>${formatarDataHora(proposta.dataEnvio)}</td>
+                    <td>
+                        <span class="status-badge status-${proposta.status}">
+                            Enviada
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-success btn-sm" onclick="baixarProposta('${proposta.protocolo}')">
+                            📥 Baixar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function visualizarTR(numeroProcesso) {
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            if (!processo || !processo.tr) return;
+
+            processoAtual = processo;
+            trAtual = processo.tr;
+
+            const conteudoTR = document.getElementById('conteudoTR');
+            conteudoTR.innerHTML = `
+                <div class="tr-section">
+                    <h4>Informações Gerais</h4>
+                    <div class="tr-info-grid">
+                        <div class="tr-info-item">
+                            <div class="tr-info-label">Número do TR</div>
+                            <div class="tr-info-value">${trAtual.numero}</div>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Processo</div>
-                            <div class="detail-value">${proposta.processo}</div>
+                        <div class="tr-info-item">
+                            <div class="tr-info-label">Modalidade</div>
+                            <div class="tr-info-value">${trAtual.modalidade}</div>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Data de Envio</div>
-                            <div class="detail-value">${formatarData(proposta.dataEnvio || proposta.data)}</div>
+                        <div class="tr-info-item">
+                            <div class="tr-info-label">Valor Estimado</div>
+                            <div class="tr-info-value">${trAtual.valorEstimado}</div>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Valor Total</div>
-                            <div class="detail-value">R$ ${proposta.comercial?.valorTotal || '0,00'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Prazo de Execução</div>
-                            <div class="detail-value">${proposta.tecnica?.prazoExecucao || 'Não informado'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Validade da Proposta</div>
-                            <div class="detail-value">${proposta.comercial?.validadeProposta || '60 dias'}</div>
+                        <div class="tr-info-item">
+                            <div class="tr-info-label">Prazo de Execução</div>
+                            <div class="tr-info-value">${trAtual.prazoExecucao}</div>
                         </div>
                     </div>
-                    
-                    ${proposta.tecnica?.metodologia ? `
-                        <h4 style="margin-top: 20px;">Metodologia</h4>
-                        <p>${proposta.tecnica.metodologia}</p>
-                    ` : ''}
-                    
-                    ${proposta.comercial?.bdi ? `
-                        <h4 style="margin-top: 20px;">Composição de Preços</h4>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <div class="detail-label">Mão de Obra</div>
-                                <div class="detail-value">R$ ${proposta.comercial.totalMaoObra || '0,00'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Materiais</div>
-                                <div class="detail-value">R$ ${proposta.comercial.totalMateriais || '0,00'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Equipamentos</div>
-                                <div class="detail-value">R$ ${proposta.comercial.totalEquipamentos || '0,00'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">BDI (${proposta.comercial.bdiPercentual}%)</div>
-                                <div class="detail-value">R$ ${proposta.comercial.bdiValor || '0,00'}</div>
-                            </div>
-                        </div>
-                    ` : ''}
                 </div>
+
+                <div class="tr-section">
+                    <h4>Objeto</h4>
+                    <p>${trAtual.objeto}</p>
+                </div>
+
+                <div class="tr-section">
+                    <h4>Justificativa</h4>
+                    <p>${trAtual.justificativa}</p>
+                </div>
+
+                <div class="tr-section">
+                    <h4>Local de Execução</h4>
+                    <p>${trAtual.localExecucao}</p>
+                </div>
+
+                <div class="tr-section">
+                    <h4>Requisitos Técnicos</h4>
+                    <ul>
+                        ${trAtual.requisitos.map(req => `<li>${req}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="tr-section">
+                    <h4>Documentos Exigidos</h4>
+                    <ul>
+                        ${trAtual.documentosExigidos.map(doc => `<li>${doc}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="tr-section">
+                    <h4>Critérios de Avaliação</h4>
+                    <p>${trAtual.criteriosAvaliacao}</p>
+                </div>
+
+                ${trAtual.observacoes ? `
+                    <div class="tr-section">
+                        <h4>Observações</h4>
+                        <p>${trAtual.observacoes}</p>
+                    </div>
+                ` : ''}
             `;
-            
-            document.getElementById('modalProposta').style.display = 'block';
+
+            document.getElementById('modalVisualizarTR').style.display = 'block';
         }
 
-        // Carregar dados da empresa
-        function loadEmpresaData() {
-            if (!currentUser || !currentUser.usuarioId) {
-                console.error('Usuário não definido ao carregar dados da empresa');
-                return;
-            }
-            
-            const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
-            const empresaData = localStorage.getItem(empresaKey);
-            
-            if (empresaData) {
-                try {
-                    const data = JSON.parse(empresaData);
-                    
-                    // Preencher os campos
-                    if (document.getElementById('cnpj')) document.getElementById('cnpj').value = data.cnpj || '';
-                    if (document.getElementById('razaoSocial')) document.getElementById('razaoSocial').value = data.razaoSocial || '';
-                    if (document.getElementById('nomeFantasia')) document.getElementById('nomeFantasia').value = data.nomeFantasia || '';
-                    if (document.getElementById('email')) document.getElementById('email').value = data.email || currentUser.email || '';
-                    if (document.getElementById('telefone')) document.getElementById('telefone').value = data.telefone || '';
-                    if (document.getElementById('cep')) document.getElementById('cep').value = data.cep || '';
-                    if (document.getElementById('endereco')) document.getElementById('endereco').value = data.endereco || '';
-                    if (document.getElementById('cidade')) document.getElementById('cidade').value = data.cidade || '';
-                    if (document.getElementById('respTecnico')) document.getElementById('respTecnico').value = data.respTecnico || '';
-                    if (document.getElementById('crea')) document.getElementById('crea').value = data.crea || '';
-                    if (document.getElementById('areaAtuacao')) document.getElementById('areaAtuacao').value = data.areaAtuacao || '';
-                    
-                    // Atualizar nome no header
-                    if (data.nomeFantasia) {
-                        document.getElementById('fornecedorNome').textContent = data.nomeFantasia;
-                    }
-                } catch (error) {
-                    console.error('Erro ao carregar dados da empresa:', error);
-                }
-            } else {
-                // Preencher com dados do usuário se disponível
-                if (document.getElementById('email') && currentUser.email) {
-                    document.getElementById('email').value = currentUser.email;
-                }
+        function baixarTRWord() {
+            mostrarAlert('success', 'Baixando Termo de Referência em formato Word...');
+            // Aqui implementaria o download real via API
+        }
+
+        function iniciarProposta() {
+            if (processoAtual) {
+                elaborarProposta(processoAtual.numero);
+                fecharModal('modalVisualizarTR');
             }
         }
 
-        // Salvar dados da empresa
-        function salvarEmpresa() {
-            if (!currentUser || !currentUser.usuarioId) {
-                console.error('Usuário não autenticado');
-                alert('❌ Erro: Usuário não autenticado. Por favor, faça login novamente.');
-                return;
-            }
+        function elaborarProposta(numeroProcesso) {
+            // Salvar processo selecionado
+            localStorage.setItem('processoSelecionado', numeroProcesso);
             
-            const data = {
-                cnpj: document.getElementById('cnpj').value.trim(),
-                razaoSocial: document.getElementById('razaoSocial').value.trim(),
-                nomeFantasia: document.getElementById('nomeFantasia').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                telefone: document.getElementById('telefone').value.trim(),
-                cep: document.getElementById('cep').value.trim(),
-                endereco: document.getElementById('endereco').value.trim(),
-                cidade: document.getElementById('cidade').value.trim(),
-                respTecnico: document.getElementById('respTecnico').value.trim(),
-                crea: document.getElementById('crea').value.trim(),
-                areaAtuacao: document.getElementById('areaAtuacao').value
-            };
-            
-            // Validações básicas
-            if (!data.cnpj || !data.razaoSocial || !data.email || !data.telefone) {
-                alert('Por favor, preencha os campos obrigatórios: CNPJ, Razão Social, E-mail e Telefone.');
-                return;
-            }
-            
-            try {
-                // Salvar no localStorage
-                const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
-                localStorage.setItem(empresaKey, JSON.stringify(data));
-                
-                // Atualizar dados do usuário também
-                const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
-                const userIndex = usuarios.findIndex(u => u.usuarioId === currentUser.usuarioId);
-                
-                if (userIndex !== -1) {
-                    usuarios[userIndex].empresa = data.nomeFantasia || data.razaoSocial;
-                    usuarios[userIndex].cnpj = data.cnpj;
-                    localStorage.setItem('usuarios', JSON.stringify(usuarios));
-                }
-                
-                // Atualizar nome no header
-                if (data.nomeFantasia) {
-                    document.getElementById('fornecedorNome').textContent = data.nomeFantasia;
-                }
-                
-                alert('✅ Dados salvos com sucesso!');
-                
-                // Recarregar dados para confirmar
-                loadEmpresaData();
-                
-            } catch (error) {
-                console.error('Erro ao salvar dados:', error);
-                alert('❌ Erro ao salvar dados. Por favor, tente novamente.');
+            // Redirecionar para portal de propostas
+            window.location.href = 'portal-propostas.html';
+        }
+
+        function verificarPropostaEmElaboracao() {
+            const rascunho = localStorage.getItem('propostaRascunho');
+            if (rascunho) {
+                mostrarAlert('info', 'Você tem uma proposta em elaboração. Continue de onde parou!');
             }
         }
 
-        // Buscar CEP
-        async function buscarCEP(cep) {
-            const cepLimpo = cep.replace(/\D/g, '');
-            if (cepLimpo.length !== 8) return;
+        function mostrarAutoSave() {
+            const indicator = document.getElementById('autoSaveIndicator');
+            const status = document.getElementById('saveStatus');
             
-            try {
-                const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
-                const data = await response.json();
-                
-                if (!data.erro) {
-                    document.getElementById('endereco').value = `${data.logradouro}, ${data.bairro}`;
-                    document.getElementById('cidade').value = `${data.localidade} - ${data.uf}`;
-                }
-            } catch (error) {
-                console.error('Erro ao buscar CEP:', error);
-            }
+            indicator.classList.add('show');
+            status.textContent = 'Salvando...';
+            
+            setTimeout(() => {
+                status.textContent = 'Salvo!';
+                setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 1000);
+            }, 1000);
         }
 
-        // Funções auxiliares
-        function formatarData(data) {
-            return new Date(data).toLocaleDateString('pt-BR');
+        function simularEnvioProposta() {
+            // Simular envio bem-sucedido
+            const protocolo = 'PROP-2025-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            document.getElementById('protocoloEnviado').textContent = protocolo;
+            
+            // Limpar rascunho
+            localStorage.removeItem('propostaRascunho');
+            localStorage.removeItem('processoSelecionado');
+            
+            // Mostrar modal de sucesso
+            document.getElementById('modalSucessoEnvio').style.display = 'block';
         }
 
-        function getStatusLabel(status) {
-            const labels = {
-                'enviada': 'Enviada',
-                'analise': 'Em Análise',
-                'aprovada': 'Aprovada',
-                'reprovada': 'Reprovada'
-            };
-            return labels[status] || status;
+        function voltarDashboard() {
+            fecharModal('modalSucessoEnvio');
+            // Recarregar dados
+            carregarDashboard();
+            carregarPropostas();
         }
 
-        function formatCNPJ(input) {
-            let value = input.value.replace(/\D/g, '');
-            if (value.length > 14) value = value.substr(0, 14);
-            
-            if (value.length > 2) {
-                value = value.replace(/^(\d{2})(\d)/, '$1.$2');
-            }
-            if (value.length > 5) {
-                value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-            }
-            if (value.length > 8) {
-                value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
-            }
-            if (value.length > 12) {
-                value = value.replace(/(\d{4})(\d)/, '$1-$2');
-            }
-            
-            input.value = value;
+        function baixarComprovante() {
+            mostrarAlert('success', 'Baixando comprovante de envio...');
         }
 
-        function formatPhone(input) {
-            let value = input.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.substr(0, 11);
+        function filtrarProcessos(termo) {
+            const linhas = document.querySelectorAll('#tbodyProcessos tr');
+            termo = termo.toLowerCase();
             
-            if (value.length > 2) {
-                value = value.replace(/^(\d{2})(\d)/, '($1) $2');
-            }
-            if (value.length > 7) {
-                value = value.replace(/(\d{5})(\d)/, '$1-$2');
-            }
-            
-            input.value = value;
+            linhas.forEach(linha => {
+                const texto = linha.textContent.toLowerCase();
+                linha.style.display = texto.includes(termo) ? '' : 'none';
+            });
         }
 
-        function formatCEP(input) {
-            let value = input.value.replace(/\D/g, '');
-            if (value.length > 8) value = value.substr(0, 8);
-            
-            if (value.length > 5) {
-                value = value.replace(/^(\d{5})(\d)/, '$1-$2');
-            }
-            
-            input.value = value;
+        function formatarDataHora(dataHora) {
+            const data = new Date(dataHora);
+            return data.toLocaleString('pt-BR');
         }
 
-        function closeModal(modalId) {
+        function fecharModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
+        }
+
+        function mostrarAlert(tipo, mensagem) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${tipo}`;
+            alert.textContent = mensagem;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function baixarProposta(protocolo) {
+            mostrarAlert('success', `Baixando proposta ${protocolo}...`);
+        }
+
+        function logout() {
+            if (confirm('Deseja realmente sair?')) {
+                localStorage.clear();
+                window.location.href = 'index.html';
+            }
         }
 
         // Fechar modal ao clicar fora
@@ -1349,317 +829,14 @@
                 event.target.style.display = 'none';
             }
         }
-        
-        // Visualizar TR em nova aba
-        function visualizarTR(numeroProcesso) {
-            const processo = processos.find(p => p.numero === numeroProcesso);
-            if (!processo || !processo.termoReferencia) return;
-            
-            const tr = processo.termoReferencia;
-            const novaJanela = window.open('', '_blank');
-            
-            novaJanela.document.write(`
-                <!DOCTYPE html>
-                <html lang="pt-BR">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Termo de Referência - ${processo.numero}</title>
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            margin: 40px;
-                            line-height: 1.6;
-                        }
-                        h1, h2 { color: #2c3e50; }
-                        h1 { text-align: center; }
-                        .section { margin: 30px 0; }
-                        .header { text-align: center; margin-bottom: 40px; }
-                        @media print {
-                            .no-print { display: none; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>TERMO DE REFERÊNCIA</h1>
-                        <p><strong>Processo:</strong> ${processo.numero}</p>
-                        <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
-                    </div>
-                    
-                    ${tr.objeto ? `<div class="section"><h2>1. OBJETO</h2><p>${tr.objeto}</p></div>` : ''}
-                    ${tr.justificativa ? `<div class="section"><h2>2. JUSTIFICATIVA</h2><p>${tr.justificativa}</p></div>` : ''}
-                    ${tr.escopo ? `<div class="section"><h2>3. ESCOPO</h2><p>${tr.escopo}</p></div>` : ''}
-                    ${tr.requisitos ? `<div class="section"><h2>4. REQUISITOS</h2><p>${tr.requisitos}</p></div>` : ''}
-                    ${tr.qualificacao ? `<div class="section"><h2>5. QUALIFICAÇÃO TÉCNICA</h2><p>${tr.qualificacao}</p></div>` : ''}
-                    ${tr.obrigacoes ? `<div class="section"><h2>6. OBRIGAÇÕES</h2><p>${tr.obrigacoes}</p></div>` : ''}
-                    ${tr.prazoExecucao ? `<div class="section"><h2>7. PRAZO DE EXECUÇÃO</h2><p>${tr.prazoExecucao}</p></div>` : ''}
-                    ${tr.formaPagamento ? `<div class="section"><h2>8. FORMA DE PAGAMENTO</h2><p>${tr.formaPagamento}</p></div>` : ''}
-                    ${tr.garantia ? `<div class="section"><h2>9. GARANTIA</h2><p>${tr.garantia}</p></div>` : ''}
-                    ${tr.penalidades ? `<div class="section"><h2>10. PENALIDADES</h2><p>${tr.penalidades}</p></div>` : ''}
-                    ${tr.disposicoesGerais ? `<div class="section"><h2>11. DISPOSIÇÕES GERAIS</h2><p>${tr.disposicoesGerais}</p></div>` : ''}
-                    
-                    <div class="no-print" style="text-align: center; margin-top: 40px;">
-                        <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px;">🖨️ Imprimir</button>
-                        <button onclick="window.close()" style="padding: 10px 20px; font-size: 16px; margin-left: 10px;">❌ Fechar</button>
-                    </div>
-                </body>
-                </html>
-            `);
-        }
-        
-        // Baixar TR como Word - FUNÇÃO CORRIGIDA
-        function baixarTR(numeroProcesso) {
-            const processo = processos.find(p => p.numero === numeroProcesso);
-            if (!processo || !processo.termoReferencia) return;
-            
-            const tr = processo.termoReferencia;
-            
-            // Criar conteúdo HTML formatado para Word - FORMATO IDÊNTICO AO REQUISITANTE
-            const conteudoWord = `
-                <html xmlns:o='urn:schemas-microsoft-com:office:office' 
-                      xmlns:w='urn:schemas-microsoft-com:office:word'
-                      xmlns='http://www.w3.org/TR/REC-html40'>
-                <head>
-                    <meta charset='utf-8'>
-                    <title>Termo de Referência</title>
-                    <style>
-                        @page { margin: 2cm; }
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            line-height: 1.6;
-                            color: #333;
-                        }
-                        h1 { 
-                            text-align: center; 
-                            color: #2c3e50; 
-                            font-size: 24px;
-                            margin-bottom: 5px;
-                        }
-                        h2 { 
-                            color: #2c3e50; 
-                            font-size: 16px; 
-                            margin-top: 25px;
-                            margin-bottom: 10px;
-                            font-weight: bold;
-                        }
-                        h3 {
-                            color: #2c3e50;
-                            font-size: 14px;
-                            margin-top: 15px;
-                            margin-bottom: 8px;
-                        }
-                        p { 
-                            text-align: justify; 
-                            margin: 8px 0;
-                            font-size: 12px;
-                        }
-                        .header { 
-                            text-align: center; 
-                            margin-bottom: 30px;
-                        }
-                        .info-line {
-                            text-align: center;
-                            margin: 5px 0;
-                            font-size: 14px;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin: 15px 0;
-                            font-size: 12px;
-                        }
-                        th {
-                            background-color: #f0f0f0;
-                            border: 1px solid #ddd;
-                            padding: 8px;
-                            text-align: left;
-                            font-weight: bold;
-                        }
-                        td {
-                            border: 1px solid #ddd;
-                            padding: 8px;
-                        }
-                        .footer {
-                            margin-top: 50px;
-                            text-align: center;
-                            font-size: 11px;
-                            color: #666;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>TERMO DE REFERÊNCIA</h1>
-                        <p class="info-line"><strong>${tr.titulo || 'Contratação Infraestrutura para Cercamento Perimetral'}</strong></p>
-                        <p class="info-line">Modalidade: ${processo.modalidade || 'Concorrência'}</p>
-                        <p class="info-line">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
-                    </div>
-                    
-                    <h2>1. OBJETIVO</h2>
-                    <p>${tr.objetivo || tr.objeto || 'xxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h2>2. CONFORMIDADE AO TERMO DE REFERÊNCIA</h2>
-                    <p>${tr.conformidade || tr.justificativa || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h2>3. LOCAL E ACESSO</h2>
-                    <p><strong>Visita ao Local:</strong> ${tr.visitaLocal || 'Obrigatória'}</p>
-                    <p><strong>Local/Acesso:</strong> ${tr.localAcesso || 'xxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h2>4. ESCOPO TÉCNICO</h2>
-                    
-                    <h3>4.1. Escopo Técnico</h3>
-                    <p>${tr.escopo || tr.escopoTecnico || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>4.2. Situação Atual</h3>
-                    <p>${tr.situacaoAtual || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>4.3. Situação Proposta</h3>
-                    <p>${tr.situacaoProposta || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>4.4. Especificação Técnica</h3>
-                    <p>${tr.especificacaoTecnica || tr.especificacoes || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>4.5. Premissas, Requisitos e Restrições</h3>
-                    <p>${tr.premissas || tr.requisitos || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>4.6. Planilha de Quantidade</h3>
-                    <p>${tr.planilhaQuantidade || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>4.7. Tabela de Serviços</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th width="10%">Item</th>
-                                <th width="50%">Descrição</th>
-                                <th width="20%">Unidade</th>
-                                <th width="20%">Quantidade</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tr.tabelaServicos ? tr.tabelaServicos.map(servico => `
-                                <tr>
-                                    <td style="text-align: center;">${servico.item}</td>
-                                    <td>${servico.descricao}</td>
-                                    <td style="text-align: center;">${servico.unidade}</td>
-                                    <td style="text-align: center;">${servico.quantidade}</td>
-                                </tr>
-                            `).join('') : `
-                                <tr><td>1</td><td>xxxxxxxxxxxxxxx</td><td>UN</td><td>123</td></tr>
-                                <tr><td>2</td><td>xxxxxxxxxxxxxxxxx</td><td>UN</td><td>234</td></tr>
-                                <tr><td>3</td><td>xxxxxxxxxxxxx</td><td>UN</td><td>456</td></tr>
-                                <tr><td>4</td><td>xxxxxxxxxxxxxx</td><td>UN</td><td>678</td></tr>
-                                <tr><td>5</td><td>xxxxxxxxxxxxxx</td><td>UN</td><td>543</td></tr>
-                                <tr><td>6</td><td>xxxxxx</td><td>UN</td><td>123</td></tr>
-                            `}
-                        </tbody>
-                    </table>
-                    
-                    <h3>4.8. Escopo Geral</h3>
-                    <p>${tr.escopoGeral || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h2>5. PRAZOS</h2>
-                    <p>${tr.prazos || tr.prazoExecucao || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h2>6. MATRIZ DE RESPONSABILIDADE</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th width="70%">Atividade</th>
-                                <th width="30%">Responsável</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tr.matrizResponsabilidade ? tr.matrizResponsabilidade.map(item => `
-                                <tr>
-                                    <td>${item.atividade}</td>
-                                    <td>${item.responsavel}</td>
-                                </tr>
-                            `).join('') : `
-                                <tr><td>xxxxxxxxxxxxxxxxxxxxx</td><td>Contratada</td></tr>
-                                <tr><td>xxxxxxxxxxxxxxxxx</td><td>Contratada</td></tr>
-                                <tr><td>xxxxxxxxxxxxxxxxxxxxxxxxxxxx</td><td>Contratada</td></tr>
-                                <tr><td>xxxxxxxxxxxxxx</td><td>Contratada</td></tr>
-                                <tr><td>xxxxxxxxxxx</td><td>Contratante</td></tr>
-                                <tr><td>xxxxxxxxxxxx</td><td>Contratada</td></tr>
-                                <tr><td>xxxxxxxxxxxx</td><td>N/A</td></tr>
-                                <tr><td>xxxxxxxxxxxxxx</td><td>Contratada</td></tr>
-                            `}
-                        </tbody>
-                    </table>
-                    
-                    <h2>7. MOBILIZAÇÃO E SEGURANÇA</h2>
-                    
-                    <h3>7.1. Segurança e Saúde do Trabalho</h3>
-                    <p>${tr.segurancaTrabalho || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>7.2. Canteiro de Obras e Infraestrutura</h3>
-                    <p>${tr.canteiroObras || tr.obrigacoes || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>7.3. Credenciamento Aeroportuário</h3>
-                    <p>${tr.credenciamentoAeroportuario || 'xxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>7.4. Meio Ambiente</h3>
-                    <p>${tr.meioAmbiente || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h2>8. GESTÃO E PLANEJAMENTO</h2>
-                    
-                    <h3>8.1. Engenharia</h3>
-                    <p>${tr.engenharia || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>8.2. Aquisições</h3>
-                    <p>${tr.aquisicoes || 'xxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>8.3. Planejamento/Gestão de Contratos</h3>
-                    <p>${tr.gestaoContratos || tr.planejamentoGestao || 'xxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>8.4. Planejamento Executivo</h3>
-                    <p>${tr.planejamentoExecutivo || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h2>9. TESTES E ENCERRAMENTO</h2>
-                    
-                    <h3>9.1. Testes, Comissionamento e Treinamento</h3>
-                    <p>${tr.testesComissionamento || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>9.2. Ao Encerramento da Obra</h3>
-                    <p>${tr.encerramentoObra || 'xxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>9.3. Certificado de Aceitação Provisória (CAP)</h3>
-                    <p>${tr.certificadoAceitacaoProvisoria || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>9.4. Certificado de Aceitação Final (CAF)</h3>
-                    <p>${tr.certificadoAceitacaoFinal || 'xxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h3>9.5. Garantia</h3>
-                    <p>${tr.garantia || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h2>10. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</h2>
-                    <p>${tr.criteriosAvaliacao || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <h2>11. ANEXOS</h2>
-                    <p>${tr.anexos || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
-                    
-                    <div class="footer">
-                        <p>Documento gerado em ${new Date().toLocaleDateString('pt-BR')}, ${new Date().toLocaleTimeString('pt-BR')}</p>
-                        <p>Elaborado por: ${tr.criadoPor || 'Carlos Oliveira'}</p>
-                    </div>
-                </body>
-                </html>
-            `;
-            
-            // Criar blob e fazer download
-            const blob = new Blob(['\ufeff', conteudoWord], {
-                type: 'application/msword'
-            });
-            
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `TR_${processo.numero}_${new Date().toISOString().split('T')[0]}.doc`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
+
+        // Simular auto-save periodicamente
+        setInterval(() => {
+            const rascunho = localStorage.getItem('propostaRascunho');
+            if (rascunho) {
+                mostrarAutoSave();
+            }
+        }, 30000); // A cada 30 segundos
     </script>
 </body>
 </html>
