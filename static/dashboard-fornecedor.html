@@ -1414,42 +1414,234 @@
             
             const tr = processo.termoReferencia;
             
-            // Criar conteúdo HTML formatado para Word
+            // Criar conteúdo HTML formatado para Word - FORMATO IDÊNTICO AO REQUISITANTE
             const conteudoWord = `
                 <html xmlns:o='urn:schemas-microsoft-com:office:office' 
                       xmlns:w='urn:schemas-microsoft-com:office:word'
                       xmlns='http://www.w3.org/TR/REC-html40'>
                 <head>
                     <meta charset='utf-8'>
-                    <title>Termo de Referência - ${processo.numero}</title>
+                    <title>Termo de Referência</title>
                     <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-                        h1 { text-align: center; color: #2c3e50; font-size: 24px; }
-                        h2 { color: #2c3e50; font-size: 18px; margin-top: 30px; }
-                        p { text-align: justify; margin: 10px 0; }
-                        .header { text-align: center; margin-bottom: 40px; }
-                        .section { margin: 20px 0; page-break-inside: avoid; }
+                        @page { margin: 2cm; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            line-height: 1.6;
+                            color: #333;
+                        }
+                        h1 { 
+                            text-align: center; 
+                            color: #2c3e50; 
+                            font-size: 24px;
+                            margin-bottom: 5px;
+                        }
+                        h2 { 
+                            color: #2c3e50; 
+                            font-size: 16px; 
+                            margin-top: 25px;
+                            margin-bottom: 10px;
+                            font-weight: bold;
+                        }
+                        h3 {
+                            color: #2c3e50;
+                            font-size: 14px;
+                            margin-top: 15px;
+                            margin-bottom: 8px;
+                        }
+                        p { 
+                            text-align: justify; 
+                            margin: 8px 0;
+                            font-size: 12px;
+                        }
+                        .header { 
+                            text-align: center; 
+                            margin-bottom: 30px;
+                        }
+                        .info-line {
+                            text-align: center;
+                            margin: 5px 0;
+                            font-size: 14px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin: 15px 0;
+                            font-size: 12px;
+                        }
+                        th {
+                            background-color: #f0f0f0;
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: left;
+                            font-weight: bold;
+                        }
+                        td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                        }
+                        .footer {
+                            margin-top: 50px;
+                            text-align: center;
+                            font-size: 11px;
+                            color: #666;
+                        }
                     </style>
                 </head>
                 <body>
                     <div class="header">
                         <h1>TERMO DE REFERÊNCIA</h1>
-                        <p><strong>Processo:</strong> ${processo.numero}</p>
-                        <p><strong>Objeto:</strong> ${processo.objeto}</p>
-                        <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                        <p class="info-line"><strong>${tr.titulo || 'Contratação Infraestrutura para Cercamento Perimetral'}</strong></p>
+                        <p class="info-line">Modalidade: ${processo.modalidade || 'Concorrência'}</p>
+                        <p class="info-line">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
                     </div>
                     
-                    ${tr.objeto ? `<div class="section"><h2>1. OBJETO</h2><p>${tr.objeto}</p></div>` : ''}
-                    ${tr.justificativa ? `<div class="section"><h2>2. JUSTIFICATIVA</h2><p>${tr.justificativa}</p></div>` : ''}
-                    ${tr.escopo ? `<div class="section"><h2>3. ESCOPO</h2><p>${tr.escopo}</p></div>` : ''}
-                    ${tr.requisitos ? `<div class="section"><h2>4. REQUISITOS</h2><p>${tr.requisitos}</p></div>` : ''}
-                    ${tr.qualificacao ? `<div class="section"><h2>5. QUALIFICAÇÃO TÉCNICA</h2><p>${tr.qualificacao}</p></div>` : ''}
-                    ${tr.obrigacoes ? `<div class="section"><h2>6. OBRIGAÇÕES</h2><p>${tr.obrigacoes}</p></div>` : ''}
-                    ${tr.prazoExecucao ? `<div class="section"><h2>7. PRAZO DE EXECUÇÃO</h2><p>${tr.prazoExecucao}</p></div>` : ''}
-                    ${tr.formaPagamento ? `<div class="section"><h2>8. FORMA DE PAGAMENTO</h2><p>${tr.formaPagamento}</p></div>` : ''}
-                    ${tr.garantia ? `<div class="section"><h2>9. GARANTIA</h2><p>${tr.garantia}</p></div>` : ''}
-                    ${tr.penalidades ? `<div class="section"><h2>10. PENALIDADES</h2><p>${tr.penalidades}</p></div>` : ''}
-                    ${tr.disposicoesGerais ? `<div class="section"><h2>11. DISPOSIÇÕES GERAIS</h2><p>${tr.disposicoesGerais}</p></div>` : ''}
+                    <h2>1. OBJETIVO</h2>
+                    <p>${tr.objetivo || tr.objeto || 'xxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h2>2. CONFORMIDADE AO TERMO DE REFERÊNCIA</h2>
+                    <p>${tr.conformidade || tr.justificativa || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h2>3. LOCAL E ACESSO</h2>
+                    <p><strong>Visita ao Local:</strong> ${tr.visitaLocal || 'Obrigatória'}</p>
+                    <p><strong>Local/Acesso:</strong> ${tr.localAcesso || 'xxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h2>4. ESCOPO TÉCNICO</h2>
+                    
+                    <h3>4.1. Escopo Técnico</h3>
+                    <p>${tr.escopo || tr.escopoTecnico || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>4.2. Situação Atual</h3>
+                    <p>${tr.situacaoAtual || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>4.3. Situação Proposta</h3>
+                    <p>${tr.situacaoProposta || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>4.4. Especificação Técnica</h3>
+                    <p>${tr.especificacaoTecnica || tr.especificacoes || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>4.5. Premissas, Requisitos e Restrições</h3>
+                    <p>${tr.premissas || tr.requisitos || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>4.6. Planilha de Quantidade</h3>
+                    <p>${tr.planilhaQuantidade || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>4.7. Tabela de Serviços</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="10%">Item</th>
+                                <th width="50%">Descrição</th>
+                                <th width="20%">Unidade</th>
+                                <th width="20%">Quantidade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tr.tabelaServicos ? tr.tabelaServicos.map(servico => `
+                                <tr>
+                                    <td style="text-align: center;">${servico.item}</td>
+                                    <td>${servico.descricao}</td>
+                                    <td style="text-align: center;">${servico.unidade}</td>
+                                    <td style="text-align: center;">${servico.quantidade}</td>
+                                </tr>
+                            `).join('') : `
+                                <tr><td>1</td><td>xxxxxxxxxxxxxxx</td><td>UN</td><td>123</td></tr>
+                                <tr><td>2</td><td>xxxxxxxxxxxxxxxxx</td><td>UN</td><td>234</td></tr>
+                                <tr><td>3</td><td>xxxxxxxxxxxxx</td><td>UN</td><td>456</td></tr>
+                                <tr><td>4</td><td>xxxxxxxxxxxxxx</td><td>UN</td><td>678</td></tr>
+                                <tr><td>5</td><td>xxxxxxxxxxxxxx</td><td>UN</td><td>543</td></tr>
+                                <tr><td>6</td><td>xxxxxx</td><td>UN</td><td>123</td></tr>
+                            `}
+                        </tbody>
+                    </table>
+                    
+                    <h3>4.8. Escopo Geral</h3>
+                    <p>${tr.escopoGeral || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h2>5. PRAZOS</h2>
+                    <p>${tr.prazos || tr.prazoExecucao || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h2>6. MATRIZ DE RESPONSABILIDADE</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="70%">Atividade</th>
+                                <th width="30%">Responsável</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tr.matrizResponsabilidade ? tr.matrizResponsabilidade.map(item => `
+                                <tr>
+                                    <td>${item.atividade}</td>
+                                    <td>${item.responsavel}</td>
+                                </tr>
+                            `).join('') : `
+                                <tr><td>xxxxxxxxxxxxxxxxxxxxx</td><td>Contratada</td></tr>
+                                <tr><td>xxxxxxxxxxxxxxxxx</td><td>Contratada</td></tr>
+                                <tr><td>xxxxxxxxxxxxxxxxxxxxxxxxxxxx</td><td>Contratada</td></tr>
+                                <tr><td>xxxxxxxxxxxxxx</td><td>Contratada</td></tr>
+                                <tr><td>xxxxxxxxxxx</td><td>Contratante</td></tr>
+                                <tr><td>xxxxxxxxxxxx</td><td>Contratada</td></tr>
+                                <tr><td>xxxxxxxxxxxx</td><td>N/A</td></tr>
+                                <tr><td>xxxxxxxxxxxxxx</td><td>Contratada</td></tr>
+                            `}
+                        </tbody>
+                    </table>
+                    
+                    <h2>7. MOBILIZAÇÃO E SEGURANÇA</h2>
+                    
+                    <h3>7.1. Segurança e Saúde do Trabalho</h3>
+                    <p>${tr.segurancaTrabalho || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>7.2. Canteiro de Obras e Infraestrutura</h3>
+                    <p>${tr.canteiroObras || tr.obrigacoes || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>7.3. Credenciamento Aeroportuário</h3>
+                    <p>${tr.credenciamentoAeroportuario || 'xxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>7.4. Meio Ambiente</h3>
+                    <p>${tr.meioAmbiente || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h2>8. GESTÃO E PLANEJAMENTO</h2>
+                    
+                    <h3>8.1. Engenharia</h3>
+                    <p>${tr.engenharia || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>8.2. Aquisições</h3>
+                    <p>${tr.aquisicoes || 'xxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>8.3. Planejamento/Gestão de Contratos</h3>
+                    <p>${tr.gestaoContratos || tr.planejamentoGestao || 'xxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>8.4. Planejamento Executivo</h3>
+                    <p>${tr.planejamentoExecutivo || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h2>9. TESTES E ENCERRAMENTO</h2>
+                    
+                    <h3>9.1. Testes, Comissionamento e Treinamento</h3>
+                    <p>${tr.testesComissionamento || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>9.2. Ao Encerramento da Obra</h3>
+                    <p>${tr.encerramentoObra || 'xxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>9.3. Certificado de Aceitação Provisória (CAP)</h3>
+                    <p>${tr.certificadoAceitacaoProvisoria || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>9.4. Certificado de Aceitação Final (CAF)</h3>
+                    <p>${tr.certificadoAceitacaoFinal || 'xxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h3>9.5. Garantia</h3>
+                    <p>${tr.garantia || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h2>10. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</h2>
+                    <p>${tr.criteriosAvaliacao || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <h2>11. ANEXOS</h2>
+                    <p>${tr.anexos || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    
+                    <div class="footer">
+                        <p>Documento gerado em ${new Date().toLocaleDateString('pt-BR')}, ${new Date().toLocaleTimeString('pt-BR')}</p>
+                        <p>Elaborado por: ${tr.criadoPor || 'Carlos Oliveira'}</p>
+                    </div>
                 </body>
                 </html>
             `;
