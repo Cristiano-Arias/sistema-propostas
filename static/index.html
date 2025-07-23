@@ -169,6 +169,12 @@
             display: none;
         }
 
+        .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
         @media (max-width: 480px) {
             .login-container {
                 margin: 10px;
@@ -196,8 +202,11 @@
             
             <form onsubmit="realizarLogin(event)">
                 <div class="form-group">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" required placeholder="seu@email.com">
+                    <label for="usuario">Usuário ou E-mail</label>
+                    <input type="text" id="usuario" required placeholder="Digite seu usuário ou e-mail">
+                    <div class="help-text">
+                        Para fornecedores: use o usuário fornecido (8 dígitos) ou seu e-mail
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -247,7 +256,7 @@
             ? 'http://localhost:5000' 
             : window.location.origin;
 
-        // Usuários de teste
+        // Usuários de teste (mantém compatibilidade)
         const usuariosTeste = {
             'admin@sistema.com': {
                 senha: 'admin123',
@@ -282,8 +291,8 @@
             }
         };
 
-        function preencherCredenciais(email, senha) {
-            document.getElementById('email').value = email;
+        function preencherCredenciais(usuario, senha) {
+            document.getElementById('usuario').value = usuario;
             document.getElementById('senha').value = senha;
         }
 
@@ -299,7 +308,7 @@
         async function realizarLogin(event) {
             event.preventDefault();
             
-            const email = document.getElementById('email').value;
+            const usuarioInput = document.getElementById('usuario').value.trim();
             const senha = document.getElementById('senha').value;
             const btnLogin = document.getElementById('btnLogin');
             
@@ -308,54 +317,78 @@
             btnLogin.innerHTML = 'Entrando... <span class="loading"></span>';
             
             try {
-                // Tentar autenticação via API
-                const response = await fetch(`${API_URL}/api/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, senha })
-                });
+                // Primeiro tentar login com usuários cadastrados no sistema
+                const usuariosCadastrados = JSON.parse(localStorage.getItem('usuarios') || '[]');
                 
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        criarSessao(result.usuario);
-                        redirecionarUsuario(result.usuario.tipo);
+                // Procurar por e-mail ou usuário
+                const usuarioEncontrado = usuariosCadastrados.find(u => 
+                    u.email === usuarioInput || 
+                    u.usuario === usuarioInput ||
+                    (u.cnpj && u.cnpj.replace(/[^\d]/g, '').substring(0, 8) === usuarioInput)
+                );
+                
+                if (usuarioEncontrado) {
+                    // Verificar senha (decodificar base64)
+                    const senhaCorreta = atob(usuarioEncontrado.senha) === senha;
+                    
+                    if (senhaCorreta) {
+                        console.log('Login bem-sucedido:', usuarioEncontrado);
+                        
+                        // Criar sessão com dados do usuário
+                        const dadosUsuario = {
+                            email: usuarioEncontrado.email,
+                            nome: usuarioEncontrado.nome || usuarioEncontrado.razaoSocial,
+                            tipo: usuarioEncontrado.tipo,
+                            usuarioId: usuarioEncontrado.usuarioId,
+                            cnpj: usuarioEncontrado.cnpj || null,
+                            primeiroAcesso: usuarioEncontrado.primeiroAcesso || false
+                        };
+                        
+                        criarSessao(dadosUsuario);
+                        
+                        // Se for primeiro acesso do fornecedor, alertar
+                        if (usuarioEncontrado.primeiroAcesso && usuarioEncontrado.tipo === 'fornecedor') {
+                            alert('Bem-vindo! Este é seu primeiro acesso. Recomendamos completar seu cadastro.');
+                        }
+                        
+                        redirecionarUsuario(usuarioEncontrado.tipo);
                         return;
                     }
                 }
                 
-                throw new Error('API não disponível');
+                // Se não encontrou nos cadastrados, tentar nos usuários de teste
+                const isEmail = usuarioInput.includes('@');
+                
+                if (isEmail) {
+                    // Login por e-mail (compatibilidade com sistema antigo)
+                    const usuario = usuariosTeste[usuarioInput];
+                    
+                    if (usuario && usuario.senha === senha) {
+                        const dadosUsuario = {
+                            email: usuarioInput,
+                            nome: usuario.nome,
+                            tipo: usuario.tipo,
+                            usuarioId: usuario.usuarioId,
+                            cnpj: usuario.cnpj || null
+                        };
+                        
+                        criarSessao(dadosUsuario);
+                        redirecionarUsuario(usuario.tipo);
+                        return;
+                    }
+                }
+                
+                // Se chegou aqui, credenciais inválidas
+                mostrarErro('Usuário/e-mail ou senha incorretos');
+                
             } catch (error) {
-                console.warn('Usando autenticação local:', error);
-                autenticarLocal(email, senha);
+                console.error('Erro no login:', error);
+                mostrarErro('Erro ao processar login. Tente novamente.');
             } finally {
                 // Reabilitar botão
                 btnLogin.disabled = false;
                 btnLogin.innerHTML = 'Entrar';
             }
-        }
-
-        function autenticarLocal(email, senha) {
-            const usuario = usuariosTeste[email];
-            
-            if (!usuario || usuario.senha !== senha) {
-                mostrarErro('E-mail ou senha incorretos');
-                return;
-            }
-            
-            // Criar sessão
-            const dadosUsuario = {
-                email: email,
-                nome: usuario.nome,
-                tipo: usuario.tipo,
-                usuarioId: usuario.usuarioId,
-                cnpj: usuario.cnpj || null
-            };
-            
-            criarSessao(dadosUsuario);
-            redirecionarUsuario(usuario.tipo);
         }
 
         function criarSessao(usuario) {
@@ -366,6 +399,16 @@
             };
             
             sessionStorage.setItem('sessao_ativa', JSON.stringify(sessao));
+            
+            // Registrar log de login
+            const logs = JSON.parse(localStorage.getItem('logs_atividade') || '[]');
+            logs.push({
+                usuarioId: usuario.usuarioId,
+                acao: 'login',
+                detalhes: 'sucesso',
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('logs_atividade', JSON.stringify(logs));
         }
 
         function redirecionarUsuario(tipo) {
@@ -401,8 +444,20 @@
                 // Limpar sessão expirada
                 sessionStorage.removeItem('sessao_ativa');
             }
+            
+            // Mostrar informação sobre fornecedores cadastrados
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            const fornecedoresCadastrados = usuarios.filter(u => u.tipo === 'fornecedor');
+            
+            if (fornecedoresCadastrados.length > 0) {
+                console.log('Fornecedores cadastrados no sistema:', fornecedoresCadastrados.length);
+                console.log('Para debug, fornecedores:', fornecedoresCadastrados.map(f => ({
+                    nome: f.razaoSocial || f.nome,
+                    usuario: f.usuario,
+                    email: f.email
+                })));
+            }
         });
     </script>
 </body>
 </html>
-
