@@ -1013,7 +1013,7 @@
                             👁️ Visualizar TR em Nova Aba
                         </button>
                         <button class="btn btn-info" onclick="baixarTR('${processo.numero}')">
-                            📥 Baixar TR (PDF)
+                            📥 Baixar TR (Word)
                         </button>
                     ` : ''}
                     <button class="btn btn-primary" onclick="abrirPortalProposta('${processo.numero}'); closeModal('modalProcesso');">
@@ -1399,18 +1399,66 @@
             `);
         }
         
-        // Baixar TR como PDF (simulado - abre para impressão)
+        // Baixar TR como Word - FUNÇÃO CORRIGIDA
         function baixarTR(numeroProcesso) {
             const processo = processos.find(p => p.numero === numeroProcesso);
             if (!processo || !processo.termoReferencia) return;
             
-            // Como não temos um servidor para gerar PDF real, vamos abrir para impressão
-            visualizarTR(numeroProcesso);
+            const tr = processo.termoReferencia;
             
-            // Informar o usuário
-            setTimeout(() => {
-                alert('Use a função de impressão do navegador e selecione "Salvar como PDF" para baixar o documento.');
-            }, 1000);
+            // Criar conteúdo HTML formatado para Word
+            const conteudoWord = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+                      xmlns:w='urn:schemas-microsoft-com:office:word'
+                      xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>Termo de Referência - ${processo.numero}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                        h1 { text-align: center; color: #2c3e50; font-size: 24px; }
+                        h2 { color: #2c3e50; font-size: 18px; margin-top: 30px; }
+                        p { text-align: justify; margin: 10px 0; }
+                        .header { text-align: center; margin-bottom: 40px; }
+                        .section { margin: 20px 0; page-break-inside: avoid; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>TERMO DE REFERÊNCIA</h1>
+                        <p><strong>Processo:</strong> ${processo.numero}</p>
+                        <p><strong>Objeto:</strong> ${processo.objeto}</p>
+                        <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    
+                    ${tr.objeto ? `<div class="section"><h2>1. OBJETO</h2><p>${tr.objeto}</p></div>` : ''}
+                    ${tr.justificativa ? `<div class="section"><h2>2. JUSTIFICATIVA</h2><p>${tr.justificativa}</p></div>` : ''}
+                    ${tr.escopo ? `<div class="section"><h2>3. ESCOPO</h2><p>${tr.escopo}</p></div>` : ''}
+                    ${tr.requisitos ? `<div class="section"><h2>4. REQUISITOS</h2><p>${tr.requisitos}</p></div>` : ''}
+                    ${tr.qualificacao ? `<div class="section"><h2>5. QUALIFICAÇÃO TÉCNICA</h2><p>${tr.qualificacao}</p></div>` : ''}
+                    ${tr.obrigacoes ? `<div class="section"><h2>6. OBRIGAÇÕES</h2><p>${tr.obrigacoes}</p></div>` : ''}
+                    ${tr.prazoExecucao ? `<div class="section"><h2>7. PRAZO DE EXECUÇÃO</h2><p>${tr.prazoExecucao}</p></div>` : ''}
+                    ${tr.formaPagamento ? `<div class="section"><h2>8. FORMA DE PAGAMENTO</h2><p>${tr.formaPagamento}</p></div>` : ''}
+                    ${tr.garantia ? `<div class="section"><h2>9. GARANTIA</h2><p>${tr.garantia}</p></div>` : ''}
+                    ${tr.penalidades ? `<div class="section"><h2>10. PENALIDADES</h2><p>${tr.penalidades}</p></div>` : ''}
+                    ${tr.disposicoesGerais ? `<div class="section"><h2>11. DISPOSIÇÕES GERAIS</h2><p>${tr.disposicoesGerais}</p></div>` : ''}
+                </body>
+                </html>
+            `;
+            
+            // Criar blob e fazer download
+            const blob = new Blob(['\ufeff', conteudoWord], {
+                type: 'application/msword'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `TR_${processo.numero}_${new Date().toISOString().split('T')[0]}.doc`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
