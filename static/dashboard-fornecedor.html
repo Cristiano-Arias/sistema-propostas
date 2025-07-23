@@ -946,8 +946,76 @@
                         <h4 style="margin-top: 20px;">Descrição</h4>
                         <p>${processo.descricao}</p>
                     ` : ''}
+                    
+                    ${processo.termoReferencia ? `
+                        <h4 style="margin-top: 20px;">📋 Termo de Referência Completo</h4>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 15px 0; max-height: 400px; overflow-y: auto;">
+                            ${processo.termoReferencia.objeto ? `
+                                <h5>1. OBJETO</h5>
+                                <p>${processo.termoReferencia.objeto}</p>
+                            ` : ''}
+                            
+                            ${processo.termoReferencia.justificativa ? `
+                                <h5>2. JUSTIFICATIVA</h5>
+                                <p>${processo.termoReferencia.justificativa}</p>
+                            ` : ''}
+                            
+                            ${processo.termoReferencia.escopo ? `
+                                <h5>3. ESCOPO</h5>
+                                <p>${processo.termoReferencia.escopo}</p>
+                            ` : ''}
+                            
+                            ${processo.termoReferencia.requisitos ? `
+                                <h5>4. REQUISITOS</h5>
+                                <p>${processo.termoReferencia.requisitos}</p>
+                            ` : ''}
+                            
+                            ${processo.termoReferencia.qualificacao ? `
+                                <h5>5. QUALIFICAÇÃO TÉCNICA</h5>
+                                <p>${processo.termoReferencia.qualificacao}</p>
+                            ` : ''}
+                            
+                            ${processo.termoReferencia.obrigacoes ? `
+                                <h5>6. OBRIGAÇÕES</h5>
+                                <p>${processo.termoReferencia.obrigacoes}</p>
+                            ` : ''}
+                            
+                            ${processo.termoReferencia.prazoExecucao ? `
+                                <h5>7. PRAZO DE EXECUÇÃO</h5>
+                                <p>${processo.termoReferencia.prazoExecucao}</p>
+                            ` : ''}
+                            
+                            ${processo.termoReferencia.formaPagamento ? `
+                                <h5>8. FORMA DE PAGAMENTO</h5>
+                                <p>${processo.termoReferencia.formaPagamento}</p>
+                            ` : ''}
+                            
+                            ${processo.termoReferencia.garantia ? `
+                                <h5>9. GARANTIA</h5>
+                                <p>${processo.termoReferencia.garantia}</p>
+                            ` : ''}
+                            
+                            ${processo.termoReferencia.penalidades ? `
+                                <h5>10. PENALIDADES</h5>
+                                <p>${processo.termoReferencia.penalidades}</p>
+                            ` : ''}
+                            
+                            ${processo.termoReferencia.disposicoesGerais ? `
+                                <h5>11. DISPOSIÇÕES GERAIS</h5>
+                                <p>${processo.termoReferencia.disposicoesGerais}</p>
+                            ` : ''}
+                        </div>
+                    ` : '<p style="margin-top: 20px; color: #6c757d;">Termo de Referência não disponível</p>'}
                 </div>
                 <div style="text-align: center; margin-top: 20px;">
+                    ${processo.termoReferencia ? `
+                        <button class="btn btn-secondary" onclick="visualizarTR('${processo.numero}')">
+                            👁️ Visualizar TR em Nova Aba
+                        </button>
+                        <button class="btn btn-info" onclick="baixarTR('${processo.numero}')">
+                            📥 Baixar TR (PDF)
+                        </button>
+                    ` : ''}
                     <button class="btn btn-primary" onclick="abrirPortalProposta('${processo.numero}'); closeModal('modalProcesso');">
                         📤 Ir para Portal de Proposta
                     </button>
@@ -1272,6 +1340,77 @@
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
             }
+        }
+        
+        // Visualizar TR em nova aba
+        function visualizarTR(numeroProcesso) {
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            if (!processo || !processo.termoReferencia) return;
+            
+            const tr = processo.termoReferencia;
+            const novaJanela = window.open('', '_blank');
+            
+            novaJanela.document.write(`
+                <!DOCTYPE html>
+                <html lang="pt-BR">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Termo de Referência - ${processo.numero}</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 40px;
+                            line-height: 1.6;
+                        }
+                        h1, h2 { color: #2c3e50; }
+                        h1 { text-align: center; }
+                        .section { margin: 30px 0; }
+                        .header { text-align: center; margin-bottom: 40px; }
+                        @media print {
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>TERMO DE REFERÊNCIA</h1>
+                        <p><strong>Processo:</strong> ${processo.numero}</p>
+                        <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    
+                    ${tr.objeto ? `<div class="section"><h2>1. OBJETO</h2><p>${tr.objeto}</p></div>` : ''}
+                    ${tr.justificativa ? `<div class="section"><h2>2. JUSTIFICATIVA</h2><p>${tr.justificativa}</p></div>` : ''}
+                    ${tr.escopo ? `<div class="section"><h2>3. ESCOPO</h2><p>${tr.escopo}</p></div>` : ''}
+                    ${tr.requisitos ? `<div class="section"><h2>4. REQUISITOS</h2><p>${tr.requisitos}</p></div>` : ''}
+                    ${tr.qualificacao ? `<div class="section"><h2>5. QUALIFICAÇÃO TÉCNICA</h2><p>${tr.qualificacao}</p></div>` : ''}
+                    ${tr.obrigacoes ? `<div class="section"><h2>6. OBRIGAÇÕES</h2><p>${tr.obrigacoes}</p></div>` : ''}
+                    ${tr.prazoExecucao ? `<div class="section"><h2>7. PRAZO DE EXECUÇÃO</h2><p>${tr.prazoExecucao}</p></div>` : ''}
+                    ${tr.formaPagamento ? `<div class="section"><h2>8. FORMA DE PAGAMENTO</h2><p>${tr.formaPagamento}</p></div>` : ''}
+                    ${tr.garantia ? `<div class="section"><h2>9. GARANTIA</h2><p>${tr.garantia}</p></div>` : ''}
+                    ${tr.penalidades ? `<div class="section"><h2>10. PENALIDADES</h2><p>${tr.penalidades}</p></div>` : ''}
+                    ${tr.disposicoesGerais ? `<div class="section"><h2>11. DISPOSIÇÕES GERAIS</h2><p>${tr.disposicoesGerais}</p></div>` : ''}
+                    
+                    <div class="no-print" style="text-align: center; margin-top: 40px;">
+                        <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px;">🖨️ Imprimir</button>
+                        <button onclick="window.close()" style="padding: 10px 20px; font-size: 16px; margin-left: 10px;">❌ Fechar</button>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+        
+        // Baixar TR como PDF (simulado - abre para impressão)
+        function baixarTR(numeroProcesso) {
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            if (!processo || !processo.termoReferencia) return;
+            
+            // Como não temos um servidor para gerar PDF real, vamos abrir para impressão
+            visualizarTR(numeroProcesso);
+            
+            // Informar o usuário
+            setTimeout(() => {
+                alert('Use a função de impressão do navegador e selecione "Salvar como PDF" para baixar o documento.');
+            }, 1000);
         }
     </script>
 </body>
