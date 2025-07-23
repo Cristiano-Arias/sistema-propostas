@@ -1229,30 +1229,13 @@
             return parseFloat(numero) || 0;
         }
 
-        // Inicialização - AJUSTADA PARA AUTENTICAÇÃO
-        window.addEventListener('DOMContentLoaded', async function() {
-            console.log('Portal de propostas carregado!');
-            console.log('API URL:', API_URL);
-            
-            // Verificar autenticação - CORRIGIDO
-            let currentUser = null;
-            
-            // Tentar buscar do sessionStorage primeiro (compatibilidade com auth.js)
-            const sessionAuth = sessionStorage.getItem('currentUser');
-            if (sessionAuth) {
-                currentUser = JSON.parse(sessionAuth);
-            } else {
-                // Fallback para localStorage
-                const authData = localStorage.getItem('auth');
-                if (authData) {
-                    currentUser = JSON.parse(authData);
-                } else {
-                    // Se não encontrar autenticação
-                    alert('Você precisa estar autenticado para acessar esta página.');
-                    window.location.href = 'index.html';
-                    return;
-                }
-            }
+        // Verificar autenticação
+        const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser') || '{}');
+        if (!currentUser.usuarioId) {
+            alert('Você precisa estar autenticado para acessar esta página.');
+            window.location.href = 'index.html';
+            return;
+        }
             
             // Carregar dados do processo da URL
             const urlParams = new URLSearchParams(window.location.search);
