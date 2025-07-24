@@ -707,34 +707,108 @@
                 const tr = JSON.parse(option.dataset.trData);
                 trSelecionado = tr;
                 
-                // Criar visualização resumida do TR
+                // Mostrar TUDO do TR direto aqui, sem complicação
                 areaVisualizacao.innerHTML = `
-                    <div class="tr-section">
-                        <h3>${tr.titulo}</h3>
-                        <div class="tr-field">
-                            <span class="tr-field-label">Modalidade:</span>
-                            <span class="tr-field-value">${tr.modalidade}</span>
+                    <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin: 20px 0;">
+                        <h2 style="color: #2c3e50; margin-bottom: 30px;">📋 Termo de Referência Completo</h2>
+                        
+                        <div class="tr-section">
+                            <h3>Informações Básicas</h3>
+                            <p><strong>Título:</strong> ${tr.titulo}</p>
+                            <p><strong>Modalidade:</strong> ${tr.modalidade}</p>
+                            <p><strong>Criado por:</strong> ${tr.criadorNome} em ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
                         </div>
-                        <div class="tr-field">
-                            <span class="tr-field-label">Objetivo:</span>
-                            <span class="tr-field-value">${tr.objetivo || 'Não especificado'}</span>
+                        
+                        ${tr.objetivo || tr.objeto ? `
+                        <div class="tr-section">
+                            <h3>Objetivo</h3>
+                            <p>${tr.objetivo || tr.objeto}</p>
                         </div>
-                        <div class="tr-field">
-                            <span class="tr-field-label">Criado por:</span>
-                            <span class="tr-field-value">${tr.criadorNome} em ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</span>
+                        ` : ''}
+                        
+                        ${tr.justificativa ? `
+                        <div class="tr-section">
+                            <h3>Justificativa</h3>
+                            <p>${tr.justificativa}</p>
                         </div>
-                        <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
-                            <p style="color: #1976d2; margin-bottom: 10px;">
-                                <strong>💡 Dica:</strong> Use os botões abaixo para visualizar o TR completo no módulo de requisição ou aprovar para continuar.
-                            </p>
-                            <button type="button" class="btn btn-info" onclick="visualizarTRCompleto()">
-                                👁️ Visualizar TR Completo (Nova Aba)
-                            </button>
-                            <button type="button" class="btn btn-primary" onclick="baixarTR()">
-                                📥 Baixar TR (Nova Aba)
-                            </button>
+                        ` : ''}
+                        
+                        ${tr.conformidade ? `
+                        <div class="tr-section">
+                            <h3>Conformidade</h3>
+                            <p>${tr.conformidade}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${tr.escopoTecnico ? `
+                        <div class="tr-section">
+                            <h3>Escopo Técnico</h3>
+                            <p>${tr.escopoTecnico}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${tr.situacaoAtual ? `
+                        <div class="tr-section">
+                            <h3>Situação Atual</h3>
+                            <p>${tr.situacaoAtual}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${tr.situacaoProposta ? `
+                        <div class="tr-section">
+                            <h3>Situação Proposta</h3>
+                            <p>${tr.situacaoProposta}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${tr.especificacaoTecnica || tr.especificacoes ? `
+                        <div class="tr-section">
+                            <h3>Especificações Técnicas</h3>
+                            <p>${tr.especificacaoTecnica || tr.especificacoes}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${tr.premissas ? `
+                        <div class="tr-section">
+                            <h3>Premissas</h3>
+                            <p>${tr.premissas}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${tr.garantia ? `
+                        <div class="tr-section">
+                            <h3>Garantia</h3>
+                            <p>${tr.garantia}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${tr.prazos || tr.prazo_execucao ? `
+                        <div class="tr-section">
+                            <h3>Prazos</h3>
+                            <p>${tr.prazos || tr.prazo_execucao}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${tr.visitaLocal ? `
+                        <div class="tr-section">
+                            <h3>Visita ao Local</h3>
+                            <p>${tr.visitaLocal}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${tr.localAcesso ? `
+                        <div class="tr-section">
+                            <h3>Local/Acesso</h3>
+                            <p>${tr.localAcesso}</p>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #dee2e6;">
                             <button type="button" class="btn btn-success" onclick="aprovarTR()">
-                                ✅ Aprovar e Continuar
+                                ✅ Aprovar TR e Continuar com o Processo
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="rejeitarTR()">
+                                ❌ Rejeitar TR
                             </button>
                         </div>
                     </div>
@@ -742,6 +816,17 @@
                 
                 areaVisualizacao.style.display = 'block';
                 formularioProcesso.style.display = 'none';
+            }
+        }
+        
+        // Função para rejeitar TR
+        function rejeitarTR() {
+            const motivo = prompt('Por favor, informe o motivo da rejeição:');
+            if (motivo) {
+                alert('TR rejeitado. O requisitante será notificado.');
+                document.getElementById('trVinculado').value = '';
+                document.getElementById('areaVisualizacaoTR').style.display = 'none';
+                trSelecionado = null;
             }
         }
 
