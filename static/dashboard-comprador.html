@@ -4,12 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Comprador - Sistema de Gestão de Propostas</title>
-    <script>
-        // Configuração da API
-        const API_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:5000' 
-            : window.location.origin;
-    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -155,16 +149,6 @@
             opacity: 0.9;
         }
 
-        .stat-trend {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 12px;
-            background: rgba(255,255,255,0.2);
-            padding: 4px 8px;
-            border-radius: 12px;
-        }
-
         .welcome-section {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 30px;
@@ -182,46 +166,6 @@
         .welcome-subtitle {
             color: #6c757d;
             font-size: 16px;
-        }
-
-        /* Painel de IA */
-        .ai-panel {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 20px rgba(37,117,252,0.3);
-        }
-
-        .ai-panel h3 {
-            font-size: 20px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .ai-insights {
-            display: grid;
-            gap: 15px;
-        }
-
-        .ai-insight {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 3px solid rgba(255,255,255,0.5);
-        }
-
-        .ai-insight-title {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .ai-insight-text {
-            font-size: 14px;
-            opacity: 0.9;
         }
 
         .quick-actions {
@@ -265,49 +209,7 @@
             font-size: 14px;
         }
 
-        /* Indicadores com gráficos */
-        .indicators-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .indicator-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .indicator-card h4 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
-        .mini-chart {
-            height: 100px;
-            background: linear-gradient(to right, #667eea20, #764ba220);
-            border-radius: 8px;
-            display: flex;
-            align-items: flex-end;
-            padding: 10px;
-            gap: 5px;
-        }
-
-        .chart-bar {
-            flex: 1;
-            background: #667eea;
-            border-radius: 4px 4px 0 0;
-            transition: all 0.3s;
-        }
-
-        .chart-bar:hover {
-            background: #764ba2;
-        }
-
-        /* Estilos para formulários e listas */
+        /* Estilos para formulários */
         .form-group {
             margin-bottom: 20px;
         }
@@ -360,23 +262,8 @@
             color: white;
         }
 
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-
         .btn-info {
             background: #17a2b8;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-ai {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
             color: white;
         }
 
@@ -385,43 +272,29 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        /* Estilos para cards de processo */
-        .processo-card {
+        .tr-section {
             background: #f8f9fa;
             padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             border-left: 4px solid #667eea;
-            transition: all 0.3s;
         }
 
-        .processo-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
-        }
-
-        .processo-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
+        .tr-field {
             margin-bottom: 15px;
         }
 
-        .processo-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            color: #6c757d;
-            font-size: 14px;
+        .tr-field-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            display: block;
         }
 
-        .tr-badge {
-            background: #e3f2fd;
-            color: #1976d2;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+        .tr-field-value {
+            color: #212529;
+            line-height: 1.6;
+            white-space: pre-wrap;
         }
 
         .empty-state {
@@ -436,87 +309,7 @@
             opacity: 0.5;
         }
 
-        /* Estilos para tabela de propostas */
-        .proposta-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .proposta-table th {
-            background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #2c3e50;
-            border-bottom: 2px solid #dee2e6;
-        }
-
-        .proposta-table td {
-            padding: 12px;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .proposta-table tr:hover {
-            background: #f8f9fa;
-        }
-
-        /* Novos estilos para publicação de processo */
-        .processo-card-completo {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .processo-status {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .status-processo {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .status-rascunho {
-            background: #e9ecef;
-            color: #6c757d;
-        }
-
-        .status-publicado {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-encerrado {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .portal-section {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-            border: 2px solid #2196f3;
-        }
-
-        .portal-section h4 {
-            color: #1976d2;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Estilos para modal */
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -537,12 +330,6 @@
             max-width: 1200px;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            animation: modalFadeIn 0.3s;
-        }
-
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: translateY(-50px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .modal-header {
@@ -576,275 +363,6 @@
 
         .close:hover {
             transform: scale(1.2);
-        }
-
-        /* Estilos melhorados para visualização de TR */
-        .tr-completo-container {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .tr-header-info {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 25px;
-            border-bottom: 3px solid #667eea;
-        }
-
-        .tr-header-info h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 24px;
-        }
-
-        .tr-meta-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .tr-meta-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .tr-meta-label {
-            font-size: 12px;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-
-        .tr-meta-value {
-            font-size: 16px;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        .tr-content-section {
-            padding: 25px;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .tr-content-section:last-child {
-            border-bottom: none;
-        }
-
-        .tr-section-title {
-            color: #2c3e50;
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tr-section-content {
-            color: #495057;
-            line-height: 1.8;
-            white-space: pre-wrap;
-        }
-
-        .tr-tabs {
-            display: flex;
-            background: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-            margin: 0 -30px 20px -30px;
-            padding: 0 30px;
-        }
-
-        .tr-tab {
-            padding: 12px 24px;
-            cursor: pointer;
-            border: none;
-            background: none;
-            font-size: 14px;
-            font-weight: 600;
-            color: #6c757d;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        .tr-tab:hover {
-            color: #495057;
-        }
-
-        .tr-tab.active {
-            color: #667eea;
-        }
-
-        .tr-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #667eea;
-        }
-
-        .tr-tab-content {
-            display: none;
-        }
-
-        .tr-tab-content.active {
-            display: block;
-        }
-
-        /* Estilos para seleção de fornecedores */
-        .fornecedor-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .fornecedor-item:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
-        }
-
-        .fornecedor-item.selected {
-            background: #d4edda;
-            border: 2px solid #28a745;
-        }
-
-        .fornecedor-checkbox {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .fornecedor-info {
-            flex: 1;
-        }
-
-        .fornecedor-nome {
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .fornecedor-detalhes {
-            font-size: 14px;
-            color: #6c757d;
-        }
-
-        .tr-aprovacao-section {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border: 2px solid #2196f3;
-        }
-
-        .tr-aprovacao-section h4 {
-            color: #1976d2;
-            margin-bottom: 15px;
-        }
-
-        .tr-approval-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #dee2e6;
-        }
-
-        /* Estilos para detalhes do processo */
-        .processo-detalhes-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .processo-detalhes-section h4 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-        }
-
-        .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }
-
-        .detail-item {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 3px solid #667eea;
-        }
-
-        .detail-label {
-            font-size: 12px;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-
-        .detail-value {
-            font-size: 16px;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        /* Estilos para campos do TR completo */
-        .tr-field-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .tr-field-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 3px solid #667eea;
-        }
-
-        .tr-field-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .tr-field-value {
-            color: #2c3e50;
-            line-height: 1.6;
-        }
-
-        .tr-empty-field {
-            color: #adb5bd;
-            font-style: italic;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                max-height: 200px;
-                overflow-x: auto;
-                display: flex;
-                gap: 10px;
-                padding: 10px;
-            }
-            
-            .main-content {
-                padding: 20px;
-            }
         }
     </style>
     <script src="auth-atualizado.js"></script>
@@ -904,84 +422,20 @@
                 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <span class="stat-trend">↑ 12%</span>
                         <div class="stat-number" id="totalProcessos">0</div>
                         <div class="stat-label">Processos Ativos</div>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-trend">↑ 8%</span>
                         <div class="stat-number" id="totalPropostas">0</div>
                         <div class="stat-label">Propostas Recebidas</div>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-trend">→ 0%</span>
                         <div class="stat-number" id="trsDisponiveis">0</div>
                         <div class="stat-label">TRs Disponíveis</div>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-trend">↓ 5%</span>
                         <div class="stat-number" id="pareceresPendentes">0</div>
                         <div class="stat-label">Pareceres Pendentes</div>
-                    </div>
-                </div>
-
-                <!-- Painel de IA -->
-                <div class="ai-panel">
-                    <h3>🤖 Insights de Inteligência Artificial</h3>
-                    <div class="ai-insights">
-                        <div class="ai-insight">
-                            <div class="ai-insight-title">💡 Otimização de Processos</div>
-                            <div class="ai-insight-text" id="insight1">
-                                Baseado nos últimos 30 dias, processos de Pregão têm 35% mais propostas quando o prazo é superior a 15 dias.
-                            </div>
-                        </div>
-                        <div class="ai-insight">
-                            <div class="ai-insight-title">📊 Análise de Tendências</div>
-                            <div class="ai-insight-text" id="insight2">
-                                Fornecedores da área de TI respondem 50% mais rápido quando convidados diretamente.
-                            </div>
-                        </div>
-                        <div class="ai-insight">
-                            <div class="ai-insight-title">⚡ Recomendação</div>
-                            <div class="ai-insight-text" id="insight3">
-                                3 TRs estão prontos para processo. Considere criar processos esta semana para melhor distribuição.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Indicadores com gráficos -->
-                <div class="indicators-grid">
-                    <div class="indicator-card">
-                        <h4>📈 Taxa de Resposta por Modalidade</h4>
-                        <div class="mini-chart">
-                            <div class="chart-bar" style="height: 80%;"></div>
-                            <div class="chart-bar" style="height: 65%;"></div>
-                            <div class="chart-bar" style="height: 90%;"></div>
-                            <div class="chart-bar" style="height: 45%;"></div>
-                            <div class="chart-bar" style="height: 70%;"></div>
-                        </div>
-                    </div>
-                    <div class="indicator-card">
-                        <h4>⏱️ Tempo Médio de Resposta</h4>
-                        <div class="mini-chart">
-                            <div class="chart-bar" style="height: 40%;"></div>
-                            <div class="chart-bar" style="height: 60%;"></div>
-                            <div class="chart-bar" style="height: 55%;"></div>
-                            <div class="chart-bar" style="height: 80%;"></div>
-                            <div class="chart-bar" style="height: 70%;"></div>
-                        </div>
-                    </div>
-                    <div class="indicator-card">
-                        <h4>💰 Economia Estimada</h4>
-                        <div style="text-align: center; padding: 20px;">
-                            <div style="font-size: 32px; font-weight: bold; color: #28a745;">
-                                R$ 45.320,00
-                            </div>
-                            <div style="color: #6c757d; font-size: 14px;">
-                                Nos últimos 30 dias
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -1006,11 +460,6 @@
                         <div class="quick-action-title">Liberar Parecer</div>
                         <div class="quick-action-desc">Enviar para análise técnica</div>
                     </div>
-                    <div class="quick-action-card" onclick="gerarRelatorioIA()">
-                        <div class="quick-action-icon">🤖</div>
-                        <div class="quick-action-title">Análise com IA</div>
-                        <div class="quick-action-desc">Relatórios inteligentes</div>
-                    </div>
                 </div>
             </div>
 
@@ -1029,18 +478,13 @@
                 <p style="color: #6c757d; margin-bottom: 20px;">Crie um processo baseado em um Termo de Referência aprovado</p>
                 
                 <form id="formCadastroProcesso" onsubmit="cadastrarProcesso(event)" style="background: #f8f9fa; padding: 30px; border-radius: 10px;">
-                    <!-- Seleção de TR -->
-                    <div class="form-group" style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px solid #2196f3;">
-                        <label style="font-weight: bold; color: #1976d2; font-size: 16px;">📋 Selecionar Termo de Referência *</label>
-                        <select id="trVinculado" onchange="carregarVisualizacaoTR()" required style="margin-top: 10px;">
+                    <div class="form-group">
+                        <label>📋 Selecionar Termo de Referência *</label>
+                        <select id="trVinculado" onchange="carregarVisualizacaoTR()" required>
                             <option value="">Selecione um TR disponível</option>
                         </select>
-                        <small style="color: #0d47a1; display: block; margin-top: 10px;">
-                            ⚡ Apenas TRs sem processo vinculado são exibidos
-                        </small>
                     </div>
                     
-                    <!-- Área de visualização do TR -->
                     <div id="areaVisualizacaoTR" style="display: none;">
                         <!-- Conteúdo será preenchido dinamicamente -->
                     </div>
@@ -1053,7 +497,7 @@
                         
                         <div class="form-group">
                             <label>Objeto *</label>
-                            <input type="text" id="objetoProc" required placeholder="Será preenchido com dados do TR" readonly style="background: #f0f0f0;">
+                            <input type="text" id="objetoProc" required readonly style="background: #f0f0f0;">
                         </div>
                         
                         <div class="form-group">
@@ -1077,12 +521,8 @@
                             <input type="text" id="valorEstimado" placeholder="R$ 0,00" onkeyup="formatarMoeda(this)">
                         </div>
                         
-                        <!-- Seleção de fornecedores -->
-                        <div class="form-group" style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-top: 25px; border: 2px solid #ffc107;">
-                            <label style="font-weight: bold; color: #856404; font-size: 16px;">👥 Selecionar Fornecedores *</label>
-                            <p style="color: #856404; font-size: 14px; margin-top: 5px;">
-                                Selecione os fornecedores que serão convidados para este processo
-                            </p>
+                        <div class="form-group">
+                            <label>👥 Selecionar Fornecedores *</label>
                             <div id="listaFornecedores" style="margin-top: 15px;">
                                 <!-- Lista será carregada dinamicamente -->
                             </div>
@@ -1112,7 +552,7 @@
         </div>
     </div>
 
-    <!-- Modal para visualização completa do TR -->
+    <!-- Modal para visualização do TR -->
     <div id="modalVisualizarTR" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1125,98 +565,47 @@
         </div>
     </div>
 
-    <!-- Modal para detalhes do processo -->
-    <div id="modalDetalhesProcesso" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Detalhes do Processo</h2>
-                <span class="close" onclick="fecharModalDetalhes()">&times;</span>
-            </div>
-            <div class="modal-body" id="modalDetalhesConteudo">
-                <!-- Conteúdo será preenchido dinamicamente -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para relatório comparativo com IA -->
-    <div id="modalRelatorioIA" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🤖 Relatório Comparativo com Análise de IA</h2>
-                <span class="close" onclick="fecharModalRelatorio()">&times;</span>
-            </div>
-            <div class="modal-body" id="modalRelatorioConteudo">
-                <!-- Conteúdo será preenchido dinamicamente -->
-            </div>
-        </div>
-    </div>
-
     <script>
+        // Variáveis globais
         let usuarioAtual = null;
         let trSelecionado = null;
         let fornecedoresSelecionados = [];
 
+        // Inicialização
         window.addEventListener('DOMContentLoaded', function() {
-            // Verificar autenticação
+            console.log('Dashboard Comprador - Carregando...');
+            
             usuarioAtual = Auth.verificarAutenticacao(['comprador', 'admin']);
             if (usuarioAtual) {
+                console.log('Usuário autenticado:', usuarioAtual);
                 Auth.exibirInfoUsuario();
                 atualizarEstatisticas();
-                atualizarInsightsIA();
-                
-                // Verificar se há página específica na URL
-                const hash = window.location.hash;
-                if (hash) {
-                    const pagina = hash.substring(1);
-                    if (document.getElementById(pagina)) {
-                        mostrarPagina(pagina);
-                    }
-                }
             }
         });
 
-        // Função para navegar para cadastro de fornecedor
-        function navegarParaCadastroFornecedor() {
-            // Primeiro tenta o arquivo específico
-            fetch('cadastro-fornecedor.html', { method: 'HEAD' })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.href = 'cadastro-fornecedor.html';
-                    } else {
-                        // Se não existir, vai para o sistema principal na aba de fornecedores
-                        window.location.href = 'sistema-gestao-atualizado.html#fornecedores';
-                    }
-                })
-                .catch(() => {
-                    // Em caso de erro, vai para o sistema principal
-                    window.location.href = 'sistema-gestao-atualizado.html#fornecedores';
-                });
-        }
-
+        // Função para mostrar página
         function mostrarPagina(paginaId) {
             console.log('Mostrando página:', paginaId);
             
             // Ocultar todas as páginas
-            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Ocultar todos os botões ativos
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
             
             // Mostrar página selecionada
             const pagina = document.getElementById(paginaId);
             if (pagina) {
                 pagina.classList.add('active');
-                console.log('Página encontrada e ativada:', paginaId);
-            } else {
-                console.error('Página não encontrada:', paginaId);
             }
             
-            // Ativar botão do menu
-            const botoesMenu = document.querySelectorAll('.nav-item');
-            botoesMenu.forEach(botao => {
-                if (botao.onclick && botao.onclick.toString().includes(paginaId)) {
-                    botao.classList.add('active');
-                }
-            });
-
+            // Ativar botão correspondente
+            event.target.classList.add('active');
+            
             // Carregar conteúdo específico
             if (paginaId === 'processos') {
                 carregarMeusProcessos();
@@ -1226,11 +615,14 @@
             } else if (paginaId === 'liberar-parecer') {
                 carregarProcessosComPropostas();
             }
-            
-            // Atualizar URL
-            window.location.hash = paginaId;
         }
 
+        // Navegar para cadastro de fornecedor
+        function navegarParaCadastroFornecedor() {
+            window.location.href = 'sistema-gestao-atualizado.html#fornecedores';
+        }
+
+        // Atualizar estatísticas
         function atualizarEstatisticas() {
             const processos = JSON.parse(localStorage.getItem('processos') || '[]');
             const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
@@ -1266,24 +658,7 @@
             document.getElementById('pareceresPendentes').textContent = pareceresPendentes.length;
         }
 
-        function atualizarInsightsIA() {
-            // Simular insights de IA baseados em dados
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-            
-            // Atualizar insights dinamicamente
-            setTimeout(() => {
-                document.getElementById('insight1').textContent = 
-                    `Seus processos têm em média ${Math.floor(propostas.length / Math.max(processos.length, 1))} propostas. Considere aumentar o prazo para melhorar a participação.`;
-                
-                document.getElementById('insight2').textContent = 
-                    `${processos.filter(p => p.fornecedoresConvidados && p.fornecedoresConvidados.length > 0).length} processos usaram convite direto com sucesso médio de 85% de resposta.`;
-                
-                document.getElementById('insight3').textContent = 
-                    `Próxima semana é ideal para novos processos. Histórico mostra 40% mais engajamento no início do mês.`;
-            }, 1000);
-        }
-
+        // Carregar TRs disponíveis
         function carregarTRsDisponiveis() {
             const selectTR = document.getElementById('trVinculado');
             if (!selectTR) return;
@@ -1313,7 +688,7 @@
             });
         }
 
-        // Carregar visualização do TR com todos os campos
+        // Carregar visualização do TR
         function carregarVisualizacaoTR() {
             const selectTR = document.getElementById('trVinculado');
             const trId = selectTR.value;
@@ -1332,151 +707,29 @@
                 const tr = JSON.parse(option.dataset.trData);
                 trSelecionado = tr;
                 
-                // Criar área de visualização completa
+                // Criar visualização do TR
                 areaVisualizacao.innerHTML = `
-                    <div class="tr-aprovacao-section">
-                        <h4>📋 Termo de Referência Selecionado</h4>
-                        <div class="tr-completo-container">
-                            <div class="tr-header-info">
-                                <h3>${tr.titulo}</h3>
-                                <div class="tr-meta-info">
-                                    <div class="tr-meta-item">
-                                        <span class="tr-meta-label">Modalidade</span>
-                                        <span class="tr-meta-value">${tr.modalidade}</span>
-                                    </div>
-                                    <div class="tr-meta-item">
-                                        <span class="tr-meta-label">Criado por</span>
-                                        <span class="tr-meta-value">${tr.criadorNome || 'Não identificado'}</span>
-                                    </div>
-                                    <div class="tr-meta-item">
-                                        <span class="tr-meta-label">Data de Criação</span>
-                                        <span class="tr-meta-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</span>
-                                    </div>
-                                    <div class="tr-meta-item">
-                                        <span class="tr-meta-label">Status</span>
-                                        <span class="tr-meta-value" style="color: #28a745;">✅ ${tr.status || 'Ativo'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Tabs para organizar conteúdo -->
-                            <div class="tr-tabs">
-                                <button class="tr-tab active" onclick="mostrarTabTR('informacoes')">
-                                    📋 Informações Básicas
-                                </button>
-                                <button class="tr-tab" onclick="mostrarTabTR('escopo')">
-                                    🔧 Escopo Técnico
-                                </button>
-                                <button class="tr-tab" onclick="mostrarTabTR('especificacoes')">
-                                    📝 Especificações
-                                </button>
-                                <button class="tr-tab" onclick="mostrarTabTR('prazos')">
-                                    ⏰ Prazos e Local
-                                </button>
-                                <button class="tr-tab" onclick="mostrarTabTR('completo')">
-                                    📄 Visualização Completa
-                                </button>
-                            </div>
-                            
-                            <!-- Conteúdo das tabs -->
-                            <div id="tab-informacoes" class="tr-tab-content active">
-                                <div class="tr-content-section">
-                                    <div class="tr-field-grid">
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Objeto/Objetivo</div>
-                                            <div class="tr-field-value">${tr.objetivo || tr.objeto || '<span class="tr-empty-field">Não especificado</span>'}</div>
-                                        </div>
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Conformidade</div>
-                                            <div class="tr-field-value">${tr.conformidade || '<span class="tr-empty-field">Não especificada</span>'}</div>
-                                        </div>
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Justificativa</div>
-                                            <div class="tr-field-value">${tr.justificativa || '<span class="tr-empty-field">Não especificada</span>'}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div id="tab-escopo" class="tr-tab-content">
-                                <div class="tr-content-section">
-                                    <div class="tr-field-grid">
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Escopo Técnico</div>
-                                            <div class="tr-field-value">${tr.escopoTecnico || '<span class="tr-empty-field">Não especificado</span>'}</div>
-                                        </div>
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Situação Atual</div>
-                                            <div class="tr-field-value">${tr.situacaoAtual || '<span class="tr-empty-field">Não especificada</span>'}</div>
-                                        </div>
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Situação Proposta</div>
-                                            <div class="tr-field-value">${tr.situacaoProposta || '<span class="tr-empty-field">Não especificada</span>'}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div id="tab-especificacoes" class="tr-tab-content">
-                                <div class="tr-content-section">
-                                    <div class="tr-field-grid">
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Especificação Técnica</div>
-                                            <div class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || '<span class="tr-empty-field">Não especificada</span>'}</div>
-                                        </div>
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Premissas</div>
-                                            <div class="tr-field-value">${tr.premissas || '<span class="tr-empty-field">Não especificadas</span>'}</div>
-                                        </div>
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Garantia</div>
-                                            <div class="tr-field-value">${tr.garantia || '<span class="tr-empty-field">Não especificada</span>'}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div id="tab-prazos" class="tr-tab-content">
-                                <div class="tr-content-section">
-                                    <div class="tr-field-grid">
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Prazos</div>
-                                            <div class="tr-field-value">${tr.prazos || tr.prazo_execucao || '<span class="tr-empty-field">Não especificado</span>'}</div>
-                                        </div>
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Visita ao Local</div>
-                                            <div class="tr-field-value">${tr.visitaLocal || '<span class="tr-empty-field">Não especificado</span>'}</div>
-                                        </div>
-                                        <div class="tr-field-item">
-                                            <div class="tr-field-label">Local/Acesso</div>
-                                            <div class="tr-field-value">${tr.localAcesso || '<span class="tr-empty-field">Não especificado</span>'}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div id="tab-completo" class="tr-tab-content">
-                                <div class="tr-content-section">
-                                    <button class="btn btn-info" onclick="visualizarTRCompletoModal('${tr.id}')">
-                                        👁️ Abrir em Tela Cheia
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="tr-approval-actions">
-                                <button type="button" class="btn btn-primary" onclick="baixarTR('${tr.id}')">
-                                    📥 Baixar TR (Word)
-                                </button>
-                                <button type="button" class="btn btn-info" onclick="baixarTRPDF('${tr.id}')">
-                                    📄 Baixar TR (PDF)
-                                </button>
-                                <button type="button" class="btn btn-success" onclick="aprovarTR()">
-                                    ✅ Aprovar TR e Continuar
-                                </button>
-                                <button type="button" class="btn btn-danger" onclick="rejeitarTR()">
-                                    ❌ Rejeitar TR
-                                </button>
-                            </div>
+                    <div class="tr-section">
+                        <h3>${tr.titulo}</h3>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Modalidade:</span>
+                            <span class="tr-field-value">${tr.modalidade}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Objetivo:</span>
+                            <span class="tr-field-value">${tr.objetivo || 'Não especificado'}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Criado por:</span>
+                            <span class="tr-field-value">${tr.criadorNome} em ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <button type="button" class="btn btn-info" onclick="visualizarTRCompleto()">
+                                👁️ Visualizar TR Completo
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="aprovarTR()">
+                                ✅ Aprovar e Continuar
+                            </button>
                         </div>
                     </div>
                 `;
@@ -1486,256 +739,266 @@
             }
         }
 
-        // Função para mostrar tabs do TR
-        function mostrarTabTR(tabId) {
-            // Ocultar todas as tabs
-            document.querySelectorAll('.tr-tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.querySelectorAll('.tr-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
+        // Visualizar TR completo
+        function visualizarTRCompleto() {
+            if (!trSelecionado) return;
             
-            // Mostrar tab selecionada
-            document.getElementById(`tab-${tabId}`).classList.add('active');
+            const conteudo = `
+                <div class="tr-section">
+                    <h3>📋 Informações Básicas</h3>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Título:</span>
+                        <span class="tr-field-value">${trSelecionado.titulo}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Modalidade:</span>
+                        <span class="tr-field-value">${trSelecionado.modalidade}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Objetivo:</span>
+                        <span class="tr-field-value">${trSelecionado.objetivo || 'Não especificado'}</span>
+                    </div>
+                </div>
+                
+                <div class="tr-section">
+                    <h3>🔧 Escopo Técnico</h3>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Escopo:</span>
+                        <span class="tr-field-value">${trSelecionado.escopoTecnico || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Especificações:</span>
+                        <span class="tr-field-value">${trSelecionado.especificacaoTecnica || trSelecionado.especificacoes || 'Não especificado'}</span>
+                    </div>
+                </div>
+                
+                <div class="tr-section">
+                    <h3>⏰ Prazos</h3>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Prazos:</span>
+                        <span class="tr-field-value">${trSelecionado.prazos || 'Não especificado'}</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="baixarTR()">
+                        📥 Baixar TR
+                    </button>
+                    <button class="btn btn-success" onclick="aprovarTReFecharModal()">
+                        ✅ Aprovar TR
+                    </button>
+                </div>
+            `;
             
-            // Ativar botão da tab
-            const tabs = document.querySelectorAll('.tr-tab');
-            tabs.forEach(tab => {
-                if (tab.onclick && tab.onclick.toString().includes(tabId)) {
-                    tab.classList.add('active');
+            document.getElementById('modalTRTitulo').textContent = trSelecionado.titulo;
+            document.getElementById('modalTRConteudo').innerHTML = conteudo;
+            document.getElementById('modalVisualizarTR').style.display = 'block';
+        }
+
+        // Aprovar TR
+        function aprovarTR() {
+            if (!trSelecionado) {
+                alert('Nenhum TR selecionado!');
+                return;
+            }
+            
+            // Preencher dados do formulário
+            document.getElementById('objetoProc').value = trSelecionado.titulo || '';
+            document.getElementById('modalidadeProc').value = trSelecionado.modalidade || '';
+            
+            // Mostrar formulário
+            document.getElementById('formularioProcesso').style.display = 'block';
+            
+            // Scroll para o formulário
+            document.getElementById('formularioProcesso').scrollIntoView({ behavior: 'smooth' });
+            
+            alert('✅ TR aprovado! Agora complete os dados do processo.');
+        }
+
+        // Aprovar TR e fechar modal
+        function aprovarTReFecharModal() {
+            fecharModal();
+            aprovarTR();
+        }
+
+        // Baixar TR
+        function baixarTR() {
+            alert('📥 Função de download será implementada em breve!');
+        }
+
+        // Carregar fornecedores
+        function carregarFornecedoresDisponiveis() {
+            const container = document.getElementById('listaFornecedores');
+            if (!container) return;
+            
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            const fornecedores = usuarios.filter(u => u.tipo === 'fornecedor');
+            
+            if (fornecedores.length === 0) {
+                container.innerHTML = '<p style="color: #6c757d;">Nenhum fornecedor cadastrado</p>';
+                return;
+            }
+            
+            container.innerHTML = fornecedores.map(f => `
+                <div style="margin-bottom: 10px;">
+                    <label>
+                        <input type="checkbox" value="${f.usuarioId}" onchange="toggleFornecedor(this)">
+                        ${f.nome} - ${f.empresa || 'Empresa não informada'}
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        // Toggle fornecedor
+        function toggleFornecedor(checkbox) {
+            if (checkbox.checked) {
+                fornecedoresSelecionados.push(checkbox.value);
+            } else {
+                fornecedoresSelecionados = fornecedoresSelecionados.filter(id => id !== checkbox.value);
+            }
+        }
+
+        // Cadastrar processo
+        function cadastrarProcesso(event) {
+            event.preventDefault();
+            
+            if (!trSelecionado) {
+                alert('Por favor, selecione e aprove um TR!');
+                return;
+            }
+            
+            if (fornecedoresSelecionados.length === 0) {
+                alert('Por favor, selecione pelo menos um fornecedor!');
+                return;
+            }
+            
+            const novoProcesso = {
+                numero: document.getElementById('numeroProc').value,
+                objeto: document.getElementById('objetoProc').value,
+                modalidade: document.getElementById('modalidadeProc').value,
+                prazo: document.getElementById('prazoProc').value,
+                valorEstimado: document.getElementById('valorEstimado').value,
+                dataCadastro: new Date().toISOString(),
+                criadoPor: usuarioAtual.usuarioId,
+                criadorNome: usuarioAtual.nome,
+                trId: trSelecionado.id,
+                trAprovado: true,
+                fornecedoresConvidados: fornecedoresSelecionados,
+                status: 'publicado'
+            };
+            
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            processos.push(novoProcesso);
+            localStorage.setItem('processos', JSON.stringify(processos));
+            
+            alert('✅ Processo cadastrado com sucesso!');
+            document.getElementById('formCadastroProcesso').reset();
+            mostrarPagina('processos');
+        }
+
+        // Carregar meus processos
+        function carregarMeusProcessos() {
+            const container = document.getElementById('listaProcessos');
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            
+            const meusProcessos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
+            
+            if (meusProcessos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>Nenhum processo cadastrado</h3>
+                        <p>Crie seu primeiro processo baseado em um TR</p>
+                        <button class="btn btn-primary" onclick="mostrarPagina('cadastrar-processo')">
+                            ➕ Cadastrar Processo
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = meusProcessos.map(processo => `
+                <div class="tr-section">
+                    <h3>${processo.numero}</h3>
+                    <p>${processo.objeto}</p>
+                    <p>Modalidade: ${processo.modalidade}</p>
+                    <p>Prazo: ${new Date(processo.prazo).toLocaleString('pt-BR')}</p>
+                    <p>Status: ${processo.status}</p>
+                </div>
+            `).join('');
+        }
+
+        // Carregar processos com propostas
+        function carregarProcessosComPropostas() {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const meusProcessos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
+            
+            const selectProcesso = document.getElementById('processoParaParecer');
+            selectProcesso.innerHTML = '<option value="">Selecione um processo...</option>';
+            
+            meusProcessos.forEach(processo => {
+                const propostasProcesso = propostas.filter(p => p.processo === processo.numero);
+                if (propostasProcesso.length > 0) {
+                    selectProcesso.innerHTML += `
+                        <option value="${processo.numero}">
+                            ${processo.numero} - ${processo.objeto} (${propostasProcesso.length} propostas)
+                        </option>
+                    `;
                 }
             });
         }
 
-        // Visualizar TR completo em modal
-        function visualizarTRCompletoModal(trId) {
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const tr = trs.find(t => t.id === trId);
+        // Carregar propostas para liberar
+        function carregarPropostasParaLiberar() {
+            const processoSelecionado = document.getElementById('processoParaParecer').value;
+            const container = document.getElementById('propostasParaLiberar');
             
-            if (!tr) {
-                alert('TR não encontrado!');
+            if (!processoSelecionado) {
+                container.innerHTML = '<p style="color: #6c757d;">Selecione um processo</p>';
                 return;
             }
-
-            // Preencher o modal com TODOS os campos disponíveis
-            document.getElementById('modalTRTitulo').textContent = tr.titulo;
             
-            // Função para renderizar um campo
-            const renderizarCampo = (label, value) => {
-                if (!value || value === '') return '';
-                return `
-                    <div class="tr-field-item">
-                        <div class="tr-field-label">${label}</div>
-                        <div class="tr-field-value">${value}</div>
-                    </div>
-                `;
-            };
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const propostasProcesso = propostas.filter(p => p.processo === processoSelecionado);
             
-            const conteudo = `
-                <div class="tr-completo-container">
-                    <!-- Informações Básicas -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">📋 Informações Básicas</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Título', tr.titulo)}
-                            ${renderizarCampo('Modalidade', tr.modalidade)}
-                            ${renderizarCampo('Objeto/Objetivo', tr.objetivo || tr.objeto)}
-                            ${renderizarCampo('Conformidade', tr.conformidade)}
-                            ${renderizarCampo('Justificativa', tr.justificativa)}
-                        </div>
-                    </div>
+            container.innerHTML = propostasProcesso.map(proposta => `
+                <div class="tr-section">
+                    <h4>${proposta.empresa}</h4>
+                    <p>Valor: ${proposta.valor}</p>
+                    <p>Prazo: ${proposta.prazo} dias</p>
+                    <button class="btn btn-primary" onclick="liberarParaParecer('${proposta.protocolo}', '${processoSelecionado}')">
+                        📄 Liberar para Parecer
+                    </button>
+                </div>
+            `).join('');
+        }
 
-                    <!-- Escopo Técnico -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">🔧 Escopo Técnico</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Escopo Técnico', tr.escopoTecnico)}
-                            ${renderizarCampo('Situação Atual', tr.situacaoAtual)}
-                            ${renderizarCampo('Situação Proposta', tr.situacaoProposta)}
-                            ${renderizarCampo('Tipo de Solução', tr.tipoSolucao)}
-                        </div>
-                    </div>
+        // Liberar para parecer
+        function liberarParaParecer(propostaId, processoId) {
+            alert('✅ Proposta liberada para parecer técnico!');
+        }
 
-                    <!-- Especificações -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">📝 Especificações</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Especificação Técnica', tr.especificacaoTecnica || tr.especificacoes)}
-                            ${renderizarCampo('Premissas', tr.premissas)}
-                            ${renderizarCampo('Garantia', tr.garantia)}
-                            ${renderizarCampo('Requisitos Técnicos', tr.requisitosTecnicos)}
-                            ${renderizarCampo('Requisitos Funcionais', tr.requisitosFuncionais)}
-                            ${renderizarCampo('Requisitos Não Funcionais', tr.requisitosNaoFuncionais)}
-                        </div>
-                    </div>
+        // Formatar moeda
+        function formatarMoeda(input) {
+            let valor = input.value.replace(/\D/g, '');
+            valor = (valor / 100).toFixed(2);
+            valor = valor.replace('.', ',');
+            valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+            input.value = 'R$ ' + valor;
+        }
 
-                    <!-- Prazos e Local -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">⏰ Prazos e Local</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Prazos', tr.prazos || tr.prazo_execucao)}
-                            ${renderizarCampo('Prazo de Entrega', tr.prazoEntrega)}
-                            ${renderizarCampo('Cronograma', tr.cronograma)}
-                            ${renderizarCampo('Visita ao Local', tr.visitaLocal)}
-                            ${renderizarCampo('Local/Acesso', tr.localAcesso)}
-                            ${renderizarCampo('Endereço de Entrega', tr.enderecoEntrega)}
-                        </div>
-                    </div>
+        // Fechar modal
+        function fecharModal() {
+            document.getElementById('modalVisualizarTR').style.display = 'none';
+        }
 
-                    <!-- Obrigações e Responsabilidades -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">📋 Obrigações e Responsabilidades</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Obrigações do Contratante', tr.obrigacoesContratante)}
-                            ${renderizarCampo('Obrigações do Contratado', tr.obrigacoesContratado)}
-                            ${renderizarCampo('Responsabilidades', tr.responsabilidades)}
-                            ${renderizarCampo('Fiscalização', tr.fiscalizacao)}
-                        </div>
-                    </div>
-
-                    <!-- Condições Comerciais -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">💰 Condições Comerciais</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Forma de Pagamento', tr.formaPagamento)}
-                            ${renderizarCampo('Condições de Pagamento', tr.condicoesPagamento)}
-                            ${renderizarCampo('Valor Estimado', tr.valorEstimado)}
-                            ${renderizarCampo('Dotação Orçamentária', tr.dotacaoOrcamentaria)}
-                            ${renderizarCampo('Reajuste', tr.reajuste)}
-                        </div>
-                    </div>
-
-                    <!-- Documentação e Qualificação -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">📄 Documentação e Qualificação</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Documentação Técnica', tr.documentacaoTecnica)}
-                            ${renderizarCampo('Qualificação Técnica', tr.qualificacaoTecnica)}
-                            ${renderizarCampo('Atestados', tr.atestados)}
-                            ${renderizarCampo('Certidões', tr.certidoes)}
-                        </div>
-                    </div>
-
-                    <!-- Informações Adicionais -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">ℹ️ Informações Adicionais</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Observações', tr.observacoes)}
-                            ${renderizarCampo('Anexos', tr.anexos)}
-                            ${renderizarCampo('Referências', tr.referencias)}
-                            ${renderizarCampo('Sanções', tr.sancoes)}
-                            ${renderizarCampo('Disposições Gerais', tr.disposicoesGerais)}
-                        </div>
-                    </div>
-
-                    <!-- Metadados -->
-                    <div class="tr-content-section" style="background: #e3f2fd;">
-                        <h3 class="tr-section-title">📊 Informações do Documento</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('ID do Documento', tr.id)}
-                            ${renderizarCampo('Criado por', tr.criadorNome)}
-                            ${renderizarCampo('ID do Criador', tr.criadoPor)}
-                            ${renderizarCampo('Data de Criação', new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR'))}
-                            ${renderizarCampo('Status', tr.status)}
-                            ${renderizarCampo('Última Atualização', tr.ultimaAtualizacao ? new Date(tr.ultimaAtualizacao).toLocaleString('pt-BR') : 'N/A')}
-                        </div>
-                    </div>
-
-                    <!-- Ações -->
-                    <div class="tr-approval-actions">
-                        <button class="btn btn-primary" onclick="baixarTR('${tr.id}')">
-                            📄 Baixar Word
-                        </button>
-                        <button class="btn btn-info" onclick="baixarTRPDF('${tr.id}')">
-                            📄 Baixar PDF
-                        </button>
-                        <button class="btn btn-success" onclick="aprovarTReFecharModal()">
-                            ✅ Aprovar TR
-                        </button>
-                        <button class="btn btn-warning" onclick="imprimirTR()">
-                            🖨️ Imprimir
-                        </button>
-                    </div>
-                            ${renderizarCampo('Prazo de Entrega', tr.prazoEntrega)}
-                            ${renderizarCampo('Cronograma', tr.cronograma)}
-                            ${renderizarCampo('Visita ao Local', tr.visitaLocal)}
-                            ${renderizarCampo('Local/Acesso', tr.localAcesso)}
-                            ${renderizarCampo('Endereço de Entrega', tr.enderecoEntrega)}
-                        </div>
-                    </div>
-
-                    <!-- Obrigações e Responsabilidades -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">📋 Obrigações e Responsabilidades</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Obrigações do Contratante', tr.obrigacoesContratante)}
-                            ${renderizarCampo('Obrigações do Contratado', tr.obrigacoesContratado)}
-                            ${renderizarCampo('Responsabilidades', tr.responsabilidades)}
-                            ${renderizarCampo('Fiscalização', tr.fiscalizacao)}
-                        </div>
-                    </div>
-
-                    <!-- Condições Comerciais -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">💰 Condições Comerciais</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Forma de Pagamento', tr.formaPagamento)}
-                            ${renderizarCampo('Condições de Pagamento', tr.condicoesPagamento)}
-                            ${renderizarCampo('Valor Estimado', tr.valorEstimado)}
-                            ${renderizarCampo('Dotação Orçamentária', tr.dotacaoOrcamentaria)}
-                            ${renderizarCampo('Reajuste', tr.reajuste)}
-                        </div>
-                    </div>
-
-                    <!-- Documentação e Qualificação -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">📄 Documentação e Qualificação</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Documentação Técnica', tr.documentacaoTecnica)}
-                            ${renderizarCampo('Qualificação Técnica', tr.qualificacaoTecnica)}
-                            ${renderizarCampo('Atestados', tr.atestados)}
-                            ${renderizarCampo('Certidões', tr.certidoes)}
-                        </div>
-                    </div>
-
-                    <!-- Informações Adicionais -->
-                    <div class="tr-content-section">
-                        <h3 class="tr-section-title">ℹ️ Informações Adicionais</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('Observações', tr.observacoes)}
-                            ${renderizarCampo('Anexos', tr.anexos)}
-                            ${renderizarCampo('Referências', tr.referencias)}
-                            ${renderizarCampo('Sanções', tr.sancoes)}
-                            ${renderizarCampo('Disposições Gerais', tr.disposicoesGerais)}
-                        </div>
-                    </div>
-
-                    <!-- Metadados -->
-                    <div class="tr-content-section" style="background: #e3f2fd;">
-                        <h3 class="tr-section-title">📊 Informações do Documento</h3>
-                        <div class="tr-field-grid">
-                            ${renderizarCampo('ID do Documento', tr.id)}
-                            ${renderizarCampo('Criado por', tr.criadorNome)}
-                            ${renderizarCampo('ID do Criador', tr.criadoPor)}
-                            ${renderizarCampo('Data de Criação', new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR'))}
-                            ${renderizarCampo('Status', tr.status)}
-                            ${renderizarCampo('Última Atualização', tr.ultimaAtualizacao ? new Date(tr.ultimaAtualizacao).toLocaleString('pt-BR') : 'N/A')}
-                        </div>
-                    </div>
-
-                    <!-- Ações -->
-                    <div class="tr-approval-actions">
-                        <button class="btn btn-primary" onclick="baixarTR('${tr.id}')">
-                            📄 Baixar Word
-                        </button>
-                        <button class="btn btn-info" onclick="baixarTRPDF('${tr.id}')">
-                            📄 Baixar PDF
-                        </button>
-                        <button class="btn btn-success" onclick="aprovarTReFecharModal()">
-                            ✅ Aprovar TR
-                        </button>
-                        <button class="btn btn-warning" onclick="imprimirTR()">
-                            🖨️ Imprimir
-                        </button>
-                    </div>
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
