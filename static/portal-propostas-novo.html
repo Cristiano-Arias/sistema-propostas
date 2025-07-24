@@ -9,7 +9,7 @@
     <script>
         // Detecta automaticamente se está local ou em produção
         const API_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:5000' 
+            ? 'http://localhost:5001' 
             : window.location.origin;
     </script>
     
@@ -1599,7 +1599,7 @@
             `);
         }
 
-        function enviarProposta() {
+        async function enviarProposta() {
             // Validações básicas
             const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia'];
             let tudoPreenchido = true;
@@ -1619,14 +1619,131 @@
                 return;
             }
             
-            const protocolo = 'PROP-' + Date.now();
+            // Mostrar loading
+            const submitBtn = document.querySelector('.submit-btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="loading"></span> Enviando...';
+            submitBtn.disabled = true;
             
-            mostrarMensagem(`
-                <strong>✅ Proposta enviada com sucesso!</strong><br>
-                <strong>Protocolo:</strong> ${protocolo}<br>
-                <strong>Data/Hora:</strong> ${new Date().toLocaleString('pt-BR')}<br>
-                <small>📧 E-mail de confirmação enviado</small>
-            `, 'success');
+            try {
+                // Coletar todos os dados da proposta
+                const dadosProposta = coletarDadosCompletos();
+                
+                // Enviar para o backend
+                const response = await fetch('/api/propostas/enviar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dadosProposta)
+                });
+                
+                const resultado = await response.json();
+                
+                if (response.ok) {
+                    mostrarMensagem(`
+                        <strong>✅ Proposta enviada com sucesso!</strong><br>
+                        <strong>Protocolo:</strong> ${resultado.protocolo}<br>
+                        <strong>Data/Hora:</strong> ${new Date().toLocaleString('pt-BR')}<br>
+                        <small>📧 E-mail de confirmação enviado</small><br>
+                        <small>💾 Salvo no módulo Fornecedor</small><br>
+                        <small>📤 Enviado para módulo Comprador</small>
+                    `, 'success');
+                } else {
+                    throw new Error(resultado.erro || 'Erro ao enviar proposta');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao enviar proposta:', error);
+                mostrarMensagem(`
+                    <strong>❌ Erro ao enviar proposta</strong><br>
+                    ${error.message}<br>
+                    <small>Tente novamente em alguns instantes</small>
+                `, 'error');
+            } finally {
+                // Restaurar botão
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function coletarDadosCompletos() {
+            return {
+                // Dados cadastrais
+                dadosCadastrais: {
+                    razaoSocial: document.getElementById('razaoSocial').value,
+                    cnpj: document.getElementById('cnpj').value,
+                    endereco: document.getElementById('endereco').value,
+                    cidade: document.getElementById('cidade').value,
+                    telefone: document.getElementById('telefone').value,
+                    email: document.getElementById('email').value,
+                    respTecnico: document.getElementById('respTecnico').value,
+                    crea: document.getElementById('crea').value
+                },
+                
+                // Dados do processo
+                processo: {
+                    numero: document.getElementById('numeroProcesso').value,
+                    objeto: document.getElementById('objetoProcesso').value,
+                    prazoEnvio: document.getElementById('prazoEnvio').value
+                },
+                
+                // Proposta técnica
+                propostaTecnica: {
+                    objetoConcorrencia: document.getElementById('objetoConcorrencia').value,
+                    escopoInclusos: document.getElementById('escopoInclusos').value,
+                    escopoExclusos: document.getElementById('escopoExclusos').value,
+                    metodologia: document.getElementById('metodologia').value,
+                    sequenciaExecucao: document.getElementById('sequenciaExecucao').value,
+                    prazoExecucao: document.getElementById('prazoExecucao').value,
+                    prazoMobilizacao: document.getElementById('prazoMobilizacao').value,
+                    garantias: document.getElementById('garantias').value,
+                    estruturaCanteiro: document.getElementById('estruturaCanteiro').value,
+                    obrigacoesContratada: document.getElementById('obrigacoesContratada').value,
+                    obrigacoesContratante: document.getElementById('obrigacoesContratante').value,
+                    servicosTecnica: coletarTabela('servicosTecnicaTable'),
+                    equipe: coletarTabela('equipeTable'),
+                    materiais: coletarTabela('materiaisTable'),
+                    equipamentos: coletarTabela('equipamentosTable'),
+                    cronograma: coletarTabela('cronogramaTable'),
+                    experiencia: coletarTabela('experienciaTable'),
+                    certificacoes: coletarTabela('certificacoesTable')
+                },
+                
+                // Proposta comercial
+                propostaComercial: {
+                    servicos: coletarTabela('servicosTable'),
+                    maoObra: coletarTabela('maoObraTable'),
+                    materiaisComercial: coletarTabela('materiaisComercialTable'),
+                    equipamentosComercial: coletarTabela('equipamentosComercialTable'),
+                    bdi: coletarTabela('bdiTable'),
+                    valorTotal: document.getElementById('valorTotalCalculado').textContent,
+                    validadeProposta: document.getElementById('validadeProposta').value,
+                    validadeDetalhada: document.getElementById('validadeDetalhada').value,
+                    totais: {
+                        servicos: document.getElementById('totalServicos').textContent,
+                        maoObra: document.getElementById('totalMaoObra').textContent,
+                        materiais: document.getElementById('totalMateriais').textContent,
+                        equipamentos: document.getElementById('totalEquipamentos').textContent,
+                        custoDirecto: document.getElementById('custoDirecto').textContent,
+                        bdiPercentual: document.getElementById('bdiPercentual').textContent,
+                        bdiValor: document.getElementById('bdiValor').textContent
+                    }
+                },
+                
+                // Resumo
+                resumo: {
+                    prazoExecucao: document.getElementById('prazoExecucaoResumo').value,
+                    formaPagamento: document.getElementById('formaPagamentoResumo').value
+                },
+                
+                // Metadados
+                metadata: {
+                    dataEnvio: new Date().toISOString(),
+                    versaoSistema: '2.0',
+                    navegador: navigator.userAgent
+                }
+            };
         }
 
         function mostrarMensagem(texto, tipo) {
