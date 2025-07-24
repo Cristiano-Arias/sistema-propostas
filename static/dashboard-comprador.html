@@ -1,4 +1,41 @@
-<!DOCTYPE html>
+// Carregar visualização do TR
+        function carregarVisualizacaoTR() {
+            const selectTR = document.getElementById('trVinculado');
+            const trId = selectTR.value;
+            const areaVisualizacao = document.getElementById('areaVisualizacaoTR');
+            const formularioProcesso = document.getElementById('formularioProcesso');
+            
+            if (!trId) {
+                areaVisualizacao.style.display = 'none';
+                formularioProcesso.style.display = 'none';
+                trSelecionado = null;
+                return;
+            }
+            
+            const option = selectTR.querySelector(`option[value="${trId}"]`);
+            if (option && option.dataset.trData) {
+                const tr = JSON.parse(option.dataset.trData);
+                trSelecionado = tr;
+                
+                // Mostrar TODOS OS CAMPOS DO TR
+                areaVisualizacao.innerHTML = `
+                    <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin: 20px 0;">
+                        <h2 style="color: #2c3e50; margin-bottom: 30px; text-align: center;">📋 TERMO DE REFERÊNCIA COMPLETO</h2>
+                        
+                        <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
+                        <div class="tr-section">
+                            <h3 style="color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 10px;">1. INFORMAÇÕES BÁSICAS</h3>
+                            <p><strong>Título:</strong> ${tr.titulo || 'Não informado'}</p>
+                            <p><strong>Modalidade:</strong> ${tr.modalidade || 'Não informada'}</p>
+                            <p><strong>Tipo:</strong> ${tr.tipo || 'Não informado'}</p>
+                            <p><strong>Categoria:</strong> ${tr.categoria || 'Não informada'}</p>
+                            <p><strong>Criado por:</strong> ${tr.criadorNome || 'Não identificado'}</p>
+                            <p><strong>Data de Criação:</strong> ${new Date(tr.criado_em || tr.dataCriacao || Date.now()).toLocaleDateString('pt-BR')}</p>
+                            <p><strong>Status:</strong> ${tr.status || 'Ativo'}</p>
+                        </div>
+                        
+                        <!-- SEÇÃO 2: OBJETO E JUSTIFICATIVA -->
+                        ${(tr.objetivo || tr.objeto || tr.justificativa) ?<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -707,107 +744,176 @@
                 const tr = JSON.parse(option.dataset.trData);
                 trSelecionado = tr;
                 
-                // Mostrar TUDO do TR direto aqui, sem complicação
+                // Estrutura EXATA copiada do módulo requisitante
                 areaVisualizacao.innerHTML = `
-                    <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin: 20px 0;">
-                        <h2 style="color: #2c3e50; margin-bottom: 30px;">📋 Termo de Referência Completo</h2>
+                    <div style="background: white; padding: 30px; border-radius: 10px; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <h2 style="color: #2c3e50; margin-bottom: 30px; text-align: center; font-size: 28px;">
+                            📋 TERMO DE REFERÊNCIA
+                        </h2>
                         
-                        <div class="tr-section">
-                            <h3>Informações Básicas</h3>
-                            <p><strong>Título:</strong> ${tr.titulo}</p>
-                            <p><strong>Modalidade:</strong> ${tr.modalidade}</p>
-                            <p><strong>Criado por:</strong> ${tr.criadorNome} em ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                            <h3 style="color: #2c3e50; margin-bottom: 15px;">${tr.titulo}</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div>
+                                    <strong style="color: #6c757d;">Modalidade:</strong>
+                                    <p style="margin: 5px 0;">${tr.modalidade}</p>
+                                </div>
+                                <div>
+                                    <strong style="color: #6c757d;">Criado por:</strong>
+                                    <p style="margin: 5px 0;">${tr.criadorNome || 'Não identificado'}</p>
+                                </div>
+                                <div>
+                                    <strong style="color: #6c757d;">Data:</strong>
+                                    <p style="margin: 5px 0;">${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                                </div>
+                            </div>
                         </div>
                         
-                        ${tr.objetivo || tr.objeto ? `
-                        <div class="tr-section">
-                            <h3>Objetivo</h3>
-                            <p>${tr.objetivo || tr.objeto}</p>
+                        <!-- Campos do TR -->
+                        <div style="max-height: 600px; overflow-y: auto; padding-right: 10px;">
+                            
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">1. OBJETIVO</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.objetivo || tr.objeto || 'Não especificado'}</p>
+                            </div>
+                            
+                            ${tr.justificativa ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">2. JUSTIFICATIVA</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.justificativa}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.conformidade ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">3. CONFORMIDADE</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.conformidade}</p>
+                            </div>
+                            ` : ''}
+                            
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">4. ESCOPO TÉCNICO</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.escopoTecnico || 'Não especificado'}</p>
+                            </div>
+                            
+                            ${tr.situacaoAtual ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">5. SITUAÇÃO ATUAL</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.situacaoAtual}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.situacaoProposta ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">6. SITUAÇÃO PROPOSTA</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.situacaoProposta}</p>
+                            </div>
+                            ` : ''}
+                            
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">7. ESPECIFICAÇÕES TÉCNICAS</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificado'}</p>
+                            </div>
+                            
+                            ${tr.premissas ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">8. PREMISSAS</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.premissas}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.garantia ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">9. GARANTIA</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.garantia}</p>
+                            </div>
+                            ` : ''}
+                            
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">10. PRAZOS</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</p>
+                            </div>
+                            
+                            ${tr.cronograma ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">11. CRONOGRAMA</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.cronograma}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.visitaLocal ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">12. VISITA AO LOCAL</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.visitaLocal}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.localAcesso ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">13. LOCAL/ACESSO</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.localAcesso}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.obrigacoesContratante ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">14. OBRIGAÇÕES DO CONTRATANTE</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.obrigacoesContratante}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.obrigacoesContratado ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">15. OBRIGAÇÕES DO CONTRATADO</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.obrigacoesContratado}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.formaPagamento || tr.condicoesPagamento ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">16. CONDIÇÕES DE PAGAMENTO</h4>
+                                <p style="line-height: 1.6; color: #495057;">
+                                    ${tr.formaPagamento || ''} ${tr.condicoesPagamento || ''}
+                                </p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.qualificacaoTecnica ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">17. QUALIFICAÇÃO TÉCNICA</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.qualificacaoTecnica}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.documentacaoTecnica ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">18. DOCUMENTAÇÃO TÉCNICA</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.documentacaoTecnica}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.sancoes ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">19. SANÇÕES</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.sancoes}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${tr.disposicoesGerais ? `
+                            <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-left: 4px solid #667eea; border-radius: 5px;">
+                                <h4 style="color: #2c3e50; margin-bottom: 10px;">20. DISPOSIÇÕES GERAIS</h4>
+                                <p style="line-height: 1.6; color: #495057;">${tr.disposicoesGerais}</p>
+                            </div>
+                            ` : ''}
+                            
                         </div>
-                        ` : ''}
                         
-                        ${tr.justificativa ? `
-                        <div class="tr-section">
-                            <h3>Justificativa</h3>
-                            <p>${tr.justificativa}</p>
-                        </div>
-                        ` : ''}
-                        
-                        ${tr.conformidade ? `
-                        <div class="tr-section">
-                            <h3>Conformidade</h3>
-                            <p>${tr.conformidade}</p>
-                        </div>
-                        ` : ''}
-                        
-                        ${tr.escopoTecnico ? `
-                        <div class="tr-section">
-                            <h3>Escopo Técnico</h3>
-                            <p>${tr.escopoTecnico}</p>
-                        </div>
-                        ` : ''}
-                        
-                        ${tr.situacaoAtual ? `
-                        <div class="tr-section">
-                            <h3>Situação Atual</h3>
-                            <p>${tr.situacaoAtual}</p>
-                        </div>
-                        ` : ''}
-                        
-                        ${tr.situacaoProposta ? `
-                        <div class="tr-section">
-                            <h3>Situação Proposta</h3>
-                            <p>${tr.situacaoProposta}</p>
-                        </div>
-                        ` : ''}
-                        
-                        ${tr.especificacaoTecnica || tr.especificacoes ? `
-                        <div class="tr-section">
-                            <h3>Especificações Técnicas</h3>
-                            <p>${tr.especificacaoTecnica || tr.especificacoes}</p>
-                        </div>
-                        ` : ''}
-                        
-                        ${tr.premissas ? `
-                        <div class="tr-section">
-                            <h3>Premissas</h3>
-                            <p>${tr.premissas}</p>
-                        </div>
-                        ` : ''}
-                        
-                        ${tr.garantia ? `
-                        <div class="tr-section">
-                            <h3>Garantia</h3>
-                            <p>${tr.garantia}</p>
-                        </div>
-                        ` : ''}
-                        
-                        ${tr.prazos || tr.prazo_execucao ? `
-                        <div class="tr-section">
-                            <h3>Prazos</h3>
-                            <p>${tr.prazos || tr.prazo_execucao}</p>
-                        </div>
-                        ` : ''}
-                        
-                        ${tr.visitaLocal ? `
-                        <div class="tr-section">
-                            <h3>Visita ao Local</h3>
-                            <p>${tr.visitaLocal}</p>
-                        </div>
-                        ` : ''}
-                        
-                        ${tr.localAcesso ? `
-                        <div class="tr-section">
-                            <h3>Local/Acesso</h3>
-                            <p>${tr.localAcesso}</p>
-                        </div>
-                        ` : ''}
-                        
-                        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #dee2e6;">
-                            <button type="button" class="btn btn-success" onclick="aprovarTR()">
+                        <!-- Botões de Ação -->
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #dee2e6; text-align: center;">
+                            <button type="button" class="btn btn-success" onclick="aprovarTR()" style="font-size: 16px; padding: 15px 30px;">
                                 ✅ Aprovar TR e Continuar com o Processo
                             </button>
-                            <button type="button" class="btn btn-danger" onclick="rejeitarTR()">
+                            <button type="button" class="btn btn-danger" onclick="rejeitarTR()" style="font-size: 16px; padding: 15px 30px;">
                                 ❌ Rejeitar TR
                             </button>
                         </div>
