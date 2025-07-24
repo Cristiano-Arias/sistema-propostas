@@ -2716,14 +2716,14 @@
             `;
         }
         
-        // Atualizar função carregarVisualizadorTRCompleto para incluir as novas seções
+        // Atualizar função carregarVisualizadorTRCompleto para usar estrutura IDÊNTICA ao original
         function carregarVisualizadorTRCompletoV2(tr) {
             const container = document.getElementById('visualizadorTR');
             
             const statusAnalise = tr.compradorAnalise?.statusAnalise || 'pendente';
             const podeAprovar = statusAnalise !== 'aprovado';
             
-            // Criar modal para visualização completa
+            // Criar modal para visualização completa - ESTRUTURA IDÊNTICA AO ORIGINAL
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.style.display = 'block';
@@ -2736,7 +2736,7 @@
             modal.style.overflow = 'auto';
             modal.style.backgroundColor = 'rgba(0,0,0,0.4)';
             
-            // Conteúdo do modal
+            // Conteúdo do modal - ESTRUTURA IDÊNTICA AO ORIGINAL
             modal.innerHTML = `
                 <div class="modal-content" style="background-color: #fefefe; margin: 2% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 1200px; max-height: 90vh; overflow-y: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background-color: #7986cb; padding: 15px; border-radius: 5px; color: white;">
@@ -2744,181 +2744,168 @@
                         <span class="close" style="color: white; font-size: 28px; font-weight: bold; cursor: pointer;" onclick="this.closest('.modal').remove()">&times;</span>
                     </div>
                     
-                    <div style="max-width: 100%; overflow-x: hidden;">
-                        ${criarIndiceNavegacao(tr)}
-                        
-                        <div class="tr-document fade-in" style="width: 100%;">
-                            <div class="tr-document-header">
-                                <div class="tr-document-title">${tr.titulo}</div>
-                                <div class="tr-document-meta">
-                                    <strong>Modalidade:</strong> ${tr.modalidade} | 
-                                    <strong>Criado por:</strong> ${tr.criadorNome || 'Requisitante'} | 
-                                    <strong>Data:</strong> ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}
+                    <!-- Informações Básicas - ESTRUTURA ORIGINAL -->
+                    <div class="tr-section">
+                        <h4>📋 Informações Básicas</h4>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Modalidade:</span>
+                            <span class="tr-field-value">${tr.modalidade || 'Não especificada'}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Objetivo:</span>
+                            <span class="tr-field-value">${tr.objetivo || tr.objeto || 'Não especificado'}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Conformidade:</span>
+                            <span class="tr-field-value">${tr.conformidade || 'Não especificada'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Local e Acesso - ESTRUTURA ORIGINAL -->
+                    <div class="tr-section">
+                        <h4>📍 Local e Acesso</h4>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Visita ao Local:</span>
+                            <span class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Local/Acesso:</span>
+                            <span class="tr-field-value">${tr.localAcesso || 'Não especificado'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Escopo Técnico - ESTRUTURA ORIGINAL -->
+                    <div class="tr-section">
+                        <h4>🔧 Escopo Técnico</h4>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Escopo Técnico:</span>
+                            <span class="tr-field-value">${tr.escopoTecnico || 'Não especificado'}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Situação Atual:</span>
+                            <span class="tr-field-value">${tr.situacaoAtual || 'Não especificada'}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Situação Proposta:</span>
+                            <span class="tr-field-value">${tr.situacaoProposta || 'Não especificada'}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Especificação Técnica:</span>
+                            <span class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Prazos - ESTRUTURA ORIGINAL -->
+                    <div class="tr-section">
+                        <h4>⏰ Prazos</h4>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Prazos:</span>
+                            <span class="tr-field-value">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Metadados - ESTRUTURA ORIGINAL -->
+                    <div class="tr-section" style="background: #e3f2fd; border-left-color: #2196f3;">
+                        <h4>ℹ️ Informações do Documento</h4>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Criado por:</span>
+                            <span class="tr-field-value">${tr.criadorNome || 'Não identificado'}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Data de Criação:</span>
+                            <span class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</span>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Status:</span>
+                            <span class="tr-field-value">${tr.status || 'Ativo'}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Novas seções - tabela de serviço e matriz de responsabilidade -->
+                    ${criarTabelaServico(tr)}
+                    ${criarMatrizResponsabilidade(tr)}
+                    
+                    ${criarValidadorConformidade(tr)}
+                    ${criarComparadorTRs(tr)}
+                    ${criarHistoricoAnalises(tr)}
+                    
+                    ${podeAprovar ? `
+                        <div class="tr-aprovacao-section">
+                            <h4>✅ Sistema de Aprovação Avançado</h4>
+                            
+                            <div class="checklist">
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="check1" required>
+                                    <label for="check1">Objetivo claramente definido e alinhado com necessidades institucionais</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="check2" required>
+                                    <label for="check2">Especificações técnicas adequadas, completas e exequíveis</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="check3" required>
+                                    <label for="check3">Prazos realistas e compatíveis com a complexidade do objeto</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="check4" required>
+                                    <label for="check4">Modalidade licitatória apropriada conforme legislação</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="check5" required>
+                                    <label for="check5">Conformidade total com legislação vigente (Lei 14.133/2021)</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="check6" required>
+                                    <label for="check6">Informações de local e acesso adequadamente especificadas</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="check7" required>
+                                    <label for="check7">Documentação técnica suficiente para elaboração do edital</label>
                                 </div>
                             </div>
                             
-                            <div class="tr-section" id="secao-basicas">
-                                <div class="tr-section-title">📋 Informações Básicas</div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Modalidade:</span>
-                                    <div class="tr-field-value">${tr.modalidade || 'Não especificada'}</div>
-                                </div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Objetivo:</span>
-                                    <div class="tr-field-value">${tr.objetivo || tr.objeto || 'Não especificado'}</div>
-                                </div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Conformidade:</span>
-                                    <div class="tr-field-value">${tr.conformidade || 'Não especificada'}</div>
-                                </div>
+                            <div class="comments-section">
+                                <label class="comments-label">Comentários e Observações Detalhadas:</label>
+                                <textarea class="comments-textarea" id="comentariosAprovacao" 
+                                    placeholder="Adicione comentários detalhados sobre a análise do TR, incluindo sugestões de melhorias, pontos de atenção ou recomendações específicas..."></textarea>
                             </div>
                             
-                            <div class="tr-section" id="secao-local">
-                                <div class="tr-section-title">📍 Local e Acesso</div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Visita ao Local:</span>
-                                    <div class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</div>
-                                </div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Local/Acesso:</span>
-                                    <div class="tr-field-value">${tr.localAcesso || 'Não especificado'}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="tr-section" id="secao-tecnico">
-                                <div class="tr-section-title">🔧 Escopo Técnico</div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Escopo Técnico:</span>
-                                    <div class="tr-field-value">${tr.escopoTecnico || 'Não especificado'}</div>
-                                </div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Situação Atual:</span>
-                                    <div class="tr-field-value">${tr.situacaoAtual || 'Não especificada'}</div>
-                                </div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Situação Proposta:</span>
-                                    <div class="tr-field-value">${tr.situacaoProposta || 'Não especificada'}</div>
-                                </div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Especificação Técnica:</span>
-                                    <div class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="tr-section" id="secao-prazos">
-                                <div class="tr-section-title">⏰ Prazos e Cronograma</div>
-                                <div class="tr-field">
-                                    <div class="tr-field-value">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="tr-section" id="secao-documentos">
-                                <div class="tr-section-title">ℹ️ Informações do Documento</div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Criado por:</span>
-                                    <div class="tr-field-value">${tr.criadorNome || 'Não identificado'}</div>
-                                </div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Data de Criação:</span>
-                                    <div class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</div>
-                                </div>
-                                <div class="tr-field">
-                                    <span class="tr-field-label">Status:</span>
-                                    <div class="tr-field-value">${tr.status || 'Ativo'}</div>
-                                </div>
+                            <div class="approval-actions">
+                                <button class="btn btn-warning" onclick="solicitarComplementacao('${tr.id}')">
+                                    📝 Solicitar Complementação
+                                </button>
+                                <button class="btn btn-danger" onclick="rejeitarTR('${tr.id}')">
+                                    ❌ Rejeitar TR
+                                </button>
+                                <button class="btn btn-success" onclick="aprovarTR('${tr.id}')">
+                                    ✅ Aprovar TR
+                                </button>
                             </div>
                         </div>
-                        
-                        <!-- Novas seções -->
-                        ${criarTabelaServico(tr)}
-                        ${criarMatrizResponsabilidade(tr)}
-                        
-                        ${criarValidadorConformidade(tr)}
-                        ${criarComparadorTRs(tr)}
-                        ${criarHistoricoAnalises(tr)}
-                        
-                        ${podeAprovar ? `
-                            <div class="approval-system">
-                                <div class="approval-header">
-                                    <div class="approval-title">✅ Sistema de Aprovação Avançado</div>
-                                </div>
-                                
-                                <div class="checklist">
-                                    <div class="checklist-item">
-                                        <input type="checkbox" id="check1" required>
-                                        <label for="check1">Objetivo claramente definido e alinhado com necessidades institucionais</label>
-                                    </div>
-                                    <div class="checklist-item">
-                                        <input type="checkbox" id="check2" required>
-                                        <label for="check2">Especificações técnicas adequadas, completas e exequíveis</label>
-                                    </div>
-                                    <div class="checklist-item">
-                                        <input type="checkbox" id="check3" required>
-                                        <label for="check3">Prazos realistas e compatíveis com a complexidade do objeto</label>
-                                    </div>
-                                    <div class="checklist-item">
-                                        <input type="checkbox" id="check4" required>
-                                        <label for="check4">Modalidade licitatória apropriada conforme legislação</label>
-                                    </div>
-                                    <div class="checklist-item">
-                                        <input type="checkbox" id="check5" required>
-                                        <label for="check5">Conformidade total com legislação vigente (Lei 14.133/2021)</label>
-                                    </div>
-                                    <div class="checklist-item">
-                                        <input type="checkbox" id="check6" required>
-                                        <label for="check6">Informações de local e acesso adequadamente especificadas</label>
-                                    </div>
-                                    <div class="checklist-item">
-                                        <input type="checkbox" id="check7" required>
-                                        <label for="check7">Documentação técnica suficiente para elaboração do edital</label>
-                                    </div>
-                                </div>
-                                
+                    ` : `
+                        <div class="tr-aprovacao-section">
+                            <h4>✅ TR Aprovado</h4>
+                            <p style="color: #155724; margin-bottom: 20px;">
+                                Este TR foi aprovado em ${new Date(tr.compradorAnalise.aprovacao.data).toLocaleDateString('pt-BR')}
+                            </p>
+                            ${tr.compradorAnalise.comentarios ? `
                                 <div class="comments-section">
-                                    <label class="comments-label">Comentários e Observações Detalhadas:</label>
-                                    <textarea class="comments-textarea" id="comentariosAprovacao" 
-                                        placeholder="Adicione comentários detalhados sobre a análise do TR, incluindo sugestões de melhorias, pontos de atenção ou recomendações específicas..."></textarea>
-                                </div>
-                                
-                                <div class="approval-actions">
-                                    <button class="btn btn-warning" onclick="solicitarComplementacao('${tr.id}')">
-                                        📝 Solicitar Complementação
-                                    </button>
-                                    <button class="btn btn-danger" onclick="rejeitarTR('${tr.id}')">
-                                        ❌ Rejeitar TR
-                                    </button>
-                                    <button class="btn btn-success" onclick="aprovarTR('${tr.id}')">
-                                        ✅ Aprovar TR
-                                    </button>
-                                </div>
-                            </div>
-                        ` : `
-                            <div class="approval-system">
-                                <div class="approval-header">
-                                    <div class="approval-title">✅ TR Aprovado</div>
-                                </div>
-                                <p style="color: #155724; margin-bottom: 20px;">
-                                    Este TR foi aprovado em ${new Date(tr.compradorAnalise.aprovacao.data).toLocaleDateString('pt-BR')}
-                                </p>
-                                ${tr.compradorAnalise.comentarios ? `
-                                    <div class="comments-section">
-                                        <label class="comments-label">Comentários da Aprovação:</label>
-                                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
-                                            ${tr.compradorAnalise.comentarios}
-                                        </div>
+                                    <label class="comments-label">Comentários da Aprovação:</label>
+                                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                                        ${tr.compradorAnalise.comentarios}
                                     </div>
-                                ` : ''}
-                                <div class="approval-actions">
-                                    <button class="btn btn-primary" onclick="criarProcessoComTR('${tr.id}')">
-                                        ➕ Criar Processo
-                                    </button>
-                                    <button class="btn btn-info" onclick="baixarTR('${tr.id}')">
-                                        📄 Baixar Documento
-                                    </button>
                                 </div>
+                            ` : ''}
+                            <div class="approval-actions">
+                                <button class="btn btn-primary" onclick="criarProcessoComTR('${tr.id}')">
+                                    ➕ Criar Processo
+                                </button>
+                                <button class="btn btn-info" onclick="baixarTR('${tr.id}')">
+                                    📄 Baixar Documento
+                                </button>
                             </div>
-                        `}
-                    </div>
+                        </div>
+                    `}
                 </div>
             `;
             
@@ -2932,84 +2919,51 @@
     
     <!-- Adicionando estilos para melhorar a visualização do TR -->
     <style>
-        #visualizadorTR {
-            max-width: 100%;
-            overflow-x: hidden;
-            padding: 20px;
-        }
-        
-        .tr-document {
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 25px;
-            margin-bottom: 30px;
-            width: 100%;
-        }
-        
-        .tr-document-header {
-            border-bottom: 2px solid #4a6fa5;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .tr-document-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        
-        .tr-document-meta {
-            color: #6c757d;
-            font-size: 14px;
-        }
-        
+        /* Estilos para visualização de TR - IDÊNTICOS AO ORIGINAL */
         .tr-section {
             background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 5px solid #667eea;
             padding: 20px;
-            margin-bottom: 25px;
-            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
         }
-        
-        .tr-section:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-        
-        .tr-section-title {
-            font-size: 22px;
-            font-weight: 600;
+
+        .tr-section h4 {
             color: #2c3e50;
             margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-size: 18px;
         }
-        
+
         .tr-field {
             margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e9ecef;
         }
-        
-        .tr-field:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-        
+
         .tr-field-label {
             font-weight: 600;
             color: #495057;
-            display: block;
             margin-bottom: 5px;
+            display: block;
         }
-        
+
         .tr-field-value {
             color: #212529;
             line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        /* Estilos para aprovação de TR */
+        .tr-aprovacao-section {
+            background: #d4edda;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        .tr-aprovacao-section h4 {
+            color: #155724;
+            margin-bottom: 15px;
+            font-size: 18px;
         }
         
         .approval-system {
@@ -3102,4 +3056,3 @@
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
-
