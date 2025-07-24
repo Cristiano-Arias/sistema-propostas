@@ -149,13 +149,6 @@
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 20px;
             border-bottom: 1px solid #dee2e6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .section-header-left {
-            flex: 1;
         }
 
         .section-title {
@@ -759,175 +752,6 @@
             margin-bottom: 20px;
         }
 
-        /* Estilos para modo tela cheia */
-        .fullscreen-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #f5f7fa;
-            z-index: 9999;
-            display: none;
-            overflow-y: auto;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .fullscreen-container.active {
-            display: block;
-        }
-
-        .fullscreen-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        .fullscreen-header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .fullscreen-body {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .fullscreen-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .btn-fullscreen {
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-fullscreen:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
-        }
-
-        .btn-exit-fullscreen {
-            background: rgba(220, 53, 69, 0.9);
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-
-        .btn-exit-fullscreen:hover {
-            background: #dc3545;
-        }
-
-        /* Modo de leitura */
-        .reading-mode {
-            background: #fefefe;
-            color: #333;
-            font-size: 18px;
-            line-height: 1.8;
-        }
-
-        .reading-mode .tr-section {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-
-        .reading-mode .tr-field-value {
-            font-size: 16px;
-        }
-
-        /* Controles de zoom */
-        .zoom-controls {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            padding: 15px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            z-index: 101;
-        }
-
-        .zoom-btn {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .zoom-btn:hover {
-            background: #667eea;
-            color: white;
-        }
-
-        .zoom-level {
-            font-weight: 600;
-            color: #2c3e50;
-            min-width: 60px;
-            text-align: center;
-        }
-
-        /* Navegação lateral */
-        .side-navigation {
-            position: fixed;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            background: white;
-            border-radius: 0 12px 12px 0;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            padding: 20px 10px;
-            z-index: 101;
-        }
-
-        .side-nav-item {
-            display: block;
-            padding: 10px;
-            margin: 5px 0;
-            color: #6c757d;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-size: 12px;
-            text-align: center;
-        }
-
-        .side-nav-item:hover {
-            background: #f8f9fa;
-            color: #667eea;
-        }
-
-        .side-nav-item.active {
-            background: #667eea;
-            color: white;
-        }
-
         /* Responsividade */
         @media (max-width: 1200px) {
             .main-container {
@@ -996,30 +820,6 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-
-        /* Botão flutuante de tela cheia */
-        .btn-expand-viewer {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .btn-expand-viewer:hover {
-            background: #764ba2;
-            transform: scale(1.05);
         }
     </style>
     <script>
@@ -1090,10 +890,8 @@
         <!-- Central de Análise de TRs -->
         <div class="section-card">
             <div class="section-header">
-                <div class="section-header-left">
-                    <div class="section-title">📋 Central de Análise de TRs</div>
-                    <div class="section-subtitle">Termos de Referência aguardando análise</div>
-                </div>
+                <div class="section-title">📋 Central de Análise de TRs</div>
+                <div class="section-subtitle">Termos de Referência aguardando análise</div>
             </div>
             <div class="section-content">
                 <div class="filters-section">
@@ -1127,13 +925,8 @@
         <!-- Visualizador de TR -->
         <div class="section-card">
             <div class="section-header">
-                <div class="section-header-left">
-                    <div class="section-title">👁️ Visualizador de TR</div>
-                    <div class="section-subtitle">Análise detalhada do termo selecionado</div>
-                </div>
-                <button class="btn btn-primary" id="btnExpandirVisualizador" onclick="abrirTelaCheia()" style="display: none;">
-                    ⛶ Tela Cheia
-                </button>
+                <div class="section-title">👁️ Visualizador de TR</div>
+                <div class="section-subtitle">Análise detalhada do termo selecionado</div>
             </div>
             <div class="section-content">
                 <div id="visualizadorTR" class="tr-viewer">
@@ -1149,10 +942,8 @@
         <!-- Criador de Processos -->
         <div class="section-card">
             <div class="section-header">
-                <div class="section-header-left">
-                    <div class="section-title">➕ Criador de Processos</div>
-                    <div class="section-subtitle">Criar processo baseado em TR aprovado</div>
-                </div>
+                <div class="section-title">➕ Criador de Processos</div>
+                <div class="section-subtitle">Criar processo baseado em TR aprovado</div>
             </div>
             <div class="section-content">
                 <div id="criadorProcessos" class="process-form">
@@ -1168,54 +959,14 @@
         <!-- Gerenciador de Processos -->
         <div class="section-card" style="grid-column: 1 / -1;">
             <div class="section-header">
-                <div class="section-header-left">
-                    <div class="section-title">📊 Gerenciador de Processos Ativos</div>
-                    <div class="section-subtitle">Acompanhe todos os seus processos em andamento</div>
-                </div>
+                <div class="section-title">📊 Gerenciador de Processos Ativos</div>
+                <div class="section-subtitle">Acompanhe todos os seus processos em andamento</div>
             </div>
             <div class="section-content">
                 <div id="listaProcessos" class="process-list">
                     <!-- Processos serão carregados dinamicamente -->
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Container de Tela Cheia -->
-    <div id="fullscreenContainer" class="fullscreen-container">
-        <div class="fullscreen-header">
-            <div class="fullscreen-header-content">
-                <div>
-                    <h2 id="fullscreenTitle">Visualização de TR em Tela Cheia</h2>
-                    <p id="fullscreenSubtitle">Análise detalhada e imersiva</p>
-                </div>
-                <div class="fullscreen-actions">
-                    <button class="btn-fullscreen" onclick="toggleModoLeitura()">
-                        📖 Modo Leitura
-                    </button>
-                    <button class="btn-fullscreen" onclick="imprimirTR()">
-                        🖨️ Imprimir
-                    </button>
-                    <button class="btn-fullscreen btn-exit-fullscreen" onclick="fecharTelaCheia()">
-                        ✕ Sair da Tela Cheia
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="fullscreen-body" id="fullscreenBody">
-            <!-- Conteúdo será inserido dinamicamente -->
-        </div>
-        
-        <!-- Controles de zoom -->
-        <div class="zoom-controls" id="zoomControls">
-            <button class="zoom-btn" onclick="diminuirZoom()">-</button>
-            <span class="zoom-level" id="zoomLevel">100%</span>
-            <button class="zoom-btn" onclick="aumentarZoom()">+</button>
-        </div>
-        
-        <!-- Navegação lateral -->
-        <div class="side-navigation" id="sideNavigation">
-            <!-- Links de navegação serão inseridos dinamicamente -->
         </div>
     </div>
 
@@ -1250,8 +1001,6 @@
         let trSelecionado = null;
         let fornecedoresSelecionados = [];
         let trsCarregados = [];
-        let zoomAtual = 100;
-        let modoLeitura = false;
 
         // Inicialização
         window.addEventListener('DOMContentLoaded', function() {
@@ -1421,9 +1170,6 @@
             // Adicionar seleção atual
             event.currentTarget.classList.add('selected');
             
-            // Mostrar botão de tela cheia
-            document.getElementById('btnExpandirVisualizador').style.display = 'block';
-            
             // Carregar visualizador
             carregarVisualizadorTR(tr);
         }
@@ -1560,98 +1306,472 @@
             container.classList.add('active');
         }
 
-        // Funções de Tela Cheia
-        function abrirTelaCheia() {
-            if (!trSelecionado) return;
+        function iniciarAnalise(trId) {
+            const tr = trsCarregados.find(t => t.id === trId);
+            if (!tr) return;
             
-            const container = document.getElementById('fullscreenContainer');
-            const body = document.getElementById('fullscreenBody');
+            // Marcar como em análise
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const trIndex = trs.findIndex(t => t.id === trId);
             
-            // Atualizar título
-            document.getElementById('fullscreenTitle').textContent = trSelecionado.titulo;
-            document.getElementById('fullscreenSubtitle').textContent = `Modalidade: ${trSelecionado.modalidade} | Por: ${trSelecionado.criadorNome || 'Requisitante'}`;
+            if (trIndex !== -1) {
+                if (!trs[trIndex].compradorAnalise) {
+                    trs[trIndex].compradorAnalise = {};
+                }
+                
+                trs[trIndex].compradorAnalise = {
+                    ...trs[trIndex].compradorAnalise,
+                    compradorId: usuarioAtual.usuarioId,
+                    statusAnalise: 'em_analise',
+                    dataInicio: new Date().toISOString()
+                };
+                
+                localStorage.setItem('termos_referencia', JSON.stringify(trs));
+                
+                // Atualizar interface
+                carregarTRsParaAnalise();
+                selecionarTR(trId);
+            }
+        }
+
+        function aprovarTR(trId) {
+            // Validar checklist
+            const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+            const todosChecados = Array.from(checkboxes).every(cb => cb.checked);
             
-            // Carregar conteúdo completo
-            body.innerHTML = gerarConteudoTRCompleto(trSelecionado);
+            if (!todosChecados) {
+                alert('❌ Por favor, complete todos os itens do checklist antes de aprovar!');
+                return;
+            }
             
-            // Criar navegação lateral
-            criarNavegacaoLateral();
+            const comentarios = document.getElementById('comentariosAprovacao').value;
             
-            // Exibir container
+            // Salvar aprovação
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const trIndex = trs.findIndex(t => t.id === trId);
+            
+            if (trIndex !== -1) {
+                if (!trs[trIndex].compradorAnalise) {
+                    trs[trIndex].compradorAnalise = {};
+                }
+                
+                trs[trIndex].compradorAnalise = {
+                    ...trs[trIndex].compradorAnalise,
+                    compradorId: usuarioAtual.usuarioId,
+                    statusAnalise: 'aprovado',
+                    dataFim: new Date().toISOString(),
+                    comentarios: comentarios,
+                    aprovacao: {
+                        tipo: 'final',
+                        justificativa: comentarios,
+                        data: new Date().toISOString()
+                    }
+                };
+                
+                localStorage.setItem('termos_referencia', JSON.stringify(trs));
+                
+                // Notificar requisitante
+                const tr = trs[trIndex];
+                if (tr.criadoPor) {
+                    Auth.Notificacoes.criar({
+                        tipo: 'tr_aprovado_comprador',
+                        titulo: '✅ TR Aprovado pelo Comprador',
+                        mensagem: `Seu TR "${tr.titulo}" foi aprovado e está disponível para criação de processo`,
+                        destinatario: tr.criadoPor,
+                        remetente: usuarioAtual.nome,
+                        metadata: {
+                            trId: tr.id,
+                            comentarios: comentarios
+                        }
+                    });
+                }
+                
+                alert('✅ TR aprovado com sucesso!');
+                
+                // Atualizar interface
+                atualizarMetricas();
+                carregarTRsParaAnalise();
+                selecionarTR(trId);
+                
+                // Habilitar criação de processo
+                criarProcessoComTR(trId);
+            }
+        }
+
+        function rejeitarTR(trId) {
+            const comentarios = document.getElementById('comentariosAprovacao').value;
+            
+            if (!comentarios.trim()) {
+                alert('❌ Por favor, adicione comentários explicando a rejeição!');
+                return;
+            }
+            
+            if (!confirm('Tem certeza que deseja rejeitar este TR? Esta ação notificará o requisitante.')) {
+                return;
+            }
+            
+            // Salvar rejeição
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const trIndex = trs.findIndex(t => t.id === trId);
+            
+            if (trIndex !== -1) {
+                if (!trs[trIndex].compradorAnalise) {
+                    trs[trIndex].compradorAnalise = {};
+                }
+                
+                trs[trIndex].compradorAnalise = {
+                    ...trs[trIndex].compradorAnalise,
+                    compradorId: usuarioAtual.usuarioId,
+                    statusAnalise: 'rejeitado',
+                    dataFim: new Date().toISOString(),
+                    comentarios: comentarios,
+                    rejeicao: {
+                        justificativa: comentarios,
+                        data: new Date().toISOString()
+                    }
+                };
+                
+                localStorage.setItem('termos_referencia', JSON.stringify(trs));
+                
+                // Notificar requisitante
+                const tr = trs[trIndex];
+                if (tr.criadoPor) {
+                    Auth.Notificacoes.criar({
+                        tipo: 'tr_rejeitado_comprador',
+                        titulo: '❌ TR Rejeitado pelo Comprador',
+                        mensagem: `Seu TR "${tr.titulo}" foi rejeitado. Verifique os comentários e faça as correções necessárias`,
+                        destinatario: tr.criadoPor,
+                        remetente: usuarioAtual.nome,
+                        metadata: {
+                            trId: tr.id,
+                            comentarios: comentarios
+                        }
+                    });
+                }
+                
+                alert('❌ TR rejeitado. O requisitante foi notificado.');
+                
+                // Atualizar interface
+                atualizarMetricas();
+                carregarTRsParaAnalise();
+                selecionarTR(trId);
+            }
+        }
+
+        function criarProcessoComTR(trId) {
+            const tr = trsCarregados.find(t => t.id === trId) || 
+                      JSON.parse(localStorage.getItem('termos_referencia') || '[]').find(t => t.id === trId);
+            
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
+            
+            // Verificar se TR está aprovado
+            if (!tr.compradorAnalise || tr.compradorAnalise.statusAnalise !== 'aprovado') {
+                alert('❌ Este TR precisa ser aprovado antes de criar um processo!');
+                return;
+            }
+            
+            const container = document.getElementById('criadorProcessos');
+            
+            container.innerHTML = `
+                <form id="formCriarProcesso" onsubmit="salvarProcesso(event)" class="fade-in">
+                    <div class="form-group">
+                        <label class="form-label">TR Vinculado</label>
+                        <input type="text" class="form-input" value="${tr.titulo}" readonly>
+                        <small style="color: #28a745; display: block; margin-top: 5px;">
+                            ✅ TR aprovado em ${new Date(tr.compradorAnalise.aprovacao.data).toLocaleDateString('pt-BR')}
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Número do Processo *</label>
+                        <input type="text" class="form-input" id="numeroProcesso" required 
+                               placeholder="Ex: LIC-2025-001">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Objeto *</label>
+                        <input type="text" class="form-input" id="objetoProcesso" 
+                               value="${tr.titulo}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Modalidade *</label>
+                        <select class="form-select" id="modalidadeProcesso" required>
+                            <option value="${tr.modalidade}" selected>${tr.modalidade}</option>
+                            <option value="Pregão">Pregão</option>
+                            <option value="Concorrência">Concorrência</option>
+                            <option value="Tomada de Preços">Tomada de Preços</option>
+                            <option value="Convite">Convite</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Data e Hora Limite *</label>
+                        <input type="datetime-local" class="form-input" id="prazoProcesso" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Valor Estimado</label>
+                        <input type="text" class="form-input" id="valorEstimado" 
+                               placeholder="R$ 0,00" onkeyup="formatarMoeda(this)">
+                    </div>
+                    
+                    <div class="suppliers-section">
+                        <div class="suppliers-header">
+                            👥 Selecionar Fornecedores para Convite
+                        </div>
+                        <div id="listaFornecedores" class="supplier-list">
+                            <!-- Fornecedores serão carregados -->
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px; text-align: center;">
+                        <button type="submit" class="btn btn-success" style="padding: 15px 30px; font-size: 16px;">
+                            💾 Criar Processo
+                        </button>
+                    </div>
+                </form>
+            `;
+            
             container.classList.add('active');
             
-            // Resetar zoom
-            zoomAtual = 100;
-            aplicarZoom();
-        }
-
-        function fecharTelaCheia() {
-            const container = document.getElementById('fullscreenContainer');
-            container.classList.remove('active');
+            // Carregar fornecedores
+            carregarFornecedoresParaConvite();
             
-            // Resetar modo leitura
-            if (modoLeitura) {
-                toggleModoLeitura();
-            }
+            // Definir data mínima (amanhã)
+            const amanha = new Date();
+            amanha.setDate(amanha.getDate() + 1);
+            document.getElementById('prazoProcesso').min = amanha.toISOString().slice(0, 16);
         }
 
-        function toggleModoLeitura() {
-            modoLeitura = !modoLeitura;
-            const body = document.getElementById('fullscreenBody');
+        function carregarFornecedoresParaConvite() {
+            const container = document.getElementById('listaFornecedores');
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            const fornecedores = usuarios.filter(u => u.tipo === 'fornecedor');
             
-            if (modoLeitura) {
-                body.classList.add('reading-mode');
-            } else {
-                body.classList.remove('reading-mode');
+            if (fornecedores.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #6c757d;">
+                        <p>Nenhum fornecedor cadastrado no sistema.</p>
+                        <a href="cadastro-fornecedor.html" class="btn btn-primary">
+                            ➕ Cadastrar Fornecedores
+                        </a>
+                    </div>
+                `;
+                return;
             }
-        }
-
-        function aumentarZoom() {
-            if (zoomAtual < 150) {
-                zoomAtual += 10;
-                aplicarZoom();
-            }
-        }
-
-        function diminuirZoom() {
-            if (zoomAtual > 50) {
-                zoomAtual -= 10;
-                aplicarZoom();
-            }
-        }
-
-        function aplicarZoom() {
-            const body = document.getElementById('fullscreenBody');
-            body.style.fontSize = `${zoomAtual}%`;
-            document.getElementById('zoomLevel').textContent = `${zoomAtual}%`;
-        }
-
-        function imprimirTR() {
-            window.print();
-        }
-
-        function criarNavegacaoLateral() {
-            const nav = document.getElementById('sideNavigation');
-            const secoes = [
-                { id: 'objetivo', label: '🎯', title: 'Objetivo' },
-                { id: 'escopo', label: '🔧', title: 'Escopo' },
-                { id: 'prazos', label: '⏰', title: 'Prazos' },
-                { id: 'local', label: '📍', title: 'Local' },
-                { id: 'validacao', label: '🛡️', title: 'Validação' }
-            ];
             
-            nav.innerHTML = secoes.map(secao => `
-                <a href="#secao-${secao.id}" class="side-nav-item" title="${secao.title}">
-                    ${secao.label}
-                </a>
+            container.innerHTML = fornecedores.map(fornecedor => `
+                <div class="supplier-item" onclick="toggleFornecedor('${fornecedor.usuarioId}')">
+                    <input type="checkbox" class="supplier-checkbox" 
+                           id="fornecedor_${fornecedor.usuarioId}"
+                           value="${fornecedor.usuarioId}"
+                           onclick="event.stopPropagation()">
+                    <div class="supplier-info">
+                        <div class="supplier-name">${fornecedor.nome}</div>
+                        <div class="supplier-details">
+                            ${fornecedor.empresa || 'Empresa não informada'} | ${fornecedor.email}
+                        </div>
+                    </div>
+                </div>
             `).join('');
         }
 
-        function gerarConteudoTRCompleto(tr) {
-            return `
-                ${criarIndiceNavegacao(tr)}
+        function toggleFornecedor(fornecedorId) {
+            const checkbox = document.getElementById(`fornecedor_${fornecedorId}`);
+            const item = checkbox.closest('.supplier-item');
+            
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                item.classList.add('selected');
+                if (!fornecedoresSelecionados.includes(fornecedorId)) {
+                    fornecedoresSelecionados.push(fornecedorId);
+                }
+            } else {
+                item.classList.remove('selected');
+                fornecedoresSelecionados = fornecedoresSelecionados.filter(id => id !== fornecedorId);
+            }
+        }
+
+        function salvarProcesso(event) {
+            event.preventDefault();
+            
+            if (!trSelecionado) {
+                alert('❌ Nenhum TR selecionado!');
+                return;
+            }
+            
+            // Verificar fornecedores selecionados
+            const checkboxes = document.querySelectorAll('.supplier-checkbox:checked');
+            fornecedoresSelecionados = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (fornecedoresSelecionados.length === 0) {
+                alert('❌ Selecione pelo menos um fornecedor!');
+                return;
+            }
+            
+            const novoProcesso = {
+                numero: document.getElementById('numeroProcesso').value,
+                objeto: document.getElementById('objetoProcesso').value,
+                modalidade: document.getElementById('modalidadeProcesso').value,
+                prazo: document.getElementById('prazoProcesso').value,
+                valorEstimado: document.getElementById('valorEstimado').value,
+                dataCadastro: new Date().toISOString(),
+                criadoPor: usuarioAtual.usuarioId,
+                criadorNome: usuarioAtual.nome,
+                trId: trSelecionado.id,
+                trAprovado: true,
+                dataAprovacaoTR: trSelecionado.compradorAnalise.aprovacao.data,
+                fornecedoresConvidados: fornecedoresSelecionados,
+                status: 'publicado',
+                publicacao: {
+                    confirmado: true,
+                    dataConfirmacao: new Date().toISOString(),
+                    tipoPublicacao: 'direcionada',
+                    dataPublicacao: new Date().toISOString()
+                },
+                visibilidade: {
+                    publico: false,
+                    direcionado: true,
+                    fornecedoresNotificados: fornecedoresSelecionados,
+                    totalVisualizacoes: 0
+                }
+            };
+            
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            processos.push(novoProcesso);
+            localStorage.setItem('processos', JSON.stringify(processos));
+            
+            // Notificar requisitante
+            if (trSelecionado.criadoPor) {
+                Auth.Notificacoes.criar({
+                    tipo: 'processo_criado_com_tr',
+                    titulo: '📋 Processo criado com seu TR',
+                    mensagem: `O processo ${novoProcesso.numero} foi criado baseado no TR "${trSelecionado.titulo}"`,
+                    destinatario: trSelecionado.criadoPor,
+                    remetente: usuarioAtual.nome,
+                    metadata: {
+                        processoId: novoProcesso.numero,
+                        trId: novoProcesso.trId
+                    }
+                });
+            }
+            
+            // Notificar fornecedores
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            fornecedoresSelecionados.forEach(fornecedorId => {
+                const fornecedor = usuarios.find(u => u.usuarioId === fornecedorId);
+                if (fornecedor) {
+                    Auth.Notificacoes.criar({
+                        tipo: 'processo_direcionado',
+                        titulo: '📋 Novo Processo Disponível',
+                        mensagem: `Você foi convidado para o processo ${novoProcesso.numero} - ${novoProcesso.objeto}`,
+                        destinatario: fornecedorId,
+                        remetente: usuarioAtual.nome,
+                        metadata: {
+                            processoId: novoProcesso.numero,
+                            prazo: novoProcesso.prazo
+                        }
+                    });
+                }
+            });
+            
+            alert(`✅ Processo criado e enviado para ${fornecedoresSelecionados.length} fornecedor(es)!`);
+            
+            // Limpar formulário e atualizar interface
+            document.getElementById('formCriarProcesso').reset();
+            fornecedoresSelecionados = [];
+            atualizarMetricas();
+            carregarTRsParaAnalise();
+            carregarProcessosAtivos();
+            
+            // Ocultar criador de processos
+            document.getElementById('criadorProcessos').classList.remove('active');
+            document.getElementById('criadorProcessos').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">✅</div>
+                    <div class="empty-title">Processo Criado!</div>
+                    <div class="empty-description">Aprove outro TR para criar um novo processo</div>
+                </div>
+            `;
+        }
+
+        function carregarProcessosAtivos() {
+            const container = document.getElementById('listaProcessos');
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            
+            const meusProcessos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
+            
+            if (meusProcessos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <div class="empty-title">Nenhum processo criado</div>
+                        <div class="empty-description">Aprove TRs e crie seus primeiros processos</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = meusProcessos.map(processo => {
+                const propostasProcesso = propostas.filter(p => p.processo === processo.numero);
+                const dataPrazo = new Date(processo.prazo);
+                const diasRestantes = Math.ceil((dataPrazo - new Date()) / (1000 * 60 * 60 * 24));
                 
-                <div class="tr-document fade-in">
+                return `
+                    <div class="process-card fade-in">
+                        <div class="process-header">
+                            <div>
+                                <div class="process-title">${processo.numero}</div>
+                                <div class="process-object">${processo.objeto}</div>
+                            </div>
+                            <div>
+                                <div class="process-status">✅ Publicado</div>
+                                <div style="color: ${diasRestantes > 0 ? '#28a745' : '#dc3545'}; font-weight: 600; margin-top: 5px; font-size: 12px;">
+                                    ${diasRestantes > 0 ? `${diasRestantes} dias restantes` : 'Encerrado'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="process-info">
+                            <div><strong>Modalidade:</strong> ${processo.modalidade}</div>
+                            <div><strong>Propostas:</strong> ${propostasProcesso.length}</div>
+                            <div><strong>Valor Estimado:</strong> ${processo.valorEstimado || 'Não informado'}</div>
+                            <div><strong>Fornecedores:</strong> ${processo.fornecedoresConvidados?.length || 0}</div>
+                        </div>
+                        <div class="process-actions">
+                            <button class="btn btn-info" onclick="verDetalhesProcesso('${processo.numero}')">
+                                👁️ Detalhes
+                            </button>
+                            <button class="btn btn-primary" onclick="analisarPropostas('${processo.numero}')">
+                                📊 Analisar Propostas
+                            </button>
+                            <button class="btn btn-warning" onclick="liberarParaParecer('${processo.numero}')">
+                                📄 Liberar Parecer
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function visualizarTRCompleto(trId) {
+            const tr = trsCarregados.find(t => t.id === trId) || 
+                      JSON.parse(localStorage.getItem('termos_referencia') || '[]').find(t => t.id === trId);
+            
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
+            
+            document.getElementById('modalTRTitulo').textContent = tr.titulo;
+            
+            const conteudo = `
+                <div class="tr-document">
                     <div class="tr-document-header">
                         <div class="tr-document-title">${tr.titulo}</div>
                         <div class="tr-document-meta">
@@ -1661,14 +1781,35 @@
                         </div>
                     </div>
                     
-                    <div class="tr-section" id="secao-objetivo">
-                        <div class="tr-section-title">🎯 Objetivo</div>
+                    <div class="tr-section">
+                        <div class="tr-section-title">📋 Informações Básicas</div>
                         <div class="tr-field">
+                            <span class="tr-field-label">Modalidade:</span>
+                            <div class="tr-field-value">${tr.modalidade || 'Não especificada'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Objetivo:</span>
                             <div class="tr-field-value">${tr.objetivo || tr.objeto || 'Não especificado'}</div>
                         </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Conformidade:</span>
+                            <div class="tr-field-value">${tr.conformidade || 'Não especificada'}</div>
+                        </div>
                     </div>
-                    
-                    <div class="tr-section" id="secao-escopo">
+
+                    <div class="tr-section">
+                        <div class="tr-section-title">📍 Local e Acesso</div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Visita ao Local:</span>
+                            <div class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Local/Acesso:</span>
+                            <div class="tr-field-value">${tr.localAcesso || 'Não especificado'}</div>
+                        </div>
+                    </div>
+
+                    <div class="tr-section">
                         <div class="tr-section-title">🔧 Escopo Técnico</div>
                         <div class="tr-field">
                             <span class="tr-field-label">Escopo Técnico:</span>
@@ -1687,43 +1828,160 @@
                             <div class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</div>
                         </div>
                     </div>
-                    
-                    <div class="tr-section" id="secao-prazos">
-                        <div class="tr-section-title">⏰ Prazos e Cronograma</div>
+
+                    <div class="tr-section">
+                        <div class="tr-section-title">⏰ Prazos</div>
                         <div class="tr-field">
+                            <span class="tr-field-label">Prazos:</span>
                             <div class="tr-field-value">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</div>
                         </div>
                     </div>
-                    
-                    <div class="tr-section" id="secao-local">
-                        <div class="tr-section-title">📍 Local e Acesso</div>
+
+                    <div class="tr-section" style="background: #e3f2fd; border-left-color: #2196f3;">
+                        <div class="tr-section-title">ℹ️ Informações do Documento</div>
                         <div class="tr-field">
-                            <span class="tr-field-label">Visita ao Local:</span>
-                            <div class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</div>
+                            <span class="tr-field-label">Criado por:</span>
+                            <div class="tr-field-value">${tr.criadorNome || 'Não identificado'}</div>
                         </div>
                         <div class="tr-field">
-                            <span class="tr-field-label">Local/Acesso:</span>
-                            <div class="tr-field-value">${tr.localAcesso || 'Não especificado'}</div>
+                            <span class="tr-field-label">Data de Criação:</span>
+                            <div class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Status:</span>
+                            <div class="tr-field-value">${tr.status || 'Ativo'}</div>
                         </div>
                     </div>
                 </div>
                 
-                <div id="secao-validacao">
-                    ${criarValidadorConformidade(tr)}
+                <div style="margin-top: 30px; text-align: center;">
+                    <button class="btn btn-primary" onclick="baixarTR('${tr.id}')">
+                        📄 Baixar Word
+                    </button>
+                    <button class="btn btn-success" onclick="fecharModalTR(); selecionarTR('${tr.id}')">
+                        🔍 Analisar TR
+                    </button>
                 </div>
-                
-                ${criarComparadorTRs(tr)}
-                ${criarHistoricoAnalises(tr)}
             `;
+            
+            document.getElementById('modalTRConteudo').innerHTML = conteudo;
+            document.getElementById('modalTRCompleto').style.display = 'block';
         }
 
+        function baixarTR(trId) {
+            const tr = JSON.parse(localStorage.getItem('termos_referencia') || '[]').find(t => t.id === trId);
+            
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
+
+            const conteudoWord = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+                        h2 { color: #34495e; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+                        p { margin-bottom: 10px; text-align: justify; }
+                        .info-box { background: #ecf0f1; padding: 15px; margin: 20px 0; border-left: 4px solid #3498db; }
+                        .field { margin-bottom: 15px; }
+                        .field-label { font-weight: bold; color: #2c3e50; }
+                        .header-info { text-align: center; margin-bottom: 30px; }
+                        .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #7f8c8d; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header-info">
+                        <h1>TERMO DE REFERÊNCIA</h1>
+                        <p><strong>${tr.titulo}</strong></p>
+                        <p>Modalidade: ${tr.modalidade}</p>
+                        <p>Data: ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                    </div>
+
+                    <h2>1. OBJETIVO</h2>
+                    <p>${tr.objetivo || 'Não especificado'}</p>
+
+                    <h2>2. ESCOPO TÉCNICO</h2>
+                    <p>${tr.escopoTecnico || 'Não especificado'}</p>
+
+                    <h2>3. PRAZOS</h2>
+                    <p>${tr.prazos || 'Não especificado'}</p>
+
+                    <div class="footer">
+                        <p>Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
+                        <p>Elaborado por: ${tr.criadorNome || 'Não identificado'}</p>
+                        ${tr.compradorAnalise?.aprovacao ? `<p>Aprovado pelo comprador em: ${new Date(tr.compradorAnalise.aprovacao.data).toLocaleString('pt-BR')}</p>` : ''}
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob([conteudoWord], { type: 'application/msword' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `TR_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.doc`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            alert('✅ Documento Word baixado com sucesso!');
+        }
+
+        function verDetalhesProcesso(numeroProcesso) {
+            alert('🔧 Funcionalidade em desenvolvimento!');
+        }
+
+        function analisarPropostas(numeroProcesso) {
+            alert('📊 Análise de propostas em desenvolvimento!');
+        }
+
+        function liberarParaParecer(numeroProcesso) {
+            alert('📄 Liberação para parecer em desenvolvimento!');
+        }
+
+        function formatarMoeda(input) {
+            let valor = input.value.replace(/\D/g, '');
+            valor = (valor / 100).toFixed(2);
+            valor = valor.replace('.', ',');
+            valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+            input.value = 'R$ ' + valor;
+        }
+
+        function fecharModalTR() {
+            document.getElementById('modalTRCompleto').style.display = 'none';
+        }
+
+        function fecharModalProcesso() {
+            document.getElementById('modalDetalhesProcesso').style.display = 'none';
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+    <!-- Adicionando funcionalidades avançadas de visualização de TR -->
+    <script>
+        // Funcionalidades avançadas para visualização de TR
+        
         function criarIndiceNavegacao(tr) {
             const secoes = [
-                { id: 'objetivo', titulo: '📋 Objetivo', icone: '🎯' },
-                { id: 'escopo', titulo: '🔧 Escopo Técnico', icone: '🔧' },
-                { id: 'prazos', titulo: '⏰ Prazos', icone: '⏰' },
+                { id: 'basicas', titulo: '📋 Informações Básicas', icone: '📋' },
                 { id: 'local', titulo: '📍 Local e Acesso', icone: '📍' },
-                { id: 'validacao', titulo: '🛡️ Validação', icone: '🛡️' }
+                { id: 'tecnico', titulo: '🔧 Escopo Técnico', icone: '🔧' },
+                { id: 'prazos', titulo: '⏰ Prazos', icone: '⏰' },
+                { id: 'documentos', titulo: 'ℹ️ Informações do Documento', icone: 'ℹ️' }
             ];
             
             return `
@@ -1795,6 +2053,105 @@
                     </div>
                 </div>
             `;
+        }
+        
+        function compararTRs(trId1, trId2) {
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr1 = trs.find(t => t.id === trId1);
+            const tr2 = trs.find(t => t.id === trId2);
+            
+            if (!tr1 || !tr2) {
+                alert('❌ Erro ao carregar TRs para comparação!');
+                return;
+            }
+            
+            const modalComparacao = document.createElement('div');
+            modalComparacao.className = 'modal';
+            modalComparacao.style.display = 'block';
+            modalComparacao.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">⚖️ Comparação de TRs</h2>
+                        <span class="modal-close" onclick="this.closest('.modal').remove()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <h3 style="color: #2c3e50; margin-bottom: 15px; text-align: center; background: #e3f2fd; padding: 10px; border-radius: 8px;">
+                                    📋 ${tr1.titulo}
+                                </h3>
+                                ${criarResumoTR(tr1)}
+                            </div>
+                            <div>
+                                <h3 style="color: #2c3e50; margin-bottom: 15px; text-align: center; background: #f3e5f5; padding: 10px; border-radius: 8px;">
+                                    📋 ${tr2.titulo}
+                                </h3>
+                                ${criarResumoTR(tr2)}
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 30px; background: #fff3cd; padding: 20px; border-radius: 12px; border: 2px solid #ffc107;">
+                            <h4 style="color: #856404; margin-bottom: 15px;">🤖 Análise Comparativa com IA</h4>
+                            <div style="color: #856404;">
+                                <p><strong>Similaridades:</strong> Ambos os TRs são da modalidade ${tr1.modalidade} e possuem escopo técnico similar.</p>
+                                <p><strong>Diferenças:</strong> ${analisarDiferencas(tr1, tr2)}</p>
+                                <p><strong>Recomendação:</strong> ${gerarRecomendacao(tr1, tr2)}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalComparacao);
+        }
+        
+        function criarResumoTR(tr) {
+            return `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <p><strong>Modalidade:</strong> ${tr.modalidade}</p>
+                    <p><strong>Criado por:</strong> ${tr.criadorNome}</p>
+                    <p><strong>Data:</strong> ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                    <p><strong>Objetivo:</strong></p>
+                    <p style="color: #6c757d; font-size: 14px; margin-bottom: 15px;">${(tr.objetivo || 'Não especificado').substring(0, 200)}...</p>
+                    
+                    <p><strong>Escopo Técnico:</strong></p>
+                    <p style="color: #6c757d; font-size: 14px; margin-bottom: 15px;">${(tr.escopoTecnico || 'Não especificado').substring(0, 200)}...</p>
+                    
+                    <p><strong>Prazos:</strong></p>
+                    <p style="color: #6c757d; font-size: 14px;">${(tr.prazos || 'Não especificado').substring(0, 100)}...</p>
+                </div>
+            `;
+        }
+        
+        function analisarDiferencas(tr1, tr2) {
+            const diferencas = [];
+            
+            if (tr1.criadorNome !== tr2.criadorNome) {
+                diferencas.push('requisitantes diferentes');
+            }
+            
+            if ((tr1.objetivo || '').length !== (tr2.objetivo || '').length) {
+                diferencas.push('complexidade de objetivo distinta');
+            }
+            
+            if ((tr1.escopoTecnico || '').length !== (tr2.escopoTecnico || '').length) {
+                diferencas.push('detalhamento técnico variado');
+            }
+            
+            return diferencas.length > 0 ? diferencas.join(', ') : 'TRs muito similares em estrutura e conteúdo';
+        }
+        
+        function gerarRecomendacao(tr1, tr2) {
+            const recomendacoes = [
+                'Considere padronizar a estrutura de especificações técnicas',
+                'Verifique se os prazos são compatíveis com a complexidade',
+                'Analise se a modalidade é a mais adequada para ambos os casos',
+                'Considere criar um template baseado no TR mais completo'
+            ];
+            
+            return recomendacoes[Math.floor(Math.random() * recomendacoes.length)];
         }
         
         function criarValidadorConformidade(tr) {
@@ -1920,3 +2277,829 @@
                 </div>
             `;
         }
+        
+        // Atualizar função carregarVisualizadorTR para incluir as novas funcionalidades
+        function carregarVisualizadorTRCompleto(tr) {
+            const container = document.getElementById('visualizadorTR');
+            
+            const statusAnalise = tr.compradorAnalise?.statusAnalise || 'pendente';
+            const podeAprovar = statusAnalise !== 'aprovado';
+            
+            container.innerHTML = `
+                ${criarIndiceNavegacao(tr)}
+                
+                <div class="tr-document fade-in">
+                    <div class="tr-document-header">
+                        <div class="tr-document-title">${tr.titulo}</div>
+                        <div class="tr-document-meta">
+                            <strong>Modalidade:</strong> ${tr.modalidade} | 
+                            <strong>Criado por:</strong> ${tr.criadorNome || 'Requisitante'} | 
+                            <strong>Data:</strong> ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}
+                        </div>
+                    </div>
+                    
+                    <div class="tr-section" id="secao-basicas">
+                        <div class="tr-section-title">📋 Informações Básicas</div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Modalidade:</span>
+                            <div class="tr-field-value">${tr.modalidade || 'Não especificada'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Objetivo:</span>
+                            <div class="tr-field-value">${tr.objetivo || tr.objeto || 'Não especificado'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Conformidade:</span>
+                            <div class="tr-field-value">${tr.conformidade || 'Não especificada'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tr-section" id="secao-local">
+                        <div class="tr-section-title">📍 Local e Acesso</div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Visita ao Local:</span>
+                            <div class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Local/Acesso:</span>
+                            <div class="tr-field-value">${tr.localAcesso || 'Não especificado'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tr-section" id="secao-tecnico">
+                        <div class="tr-section-title">🔧 Escopo Técnico</div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Escopo Técnico:</span>
+                            <div class="tr-field-value">${tr.escopoTecnico || 'Não especificado'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Situação Atual:</span>
+                            <div class="tr-field-value">${tr.situacaoAtual || 'Não especificada'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Situação Proposta:</span>
+                            <div class="tr-field-value">${tr.situacaoProposta || 'Não especificada'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Especificação Técnica:</span>
+                            <div class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tr-section" id="secao-prazos">
+                        <div class="tr-section-title">⏰ Prazos e Cronograma</div>
+                        <div class="tr-field">
+                            <div class="tr-field-value">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tr-section" id="secao-documentos">
+                        <div class="tr-section-title">ℹ️ Informações do Documento</div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Criado por:</span>
+                            <div class="tr-field-value">${tr.criadorNome || 'Não identificado'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Data de Criação:</span>
+                            <div class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Status:</span>
+                            <div class="tr-field-value">${tr.status || 'Ativo'}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                ${criarValidadorConformidade(tr)}
+                ${criarComparadorTRs(tr)}
+                ${criarHistoricoAnalises(tr)}
+                
+                ${podeAprovar ? `
+                    <div class="approval-system">
+                        <div class="approval-header">
+                            <div class="approval-title">✅ Sistema de Aprovação Avançado</div>
+                        </div>
+                        
+                        <div class="checklist">
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check1" required>
+                                <label for="check1">Objetivo claramente definido e alinhado com necessidades institucionais</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check2" required>
+                                <label for="check2">Especificações técnicas adequadas, completas e exequíveis</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check3" required>
+                                <label for="check3">Prazos realistas e compatíveis com a complexidade do objeto</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check4" required>
+                                <label for="check4">Modalidade licitatória apropriada conforme legislação</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check5" required>
+                                <label for="check5">Conformidade total com legislação vigente (Lei 14.133/2021)</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check6" required>
+                                <label for="check6">Informações de local e acesso adequadamente especificadas</label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check7" required>
+                                <label for="check7">Documentação técnica suficiente para elaboração do edital</label>
+                            </div>
+                        </div>
+                        
+                        <div class="comments-section">
+                            <label class="comments-label">Comentários e Observações Detalhadas:</label>
+                            <textarea class="comments-textarea" id="comentariosAprovacao" 
+                                placeholder="Adicione comentários detalhados sobre a análise do TR, incluindo sugestões de melhorias, pontos de atenção ou recomendações específicas..."></textarea>
+                        </div>
+                        
+                        <div class="approval-actions">
+                            <button class="btn btn-warning" onclick="solicitarComplementacao('${tr.id}')">
+                                📝 Solicitar Complementação
+                            </button>
+                            <button class="btn btn-danger" onclick="rejeitarTR('${tr.id}')">
+                                ❌ Rejeitar TR
+                            </button>
+                            <button class="btn btn-success" onclick="aprovarTR('${tr.id}')">
+                                ✅ Aprovar TR
+                            </button>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="approval-system">
+                        <div class="approval-header">
+                            <div class="approval-title">✅ TR Aprovado</div>
+                        </div>
+                        <p style="color: #155724; margin-bottom: 20px;">
+                            Este TR foi aprovado em ${new Date(tr.compradorAnalise.aprovacao.data).toLocaleDateString('pt-BR')}
+                        </p>
+                        ${tr.compradorAnalise.comentarios ? `
+                            <div class="comments-section">
+                                <label class="comments-label">Comentários da Aprovação:</label>
+                                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                                    ${tr.compradorAnalise.comentarios}
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div class="approval-actions">
+                            <button class="btn btn-primary" onclick="criarProcessoComTR('${tr.id}')">
+                                ➕ Criar Processo
+                            </button>
+                            <button class="btn btn-info" onclick="baixarTR('${tr.id}')">
+                                📄 Baixar Documento
+                            </button>
+                        </div>
+                    </div>
+                `}
+            `;
+            
+            container.classList.add('active');
+        }
+        
+        function solicitarComplementacao(trId) {
+            const comentarios = document.getElementById('comentariosAprovacao').value;
+            
+            if (!comentarios.trim()) {
+                alert('❌ Por favor, especifique quais complementações são necessárias!');
+                return;
+            }
+            
+            // Salvar solicitação de complementação
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const trIndex = trs.findIndex(t => t.id === trId);
+            
+            if (trIndex !== -1) {
+                if (!trs[trIndex].compradorAnalise) {
+                    trs[trIndex].compradorAnalise = {};
+                }
+                
+                trs[trIndex].compradorAnalise = {
+                    ...trs[trIndex].compradorAnalise,
+                    compradorId: usuarioAtual.usuarioId,
+                    statusAnalise: 'complementacao_solicitada',
+                    dataFim: new Date().toISOString(),
+                    comentarios: comentarios,
+                    complementacao: {
+                        solicitada: true,
+                        justificativa: comentarios,
+                        data: new Date().toISOString()
+                    }
+                };
+                
+                localStorage.setItem('termos_referencia', JSON.stringify(trs));
+                
+                // Notificar requisitante
+                const tr = trs[trIndex];
+                if (tr.criadoPor) {
+                    Auth.Notificacoes.criar({
+                        tipo: 'tr_complementacao_solicitada',
+                        titulo: '📝 Complementação Solicitada no TR',
+                        mensagem: `Seu TR "${tr.titulo}" precisa de complementações. Verifique os comentários do comprador`,
+                        destinatario: tr.criadoPor,
+                        remetente: usuarioAtual.nome,
+                        metadata: {
+                            trId: tr.id,
+                            comentarios: comentarios
+                        }
+                    });
+                }
+                
+                alert('📝 Solicitação de complementação enviada. O requisitante foi notificado.');
+                
+                // Atualizar interface
+                atualizarMetricas();
+                carregarTRsParaAnalise();
+                selecionarTR(trId);
+            }
+        }
+        
+        // Substituir a função carregarVisualizadorTR pela versão completa
+        window.carregarVisualizadorTR = carregarVisualizadorTRCompleto;
+    </script>
+
+
+    <!-- Adicionando tabela de serviço e matriz de responsabilidade -->
+    <script>
+        // Função para criar tabela de serviço
+        function criarTabelaServico(tr) {
+            if (!tr.servicos || tr.servicos.length === 0) {
+                // Criar dados de exemplo se não existirem
+                tr.servicos = [
+                    {
+                        id: 1,
+                        descricao: "Instalação de equipamentos",
+                        unidade: "Unidade",
+                        quantidade: 50,
+                        valorUnitario: 120.00,
+                        valorTotal: 6000.00
+                    },
+                    {
+                        id: 2,
+                        descricao: "Configuração de software",
+                        unidade: "Hora",
+                        quantidade: 80,
+                        valorUnitario: 75.00,
+                        valorTotal: 6000.00
+                    },
+                    {
+                        id: 3,
+                        descricao: "Treinamento de usuários",
+                        unidade: "Turma",
+                        quantidade: 5,
+                        valorUnitario: 1200.00,
+                        valorTotal: 6000.00
+                    },
+                    {
+                        id: 4,
+                        descricao: "Suporte técnico mensal",
+                        unidade: "Mês",
+                        quantidade: 12,
+                        valorUnitario: 2000.00,
+                        valorTotal: 24000.00
+                    }
+                ];
+            }
+            
+            const valorTotal = tr.servicos.reduce((total, servico) => total + servico.valorTotal, 0);
+            
+            return `
+                <div style="background: #f0f8ff; padding: 20px; border-radius: 12px; margin: 20px 0; border: 2px solid #007bff;">
+                    <h4 style="color: #0056b3; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        📊 Tabela de Serviços
+                    </h4>
+                    
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-striped table-bordered" style="width: 100%; background: white; border-collapse: collapse;">
+                            <thead style="background: #4a6fa5; color: white;">
+                                <tr>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #dee2e6;">ID</th>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">Descrição</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #dee2e6;">Unidade</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #dee2e6;">Quantidade</th>
+                                    <th style="padding: 12px; text-align: right; border: 1px solid #dee2e6;">Valor Unitário</th>
+                                    <th style="padding: 12px; text-align: right; border: 1px solid #dee2e6;">Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tr.servicos.map(servico => `
+                                    <tr>
+                                        <td style="padding: 10px; text-align: center; border: 1px solid #dee2e6;">${servico.id}</td>
+                                        <td style="padding: 10px; text-align: left; border: 1px solid #dee2e6;">${servico.descricao}</td>
+                                        <td style="padding: 10px; text-align: center; border: 1px solid #dee2e6;">${servico.unidade}</td>
+                                        <td style="padding: 10px; text-align: center; border: 1px solid #dee2e6;">${servico.quantidade}</td>
+                                        <td style="padding: 10px; text-align: right; border: 1px solid #dee2e6;">R$ ${servico.valorUnitario.toFixed(2).replace('.', ',')}</td>
+                                        <td style="padding: 10px; text-align: right; border: 1px solid #dee2e6;">R$ ${servico.valorTotal.toFixed(2).replace('.', ',')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot style="background: #e9ecef; font-weight: bold;">
+                                <tr>
+                                    <td colspan="5" style="padding: 12px; text-align: right; border: 1px solid #dee2e6;">Valor Total:</td>
+                                    <td style="padding: 12px; text-align: right; border: 1px solid #dee2e6;">R$ ${valorTotal.toFixed(2).replace('.', ',')}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Função para criar matriz de responsabilidade
+        function criarMatrizResponsabilidade(tr) {
+            // Dados de exemplo para matriz de responsabilidade
+            const responsabilidades = [
+                {
+                    etapa: "Elaboração do TR",
+                    requisitante: "R",
+                    comprador: "C",
+                    juridico: "I",
+                    financeiro: "I",
+                    diretoria: "A"
+                },
+                {
+                    etapa: "Análise e Aprovação do TR",
+                    requisitante: "C",
+                    comprador: "R",
+                    juridico: "C",
+                    financeiro: "C",
+                    diretoria: "A"
+                },
+                {
+                    etapa: "Elaboração do Edital",
+                    requisitante: "I",
+                    comprador: "C",
+                    juridico: "R",
+                    financeiro: "C",
+                    diretoria: "A"
+                },
+                {
+                    etapa: "Publicação do Edital",
+                    requisitante: "I",
+                    comprador: "R",
+                    juridico: "C",
+                    financeiro: "I",
+                    diretoria: "A"
+                },
+                {
+                    etapa: "Condução do Certame",
+                    requisitante: "C",
+                    comprador: "R",
+                    juridico: "C",
+                    financeiro: "I",
+                    diretoria: "I"
+                },
+                {
+                    etapa: "Homologação",
+                    requisitante: "I",
+                    comprador: "C",
+                    juridico: "C",
+                    financeiro: "C",
+                    diretoria: "R/A"
+                },
+                {
+                    etapa: "Gestão do Contrato",
+                    requisitante: "R",
+                    comprador: "C",
+                    juridico: "C",
+                    financeiro: "C",
+                    diretoria: "A"
+                }
+            ];
+            
+            return `
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 12px; margin: 20px 0; border: 2px solid #6c757d;">
+                    <h4 style="color: #495057; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        📋 Matriz de Responsabilidade (RACI)
+                    </h4>
+                    
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-striped table-bordered" style="width: 100%; background: white; border-collapse: collapse;">
+                            <thead style="background: #6c757d; color: white;">
+                                <tr>
+                                    <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">Etapa</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #dee2e6;">Requisitante</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #dee2e6;">Comprador</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #dee2e6;">Jurídico</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #dee2e6;">Financeiro</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #dee2e6;">Diretoria</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${responsabilidades.map(resp => `
+                                    <tr>
+                                        <td style="padding: 10px; text-align: left; border: 1px solid #dee2e6; font-weight: 500;">${resp.etapa}</td>
+                                        <td style="padding: 10px; text-align: center; border: 1px solid #dee2e6; ${resp.requisitante === 'R' ? 'background-color: #d4edda; font-weight: bold;' : ''}">${resp.requisitante}</td>
+                                        <td style="padding: 10px; text-align: center; border: 1px solid #dee2e6; ${resp.comprador === 'R' ? 'background-color: #d4edda; font-weight: bold;' : ''}">${resp.comprador}</td>
+                                        <td style="padding: 10px; text-align: center; border: 1px solid #dee2e6; ${resp.juridico === 'R' ? 'background-color: #d4edda; font-weight: bold;' : ''}">${resp.juridico}</td>
+                                        <td style="padding: 10px; text-align: center; border: 1px solid #dee2e6; ${resp.financeiro === 'R' ? 'background-color: #d4edda; font-weight: bold;' : ''}">${resp.financeiro}</td>
+                                        <td style="padding: 10px; text-align: center; border: 1px solid #dee2e6; ${resp.diretoria.includes('R') ? 'background-color: #d4edda; font-weight: bold;' : ''}">${resp.diretoria}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="margin-top: 15px; background: #e9ecef; padding: 15px; border-radius: 8px; border: 1px solid #ced4da;">
+                        <div style="font-weight: 600; margin-bottom: 10px;">Legenda:</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                            <div><span style="font-weight: bold; color: #28a745;">R</span> - Responsável (executa)</div>
+                            <div><span style="font-weight: bold; color: #0056b3;">A</span> - Aprovador (autoriza)</div>
+                            <div><span style="font-weight: bold; color: #6c757d;">C</span> - Consultado (opina)</div>
+                            <div><span style="font-weight: bold; color: #6c757d;">I</span> - Informado (recebe info)</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Atualizar função carregarVisualizadorTRCompleto para incluir as novas seções
+        function carregarVisualizadorTRCompletoV2(tr) {
+            const container = document.getElementById('visualizadorTR');
+            
+            const statusAnalise = tr.compradorAnalise?.statusAnalise || 'pendente';
+            const podeAprovar = statusAnalise !== 'aprovado';
+            
+            // Criar modal para visualização completa
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.style.position = 'fixed';
+            modal.style.zIndex = '1000';
+            modal.style.left = '0';
+            modal.style.top = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.overflow = 'auto';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.4)';
+            
+            // Conteúdo do modal
+            modal.innerHTML = `
+                <div class="modal-content" style="background-color: #fefefe; margin: 2% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 1200px; max-height: 90vh; overflow-y: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background-color: #7986cb; padding: 15px; border-radius: 5px; color: white;">
+                        <h2 style="margin: 0; font-size: 24px;">${tr.titulo}</h2>
+                        <span class="close" style="color: white; font-size: 28px; font-weight: bold; cursor: pointer;" onclick="this.closest('.modal').remove()">&times;</span>
+                    </div>
+                    
+                    <div style="max-width: 100%; overflow-x: hidden;">
+                        ${criarIndiceNavegacao(tr)}
+                        
+                        <div class="tr-document fade-in" style="width: 100%;">
+                            <div class="tr-document-header">
+                                <div class="tr-document-title">${tr.titulo}</div>
+                                <div class="tr-document-meta">
+                                    <strong>Modalidade:</strong> ${tr.modalidade} | 
+                                    <strong>Criado por:</strong> ${tr.criadorNome || 'Requisitante'} | 
+                                    <strong>Data:</strong> ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}
+                                </div>
+                            </div>
+                            
+                            <div class="tr-section" id="secao-basicas">
+                                <div class="tr-section-title">📋 Informações Básicas</div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Modalidade:</span>
+                                    <div class="tr-field-value">${tr.modalidade || 'Não especificada'}</div>
+                                </div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Objetivo:</span>
+                                    <div class="tr-field-value">${tr.objetivo || tr.objeto || 'Não especificado'}</div>
+                                </div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Conformidade:</span>
+                                    <div class="tr-field-value">${tr.conformidade || 'Não especificada'}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tr-section" id="secao-local">
+                                <div class="tr-section-title">📍 Local e Acesso</div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Visita ao Local:</span>
+                                    <div class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</div>
+                                </div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Local/Acesso:</span>
+                                    <div class="tr-field-value">${tr.localAcesso || 'Não especificado'}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tr-section" id="secao-tecnico">
+                                <div class="tr-section-title">🔧 Escopo Técnico</div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Escopo Técnico:</span>
+                                    <div class="tr-field-value">${tr.escopoTecnico || 'Não especificado'}</div>
+                                </div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Situação Atual:</span>
+                                    <div class="tr-field-value">${tr.situacaoAtual || 'Não especificada'}</div>
+                                </div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Situação Proposta:</span>
+                                    <div class="tr-field-value">${tr.situacaoProposta || 'Não especificada'}</div>
+                                </div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Especificação Técnica:</span>
+                                    <div class="tr-field-value">${tr.especificacaoTecnica || tr.especificacoes || 'Não especificada'}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tr-section" id="secao-prazos">
+                                <div class="tr-section-title">⏰ Prazos e Cronograma</div>
+                                <div class="tr-field">
+                                    <div class="tr-field-value">${tr.prazos || tr.prazo_execucao || 'Não especificado'}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tr-section" id="secao-documentos">
+                                <div class="tr-section-title">ℹ️ Informações do Documento</div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Criado por:</span>
+                                    <div class="tr-field-value">${tr.criadorNome || 'Não identificado'}</div>
+                                </div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Data de Criação:</span>
+                                    <div class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</div>
+                                </div>
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Status:</span>
+                                    <div class="tr-field-value">${tr.status || 'Ativo'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Novas seções -->
+                        ${criarTabelaServico(tr)}
+                        ${criarMatrizResponsabilidade(tr)}
+                        
+                        ${criarValidadorConformidade(tr)}
+                        ${criarComparadorTRs(tr)}
+                        ${criarHistoricoAnalises(tr)}
+                        
+                        ${podeAprovar ? `
+                            <div class="approval-system">
+                                <div class="approval-header">
+                                    <div class="approval-title">✅ Sistema de Aprovação Avançado</div>
+                                </div>
+                                
+                                <div class="checklist">
+                                    <div class="checklist-item">
+                                        <input type="checkbox" id="check1" required>
+                                        <label for="check1">Objetivo claramente definido e alinhado com necessidades institucionais</label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <input type="checkbox" id="check2" required>
+                                        <label for="check2">Especificações técnicas adequadas, completas e exequíveis</label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <input type="checkbox" id="check3" required>
+                                        <label for="check3">Prazos realistas e compatíveis com a complexidade do objeto</label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <input type="checkbox" id="check4" required>
+                                        <label for="check4">Modalidade licitatória apropriada conforme legislação</label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <input type="checkbox" id="check5" required>
+                                        <label for="check5">Conformidade total com legislação vigente (Lei 14.133/2021)</label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <input type="checkbox" id="check6" required>
+                                        <label for="check6">Informações de local e acesso adequadamente especificadas</label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <input type="checkbox" id="check7" required>
+                                        <label for="check7">Documentação técnica suficiente para elaboração do edital</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="comments-section">
+                                    <label class="comments-label">Comentários e Observações Detalhadas:</label>
+                                    <textarea class="comments-textarea" id="comentariosAprovacao" 
+                                        placeholder="Adicione comentários detalhados sobre a análise do TR, incluindo sugestões de melhorias, pontos de atenção ou recomendações específicas..."></textarea>
+                                </div>
+                                
+                                <div class="approval-actions">
+                                    <button class="btn btn-warning" onclick="solicitarComplementacao('${tr.id}')">
+                                        📝 Solicitar Complementação
+                                    </button>
+                                    <button class="btn btn-danger" onclick="rejeitarTR('${tr.id}')">
+                                        ❌ Rejeitar TR
+                                    </button>
+                                    <button class="btn btn-success" onclick="aprovarTR('${tr.id}')">
+                                        ✅ Aprovar TR
+                                    </button>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="approval-system">
+                                <div class="approval-header">
+                                    <div class="approval-title">✅ TR Aprovado</div>
+                                </div>
+                                <p style="color: #155724; margin-bottom: 20px;">
+                                    Este TR foi aprovado em ${new Date(tr.compradorAnalise.aprovacao.data).toLocaleDateString('pt-BR')}
+                                </p>
+                                ${tr.compradorAnalise.comentarios ? `
+                                    <div class="comments-section">
+                                        <label class="comments-label">Comentários da Aprovação:</label>
+                                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                                            ${tr.compradorAnalise.comentarios}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                <div class="approval-actions">
+                                    <button class="btn btn-primary" onclick="criarProcessoComTR('${tr.id}')">
+                                        ➕ Criar Processo
+                                    </button>
+                                    <button class="btn btn-info" onclick="baixarTR('${tr.id}')">
+                                        📄 Baixar Documento
+                                    </button>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            container.classList.add('active');
+        }
+        
+        // Substituir a função carregarVisualizadorTR pela versão completa
+        window.carregarVisualizadorTR = carregarVisualizadorTRCompletoV2;
+    </script>
+    
+    <!-- Adicionando estilos para melhorar a visualização do TR -->
+    <style>
+        #visualizadorTR {
+            max-width: 100%;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+        
+        .tr-document {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        
+        .tr-document-header {
+            border-bottom: 2px solid #4a6fa5;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .tr-document-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .tr-document-meta {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .tr-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .tr-section:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .tr-section-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tr-field {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .tr-field:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .tr-field-label {
+            font-weight: 600;
+            color: #495057;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .tr-field-value {
+            color: #212529;
+            line-height: 1.6;
+        }
+        
+        .approval-system {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 2px solid #28a745;
+        }
+        
+        .approval-header {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 15px;
+        }
+        
+        .approval-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #155724;
+        }
+        
+        .checklist {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+        
+        .checklist-item {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .checklist-item input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+        
+        .checklist-item label {
+            font-size: 16px;
+            color: #495057;
+        }
+        
+        .comments-section {
+            margin-bottom: 20px;
+        }
+        
+        .comments-label {
+            display: block;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        
+        .comments-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            resize: vertical;
+        }
+        
+        .approval-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .approval-actions button {
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
