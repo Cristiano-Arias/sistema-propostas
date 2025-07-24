@@ -707,7 +707,7 @@
                 const tr = JSON.parse(option.dataset.trData);
                 trSelecionado = tr;
                 
-                // Criar visualização do TR
+                // Criar visualização resumida do TR
                 areaVisualizacao.innerHTML = `
                     <div class="tr-section">
                         <h3>${tr.titulo}</h3>
@@ -723,9 +723,15 @@
                             <span class="tr-field-label">Criado por:</span>
                             <span class="tr-field-value">${tr.criadorNome} em ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</span>
                         </div>
-                        <div style="margin-top: 20px;">
+                        <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                            <p style="color: #1976d2; margin-bottom: 10px;">
+                                <strong>💡 Dica:</strong> Use os botões abaixo para visualizar o TR completo no módulo de requisição ou aprovar para continuar.
+                            </p>
                             <button type="button" class="btn btn-info" onclick="visualizarTRCompleto()">
-                                👁️ Visualizar TR Completo
+                                👁️ Visualizar TR Completo (Nova Aba)
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="baixarTR()">
+                                📥 Baixar TR (Nova Aba)
                             </button>
                             <button type="button" class="btn btn-success" onclick="aprovarTR()">
                                 ✅ Aprovar e Continuar
@@ -739,60 +745,151 @@
             }
         }
 
-        // Visualizar TR completo
-        function visualizarTRCompleto() {
-            if (!trSelecionado) return;
+        // Visualizar TR completo - Solução alternativa
+        function visualizarTRAlternativo() {
+            if (!trSelecionado) {
+                alert('Nenhum TR selecionado!');
+                return;
+            }
             
-            const conteudo = `
-                <div class="tr-section">
-                    <h3>📋 Informações Básicas</h3>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Título:</span>
-                        <span class="tr-field-value">${trSelecionado.titulo}</span>
+            // Criar uma visualização simples em popup
+            const popup = window.open('', 'TR_Visualizacao', 'width=800,height=600,scrollbars=yes');
+            
+            const conteudoHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>TR: ${trSelecionado.titulo}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                        h1 { color: #2c3e50; }
+                        h2 { color: #34495e; margin-top: 20px; }
+                        .campo { margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; }
+                        .label { font-weight: bold; color: #495057; }
+                        .valor { margin-top: 5px; }
+                        .btn { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+                        .btn:hover { background: #0056b3; }
+                        @media print { .no-print { display: none; } }
+                    </style>
+                </head>
+                <body>
+                    <h1>Termo de Referência</h1>
+                    <h2>${trSelecionado.titulo}</h2>
+                    
+                    <div class="campo">
+                        <div class="label">Modalidade:</div>
+                        <div class="valor">${trSelecionado.modalidade || 'Não especificada'}</div>
                     </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Modalidade:</span>
-                        <span class="tr-field-value">${trSelecionado.modalidade}</span>
+                    
+                    <div class="campo">
+                        <div class="label">Objetivo:</div>
+                        <div class="valor">${trSelecionado.objetivo || trSelecionado.objeto || 'Não especificado'}</div>
                     </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Objetivo:</span>
-                        <span class="tr-field-value">${trSelecionado.objetivo || 'Não especificado'}</span>
+                    
+                    <div class="campo">
+                        <div class="label">Conformidade:</div>
+                        <div class="valor">${trSelecionado.conformidade || 'Não especificada'}</div>
                     </div>
-                </div>
-                
-                <div class="tr-section">
-                    <h3>🔧 Escopo Técnico</h3>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Escopo:</span>
-                        <span class="tr-field-value">${trSelecionado.escopoTecnico || 'Não especificado'}</span>
+                    
+                    <div class="campo">
+                        <div class="label">Justificativa:</div>
+                        <div class="valor">${trSelecionado.justificativa || 'Não especificada'}</div>
                     </div>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Especificações:</span>
-                        <span class="tr-field-value">${trSelecionado.especificacaoTecnica || trSelecionado.especificacoes || 'Não especificado'}</span>
+                    
+                    <div class="campo">
+                        <div class="label">Escopo Técnico:</div>
+                        <div class="valor">${trSelecionado.escopoTecnico || 'Não especificado'}</div>
                     </div>
-                </div>
-                
-                <div class="tr-section">
-                    <h3>⏰ Prazos</h3>
-                    <div class="tr-field">
-                        <span class="tr-field-label">Prazos:</span>
-                        <span class="tr-field-value">${trSelecionado.prazos || 'Não especificado'}</span>
+                    
+                    <div class="campo">
+                        <div class="label">Situação Atual:</div>
+                        <div class="valor">${trSelecionado.situacaoAtual || 'Não especificada'}</div>
                     </div>
-                </div>
-                
-                <div style="margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="baixarTR()">
-                        📥 Baixar TR
-                    </button>
-                    <button class="btn btn-success" onclick="aprovarTReFecharModal()">
-                        ✅ Aprovar TR
-                    </button>
-                </div>
+                    
+                    <div class="campo">
+                        <div class="label">Situação Proposta:</div>
+                        <div class="valor">${trSelecionado.situacaoProposta || 'Não especificada'}</div>
+                    </div>
+                    
+                    <div class="campo">
+                        <div class="label">Especificações Técnicas:</div>
+                        <div class="valor">${trSelecionado.especificacaoTecnica || trSelecionado.especificacoes || 'Não especificadas'}</div>
+                    </div>
+                    
+                    <div class="campo">
+                        <div class="label">Premissas:</div>
+                        <div class="valor">${trSelecionado.premissas || 'Não especificadas'}</div>
+                    </div>
+                    
+                    <div class="campo">
+                        <div class="label">Garantia:</div>
+                        <div class="valor">${trSelecionado.garantia || 'Não especificada'}</div>
+                    </div>
+                    
+                    <div class="campo">
+                        <div class="label">Prazos:</div>
+                        <div class="valor">${trSelecionado.prazos || trSelecionado.prazo_execucao || 'Não especificado'}</div>
+                    </div>
+                    
+                    <div class="campo">
+                        <div class="label">Visita ao Local:</div>
+                        <div class="valor">${trSelecionado.visitaLocal || 'Não especificado'}</div>
+                    </div>
+                    
+                    <div class="campo">
+                        <div class="label">Local/Acesso:</div>
+                        <div class="valor">${trSelecionado.localAcesso || 'Não especificado'}</div>
+                    </div>
+                    
+                    <hr style="margin: 30px 0;">
+                    
+                    <div class="campo" style="background: #e3f2fd;">
+                        <div class="label">Criado por:</div>
+                        <div class="valor">${trSelecionado.criadorNome || 'Não identificado'}</div>
+                    </div>
+                    
+                    <div class="campo" style="background: #e3f2fd;">
+                        <div class="label">Data de Criação:</div>
+                        <div class="valor">${new Date(trSelecionado.criado_em || trSelecionado.dataCriacao).toLocaleString('pt-BR')}</div>
+                    </div>
+                    
+                    <div class="no-print" style="margin-top: 30px; text-align: center;">
+                        <button class="btn" onclick="window.print()">🖨️ Imprimir</button>
+                        <button class="btn" onclick="window.close()">❌ Fechar</button>
+                    </div>
+                </body>
+                </html>
             `;
             
-            document.getElementById('modalTRTitulo').textContent = trSelecionado.titulo;
-            document.getElementById('modalTRConteudo').innerHTML = conteudo;
-            document.getElementById('modalVisualizarTR').style.display = 'block';
+            popup.document.write(conteudoHTML);
+            popup.document.close();
+        }
+
+        // Atualizar a função visualizarTRCompleto para usar a alternativa
+        function visualizarTRCompleto() {
+            // Tenta primeiro abrir no módulo de requisição
+            try {
+                // Verifica se o arquivo existe
+                fetch('dashboard-requisitante.html', { method: 'HEAD' })
+                    .then(response => {
+                        if (response.ok) {
+                            // Se existe, abre no módulo
+                            sessionStorage.setItem('visualizar_tr_id', trSelecionado.id);
+                            sessionStorage.setItem('retornar_para', 'dashboard-comprador.html#cadastrar-processo');
+                            window.open('dashboard-requisitante.html#visualizar-tr', '_blank');
+                        } else {
+                            // Se não existe, usa a visualização alternativa
+                            visualizarTRAlternativo();
+                        }
+                    })
+                    .catch(() => {
+                        // Em caso de erro, usa a visualização alternativa
+                        visualizarTRAlternativo();
+                    });
+            } catch (e) {
+                // Fallback para visualização alternativa
+                visualizarTRAlternativo();
+            }
         }
 
         // Aprovar TR
@@ -821,9 +918,110 @@
             aprovarTR();
         }
 
-        // Baixar TR
+        // Baixar TR - Gera arquivo para download
         function baixarTR() {
-            alert('📥 Função de download será implementada em breve!');
+            if (!trSelecionado) {
+                alert('Nenhum TR selecionado!');
+                return;
+            }
+            
+            // Criar conteúdo HTML para Word
+            const conteudoWord = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>TR - ${trSelecionado.titulo}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+                        h2 { color: #34495e; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+                        p { margin-bottom: 10px; text-align: justify; }
+                        .campo { margin-bottom: 20px; }
+                        .label { font-weight: bold; color: #2c3e50; }
+                        .valor { margin-top: 5px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>TERMO DE REFERÊNCIA</h1>
+                    <p style="text-align: center;"><strong>${trSelecionado.titulo}</strong></p>
+                    <p style="text-align: center;">Modalidade: ${trSelecionado.modalidade}</p>
+                    <p style="text-align: center;">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
+                    
+                    <h2>1. OBJETO/OBJETIVO</h2>
+                    <p>${trSelecionado.objetivo || trSelecionado.objeto || 'Não especificado'}</p>
+                    
+                    ${trSelecionado.justificativa ? `
+                        <h2>2. JUSTIFICATIVA</h2>
+                        <p>${trSelecionado.justificativa}</p>
+                    ` : ''}
+                    
+                    ${trSelecionado.conformidade ? `
+                        <h2>3. CONFORMIDADE</h2>
+                        <p>${trSelecionado.conformidade}</p>
+                    ` : ''}
+                    
+                    <h2>4. ESCOPO TÉCNICO</h2>
+                    <p>${trSelecionado.escopoTecnico || 'Não especificado'}</p>
+                    
+                    ${trSelecionado.situacaoAtual ? `
+                        <h2>5. SITUAÇÃO ATUAL</h2>
+                        <p>${trSelecionado.situacaoAtual}</p>
+                    ` : ''}
+                    
+                    ${trSelecionado.situacaoProposta ? `
+                        <h2>6. SITUAÇÃO PROPOSTA</h2>
+                        <p>${trSelecionado.situacaoProposta}</p>
+                    ` : ''}
+                    
+                    <h2>7. ESPECIFICAÇÕES TÉCNICAS</h2>
+                    <p>${trSelecionado.especificacaoTecnica || trSelecionado.especificacoes || 'Não especificado'}</p>
+                    
+                    ${trSelecionado.premissas ? `
+                        <h2>8. PREMISSAS</h2>
+                        <p>${trSelecionado.premissas}</p>
+                    ` : ''}
+                    
+                    ${trSelecionado.garantia ? `
+                        <h2>9. GARANTIA</h2>
+                        <p>${trSelecionado.garantia}</p>
+                    ` : ''}
+                    
+                    <h2>10. PRAZOS</h2>
+                    <p>${trSelecionado.prazos || trSelecionado.prazo_execucao || 'Não especificado'}</p>
+                    
+                    ${trSelecionado.visitaLocal ? `
+                        <h2>11. VISITA AO LOCAL</h2>
+                        <p>${trSelecionado.visitaLocal}</p>
+                    ` : ''}
+                    
+                    ${trSelecionado.localAcesso ? `
+                        <h2>12. LOCAL/ACESSO</h2>
+                        <p>${trSelecionado.localAcesso}</p>
+                    ` : ''}
+                    
+                    <br><br>
+                    <hr>
+                    <p style="text-align: center; font-size: 12px; color: #7f8c8d;">
+                        Documento gerado em ${new Date().toLocaleString('pt-BR')}<br>
+                        Elaborado por: ${trSelecionado.criadorNome || 'Não identificado'}
+                    </p>
+                </body>
+                </html>
+            `;
+            
+            // Criar blob e fazer download
+            const blob = new Blob([conteudoWord], { 
+                type: 'application/msword;charset=utf-8' 
+            });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `TR_${trSelecionado.titulo.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.doc`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert('✅ TR baixado com sucesso!');
         }
 
         // Carregar fornecedores
