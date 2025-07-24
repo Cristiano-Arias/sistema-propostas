@@ -1,857 +1,603 @@
-// ===== PORTAL DE PROPOSTAS - SCRIPTS JAVASCRIPT =====
-// Arquivo: portal-propostas-scripts.js
-
-// ===== VARIÁVEIS GLOBAIS =====
-let currentTab = 'dados';
-let usuarioAtual = null;
-let processoAtual = null;
-let dadosSalvosTemp = {};
-
-// ===== INICIALIZAÇÃO =====
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Iniciando Portal de Propostas...');
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Envio de Propostas</title>
     
-    // Verificar autenticação usando o Auth.js
-    usuarioAtual = Auth.verificarAutenticacao(['fornecedor']);
+    <!-- Importar arquivos do sistema -->
+    <script src="auth.js"></script>
+    <script src="sistema-notificacoes.js"></script>
     
-    if (!usuarioAtual) {
-        mostrarMensagem('Você precisa estar autenticado como fornecedor para acessar esta página.', 'error');
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 2000);
-        return;
-    }
+    <!-- Configuração da API -->
+    <script>
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000' 
+            : window.location.origin;
+    </script>
     
-    // Exibir informações do usuário
-    document.getElementById('authInfo').innerHTML = `
-        <strong>${usuarioAtual.nome}</strong><br>
-        <small>Fornecedor</small>
-    `;
-    
-    // Carregar dados do processo
-    const urlParams = new URLSearchParams(window.location.search);
-    const numeroProcesso = urlParams.get('processo');
-    
-    if (!numeroProcesso) {
-        mostrarMensagem('Nenhum processo especificado.', 'error');
-        setTimeout(() => {
-            window.location.href = 'dashboard-fornecedor.html';
-        }, 2000);
-        return;
-    }
-    
-    carregarProcesso(numeroProcesso);
-    
-    // Carregar dados da empresa
-    carregarDadosEmpresa();
-    
-    // Iniciar auto-save
-    iniciarAutoSave();
-    
-    // Verificar rascunho existente
-    verificarRascunho();
-    
-    // Atualizar progresso inicial
-    updateProgress();
-});
-
-// ===== FUNÇÕES DE CARREGAMENTO =====
-function carregarProcesso(numeroProcesso) {
-    const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-    processoAtual = processos.find(p => p.numero === numeroProcesso);
-    
-    if (!processoAtual) {
-        mostrarMensagem('Processo não encontrado.', 'error');
-        setTimeout(() => {
-            window.location.href = 'dashboard-fornecedor.html';
-        }, 2000);
-        return;
-    }
-    
-    // Verificar se o fornecedor foi convidado
-    if (processoAtual.fornecedoresConvidados && 
-        !processoAtual.fornecedoresConvidados.includes(usuarioAtual.usuarioId)) {
-        mostrarMensagem('Você não foi convidado para este processo.', 'error');
-        setTimeout(() => {
-            window.location.href = 'dashboard-fornecedor.html';
-        }, 2000);
-        return;
-    }
-    
-    // Preencher dados do processo
-    document.getElementById('numeroProcesso').value = processoAtual.numero;
-    document.getElementById('objetoProcesso').value = processoAtual.objeto || '';
-    
-    if (processoAtual.prazo) {
-        const prazoDate = new Date(processoAtual.prazo);
-        document.getElementById('prazoEnvio').value = prazoDate.toLocaleString('pt-BR');
-    }
-    
-    // Copiar objeto para proposta técnica
-    document.getElementById('objetoConcorrencia').value = processoAtual.objeto || '';
-}
-
-function carregarDadosEmpresa() {
-    // Buscar dados do cadastro do fornecedor
-    const cadastros = JSON.parse(localStorage.getItem('cadastros_fornecedores') || '[]');
-    const meuCadastro = cadastros.find(c => c.usuarioId === usuarioAtual.usuarioId);
-    
-    if (meuCadastro) {
-        // Preencher dados cadastrais automaticamente
-        document.getElementById('razaoSocial').value = meuCadastro.razaoSocial || '';
-        document.getElementById('cnpj').value = meuCadastro.cnpj || '';
-        document.getElementById('endereco').value = 
-            `${meuCadastro.endereco || ''} ${meuCadastro.numero || ''} ${meuCadastro.complemento || ''}`.trim();
-        document.getElementById('cidade').value = 
-            `${meuCadastro.cidade || ''} - ${meuCadastro.estado || ''}`;
-        document.getElementById('telefone').value = meuCadastro.telefone || '';
-        document.getElementById('email').value = meuCadastro.email || '';
-        document.getElementById('respTecnico').value = meuCadastro.responsavelTecnico || '';
-        document.getElementById('crea').value = meuCadastro.registroTecnico || '';
-    }
-}
-
-// ===== NAVEGAÇÃO ENTRE ABAS =====
-function showTab(tabName, buttonElement) {
-    // Validar aba atual antes de mudar
-    if (!validarAbaAtual()) {
-        return;
-    }
-    
-    // Ocultar todas as seções
-    document.querySelectorAll('.form-section').forEach(section => {
-        section.classList.remove('active');
-    });
-    
-    // Remover classe active de todas as abas
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Mostrar seção selecionada
-    document.getElementById(tabName).classList.add('active');
-    buttonElement.classList.add('active');
-    
-    currentTab = tabName;
-    updateProgress();
-    
-    // Se for a aba de revisão, gerar resumo
-    if (tabName === 'revisao') {
-        gerarResumo();
-    }
-    
-    // Scroll para o topo
-    window.scrollTo(0, 0);
-}
-
-function updateProgress() {
-    const tabs = ['dados', 'tecnica', 'comercial', 'revisao'];
-    const currentIndex = tabs.indexOf(currentTab);
-    const progress = ((currentIndex + 1) / tabs.length) * 100;
-    
-    document.getElementById('progressFill').style.width = progress + '%';
-    document.getElementById('progressText').textContent = Math.round(progress) + '%';
-}
-
-// ===== VALIDAÇÕES =====
-function validarAbaAtual() {
-    let valido = true;
-    
-    if (currentTab === 'dados') {
-        const camposObrigatorios = ['razaoSocial', 'cnpj', 'email'];
-        camposObrigatorios.forEach(campo => {
-            const elemento = document.getElementById(campo);
-            if (!elemento.value.trim()) {
-                elemento.style.borderColor = '#e74c3c';
-                valido = false;
-            } else {
-                elemento.style.borderColor = '#e9ecef';
-            }
-        });
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        if (!valido) {
-            mostrarMensagem('Por favor, preencha todos os campos obrigatórios marcados com *.', 'error');
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
         }
-    } else if (currentTab === 'tecnica') {
-        const camposObrigatorios = ['objetoConcorrencia', 'metodologia', 'prazoExecucao'];
-        camposObrigatorios.forEach(campo => {
-            const elemento = document.getElementById(campo);
-            if (!elemento.value.trim()) {
-                elemento.style.borderColor = '#e74c3c';
-                valido = false;
-            } else {
-                elemento.style.borderColor = '#e9ecef';
-            }
-        });
-        
-        if (!valido) {
-            mostrarMensagem('Por favor, preencha todos os campos obrigatórios da proposta técnica.', 'error');
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            position: relative;
         }
-    } else if (currentTab === 'comercial') {
-        const valorTotal = document.getElementById('valorTotal');
-        if (!valorTotal.value.trim() || limparValor(valorTotal.value) <= 0) {
-            valorTotal.style.borderColor = '#e74c3c';
-            valido = false;
-            mostrarMensagem('Por favor, informe o valor total da proposta.', 'error');
-        } else {
-            valorTotal.style.borderColor = '#e9ecef';
+
+        .auth-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
         }
-    }
-    
-    return valido;
-}
 
-// ===== FUNÇÕES DE TABELA DINÂMICA =====
-function addEquipeRow() {
-    const tbody = document.querySelector('#equipeTable tbody');
-    const newRow = tbody.insertRow();
-    newRow.innerHTML = `
-        <td><input type="text" placeholder="Nome completo"></td>
-        <td><input type="text" placeholder="Função"></td>
-        <td><input type="text" placeholder="CREA/CAU"></td>
-        <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
-    `;
-}
-
-function addExperienciaRow() {
-    const tbody = document.querySelector('#experienciaTable tbody');
-    const newRow = tbody.insertRow();
-    newRow.innerHTML = `
-        <td><input type="text" placeholder="Descrição da obra"></td>
-        <td><input type="text" placeholder="Nome do cliente"></td>
-        <td><input type="number" placeholder="2024" min="1900" max="2030"></td>
-        <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
-    `;
-}
-
-function addCustoRow() {
-    const tbody = document.querySelector('#custosTable tbody');
-    const nextItem = tbody.rows.length + 1;
-    const newRow = tbody.insertRow();
-    newRow.innerHTML = `
-        <td><input type="text" value="${nextItem}" readonly style="text-align: center;"></td>
-        <td><input type="text" placeholder="Descrição do item/serviço"></td>
-        <td><input type="number" placeholder="1" min="0" step="0.01" onchange="calcularTotal(this)"></td>
-        <td><input type="text" placeholder="R$ 0,00" onblur="formatarValorUnitario(this)" onchange="calcularTotal(this)"></td>
-        <td><input type="text" placeholder="R$ 0,00" readonly style="background: #f8f9fa;"></td>
-        <td><button type="button" class="remove-btn" onclick="removeRowComCalculo(this)">×</button></td>
-    `;
-}
-
-function removeRow(button) {
-    const row = button.closest('tr');
-    const tbody = row.parentElement;
-    
-    // Não remover se for a última linha
-    if (tbody.rows.length > 1) {
-        row.remove();
-    } else {
-        mostrarMensagem('Deve haver pelo menos um item na tabela.', 'error');
-    }
-}
-
-function removeRowComCalculo(button) {
-    const row = button.closest('tr');
-    const tbody = row.parentElement;
-    
-    // Não remover se for a última linha
-    if (tbody.rows.length > 1) {
-        row.remove();
-        // Renumerar itens
-        renumerarItens();
-        // Recalcular total
-        calcularTotalGeral();
-    } else {
-        mostrarMensagem('Deve haver pelo menos um item na planilha.', 'error');
-    }
-}
-
-function renumerarItens() {
-    const tbody = document.querySelector('#custosTable tbody');
-    const rows = tbody.rows;
-    
-    for (let i = 0; i < rows.length; i++) {
-        const itemInput = rows[i].cells[0].querySelector('input');
-        if (itemInput) {
-            itemInput.value = i + 1;
-        }
-    }
-}
-
-// ===== CÁLCULOS E FORMATAÇÃO =====
-function formatarValor(input) {
-    let valor = input.value.replace(/\D/g, '');
-    if (valor === '') {
-        input.value = '';
-        return;
-    }
-    
-    valor = (parseInt(valor) / 100).toFixed(2);
-    input.value = `R$ ${valor.replace('.', ',')}`;
-}
-
-function formatarValorUnitario(input) {
-    formatarValor(input);
-}
-
-function limparValor(valor) {
-    if (!valor) return 0;
-    return parseFloat(valor.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.')) || 0;
-}
-
-function calcularTotal(input) {
-    const row = input.closest('tr');
-    const qtdInput = row.cells[2].querySelector('input');
-    const valorInput = row.cells[3].querySelector('input');
-    const totalInput = row.cells[4].querySelector('input');
-    
-    const qtd = parseFloat(qtdInput.value) || 0;
-    const valorUnit = limparValor(valorInput.value);
-    const total = qtd * valorUnit;
-    
-    totalInput.value = `R$ ${total.toFixed(2).replace('.', ',')}`;
-    
-    calcularTotalGeral();
-}
-
-function calcularTotalGeral() {
-    let total = 0;
-    
-    document.querySelectorAll('#custosTable tbody tr').forEach(row => {
-        const totalCell = row.cells[4].querySelector('input');
-        if (totalCell) {
-            total += limparValor(totalCell.value);
-        }
-    });
-    
-    document.getElementById('totalGeral').textContent = total.toFixed(2).replace('.', ',');
-    
-    // Atualizar valor total da proposta se estiver vazio
-    const valorTotalInput = document.getElementById('valorTotal');
-    if (!valorTotalInput.value || limparValor(valorTotalInput.value) === 0) {
-        valorTotalInput.value = `R$ ${total.toFixed(2).replace('.', ',')}`;
-    }
-}
-
-// ===== COLETA DE DADOS =====
-function coletarDados() {
-    // Função auxiliar para coletar dados de tabela
-    const coletarTabela = (tableId) => {
-        const dados = [];
-        const tbody = document.querySelector(`#${tableId} tbody`);
-        
-        if (tbody) {
-            Array.from(tbody.rows).forEach(row => {
-                const rowData = [];
-                Array.from(row.cells).forEach((cell, index) => {
-                    // Pular a última célula (botão de ação)
-                    if (index < row.cells.length - 1) {
-                        const input = cell.querySelector('input');
-                        if (input) {
-                            rowData.push(input.value);
-                        }
-                    }
-                });
-                
-                // Adicionar apenas se tiver dados válidos
-                if (rowData.some(val => val && val.trim() !== '')) {
-                    dados.push(rowData);
-                }
-            });
+        .processo-info {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
         }
         
-        return dados;
-    };
-
-    return {
-        processo: processoAtual.numero,
-        fornecedor: {
-            id: usuarioAtual.usuarioId,
-            nome: usuarioAtual.nome
-        },
-        dados: {
-            razaoSocial: document.getElementById('razaoSocial').value,
-            cnpj: document.getElementById('cnpj').value,
-            endereco: document.getElementById('endereco').value,
-            cidade: document.getElementById('cidade').value,
-            telefone: document.getElementById('telefone').value,
-            email: document.getElementById('email').value,
-            respTecnico: document.getElementById('respTecnico').value,
-            crea: document.getElementById('crea').value
-        },
-        tecnica: {
-            objetoConcorrencia: document.getElementById('objetoConcorrencia').value,
-            metodologia: document.getElementById('metodologia').value,
-            prazoExecucao: document.getElementById('prazoExecucao').value,
-            garantias: document.getElementById('garantias').value,
-            equipe: coletarTabela('equipeTable'),
-            experiencia: coletarTabela('experienciaTable')
-        },
-        comercial: {
-            valorTotal: document.getElementById('valorTotal').value,
-            validadeProposta: document.getElementById('validadeProposta').value,
-            condicoesPagamento: document.getElementById('condicoesPagamento').value,
-            custos: coletarTabela('custosTable')
+        .processo-info input {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
         }
-    };
-}
+        
+        .processo-info input#objetoProcesso {
+            width: 400px;
+        }
 
-// ===== RESUMO DA PROPOSTA =====
-function gerarResumo() {
-    const dados = coletarDados();
-    
-    let html = `
-        <div class="resumo-section">
-            <h3>📋 Dados da Empresa</h3>
-            <div class="resumo-item">
-                <strong>Razão Social:</strong> ${dados.dados.razaoSocial || 'Não informado'}
+        .progress-container {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            background: #ecf0f1;
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            height: 100%;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active { 
+            background: #3498db; 
+            color: white; 
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active:hover {
+            background: #3498db;
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .form-section.active { 
+            display: block; 
+        }
+
+        .section-title {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row.single { grid-template-columns: 1fr; }
+        .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+
+        .form-group { margin-bottom: 15px; }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 13px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        textarea { resize: vertical; min-height: 70px; }
+
+        .required { color: #e74c3c; }
+
+        .help-text {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+
+        .submit-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .submit-btn, .preview-btn {
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0 8px;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .preview-btn {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .preview-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 126, 34, 0.3);
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #28a745;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #dc3545;
+        }
+
+        .info-message {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .dynamic-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            margin: 10px 0;
+        }
+
+        .dynamic-table th {
+            background: #3498db;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .dynamic-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .dynamic-table input, .dynamic-table select {
+            border: 1px solid #ddd;
+            padding: 5px;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        .add-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin: 8px 0;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #219a52;
+            transform: translateY(-1px);
+        }
+
+        .remove-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .resumo-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .resumo-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .resumo-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .resumo-item:last-child {
+            border-bottom: none;
+        }
+
+        .total-section {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .total-section h2 {
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .form-row, .form-row.triple { grid-template-columns: 1fr; }
+            .tabs { flex-direction: column; }
+            .tab { min-width: auto; }
+            .processo-info input#objetoProcesso { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Portal de Envio de Propostas</h1>
+            <p>Sistema Profissional de Propostas Técnicas e Comerciais</p>
+            <div class="auth-info" id="authInfo"></div>
+        </div>
+
+        <div class="processo-info">
+            <h2>📋 Processo: <input type="text" id="numeroProcesso" readonly></h2>
+            <p><strong>Objeto:</strong> <input type="text" id="objetoProcesso" readonly></p>
+            <p><strong>Prazo para envio:</strong> <input type="text" id="prazoEnvio" readonly></p>
+        </div>
+
+        <div class="progress-container">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span><strong>Progresso:</strong> <span id="progressText">0%</span></span>
+                <span style="font-size: 12px; color: #27ae60;">💾 Auto-save ativo</span>
             </div>
-            <div class="resumo-item">
-                <strong>CNPJ:</strong> ${dados.dados.cnpj || 'Não informado'}
-            </div>
-            <div class="resumo-item">
-                <strong>E-mail:</strong> ${dados.dados.email || 'Não informado'}
-            </div>
-            <div class="resumo-item">
-                <strong>Telefone:</strong> ${dados.dados.telefone || 'Não informado'}
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
             </div>
         </div>
-        
-        <div class="resumo-section">
-            <h3>🔧 Proposta Técnica</h3>
-            <div class="resumo-item">
-                <strong>Prazo de Execução:</strong> ${dados.tecnica.prazoExecucao || 'Não informado'}
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('dados', this)">1. Dados Cadastrais</button>
+            <button class="tab" onclick="showTab('tecnica', this)">2. Proposta Técnica</button>
+            <button class="tab" onclick="showTab('comercial', this)">3. Proposta Comercial</button>
+            <button class="tab" onclick="showTab('revisao', this)">4. Revisão Final</button>
+        </div>
+
+        <!-- SEÇÃO 1: DADOS CADASTRAIS -->
+        <div class="form-section active" id="dados">
+            <div class="section-title">🏢 1. Dados Cadastrais</div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="razaoSocial">Razão Social <span class="required">*</span></label>
+                    <input type="text" id="razaoSocial" required>
+                </div>
+                <div class="form-group">
+                    <label for="cnpj">CNPJ <span class="required">*</span></label>
+                    <input type="text" id="cnpj" required>
+                </div>
             </div>
-            <div class="resumo-item">
-                <strong>Garantias:</strong> ${dados.tecnica.garantias || 'Não informado'}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="endereco">Endereço Completo</label>
+                    <input type="text" id="endereco">
+                </div>
+                <div class="form-group">
+                    <label for="cidade">Cidade/UF</label>
+                    <input type="text" id="cidade">
+                </div>
             </div>
-            <div class="resumo-item">
-                <strong>Equipe Técnica:</strong> ${dados.tecnica.equipe.length} profissional(is)
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="telefone">Telefone</label>
+                    <input type="tel" id="telefone">
+                </div>
+                <div class="form-group">
+                    <label for="email">E-mail <span class="required">*</span></label>
+                    <input type="email" id="email" required>
+                </div>
             </div>
-            <div class="resumo-item">
-                <strong>Experiências Anteriores:</strong> ${dados.tecnica.experiencia.length} obra(s)
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="respTecnico">Responsável Técnico</label>
+                    <input type="text" id="respTecnico">
+                </div>
+                <div class="form-group">
+                    <label for="crea">CREA/CAU</label>
+                    <input type="text" id="crea">
+                </div>
             </div>
         </div>
-        
-        <div class="resumo-section">
-            <h3>💰 Proposta Comercial</h3>
-            <div class="resumo-item">
-                <strong>Valor Total:</strong> ${dados.comercial.valorTotal || 'Não informado'}
+
+        <!-- SEÇÃO 2: PROPOSTA TÉCNICA -->
+        <div class="form-section" id="tecnica">
+            <div class="section-title">📋 2. Proposta Técnica</div>
+
+            <div class="form-group">
+                <label for="objetoConcorrencia">Descrição do Objeto <span class="required">*</span></label>
+                <textarea id="objetoConcorrencia" rows="3" required></textarea>
+                <div class="help-text">Descreva detalhadamente o objeto da licitação</div>
             </div>
-            <div class="resumo-item">
-                <strong>Validade da Proposta:</strong> ${dados.comercial.validadeProposta || 'Não informado'}
+
+            <div class="form-group">
+                <label for="metodologia">Metodologia de Execução <span class="required">*</span></label>
+                <textarea id="metodologia" rows="5" required></textarea>
+                <div class="help-text">Explique como os serviços serão executados</div>
             </div>
-            <div class="resumo-item">
-                <strong>Condições de Pagamento:</strong> ${dados.comercial.condicoesPagamento || 'Não informado'}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="prazoExecucao">Prazo de Execução <span class="required">*</span></label>
+                    <input type="text" id="prazoExecucao" placeholder="Ex: 120 dias corridos" required>
+                </div>
+                <div class="form-group">
+                    <label for="garantias">Garantias Oferecidas</label>
+                    <input type="text" id="garantias" placeholder="Ex: 5 anos para estrutura">
+                </div>
             </div>
-            <div class="resumo-item">
-                <strong>Itens da Planilha:</strong> ${dados.comercial.custos.length} item(ns)
+
+            <div class="section-title">Equipe Técnica</div>
+            <table class="dynamic-table" id="equipeTable">
+                <thead>
+                    <tr>
+                        <th style="width: 35%;">Nome</th>
+                        <th style="width: 35%;">Função</th>
+                        <th style="width: 25%;">CREA/CAU</th>
+                        <th style="width: 5%;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" placeholder="Nome completo"></td>
+                        <td><input type="text" placeholder="Engenheiro Civil"></td>
+                        <td><input type="text" placeholder="CREA-XX XXXXX"></td>
+                        <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="add-btn" onclick="addEquipeRow()">+ Adicionar Membro</button>
+
+            <div class="section-title">Experiência da Empresa</div>
+            <table class="dynamic-table" id="experienciaTable">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Obra/Serviço</th>
+                        <th style="width: 35%;">Cliente</th>
+                        <th style="width: 10%;">Ano</th>
+                        <th style="width: 5%;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" placeholder="Descrição da obra"></td>
+                        <td><input type="text" placeholder="Nome do cliente"></td>
+                        <td><input type="number" placeholder="2024" min="1900" max="2030"></td>
+                        <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="add-btn" onclick="addExperienciaRow()">+ Adicionar Experiência</button>
+        </div>
+
+        <!-- SEÇÃO 3: PROPOSTA COMERCIAL -->
+        <div class="form-section" id="comercial">
+            <div class="section-title">💰 3. Proposta Comercial</div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="valorTotal">Valor Total da Proposta <span class="required">*</span></label>
+                    <input type="text" id="valorTotal" placeholder="R$ 0,00" required onblur="formatarValor(this)">
+                    <div class="help-text">Digite apenas números. Ex: 50000,00</div>
+                </div>
+                <div class="form-group">
+                    <label for="validadeProposta">Validade da Proposta</label>
+                    <input type="text" id="validadeProposta" placeholder="60 dias" value="60 dias">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="condicoesPagamento">Condições de Pagamento</label>
+                <textarea id="condicoesPagamento" rows="3" placeholder="Ex: 30% na assinatura do contrato, 40% na entrega, 30% após aceite final"></textarea>
+            </div>
+
+            <div class="section-title">Planilha de Custos Detalhada</div>
+            <table class="dynamic-table" id="custosTable">
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">Item</th>
+                        <th style="width: 40%;">Descrição</th>
+                        <th style="width: 15%;">Quantidade</th>
+                        <th style="width: 16%;">Valor Unit.</th>
+                        <th style="width: 16%;">Total</th>
+                        <th style="width: 5%;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" value="1" readonly style="text-align: center;"></td>
+                        <td><input type="text" placeholder="Descrição do item/serviço"></td>
+                        <td><input type="number" placeholder="1" min="0" step="0.01" onchange="calcularTotal(this)"></td>
+                        <td><input type="text" placeholder="R$ 0,00" onblur="formatarValorUnitario(this)" onchange="calcularTotal(this)"></td>
+                        <td><input type="text" placeholder="R$ 0,00" readonly style="background: #f8f9fa;"></td>
+                        <td><button type="button" class="remove-btn" onclick="removeRowComCalculo(this)">×</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="add-btn" onclick="addCustoRow()">+ Adicionar Item</button>
+
+            <div style="text-align: right; margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px;">
+                <span style="font-size: 18px; font-weight: bold;">Total Geral: R$ <span id="totalGeral">0,00</span></span>
             </div>
         </div>
-    `;
-    
-    // Verificar se todos os campos obrigatórios estão preenchidos
-    const camposObrigatorios = [
-        dados.dados.razaoSocial,
-        dados.dados.cnpj,
-        dados.dados.email,
-        dados.tecnica.objetoConcorrencia,
-        dados.tecnica.metodologia,
-        dados.tecnica.prazoExecucao,
-        dados.comercial.valorTotal
-    ];
-    
-    const tudoPreenchido = camposObrigatorios.every(campo => campo && campo.trim() !== '');
-    
-    if (tudoPreenchido) {
-        html += `
-            <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;">
-                <strong>✅ Proposta completa e pronta para envio!</strong>
-            </div>
-        `;
-    } else {
-        html += `
-            <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;">
-                <strong>⚠️ Atenção: Alguns campos obrigatórios não foram preenchidos.</strong>
-            </div>
-        `;
-    }
-    
-    document.getElementById('resumoProposta').innerHTML = html;
-}
 
-// ===== ENVIO DA PROPOSTA =====
-async function enviarProposta() {
-    // Validar todos os campos obrigatórios
-    const camposObrigatorios = [
-        { id: 'razaoSocial', nome: 'Razão Social' },
-        { id: 'cnpj', nome: 'CNPJ' },
-        { id: 'email', nome: 'E-mail' },
-        { id: 'objetoConcorrencia', nome: 'Descrição do Objeto' },
-        { id: 'metodologia', nome: 'Metodologia' },
-        { id: 'prazoExecucao', nome: 'Prazo de Execução' },
-        { id: 'valorTotal', nome: 'Valor Total' }
-    ];
-    
-    let tudoPreenchido = true;
-    let camposFaltando = [];
-    
-    for (const campo of camposObrigatorios) {
-        const elemento = document.getElementById(campo.id);
-        if (!elemento || !elemento.value.trim()) {
-            tudoPreenchido = false;
-            camposFaltando.push(campo.nome);
-            if (elemento) {
-                elemento.style.borderColor = '#e74c3c';
-            }
-        }
-    }
-    
-    if (!tudoPreenchido) {
-        mostrarMensagem(`Por favor, preencha os seguintes campos obrigatórios:<br>• ${camposFaltando.join('<br>• ')}`, 'error');
-        return;
-    }
-    
-    // Confirmar envio
-    if (!confirm('Tem certeza que deseja enviar a proposta?\n\nApós o envio, não será possível fazer alterações.')) {
-        return;
-    }
-    
-    // Coletar dados
-    const dados = coletarDados();
-    const protocolo = gerarProtocolo();
-    
-    // Criar objeto da proposta
-    const proposta = {
-        protocolo: protocolo,
-        processo: processoAtual.numero,
-        fornecedor: {
-            id: usuarioAtual.usuarioId,
-            nome: usuarioAtual.nome,
-            empresa: dados.dados.razaoSocial,
-            cnpj: dados.dados.cnpj,
-            email: dados.dados.email
-        },
-        dados: dados,
-        dataEnvio: new Date().toISOString(),
-        status: 'enviada',
-        valorTotal: dados.comercial.valorTotal,
-        prazoExecucao: dados.tecnica.prazoExecucao
-    };
-    
-    mostrarMensagem('<span class="loading"></span> Enviando proposta...', 'info');
-    
-    try {
-        // Salvar proposta no localStorage
-        const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
-        propostas.push(proposta);
-        localStorage.setItem('propostas', JSON.stringify(propostas));
-        
-        // Atualizar contador de propostas do processo
-        const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-        const processoIndex = processos.findIndex(p => p.numero === processoAtual.numero);
-        
-        if (processoIndex !== -1) {
-            processos[processoIndex].propostas = (processos[processoIndex].propostas || 0) + 1;
-            localStorage.setItem('processos', JSON.stringify(processos));
-        }
-        
-        // Criar notificação para o comprador
-        if (window.SistemaNotificacoes && processoAtual.criadoPor) {
-            SistemaNotificacoes.notificarPropostaRecebida(proposta, processoAtual.criadoPor);
-        }
-        
-        // Registrar atividade no log do Auth
-        if (window.Auth && Auth.registrarLog) {
-            Auth.registrarLog(usuarioAtual.usuarioId, 'envio_proposta', {
-                protocolo: protocolo,
-                processo: processoAtual.numero,
-                valor: dados.comercial.valorTotal
-            });
-        }
-        
-        // Tentar enviar para API (se disponível)
-        try {
-            const response = await fetch(`${API_URL}/api/enviar-proposta`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(proposta)
-            });
+        <!-- SEÇÃO 4: REVISÃO -->
+        <div class="form-section" id="revisao">
+            <div class="section-title">📋 4. Revisão Final da Proposta</div>
             
-            if (response.ok) {
-                console.log('Proposta enviada para servidor com sucesso');
-            }
-        } catch (error) {
-            console.log('Servidor offline, mas proposta salva localmente:', error);
-        }
-        
-        // Limpar rascunho
-        localStorage.removeItem(`proposta_rascunho_${usuarioAtual.usuarioId}_${processoAtual.numero}`);
-        
-        // Mostrar mensagem de sucesso
-        mostrarMensagem(`
-            <div style="text-align: center;">
-                <h3 style="color: #155724; margin-bottom: 15px;">✅ Proposta Enviada com Sucesso!</h3>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                    <p><strong>Protocolo:</strong> ${protocolo}</p>
-                    <p><strong>Data/Hora:</strong> ${new Date().toLocaleString('pt-BR')}</p>
-                    <p><strong>Valor:</strong> ${dados.comercial.valorTotal}</p>
-                </div>
-                <p style="margin-top: 15px;">Um e-mail de confirmação será enviado para ${dados.dados.email}</p>
+            <div id="resumoProposta">
+                <!-- Conteúdo será gerado dinamicamente -->
             </div>
-        `, 'success');
-        
-        // Adicionar botões de ação após 2 segundos
-        setTimeout(() => {
-            const mensagemDiv = document.getElementById('mensagem');
-            mensagemDiv.innerHTML += `
-                <div style="margin-top: 20px; text-align: center;">
-                    <button onclick="window.location.href='dashboard-fornecedor.html'" 
-                            style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600; margin-right: 10px;">
-                        🏠 Voltar ao Dashboard
-                    </button>
-                    <button onclick="window.print()" 
-                            style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600;">
-                        🖨️ Imprimir Comprovante
-                    </button>
-                </div>
-            `;
-        }, 2000);
-        
-    } catch (error) {
-        console.error('Erro ao enviar proposta:', error);
-        mostrarMensagem('Erro ao enviar proposta. Por favor, tente novamente.', 'error');
-    }
-}
+            
+            <div class="total-section">
+                <h2>Confirme o envio da sua proposta</h2>
+                <p>Após o envio, a proposta não poderá ser alterada.</p>
+            </div>
+        </div>
 
-function gerarProtocolo() {
-    const data = new Date();
-    const ano = data.getFullYear();
-    const mes = String(data.getMonth() + 1).padStart(2, '0');
-    const dia = String(data.getDate()).padStart(2, '0');
-    const hora = String(data.getHours()).padStart(2, '0');
-    const minuto = String(data.getMinutes()).padStart(2, '0');
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    
-    return `PROP-${ano}${mes}${dia}-${hora}${minuto}-${random}`;
-}
+        <div class="submit-section">
+            <button type="button" class="preview-btn" onclick="gerarPreview()">👁️ Visualizar PDF</button>
+            <button type="button" class="submit-btn" onclick="enviarProposta()">🚀 Enviar Proposta</button>
+            
+            <div id="mensagem" style="margin-top: 20px; display: none;"></div>
+        </div>
+    </div>
 
-// ===== PREVIEW =====
-function gerarPreview() {
-    const dados = coletarDados();
-    const protocolo = 'PREVIEW-' + Date.now();
-    
-    const preview = window.open('', '_blank');
-    preview.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Preview - Proposta ${protocolo}</title>
-            <style>
-                body { 
-                    font-family: Arial, sans-serif; 
-                    margin: 40px; 
-                    color: #333;
-                }
-                h1, h2, h3 { color: #2c3e50; }
-                table { 
-                    width: 100%; 
-                    border-collapse: collapse; 
-                    margin: 20px 0; 
-                }
-                th, td { 
-                    border: 1px solid #ddd; 
-                    padding: 8px; 
-                    text-align: left; 
-                }
-                th { 
-                    background: #3498db; 
-                    color: white; 
-                }
-                .section { 
-                    margin: 30px 0; 
-                    page-break-inside: avoid; 
-                }
-                .header { 
-                    text-align: center; 
-                    margin-bottom: 40px; 
-                    border-bottom: 2px solid #3498db;
-                    padding-bottom: 20px;
-                }
-                .footer { 
-                    text-align: center; 
-                    margin-top: 60px; 
-                    padding-top: 20px;
-                    border-top: 1px solid #ddd;
-                }
-                .info-box {
-                    background: #f8f9fa;
-                    padding: 15px;
-                    border-radius: 5px;
-                    margin: 10px 0;
-                }
-                @media print {
-                    .no-print { display: none; }
-                    body { margin: 20px; }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>PROPOSTA TÉCNICA E COMERCIAL</h1>
-                <div class="info-box">
-                    <p><strong>Processo:</strong> ${processoAtual.numero}</p>
-                    <p><strong>Objeto:</strong> ${processoAtual.objeto}</p>
-                    <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2>1. DADOS DA EMPRESA</h2>
-                <div class="info-box">
-                    <p><strong>Razão Social:</strong> ${dados.dados.razaoSocial}</p>
-                    <p><strong>CNPJ:</strong> ${dados.dados.cnpj}</p>
-                    <p><strong>Endereço:</strong> ${dados.dados.endereco}</p>
-                    <p><strong>Cidade:</strong> ${dados.dados.cidade}</p>
-                    <p><strong>Telefone:</strong> ${dados.dados.telefone}</p>
-                    <p><strong>E-mail:</strong> ${dados.dados.email}</p>
-                    <p><strong>Responsável Técnico:</strong> ${dados.dados.respTecnico} - ${dados.dados.crea}</p>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2>2. PROPOSTA TÉCNICA</h2>
-                <h3>2.1. Objeto</h3>
-                <p>${dados.tecnica.objetoConcorrencia}</p>
-                
-                <h3>2.2. Metodologia de Execução</h3>
-                <p>${dados.tecnica.metodologia.replace(/\n/g, '<br>')}</p>
-                
-                <h3>2.3. Prazo de Execução</h3>
-                <p>${dados.tecnica.prazoExecucao}</p>
-                
-                <h3>2.4. Garantias</h3>
-                <p>${dados.tecnica.garantias || 'Conforme edital'}</p>
-                
-                ${dados.tecnica.equipe.length > 0 ? `
-                    <h3>2.5. Equipe Técnica</h3>
-                    <table>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Função</th>
-                            <th>Registro</th>
-                        </tr>
-                        ${dados.tecnica.equipe.map(membro => `
-                            <tr>
-                                <td>${membro[0]}</td>
-                                <td>${membro[1]}</td>
-                                <td>${membro[2]}</td>
-                            </tr>
-                        `).join('')}
-                    </table>
-                ` : ''}
-                
-                ${dados.tecnica.experiencia.length > 0 ? `
-                    <h3>2.6. Experiência da Empresa</h3>
-                    <table>
-                        <tr>
-                            <th>Obra/Serviço</th>
-                            <th>Cliente</th>
-                            <th>Ano</th>
-                        </tr>
-                        ${dados.tecnica.experiencia.map(exp => `
-                            <tr>
-                                <td>${exp[0]}</td>
-                                <td>${exp[1]}</td>
-                                <td>${exp[2]}</td>
-                            </tr>
-                        `).join('')}
-                    </table>
-                ` : ''}
-            </div>
-            
-            <div class="section">
-                <h2>3. PROPOSTA COMERCIAL</h2>
-                
-                <div class="info-box" style="background: #e8f5e9;">
-                    <h3 style="margin: 0 0 10px 0;">Valor Total da Proposta</h3>
-                    <p style="font-size: 24px; font-weight: bold; margin: 0; color: #27ae60;">
-                        ${dados.comercial.valorTotal}
-                    </p>
-                </div>
-                
-                <p><strong>Validade da Proposta:</strong> ${dados.comercial.validadeProposta}</p>
-                
-                <h3>3.1. Condições de Pagamento</h3>
-                <p>${dados.comercial.condicoesPagamento || 'Conforme edital'}</p>
-                
-                ${dados.comercial.custos.length > 0 ? `
-                    <h3>3.2. Planilha de Custos</h3>
-                    <table>
-                        <tr>
-                            <th>Item</th>
-                            <th>Descrição</th>
-                            <th>Qtd</th>
-                            <th>Valor Unit.</th>
-                            <th>Total</th>
-                        </tr>
-                        ${dados.comercial.custos.map(item => `
-                            <tr>
-                                <td>${item[0]}</td>
-                                <td>${item[1]}</td>
-                                <td>${item[2]}</td>
-                                <td>${item[3]}</td>
-                                <td>${item[4]}</td>
-                            </tr>
-                        `).join('')}
-                    </table>
-                ` : ''}
-            </div>
-            
-            <div class="footer">
-                <p>_______________________________________</p>
-                <p><strong>${dados.dados.razaoSocial}</strong></p>
-                <p>CNPJ: ${dados.dados.cnpj}</p>
-                <p>${dados.dados.respTecnico} - ${dados.dados.crea}</p>
-            </div>
-            
-            <div class="no-print" style="text-align: center; margin-top: 40px;">
-                <button onclick="window.print()" 
-                        style="padding: 10px 20px; font-size: 16px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    🖨️ Imprimir
-                </button>
-                <button onclick="window.close()" 
-                        style="padding: 10px 20px; font-size: 16px; margin-left: 10px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    ❌ Fechar
-                </button>
-            </div>
-        </body>
-        </html>
-    `);
-}
-
-// ===== AUTO-SAVE E RASCUNHO =====
-function iniciarAutoSave() {
-    setInterval(() => {
-        if (usuarioAtual && processoAtual) {
-            const dados = coletarDados();
-            const rascunhoKey = `proposta_rascunho_${usuarioAtual.usuarioId}_${processoAtual.numero}`;
-            localStorage.setItem(rascunhoKey, JSON.stringify(dados));
-            console.log('Rascunho salvo automaticamente');
-        }
-    }, 30000); // Salvar a cada 30 segundos
-}
-
-function verificarRascunho() {
-    if (!usuarioAtual || !processoAtual) return;
-    
-    const rascunhoKey = `proposta_rascunho_${usuarioAtual.usuarioId}_${processoAtual.numero}`;
-    const rascunho = localStorage.getItem(rascunhoKey);
-    
-    if (rascunho) {
-        if (confirm('Foi encontrado um rascunho salvo desta proposta.\n\nDeseja recuperá-lo?')) {
-            try {
-                carregarRascunho(JSON.parse(rascunho));
-                mostrarMensagem('✅ Rasc
+    <script src="portal-propostas-scripts.js"></script>
+</body>
+</html>
