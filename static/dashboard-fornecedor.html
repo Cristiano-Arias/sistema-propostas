@@ -385,6 +385,87 @@
             transform: scale(1.2);
         }
 
+        /* Estilos para TR completo */
+        .modal-tr {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-tr-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 1200px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: modalFadeIn 0.3s;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-tr-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-tr-header h2 {
+            margin: 0;
+            color: white;
+        }
+
+        .modal-tr-body {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .tr-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .tr-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .tr-field {
+            margin-bottom: 15px;
+        }
+
+        .tr-field-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .tr-field-value {
+            color: #212529;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
         /* Estilos para cadastro de empresa */
         .form-group {
             margin-bottom: 20px;
@@ -615,8 +696,8 @@
                 <div class="info-panel">
                     <h4>ℹ️ Como Participar</h4>
                     <p>1. Navegue pelos processos disponíveis abaixo</p>
-                    <p>2. Clique em "Portal de Proposta" para enviar sua proposta</p>
-                    <p>3. Preencha todos os dados solicitados no portal completo</p>
+                    <p>2. Clique em "Ver Detalhes" para visualizar o Termo de Referência completo</p>
+                    <p>3. Após análise do TR, clique em "Portal de Proposta" para enviar sua proposta</p>
                     <p>4. Acompanhe o status através do menu "Minhas Propostas"</p>
                 </div>
 
@@ -741,6 +822,19 @@
         </div>
     </div>
 
+    <!-- Modal para visualização completa do TR -->
+    <div id="modalVisualizarTR" class="modal-tr">
+        <div class="modal-tr-content">
+            <div class="modal-tr-header">
+                <h2 id="modalTRTitulo">Visualizar Termo de Referência Completo</h2>
+                <span class="close" onclick="fecharModalTR()">&times;</span>
+            </div>
+            <div class="modal-tr-body" id="modalTRConteudo">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // Estado da aplicação
         let currentUser = null;
@@ -850,31 +944,50 @@
             }
         }
 
-        // Função para buscar TR vinculado ao processo
-        function buscarTermoReferencia(numeroProcesso) {
+        // Buscar TR completo do sistema
+        function buscarTermoReferenciaCompleto(trId) {
             // Buscar TR no localStorage
-            const termosReferencia = JSON.parse(localStorage.getItem('termosReferencia') || '[]');
+            const termosReferencia = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
             
-            // Procurar TR vinculado a este processo
-            const trVinculado = termosReferencia.find(tr => 
-                tr.processoVinculado === numeroProcesso || 
-                tr.processo === numeroProcesso
-            );
+            // Procurar TR pelo ID
+            const tr = termosReferencia.find(t => t.id === trId);
             
-            if (trVinculado) {
-                // Retornar o TR formatado
+            if (tr) {
+                // Retornar o TR completo com todos os campos
                 return {
-                    objeto: trVinculado.objeto || trVinculado.titulo || '',
-                    justificativa: trVinculado.justificativa || '',
-                    escopo: trVinculado.escopo || trVinculado.descricao || '',
-                    requisitos: trVinculado.requisitos || trVinculado.requisitosTecnicos || '',
-                    qualificacao: trVinculado.qualificacao || trVinculado.qualificacaoTecnica || '',
-                    obrigacoes: trVinculado.obrigacoes || trVinculado.obrigacoesContratada || '',
-                    prazoExecucao: trVinculado.prazoExecucao || trVinculado.prazo || '',
-                    formaPagamento: trVinculado.formaPagamento || trVinculado.pagamento || '',
-                    garantia: trVinculado.garantia || '',
-                    penalidades: trVinculado.penalidades || trVinculado.sancoes || '',
-                    disposicoesGerais: trVinculado.disposicoesGerais || trVinculado.observacoes || ''
+                    ...tr,
+                    // Garantir que todos os campos estejam disponíveis
+                    titulo: tr.titulo || '',
+                    modalidade: tr.modalidade || '',
+                    objetivo: tr.objetivo || '',
+                    conformidade: tr.conformidade || '',
+                    visitaLocal: tr.visitaLocal || '',
+                    localAcesso: tr.localAcesso || '',
+                    escopoTecnico: tr.escopoTecnico || '',
+                    situacaoAtual: tr.situacaoAtual || '',
+                    situacaoProposta: tr.situacaoProposta || '',
+                    especificacaoTecnica: tr.especificacaoTecnica || tr.especificacoes || '',
+                    premissas: tr.premissas || '',
+                    planilhaQuantidade: tr.planilhaQuantidade || '',
+                    tabelaServicos: tr.tabelaServicos || [],
+                    escopoGeral: tr.escopoGeral || '',
+                    prazos: tr.prazos || tr.prazo_execucao || '',
+                    matrizResponsabilidade: tr.matrizResponsabilidade || [],
+                    segurancaTrabalho: tr.segurancaTrabalho || '',
+                    canteiro: tr.canteiro || '',
+                    credenciamento: tr.credenciamento || '',
+                    meioAmbiente: tr.meioAmbiente || '',
+                    engenharia: tr.engenharia || '',
+                    aquisicoes: tr.aquisicoes || '',
+                    gestaoContratos: tr.gestaoContratos || '',
+                    planejamentoExecutivo: tr.planejamentoExecutivo || '',
+                    testes: tr.testes || '',
+                    encerramentoObra: tr.encerramentoObra || '',
+                    cap: tr.cap || '',
+                    caf: tr.caf || '',
+                    garantia: tr.garantia || '',
+                    criteriosAvaliacao: tr.criteriosAvaliacao || '',
+                    anexos: tr.anexos || ''
                 };
             }
             
@@ -898,13 +1011,12 @@
                     new Date(p.prazo) > new Date()
                 );
                 
-                // Para cada processo, verificar se tem TR vinculado
+                // Para cada processo, buscar TR completo
                 processos = processos.map(processo => {
-                    // Se não tiver TR no processo, buscar TR vinculado
-                    if (!processo.termoReferencia) {
-                        const trVinculado = buscarTermoReferencia(processo.numero);
-                        if (trVinculado) {
-                            processo.termoReferencia = trVinculado;
+                    if (processo.trId) {
+                        const trCompleto = buscarTermoReferenciaCompleto(processo.trId);
+                        if (trCompleto) {
+                            processo.termoReferencia = trCompleto;
                         }
                     }
                     return processo;
@@ -939,6 +1051,11 @@
                             <button class="btn btn-info" onclick="verDetalhesProcesso('${processo.numero}')">
                                 👁️ Ver Detalhes
                             </button>
+                            ${processo.termoReferencia ? `
+                                <button class="btn btn-warning" onclick="visualizarTRCompleto('${processo.numero}')">
+                                    📄 Ver TR Completo
+                                </button>
+                            ` : ''}
                             <button class="btn btn-primary" onclick="abrirPortalProposta('${processo.numero}')">
                                 📤 Portal de Proposta
                             </button>
@@ -955,14 +1072,6 @@
         function verDetalhesProcesso(numeroProcesso) {
             const processo = processos.find(p => p.numero === numeroProcesso);
             if (!processo) return;
-            
-            // Verificar se tem TR vinculado
-            if (!processo.termoReferencia) {
-                const trVinculado = buscarTermoReferencia(processo.numero);
-                if (trVinculado) {
-                    processo.termoReferencia = trVinculado;
-                }
-            }
             
             const modalBody = document.getElementById('modalProcessoBody');
             modalBody.innerHTML = `
@@ -1003,27 +1112,27 @@
                         <h4 style="margin-top: 20px;">📋 Termo de Referência Vinculado</h4>
                         <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 20px; border-radius: 8px; margin: 15px 0;">
                             <p style="color: #1976d2; margin: 0;">
-                                <strong>${processo.termoReferencia.titulo || 'Contratação Infraestrutura para Cercamento Perimetral'}</strong>
+                                <strong>${processo.termoReferencia.titulo}</strong>
                             </p>
                             <p style="color: #0d47a1; margin: 10px 0 0 0; font-size: 14px;">
-                                ✅ TR Aprovado em ${processo.termoReferencia.dataAprovacao || '23/07/2025'}<br>
-                                👤 Criado por: ${processo.termoReferencia.criadoPor || 'Carlos Oliveira'}
+                                ✅ TR Aprovado em ${new Date(processo.dataAprovacaoTR).toLocaleDateString('pt-BR')}<br>
+                                👤 Criado por: ${processo.termoReferencia.criadorNome || 'Requisitante'}
                             </p>
                         </div>
                         <p style="color: #6c757d; font-size: 14px; margin-top: 10px;">
-                            ℹ️ Para visualizar o conteúdo completo do Termo de Referência, utilize os botões abaixo.
+                            ℹ️ Clique em "Ver TR Completo" para analisar todos os detalhes antes de enviar sua proposta.
                         </p>
                     ` : '<p style="margin-top: 20px; color: #6c757d;">Termo de Referência não disponível</p>'}
                 </div>
                 <div style="text-align: center; margin-top: 20px;">
                     ${processo.termoReferencia ? `
-                        <button class="btn btn-secondary" onclick="visualizarTR('${processo.numero}')">
-                            👁️ Visualizar TR em Nova Aba
-                        </button>
-                        <button class="btn btn-info" onclick="baixarTR('${processo.numero}')">
-                            📥 Baixar TR (Word)
+                        <button class="btn btn-warning" onclick="visualizarTRCompleto('${processo.numero}'); closeModal('modalProcesso');">
+                            📄 Ver TR Completo
                         </button>
                     ` : ''}
+                    <button class="btn btn-info" onclick="baixarTR('${processo.numero}')">
+                        📥 Baixar TR (Word)
+                    </button>
                     <button class="btn btn-primary" onclick="abrirPortalProposta('${processo.numero}'); closeModal('modalProcesso');">
                         📤 Ir para Portal de Proposta
                     </button>
@@ -1033,16 +1142,290 @@
             document.getElementById('modalProcesso').style.display = 'block';
         }
 
-        // Abrir portal de proposta - NOVA IMPLEMENTAÇÃO
+        // Visualizar TR completo
+        function visualizarTRCompleto(numeroProcesso) {
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            if (!processo || !processo.termoReferencia) {
+                alert('Termo de Referência não disponível!');
+                return;
+            }
+
+            const tr = processo.termoReferencia;
+
+            // Preencher o modal
+            document.getElementById('modalTRTitulo').textContent = tr.titulo;
+            
+            const conteudo = `
+                <!-- Informações Básicas -->
+                <div class="tr-section">
+                    <h4>📋 Informações Básicas</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Modalidade:</span>
+                        <span class="tr-field-value">${tr.modalidade || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Objetivo:</span>
+                        <span class="tr-field-value">${tr.objetivo || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Conformidade:</span>
+                        <span class="tr-field-value">${tr.conformidade || 'Não especificada'}</span>
+                    </div>
+                </div>
+
+                <!-- Local e Acesso -->
+                <div class="tr-section">
+                    <h4>📍 Local e Acesso</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Visita ao Local:</span>
+                        <span class="tr-field-value">${tr.visitaLocal || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Local/Acesso:</span>
+                        <span class="tr-field-value">${tr.localAcesso || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Escopo Técnico -->
+                <div class="tr-section">
+                    <h4>🔧 Escopo Técnico</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Escopo Técnico:</span>
+                        <span class="tr-field-value">${tr.escopoTecnico || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Situação Atual:</span>
+                        <span class="tr-field-value">${tr.situacaoAtual || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Situação Proposta:</span>
+                        <span class="tr-field-value">${tr.situacaoProposta || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Especificação Técnica:</span>
+                        <span class="tr-field-value">${tr.especificacaoTecnica || 'Não especificada'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Premissas, Requisitos e Restrições:</span>
+                        <span class="tr-field-value">${tr.premissas || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Planilha de Quantidade:</span>
+                        <span class="tr-field-value">${tr.planilhaQuantidade || 'Não especificada'}</span>
+                    </div>
+                    ${tr.tabelaServicos && tr.tabelaServicos.length > 0 ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Tabela de Serviços:</span>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #667eea; color: white;">
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Item</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Descrição</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Unidade</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.tabelaServicos.map(servico => `
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.item}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.descricao}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.unidade}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${servico.quantidade}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : ''}
+                    <div class="tr-field">
+                        <span class="tr-field-label">Escopo Geral:</span>
+                        <span class="tr-field-value">${tr.escopoGeral || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Prazos e Responsabilidades -->
+                <div class="tr-section">
+                    <h4>⏰ Prazos e Responsabilidades</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Prazos:</span>
+                        <span class="tr-field-value">${tr.prazos || 'Não especificado'}</span>
+                    </div>
+                    ${tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0 ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Matriz de Responsabilidade:</span>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #764ba2; color: white;">
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Atividade</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">Responsável</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.matrizResponsabilidade.map(item => `
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">${item.atividade}</td>
+                                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                                ${item.responsavel === 'contratada' ? '✅ Contratada' : 
+                                                  item.responsavel === 'contratante' ? '✅ Contratante' : 
+                                                  '❌ N/A'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Mobilização e Segurança -->
+                <div class="tr-section">
+                    <h4>🦺 Mobilização e Segurança</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Segurança e Saúde do Trabalho:</span>
+                        <span class="tr-field-value">${tr.segurancaTrabalho || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Canteiro de Obras e Infraestrutura:</span>
+                        <span class="tr-field-value">${tr.canteiro || 'Não especificado'}</span>
+                    </div>
+                    ${tr.credenciamento ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Credenciamento Aeroportuário:</span>
+                            <span class="tr-field-value">${tr.credenciamento}</span>
+                        </div>
+                    ` : ''}
+                    <div class="tr-field">
+                        <span class="tr-field-label">Meio Ambiente:</span>
+                        <span class="tr-field-value">${tr.meioAmbiente || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Gestão e Planejamento -->
+                <div class="tr-section">
+                    <h4>📊 Gestão e Planejamento</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Engenharia:</span>
+                        <span class="tr-field-value">${tr.engenharia || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Aquisições:</span>
+                        <span class="tr-field-value">${tr.aquisicoes || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Planejamento/Gestão de Contratos:</span>
+                        <span class="tr-field-value">${tr.gestaoContratos || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Planejamento Executivo:</span>
+                        <span class="tr-field-value">${tr.planejamentoExecutivo || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Testes e Encerramento -->
+                <div class="tr-section">
+                    <h4>✅ Testes e Encerramento</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Testes, Comissionamento, Treinamento:</span>
+                        <span class="tr-field-value">${tr.testes || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Ao Encerramento da Obra:</span>
+                        <span class="tr-field-value">${tr.encerramentoObra || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Certificado de Aceitação Provisória (CAP):</span>
+                        <span class="tr-field-value">${tr.cap || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Certificado de Aceitação Final (CAF):</span>
+                        <span class="tr-field-value">${tr.caf || 'Não especificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Garantia:</span>
+                        <span class="tr-field-value">${tr.garantia || 'Não especificado'}</span>
+                    </div>
+                </div>
+
+                <!-- Critérios de Avaliação -->
+                <div class="tr-section">
+                    <h4>📊 Critérios de Avaliação</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Critérios de Avaliação de Propostas:</span>
+                        <span class="tr-field-value">${tr.criteriosAvaliacao || 'Não especificados'}</span>
+                    </div>
+                    ${tr.anexos ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Anexos:</span>
+                            <span class="tr-field-value">${tr.anexos}</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Metadados -->
+                <div class="tr-section" style="background: #e3f2fd; border-left-color: #2196f3;">
+                    <h4>ℹ️ Informações do Documento</h4>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Criado por:</span>
+                        <span class="tr-field-value">${tr.criadorNome || 'Não identificado'}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Data de Criação:</span>
+                        <span class="tr-field-value">${new Date(tr.criado_em || tr.dataCriacao).toLocaleString('pt-BR')}</span>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Status:</span>
+                        <span class="tr-field-value">${tr.status || 'Ativo'}</span>
+                    </div>
+                </div>
+
+                <div class="btn-group" style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
+                    <button class="btn btn-info" onclick="baixarTR('${processo.numero}')">
+                        📥 Baixar TR (Word)
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.print()">
+                        🖨️ Imprimir
+                    </button>
+                    <button class="btn btn-primary" onclick="abrirPortalProposta('${processo.numero}'); fecharModalTR();">
+                        📤 Ir para Portal de Proposta
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('modalTRConteudo').innerHTML = conteudo;
+            document.getElementById('modalVisualizarTR').style.display = 'block';
+        }
+
+        // Fechar modal TR
+        function fecharModalTR() {
+            document.getElementById('modalVisualizarTR').style.display = 'none';
+        }
+
+        // Abrir portal de proposta
         function abrirPortalProposta(processoNumero) {
-            // Salvar dados da empresa antes de redirecionar
+            // Verificar se os dados da empresa estão completos
             const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
             const empresaData = localStorage.getItem(empresaKey);
             
             if (!empresaData) {
-                if (confirm('Você precisa completar seu cadastro antes de enviar propostas. Deseja fazer isso agora?')) {
+                if (confirm('⚠️ Você precisa completar seu cadastro antes de enviar propostas. Deseja fazer isso agora?')) {
                     showPage('empresa');
                 }
+                return;
+            }
+            
+            // Verificar se os dados mínimos estão preenchidos
+            try {
+                const dados = JSON.parse(empresaData);
+                if (!dados.cnpj || !dados.razaoSocial || !dados.email || !dados.telefone) {
+                    if (confirm('⚠️ Alguns dados obrigatórios estão faltando em seu cadastro. Deseja completar agora?')) {
+                        showPage('empresa');
+                    }
+                    return;
+                }
+            } catch (error) {
+                console.error('Erro ao verificar dados da empresa:', error);
+                showPage('empresa');
                 return;
             }
             
@@ -1058,7 +1441,7 @@
             // Buscar propostas do localStorage
             const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
             const minhasPropostas = propostasData.filter(p => 
-                p.dados && p.dados.fornecedorId === currentUser.usuarioId
+                p.fornecedorId === currentUser.usuarioId
             );
             
             if (minhasPropostas.length === 0) {
@@ -1078,7 +1461,7 @@
                     <div class="process-info">
                         <span><strong>Processo:</strong> ${proposta.processo}</span>
                         <span><strong>Data de Envio:</strong> ${formatarData(proposta.dataEnvio || proposta.data)}</span>
-                        <span><strong>Valor Total:</strong> R$ ${proposta.comercial?.valorTotal || '0,00'}</span>
+                        <span><strong>Valor Total:</strong> ${proposta.valor || 'Não informado'}</span>
                         <span><strong>Status:</strong> <span class="status-badge status-${proposta.status || 'enviada'}">${getStatusLabel(proposta.status)}</span></span>
                     </div>
                     <div style="margin-top: 10px;">
@@ -1116,43 +1499,26 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Valor Total</div>
-                            <div class="detail-value">R$ ${proposta.comercial?.valorTotal || '0,00'}</div>
+                            <div class="detail-value">${proposta.valor || 'Não informado'}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Prazo de Execução</div>
-                            <div class="detail-value">${proposta.tecnica?.prazoExecucao || 'Não informado'}</div>
+                            <div class="detail-value">${proposta.prazo || 'Não informado'} dias</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Validade da Proposta</div>
-                            <div class="detail-value">${proposta.comercial?.validadeProposta || '60 dias'}</div>
+                            <div class="detail-value">60 dias</div>
                         </div>
                     </div>
                     
-                    ${proposta.tecnica?.metodologia ? `
+                    ${proposta.metodologia ? `
                         <h4 style="margin-top: 20px;">Metodologia</h4>
-                        <p>${proposta.tecnica.metodologia}</p>
+                        <p>${proposta.metodologia}</p>
                     ` : ''}
                     
-                    ${proposta.comercial?.bdi ? `
-                        <h4 style="margin-top: 20px;">Composição de Preços</h4>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <div class="detail-label">Mão de Obra</div>
-                                <div class="detail-value">R$ ${proposta.comercial.totalMaoObra || '0,00'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Materiais</div>
-                                <div class="detail-value">R$ ${proposta.comercial.totalMateriais || '0,00'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Equipamentos</div>
-                                <div class="detail-value">R$ ${proposta.comercial.totalEquipamentos || '0,00'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">BDI (${proposta.comercial.bdiPercentual}%)</div>
-                                <div class="detail-value">R$ ${proposta.comercial.bdiValor || '0,00'}</div>
-                            </div>
-                        </div>
+                    ${proposta.observacoes ? `
+                        <h4 style="margin-top: 20px;">Observações</h4>
+                        <p>${proposta.observacoes}</p>
                     ` : ''}
                 </div>
             `;
@@ -1202,7 +1568,7 @@
             }
         }
 
-        // Salvar dados da empresa
+        // Salvar dados da empresa - CORRIGIDO PARA GARANTIR SALVAMENTO
         function salvarEmpresa() {
             if (!currentUser || !currentUser.usuarioId) {
                 console.error('Usuário não autenticado');
@@ -1221,19 +1587,32 @@
                 cidade: document.getElementById('cidade').value.trim(),
                 respTecnico: document.getElementById('respTecnico').value.trim(),
                 crea: document.getElementById('crea').value.trim(),
-                areaAtuacao: document.getElementById('areaAtuacao').value
+                areaAtuacao: document.getElementById('areaAtuacao').value,
+                // Adicionar ID do usuário para garantir rastreabilidade
+                fornecedorId: currentUser.usuarioId,
+                ultimaAtualizacao: new Date().toISOString()
             };
             
             // Validações básicas
             if (!data.cnpj || !data.razaoSocial || !data.email || !data.telefone) {
-                alert('Por favor, preencha os campos obrigatórios: CNPJ, Razão Social, E-mail e Telefone.');
+                alert('⚠️ Por favor, preencha os campos obrigatórios: CNPJ, Razão Social, E-mail e Telefone.');
+                return;
+            }
+            
+            // Validar formato de email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(data.email)) {
+                alert('⚠️ Por favor, insira um e-mail válido.');
                 return;
             }
             
             try {
-                // Salvar no localStorage
+                // Salvar no localStorage com chave específica do fornecedor
                 const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
                 localStorage.setItem(empresaKey, JSON.stringify(data));
+                
+                // IMPORTANTE: Também salvar uma cópia com chave genérica para compatibilidade
+                localStorage.setItem('fornecedorData', JSON.stringify(data));
                 
                 // Atualizar dados do usuário também
                 const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
@@ -1242,6 +1621,8 @@
                 if (userIndex !== -1) {
                     usuarios[userIndex].empresa = data.nomeFantasia || data.razaoSocial;
                     usuarios[userIndex].cnpj = data.cnpj;
+                    usuarios[userIndex].email = data.email; // Atualizar email também
+                    usuarios[userIndex].telefone = data.telefone; // Atualizar telefone
                     localStorage.setItem('usuarios', JSON.stringify(usuarios));
                 }
                 
@@ -1250,10 +1631,14 @@
                     document.getElementById('fornecedorNome').textContent = data.nomeFantasia;
                 }
                 
-                alert('✅ Dados salvos com sucesso!');
+                alert('✅ Dados salvos com sucesso! Agora você pode enviar propostas.');
                 
                 // Recarregar dados para confirmar
                 loadEmpresaData();
+                
+                // Verificar se salvou corretamente
+                console.log('Dados salvos:', data);
+                console.log('Verificação de salvamento:', localStorage.getItem(empresaKey));
                 
             } catch (error) {
                 console.error('Erro ao salvar dados:', error);
@@ -1291,7 +1676,7 @@
                 'aprovada': 'Aprovada',
                 'reprovada': 'Reprovada'
             };
-            return labels[status] || status;
+            return labels[status] || status || 'Enviada';
         }
 
         function formatCNPJ(input) {
@@ -1348,73 +1733,22 @@
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
             }
+            if (event.target.classList.contains('modal-tr')) {
+                event.target.style.display = 'none';
+            }
         }
         
-        // Visualizar TR em nova aba
-        function visualizarTR(numeroProcesso) {
-            const processo = processos.find(p => p.numero === numeroProcesso);
-            if (!processo || !processo.termoReferencia) return;
-            
-            const tr = processo.termoReferencia;
-            const novaJanela = window.open('', '_blank');
-            
-            novaJanela.document.write(`
-                <!DOCTYPE html>
-                <html lang="pt-BR">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Termo de Referência - ${processo.numero}</title>
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            margin: 40px;
-                            line-height: 1.6;
-                        }
-                        h1, h2 { color: #2c3e50; }
-                        h1 { text-align: center; }
-                        .section { margin: 30px 0; }
-                        .header { text-align: center; margin-bottom: 40px; }
-                        @media print {
-                            .no-print { display: none; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>TERMO DE REFERÊNCIA</h1>
-                        <p><strong>Processo:</strong> ${processo.numero}</p>
-                        <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
-                    </div>
-                    
-                    ${tr.objeto ? `<div class="section"><h2>1. OBJETO</h2><p>${tr.objeto}</p></div>` : ''}
-                    ${tr.justificativa ? `<div class="section"><h2>2. JUSTIFICATIVA</h2><p>${tr.justificativa}</p></div>` : ''}
-                    ${tr.escopo ? `<div class="section"><h2>3. ESCOPO</h2><p>${tr.escopo}</p></div>` : ''}
-                    ${tr.requisitos ? `<div class="section"><h2>4. REQUISITOS</h2><p>${tr.requisitos}</p></div>` : ''}
-                    ${tr.qualificacao ? `<div class="section"><h2>5. QUALIFICAÇÃO TÉCNICA</h2><p>${tr.qualificacao}</p></div>` : ''}
-                    ${tr.obrigacoes ? `<div class="section"><h2>6. OBRIGAÇÕES</h2><p>${tr.obrigacoes}</p></div>` : ''}
-                    ${tr.prazoExecucao ? `<div class="section"><h2>7. PRAZO DE EXECUÇÃO</h2><p>${tr.prazoExecucao}</p></div>` : ''}
-                    ${tr.formaPagamento ? `<div class="section"><h2>8. FORMA DE PAGAMENTO</h2><p>${tr.formaPagamento}</p></div>` : ''}
-                    ${tr.garantia ? `<div class="section"><h2>9. GARANTIA</h2><p>${tr.garantia}</p></div>` : ''}
-                    ${tr.penalidades ? `<div class="section"><h2>10. PENALIDADES</h2><p>${tr.penalidades}</p></div>` : ''}
-                    ${tr.disposicoesGerais ? `<div class="section"><h2>11. DISPOSIÇÕES GERAIS</h2><p>${tr.disposicoesGerais}</p></div>` : ''}
-                    
-                    <div class="no-print" style="text-align: center; margin-top: 40px;">
-                        <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px;">🖨️ Imprimir</button>
-                        <button onclick="window.close()" style="padding: 10px 20px; font-size: 16px; margin-left: 10px;">❌ Fechar</button>
-                    </div>
-                </body>
-                </html>
-            `);
-        }
-        
-        // Baixar TR como Word - FUNÇÃO CORRIGIDA
+        // Baixar TR como Word
         function baixarTR(numeroProcesso) {
             const processo = processos.find(p => p.numero === numeroProcesso);
-            if (!processo || !processo.termoReferencia) return;
+            if (!processo || !processo.termoReferencia) {
+                alert('Termo de Referência não disponível!');
+                return;
+            }
             
             const tr = processo.termoReferencia;
             
-            // Criar conteúdo HTML formatado para Word - FORMATO IDÊNTICO AO REQUISITANTE
+            // Criar conteúdo HTML formatado para Word
             const conteudoWord = `
                 <html xmlns:o='urn:schemas-microsoft-com:office:office' 
                       xmlns:w='urn:schemas-microsoft-com:office:word'
@@ -1490,40 +1824,40 @@
                 <body>
                     <div class="header">
                         <h1>TERMO DE REFERÊNCIA</h1>
-                        <p class="info-line"><strong>${tr.titulo || 'Contratação Infraestrutura para Cercamento Perimetral'}</strong></p>
-                        <p class="info-line">Modalidade: ${processo.modalidade || 'Concorrência'}</p>
+                        <p class="info-line"><strong>${tr.titulo}</strong></p>
+                        <p class="info-line">Modalidade: ${tr.modalidade}</p>
                         <p class="info-line">Data: ${new Date().toLocaleDateString('pt-BR')}</p>
                     </div>
                     
                     <h2>1. OBJETIVO</h2>
-                    <p>${tr.objetivo || tr.objeto || 'xxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.objetivo || 'Não especificado'}</p>
                     
                     <h2>2. CONFORMIDADE AO TERMO DE REFERÊNCIA</h2>
-                    <p>${tr.conformidade || tr.justificativa || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.conformidade || 'Não especificada'}</p>
                     
                     <h2>3. LOCAL E ACESSO</h2>
-                    <p><strong>Visita ao Local:</strong> ${tr.visitaLocal || 'Obrigatória'}</p>
-                    <p><strong>Local/Acesso:</strong> ${tr.localAcesso || 'xxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p><strong>Visita ao Local:</strong> ${tr.visitaLocal || 'Não especificado'}</p>
+                    <p><strong>Local/Acesso:</strong> ${tr.localAcesso || 'Não especificado'}</p>
                     
                     <h2>4. ESCOPO TÉCNICO</h2>
                     
                     <h3>4.1. Escopo Técnico</h3>
-                    <p>${tr.escopo || tr.escopoTecnico || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.escopoTecnico || 'Não especificado'}</p>
                     
                     <h3>4.2. Situação Atual</h3>
-                    <p>${tr.situacaoAtual || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.situacaoAtual || 'Não especificada'}</p>
                     
                     <h3>4.3. Situação Proposta</h3>
-                    <p>${tr.situacaoProposta || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.situacaoProposta || 'Não especificada'}</p>
                     
                     <h3>4.4. Especificação Técnica</h3>
-                    <p>${tr.especificacaoTecnica || tr.especificacoes || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.especificacaoTecnica || 'Não especificada'}</p>
                     
                     <h3>4.5. Premissas, Requisitos e Restrições</h3>
-                    <p>${tr.premissas || tr.requisitos || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.premissas || 'Não especificado'}</p>
                     
                     <h3>4.6. Planilha de Quantidade</h3>
-                    <p>${tr.planilhaQuantidade || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.planilhaQuantidade || 'Não especificada'}</p>
                     
                     <h3>4.7. Tabela de Serviços</h3>
                     <table>
@@ -1536,29 +1870,22 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${tr.tabelaServicos ? tr.tabelaServicos.map(servico => `
+                            ${tr.tabelaServicos && tr.tabelaServicos.length > 0 ? tr.tabelaServicos.map(servico => `
                                 <tr>
                                     <td style="text-align: center;">${servico.item}</td>
                                     <td>${servico.descricao}</td>
                                     <td style="text-align: center;">${servico.unidade}</td>
                                     <td style="text-align: center;">${servico.quantidade}</td>
                                 </tr>
-                            `).join('') : `
-                                <tr><td>1</td><td>xxxxxxxxxxxxxxx</td><td>UN</td><td>123</td></tr>
-                                <tr><td>2</td><td>xxxxxxxxxxxxxxxxx</td><td>UN</td><td>234</td></tr>
-                                <tr><td>3</td><td>xxxxxxxxxxxxx</td><td>UN</td><td>456</td></tr>
-                                <tr><td>4</td><td>xxxxxxxxxxxxxx</td><td>UN</td><td>678</td></tr>
-                                <tr><td>5</td><td>xxxxxxxxxxxxxx</td><td>UN</td><td>543</td></tr>
-                                <tr><td>6</td><td>xxxxxx</td><td>UN</td><td>123</td></tr>
-                            `}
+                            `).join('') : '<tr><td colspan="4" style="text-align: center;">Nenhum serviço especificado</td></tr>'}
                         </tbody>
                     </table>
                     
                     <h3>4.8. Escopo Geral</h3>
-                    <p>${tr.escopoGeral || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.escopoGeral || 'Não especificado'}</p>
                     
                     <h2>5. PRAZOS</h2>
-                    <p>${tr.prazos || tr.prazoExecucao || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.prazos || 'Não especificado'}</p>
                     
                     <h2>6. MATRIZ DE RESPONSABILIDADE</h2>
                     <table>
@@ -1569,78 +1896,74 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${tr.matrizResponsabilidade ? tr.matrizResponsabilidade.map(item => `
+                            ${tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0 ? tr.matrizResponsabilidade.map(item => `
                                 <tr>
                                     <td>${item.atividade}</td>
-                                    <td>${item.responsavel}</td>
+                                    <td>${item.responsavel === 'contratada' ? 'Contratada' : 
+                                         item.responsavel === 'contratante' ? 'Contratante' : 'N/A'}</td>
                                 </tr>
-                            `).join('') : `
-                                <tr><td>xxxxxxxxxxxxxxxxxxxxx</td><td>Contratada</td></tr>
-                                <tr><td>xxxxxxxxxxxxxxxxx</td><td>Contratada</td></tr>
-                                <tr><td>xxxxxxxxxxxxxxxxxxxxxxxxxxxx</td><td>Contratada</td></tr>
-                                <tr><td>xxxxxxxxxxxxxx</td><td>Contratada</td></tr>
-                                <tr><td>xxxxxxxxxxx</td><td>Contratante</td></tr>
-                                <tr><td>xxxxxxxxxxxx</td><td>Contratada</td></tr>
-                                <tr><td>xxxxxxxxxxxx</td><td>N/A</td></tr>
-                                <tr><td>xxxxxxxxxxxxxx</td><td>Contratada</td></tr>
-                            `}
+                            `).join('') : '<tr><td colspan="2" style="text-align: center;">Nenhuma responsabilidade definida</td></tr>'}
                         </tbody>
                     </table>
                     
                     <h2>7. MOBILIZAÇÃO E SEGURANÇA</h2>
                     
                     <h3>7.1. Segurança e Saúde do Trabalho</h3>
-                    <p>${tr.segurancaTrabalho || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.segurancaTrabalho || 'Não especificado'}</p>
                     
                     <h3>7.2. Canteiro de Obras e Infraestrutura</h3>
-                    <p>${tr.canteiroObras || tr.obrigacoes || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.canteiro || 'Não especificado'}</p>
                     
-                    <h3>7.3. Credenciamento Aeroportuário</h3>
-                    <p>${tr.credenciamentoAeroportuario || 'xxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    ${tr.credenciamento ? `
+                        <h3>7.3. Credenciamento Aeroportuário</h3>
+                        <p>${tr.credenciamento}</p>
+                    ` : ''}
                     
                     <h3>7.4. Meio Ambiente</h3>
-                    <p>${tr.meioAmbiente || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.meioAmbiente || 'Não especificado'}</p>
                     
                     <h2>8. GESTÃO E PLANEJAMENTO</h2>
                     
                     <h3>8.1. Engenharia</h3>
-                    <p>${tr.engenharia || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.engenharia || 'Não especificado'}</p>
                     
                     <h3>8.2. Aquisições</h3>
-                    <p>${tr.aquisicoes || 'xxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.aquisicoes || 'Não especificado'}</p>
                     
                     <h3>8.3. Planejamento/Gestão de Contratos</h3>
-                    <p>${tr.gestaoContratos || tr.planejamentoGestao || 'xxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.gestaoContratos || 'Não especificado'}</p>
                     
                     <h3>8.4. Planejamento Executivo</h3>
-                    <p>${tr.planejamentoExecutivo || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.planejamentoExecutivo || 'Não especificado'}</p>
                     
                     <h2>9. TESTES E ENCERRAMENTO</h2>
                     
                     <h3>9.1. Testes, Comissionamento e Treinamento</h3>
-                    <p>${tr.testesComissionamento || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.testes || 'Não especificado'}</p>
                     
                     <h3>9.2. Ao Encerramento da Obra</h3>
-                    <p>${tr.encerramentoObra || 'xxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.encerramentoObra || 'Não especificado'}</p>
                     
                     <h3>9.3. Certificado de Aceitação Provisória (CAP)</h3>
-                    <p>${tr.certificadoAceitacaoProvisoria || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.cap || 'Não especificado'}</p>
                     
                     <h3>9.4. Certificado de Aceitação Final (CAF)</h3>
-                    <p>${tr.certificadoAceitacaoFinal || 'xxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.caf || 'Não especificado'}</p>
                     
                     <h3>9.5. Garantia</h3>
-                    <p>${tr.garantia || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.garantia || 'Não especificado'}</p>
                     
                     <h2>10. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</h2>
-                    <p>${tr.criteriosAvaliacao || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    <p>${tr.criteriosAvaliacao || 'Não especificados'}</p>
                     
-                    <h2>11. ANEXOS</h2>
-                    <p>${tr.anexos || 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}</p>
+                    ${tr.anexos ? `
+                        <h2>11. ANEXOS</h2>
+                        <p>${tr.anexos}</p>
+                    ` : ''}
                     
                     <div class="footer">
-                        <p>Documento gerado em ${new Date().toLocaleDateString('pt-BR')}, ${new Date().toLocaleTimeString('pt-BR')}</p>
-                        <p>Elaborado por: ${tr.criadoPor || 'Carlos Oliveira'}</p>
+                        <p>Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
+                        <p>Elaborado por: ${tr.criadorNome || 'Não identificado'}</p>
                     </div>
                 </body>
                 </html>
@@ -1659,6 +1982,8 @@
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+            
+            alert('✅ Documento Word baixado com sucesso!');
         }
     </script>
 </body>
