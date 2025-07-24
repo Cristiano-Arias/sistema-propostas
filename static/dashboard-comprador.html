@@ -1,4 +1,485 @@
-<!DOCTYPE html>
+// Ver detalhes do processo
+        function verDetalhesProcesso(numeroProcesso) {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+            
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const propostasProcesso = propostas.filter(p => p.processo === numeroProcesso);
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === processo.trId);
+            
+            const conteudo = `
+                <div class="processo-detalhes-section">
+                    <h4>📋 Informações do Processo</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Número</div>
+                            <div class="detail-value">${processo.numero}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Objeto</div>
+                            <div class="detail-value">${processo.objeto}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Modalidade</div>
+                            <div class="detail-value">${processo.modalidade}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value">${processo.status === 'publicado' ? '✅ Publicado' : '📝 Rascunho'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Data de Cadastro</div>
+                            <div class="detail-value">${new Date(processo.dataCadastro).toLocaleString('pt-BR')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Prazo Limite</div>
+                            <div class="detail-value">${new Date(processo.prazo).toLocaleString('pt-BR')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Valor Estimado</div>
+                            <div class="detail-value">${processo.valorEstimado || 'Não informado'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Propostas Recebidas</div>
+                            <div class="detail-value">${propostasProcesso.length}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                ${tr ? `
+                    <div class="processo-detalhes-section">
+                        <h4>📄 Termo de Referência Vinculado</h4>
+                        <p><strong>${tr.titulo}</strong></p>
+                        <p>Criado por: ${tr.criadorNome} em ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                        ${processo.trAprovado ? '<p style="color: #28a745;">✅ TR Aprovado em ' + new Date(processo.dataAprovacaoTR).toLocaleDateString('pt-BR') + '</p>' : ''}
+                    </div>
+                ` : ''}
+                
+                <div class="processo-detalhes-section">
+                    <h4>👥 Fornecedores Convidados</h4>
+                    ${processo.fornecedoresConvidados && processo.fornecedoresConvidados.length > 0 ? `
+                        <div style="display: grid; gap: 10px;">
+                            ${processo.fornecedoresConvidados.map(fornId => {
+                                const fornecedor = usuarios.find(u => u.usuarioId === fornId);
+                                const propostaFornecedor = propostasProcesso.find(p => p.fornecedorId === fornId);
+                                return fornecedor ? `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                                        <div>
+                                            <strong>${fornecedor.nome}</strong>
+                                            <p style="font-size: 14px; color: #6c757d; margin: 0;">${fornecedor.empresa || 'Empresa não informada'}</p>
+                                        </div>
+                                        <div>
+                                            ${propostaFornecedor ? 
+                                                '<span style="color: #28a745;">✅ Proposta Enviada</span>' : 
+                                                '<span style="color: #ffc107;">⏳ Aguardando Proposta</span>'
+                                            }
+                                        </div>
+                                    </div>
+                                ` : '';
+                            }).join('')}
+                        </div>
+                    ` : '<p style="color: #6c757d;">Nenhum fornecedor convidado</p>'}
+                </div>
+                
+                ${propostasProcesso.length > 0 ? `
+                    <div class="processo-detalhes-section">
+                        <h4>💰 Propostas Recebidas</h4>
+                        <table class="proposta-table">
+                            <thead>
+                                <tr>
+                                    <th>Fornecedor</th>
+                                    <th>Valor</th>
+                                    <th>Prazo</th>
+                                    <th>Data Envio</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${propostasProcesso.map(proposta => `
+                                    <tr>
+                                        <td>${proposta.empresa}</td>
+                                        <td style="font-weight: 600; color: #28a745;">${proposta.valor}</td>
+                                        <td>${proposta.prazo} dias</td>
+                                        <td>${new Date(proposta.data).toLocaleDateString('pt-BR')}</td>
+                                        <td><span class="status-badge status-${proposta.status || 'enviada'}">${proposta.status || 'Enviada'}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : ''}
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-ai" onclick="gerarRelatorioComparativo('${processo.numero}'); fecharModalDetalhes();">
+                        🤖 Gerar Relatório Comparativo com IA
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('modalDetalhesConteudo').innerHTML = conteudo;
+            document.getElementById('modalDetalhesProcesso').style.display = 'block';
+        }
+
+        // Gerar relatório comparativo com IA
+        function gerarRelatorioComparativo(numeroProcesso) {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const propostasProcesso = propostas.filter(p => p.processo === numeroProcesso);
+            const pareceres = JSON.parse(localStorage.getItem('pareceres_tecnicos') || '[]');
+            
+            if (propostasProcesso.length === 0) {
+                alert('Nenhuma proposta recebida para gerar relatório.');
+                return;
+            }
+            
+            // Análise de IA simulada
+            const menorValor = Math.min(...propostasProcesso.map(p => parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.'))));
+            const maiorValor = Math.max(...propostasProcesso.map(p => parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.'))));
+            const mediaValor = propostasProcesso.reduce((acc, p) => acc + parseFloat(p.valor.replace(/[^\d,]/g, '').replace(',', '.')), 0) / propostasProcesso.length;
+            
+            const conteudo = `
+                <div class="ai-panel" style="margin-bottom: 20px;">
+                    <h3>🤖 Análise Inteligente do Processo ${numeroProcesso}</h3>
+                    <div class="ai-insights">
+                        <div class="ai-insight">
+                            <div class="ai-insight-title">📊 Análise Estatística</div>
+                            <div class="ai-insight-text">
+                                Recebidas ${propostasProcesso.length} propostas com variação de ${((maiorValor - menorValor) / menorValor * 100).toFixed(1)}% entre menor e maior valor.
+                            </div>
+                        </div>
+                        <div class="ai-insight">
+                            <div class="ai-insight-title">💡 Insight de Economia</div>
+                            <div class="ai-insight-text">
+                                A melhor proposta representa uma economia potencial de R$ ${(maiorValor - menorValor).toFixed(2)} em relação à mais cara.
+                            </div>
+                        </div>
+                        <div class="ai-insight">
+                            <div class="ai-insight-title">⚡ Recomendação</div>
+                            <div class="ai-insight-text">
+                                ${propostasProcesso.length >= 3 ? 
+                                    'Boa competitividade detectada. Considere análise técnica detalhada das 3 melhores propostas.' : 
+                                    'Baixa competitividade. Considere estender prazo ou convidar mais fornecedores.'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="processo-detalhes-section">
+                    <h4>📈 Análise Comparativa de Propostas</h4>
+                    <table class="proposta-table">
+                        <thead>
+                            <tr>
+                                <th>Ranking</th>
+                                <th>Fornecedor</th>
+                                <th>Valor</th>
+                                <th>Prazo</th>
+                                <th>Score IA</th>
+                                <th>Parecer Técnico</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${propostasProcesso
+                                .sort((a, b) => parseFloat(a.valor.replace(/[^\d,]/g, '').replace(',', '.')) - parseFloat(b.valor.replace(/[^\d,]/g, '').replace(',', '.')))
+                                .map((proposta, index) => {
+                                    const valor = parseFloat(proposta.valor.replace(/[^\d,]/g, '').replace(',', '.'));
+                                    const score = Math.round(100 - ((valor - menorValor) / (maiorValor - menorValor) * 50));
+                                    const parecer = pareceres.find(p => p.propostaId === proposta.protocolo);
+                                    
+                                    return `
+                                        <tr style="${index === 0 ? 'background: #d4edda;' : ''}">
+                                            <td style="text-align: center; font-weight: bold;">
+                                                ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                                            </td>
+                                            <td>${proposta.empresa}</td>
+                                            <td style="font-weight: 600; color: ${index === 0 ? '#155724' : '#28a745'};">
+                                                ${proposta.valor}
+                                            </td>
+                                            <td>${proposta.prazo} dias</td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 10px;">
+                                                    <div style="background: #e0e0e0; width: 100px; height: 20px; border-radius: 10px; overflow: hidden;">
+                                                        <div style="background: ${score >= 80 ? '#28a745' : score >= 60 ? '#ffc107' : '#dc3545'}; width: ${score}%; height: 100%;"></div>
+                                                    </div>
+                                                    <span>${score}%</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                ${parecer ? 
+                                                    `<span style="color: ${parecer.tipo === 'aprovado' ? '#28a745' : '#dc3545'};">
+                                                        ${parecer.tipo === 'aprovado' ? '✅ Aprovado' : '❌ Reprovado'}
+                                                    </span>` : 
+                                                    '<span style="color: #6c757d;">Pendente</span>'
+                                                }
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="processo-detalhes-section">
+                    <h4>📊 Métricas e Indicadores</h4>
+                    <div class="indicators-grid">
+                        <div class="indicator-card">
+                            <h4>💰 Valores</h4>
+                            <p><strong>Menor:</strong> R$ ${menorValor.toFixed(2)}</p>
+                            <p><strong>Maior:</strong> R$ ${maiorValor.toFixed(2)}</p>
+                            <p><strong>Média:</strong> R$ ${mediaValor.toFixed(2)}</p>
+                        </div>
+                        <div class="indicator-card">
+                            <h4>⏱️ Prazos</h4>
+                            <p><strong>Menor:</strong> ${Math.min(...propostasProcesso.map(p => p.prazo))} dias</p>
+                            <p><strong>Maior:</strong> ${Math.max(...propostasProcesso.map(p => p.prazo))} dias</p>
+                            <p><strong>Médio:</strong> ${Math.round(propostasProcesso.reduce((acc, p) => acc + p.prazo, 0) / propostasProcesso.length)} dias</p>
+                        </div>
+                        <div class="indicator-card">
+                            <h4>📈 Competitividade</h4>
+                            <p><strong>Taxa de Resposta:</strong> ${Math.round(propostasProcesso.length / (processo.fornecedoresConvidados?.length || 1) * 100)}%</p>
+                            <p><strong>Desvio Padrão:</strong> ${((maiorValor - menorValor) / 2).toFixed(2)}</p>
+                            <p><strong>Índice de Qualidade:</strong> ${propostasProcesso.filter(p => pareceres.some(par => par.propostaId === p.protocolo && par.tipo === 'aprovado')).length}/${propostasProcesso.length}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="processo-detalhes-section" style="background: #f0f8ff;">
+                    <h4>🎯 Recomendações da IA</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 10px;">✅ <strong>Melhor Valor:</strong> ${propostasProcesso[0].empresa} oferece o melhor custo-benefício</li>
+                        <li style="margin-bottom: 10px;">📋 <strong>Análise Técnica:</strong> ${pareceres.length > 0 ? 'Considere os pareceres técnicos emitidos' : 'Aguarde pareceres técnicos para decisão final'}</li>
+                        <li style="margin-bottom: 10px;">⚖️ <strong>Conformidade:</strong> Verifique documentação e certidões antes da homologação</li>
+                        <li style="margin-bottom: 10px;">💡 <strong>Negociação:</strong> ${propostasProcesso.length > 1 ? 'Considere negociação com os 3 primeiros colocados' : 'Baixa competitividade limita poder de negociação'}</li>
+                    </ul>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-primary" onclick="window.print()">
+                        🖨️ Imprimir Relatório
+                    </button>
+                    <button class="btn btn-success" onclick="exportarRelatorioExcel('${numeroProcesso}')">
+                        📊 Exportar Excel
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('modalRelatorioConteudo').innerHTML = conteudo;
+            document.getElementById('modalRelatorioIA').style.display = 'block';
+        }
+
+        // Gerar relatório IA geral
+        function gerarRelatorioIA() {
+            alert('🤖 Módulo de análise com IA em desenvolvimento. Em breve você terá acesso a insights avançados sobre todos os seus processos!');
+        }
+
+        // Exportar relatório Excel
+        function exportarRelatorioExcel(numeroProcesso) {
+            alert('📊 Exportação para Excel será implementada em breve!');
+        }
+
+        // Gerenciar fornecedores do processo
+        function gerenciarFornecedores(numeroProcesso) {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === numeroProcesso);
+            
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+            
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            const fornecedoresConvidados = processo.fornecedoresConvidados || [];
+            
+            let mensagem = `Fornecedores convidados para o processo ${numeroProcesso}:\n\n`;
+            
+            fornecedoresConvidados.forEach(fornId => {
+                const fornecedor = usuarios.find(u => u.usuarioId === fornId);
+                if (fornecedor) {
+                    mensagem += `• ${fornecedor.nome} (${fornecedor.empresa || 'Empresa não informada'})\n`;
+                }
+            });
+            
+            if (fornecedoresConvidados.length === 0) {
+                mensagem = `Nenhum fornecedor foi convidado para este processo.`;
+            }
+            
+            alert(mensagem);
+        }
+
+        function carregarProcessosComPropostas() {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const meusProcessos = processos.filter(p => p.criadoPor === usuarioAtual.usuarioId);
+            
+            const selectProcesso = document.getElementById('processoParaParecer');
+            selectProcesso.innerHTML = '<option value="">Selecione um processo...</option>';
+            
+            meusProcessos.forEach(processo => {
+                const propostasProcesso = propostas.filter(p => p.processo === processo.numero);
+                if (propostasProcesso.length > 0) {
+                    selectProcesso.innerHTML += `
+                        <option value="${processo.numero}">
+                            ${processo.numero} - ${processo.objeto} (${propostasProcesso.length} propostas)
+                        </option>
+                    `;
+                }
+            });
+        }
+
+        function carregarPropostasParaLiberar() {
+            const processoSelecionado = document.getElementById('processoParaParecer').value;
+            const container = document.getElementById('propostasParaLiberar');
+            
+            if (!processoSelecionado) {
+                container.innerHTML = '<p style="color: #6c757d;">Selecione um processo para ver as propostas</p>';
+                return;
+            }
+            
+            const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
+            const propostasProcesso = propostas.filter(p => p.processo === processoSelecionado);
+            
+            if (propostasProcesso.length === 0) {
+                container.innerHTML = '<p style="color: #6c757d;">Nenhuma proposta recebida para este processo</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <table class="proposta-table">
+                    <thead>
+                        <tr>
+                            <th>Empresa</th>
+                            <th>CNPJ</th>
+                            <th>Valor</th>
+                            <th>Data</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${propostasProcesso.map(proposta => {
+                            const jaLiberada = propostasLiberadas.some(pl => 
+                                pl.propostaId === proposta.protocolo
+                            );
+                            
+                            return `
+                                <tr>
+                                    <td>${proposta.empresa}</td>
+                                    <td>${proposta.cnpj}</td>
+                                    <td>${proposta.valor || 'Não informado'}</td>
+                                    <td>${new Date(proposta.data).toLocaleDateString('pt-BR')}</td>
+                                    <td>
+                                        ${jaLiberada ? 
+                                            '<span style="color: #28a745;">✅ Liberada</span>' : 
+                                            '<span style="color: #ffc107;">⏳ Pendente</span>'
+                                        }
+                                    </td>
+                                    <td>
+                                        ${!jaLiberada ? `
+                                            <button class="btn btn-primary" onclick="liberarParaParecer('${proposta.protocolo}', '${processoSelecionado}')">
+                                                📄 Liberar para Parecer
+                                            </button>
+                                        ` : `
+                                            <button class="btn btn-info" disabled>
+                                                ✅ Já Liberada
+                                            </button>
+                                        `}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function liberarParaParecer(propostaId, processoId) {
+            // Buscar TR vinculado ao processo
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            const processo = processos.find(p => p.numero === processoId);
+            
+            if (!processo || !processo.trId) {
+                alert('❌ Este processo não tem TR vinculado!');
+                return;
+            }
+            
+            // Buscar requisitante do TR
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === processo.trId);
+            
+            if (!tr || !tr.criadoPor) {
+                alert('❌ TR não encontrado ou sem requisitante!');
+                return;
+            }
+            
+            // Criar liberação
+            const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
+            const novaLiberacao = {
+                id: 'lib_' + Date.now(),
+                propostaId: propostaId,
+                processoId: processoId,
+                compradorId: usuarioAtual.usuarioId,
+                requisitanteId: tr.criadoPor,
+                dataLiberacao: new Date().toISOString(),
+                parecerEmitido: false
+            };
+            
+            propostasLiberadas.push(novaLiberacao);
+            localStorage.setItem('propostas_liberadas_parecer', JSON.stringify(propostasLiberadas));
+            
+            // Notificar requisitante
+            Auth.Notificacoes.criar({
+                tipo: 'proposta_liberada_parecer',
+                titulo: '📄 Nova proposta para análise',
+                mensagem: `Uma proposta do processo ${processoId} foi liberada para seu parecer técnico`,
+                destinatario: tr.criadoPor,
+                remetente: usuarioAtual.nome,
+                metadata: {
+                    propostaId: propostaId,
+                    processoId: processoId
+                }
+            });
+            
+            alert('✅ Proposta liberada para parecer técnico!');
+            carregarPropostasParaLiberar();
+        }
+
+        function formatarMoeda(input) {
+            let valor = input.value.replace(/\D/g, '');
+            valor = (valor / 100).toFixed(2);
+            valor = valor.replace('.', ',');
+            valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+            input.value = 'R$ ' + valor;
+        }
+
+        function fecharModal() {
+            document.getElementById('modalVisualizarTR').style.display = 'none';
+        }
+
+        function fecharModalDetalhes() {
+            document.getElementById('modalDetalhesProcesso').style.display = 'none';
+        }
+
+        function fecharModalRelatorio() {
+            document.getElementById('modalRelatorioIA').style.display = 'none';
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -1033,6 +1514,7 @@
             }
         });
 
+        // FUNÇÃO MOSTRAR PÁGINA - ESTAVA FALTANDO
         function mostrarPagina(paginaId) {
             // Ocultar todas as páginas
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
@@ -1145,71 +1627,6 @@
             });
         }
 
-        // Carregar visualização do TR
-        function carregarVisualizacaoTR() {
-            const selectTR = document.getElementById('trVinculado');
-            const trId = selectTR.value;
-            const areaVisualizacao = document.getElementById('areaVisualizacaoTR');
-            const formularioProcesso = document.getElementById('formularioProcesso');
-            
-            if (!trId) {
-                areaVisualizacao.style.display = 'none';
-                formularioProcesso.style.display = 'none';
-                trSelecionado = null;
-                return;
-            }
-            
-            // Buscar o TR completo no localStorage
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const tr = trs.find(t => t.id === trId);
-            
-            if (!tr) {
-                alert('TR não encontrado!');
-                return;
-            }
-            
-            trSelecionado = tr;
-            
-            // Criar área de visualização resumida
-            areaVisualizacao.innerHTML = `
-                <div class="tr-aprovacao-section">
-                    <h4>📋 Termo de Referência Selecionado</h4>
-                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <h3 style="color: #2c3e50; margin-bottom: 15px;">${tr.titulo}</h3>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                            <div>
-                                <strong>Modalidade:</strong> ${tr.modalidade}
-                            </div>
-                            <div>
-                                <strong>Criado por:</strong> ${tr.criadorNome}
-                            </div>
-                            <div>
-                                <strong>Data de Criação:</strong> ${new Date(tr.criado_em || tr.dataCriacao).toLocaleDateString('pt-BR')}
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 20px;">
-                            <strong>Objetivo:</strong>
-                            <p style="margin-top: 5px; color: #6c757d;">${tr.objetivo || 'Não especificado'}</p>
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button type="button" class="btn btn-info" onclick="visualizarTRCompleto('${tr.id}')">
-                                👁️ Visualizar TR Completo
-                            </button>
-                            <button type="button" class="btn btn-primary" onclick="baixarTR('${tr.id}')">
-                                📥 Baixar TR
-                            </button>
-                            <button type="button" class="btn btn-success" onclick="aprovarTR()">
-                                ✅ Aprovar e Continuar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            areaVisualizacao.style.display = 'block';
-            formularioProcesso.style.display = 'none';
-        }
-
         // Função para buscar o TR completo
         function buscarTermoReferenciaCompleto(trId) {
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
@@ -1261,6 +1678,70 @@
                 dataCriacao: tr.dataCriacao || tr.criado_em || new Date().toISOString(),
                 status: tr.status || 'ativo'
             };
+        }
+
+        // Carregar visualização do TR
+        function carregarVisualizacaoTR() {
+            const selectTR = document.getElementById('trVinculado');
+            const trId = selectTR.value;
+            const areaVisualizacao = document.getElementById('areaVisualizacaoTR');
+            const formularioProcesso = document.getElementById('formularioProcesso');
+            
+            if (!trId) {
+                areaVisualizacao.style.display = 'none';
+                formularioProcesso.style.display = 'none';
+                trSelecionado = null;
+                return;
+            }
+            
+            // Buscar o TR completo no localStorage
+            const tr = buscarTermoReferenciaCompleto(trId);
+            
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
+            
+            trSelecionado = tr;
+            
+            // Criar área de visualização resumida
+            areaVisualizacao.innerHTML = `
+                <div class="tr-aprovacao-section">
+                    <h4>📋 Termo de Referência Selecionado</h4>
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="color: #2c3e50; margin-bottom: 15px;">${tr.titulo}</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div>
+                                <strong>Modalidade:</strong> ${tr.modalidade}
+                            </div>
+                            <div>
+                                <strong>Criado por:</strong> ${tr.criadorNome}
+                            </div>
+                            <div>
+                                <strong>Data de Criação:</strong> ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <strong>Objetivo:</strong>
+                            <p style="margin-top: 5px; color: #6c757d;">${tr.objetivo || 'Não especificado'}</p>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" class="btn btn-info" onclick="visualizarTRCompleto('${tr.id}')">
+                                👁️ Visualizar TR Completo
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="baixarTR('${tr.id}')">
+                                📥 Baixar TR
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="aprovarTR()">
+                                ✅ Aprovar e Continuar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            areaVisualizacao.style.display = 'block';
+            formularioProcesso.style.display = 'none';
         }
 
         // Visualizar TR completo
