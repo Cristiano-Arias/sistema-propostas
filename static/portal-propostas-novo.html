@@ -9,7 +9,7 @@
     <script>
         // Detecta automaticamente se está local ou em produção
         const API_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:5001' 
+            ? 'http://localhost:5000' 
             : window.location.origin;
     </script>
     
@@ -297,6 +297,22 @@
             justify-content: space-between;
             padding: 8px 0;
             border-bottom: 1px solid #bae6fd;
+        }
+
+        .btn-voltar {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-voltar:hover {
+            background: #5a6268;
         }
 
         .resumo-item:last-child {
@@ -926,6 +942,7 @@
         </div>
 
         <div class="submit-section">
+            <button type="button" class="btn-voltar" onclick="history.back()">← Voltar</button>
             <button type="button" class="preview-btn" onclick="gerarPreview()">👁️ Visualizar</button>
             <button type="button" class="submit-btn" onclick="enviarProposta()">🚀 Enviar Proposta</button>
             
@@ -1630,7 +1647,7 @@
                 const dadosProposta = coletarDadosCompletos();
                 
                 // Enviar para o backend
-                const response = await fetch('/api/propostas/enviar', {
+                const response = await fetch(`${API_URL}/api/propostas/enviar`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
