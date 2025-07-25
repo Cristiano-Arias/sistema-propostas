@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Debug - Teste Backend Propostas</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #00ff00;
+        }
+        h1 {
+            color: #00ffff;
+            text-align: center;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        .test-section {
+            background: #0d1117;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #00ff00;
+        }
+        .test-section h3 {
+            color: #ffff00;
+            margin-top: 0;
+        }
+        button {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #2ea043;
+        }
+        button:disabled {
+            background: #656d76;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #161b22;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 3px solid #0969da;
+            white-space: pre-wrap;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left-color: #238636;
+            color: #00ff00;
+        }
+        .error {
+            border-left-color: #da3633;
+            color: #ff6b6b;
+        }
+        .warning {
+            border-left-color: #fb8500;
+            color: #ffa500;
+        }
+        input {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #f0f6fc;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px;
+            font-family: inherit;
+        }
+        .url-input {
+            width: 300px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #0d1117;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #30363d;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+        .stat-label {
+            color: #8b949e;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Backend - Sistema de Propostas</h1>
+        
+        <div class="test-section">
+            <h3>⚙️ Configuração</h3>
+            <label>URL do Backend:</label>
+            <input type="text" id="apiUrl" class="url-input" value="https://seu-app.onrender.com" placeholder="https://seu-app.onrender.com">
+            <button onclick="salvarUrl()">💾 Salvar URL</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="statusApi">❓</div>
+                <div class="stat-label">Status API</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalPropostas">0</div>
+                <div class="stat-label">Total Propostas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="ultimaTentativa">--</div>
+                <div class="stat-label">Última Tentativa</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tempoResposta">0ms</div>
+                <div class="stat-label">Tempo Resposta</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🩺 Testes de Conectividade</h3>
+            <button onclick="testarStatus()">1️⃣ Testar Status API</button>
+            <button onclick="listarPropostas()">2️⃣ Listar Propostas</button>
+            <button onclick="testarConexao()">🔄 Teste Completo</button>
+            <div id="conectividade" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📤 Teste de Envio de Proposta</h3>
+            <button onclick="enviarPropostaTeste()">🚀 Enviar Proposta Teste</button>
+            <button onclick="verificarUltimaProposta()">🔍 Verificar Última Proposta</button>
+            <div id="envio" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Análise Detalhada</h3>
+            <button onclick="analisarEstrutura()">🧬 Analisar Estrutura Dados</button>
+            <button onclick="testarEndpoints()">🎯 Testar Todos Endpoints</button>
+            <div id="analise" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Logs e Debug</h3>
+            <button onclick="limparLogs()">🧹 Limpar Logs</button>
+            <button onclick="exportarRelatorio()">📋 Exportar Relatório</button>
+            <div id="logs" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        let apiUrl = 'https://seu-app.onrender.com';
+        let ultimoProtocolo = '';
+        let dadosDebug = {
+            testes: [],
+            propostas: [],
+            erros: []
+        };
+
+        function log(mensagem, tipo = 'info') {
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            const logElement = document.getElementById('logs');
+            const prefix = tipo === 'error' ? '❌' : tipo === 'success' ? '✅' : tipo === 'warning' ? '⚠️' : 'ℹ️';
+            
+            logElement.textContent += `[${timestamp}] ${prefix} ${mensagem}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            dadosDebug.testes.push({
+                timestamp,
+                tipo,
+                mensagem
+            });
+        }
+
+        function salvarUrl() {
+            apiUrl = document.getElementById('apiUrl').value;
+            localStorage.setItem('apiUrl', apiUrl);
+            log(`URL salva: ${apiUrl}`, 'success');
+        }
+
+        function mostrarResultado(elementId, resultado, tipo = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = resultado;
+            element.className = `result ${tipo}`;
+        }
+
+        async function testarStatus() {
+            const inicio = Date.now();
+            
+            try {
+                log('Testando status da API...');
+                
+                const response = await fetch(`${apiUrl}/api/status`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const tempo = Date.now() - inicio;
+                document.getElementById('tempoResposta').textContent = `${tempo}ms`;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    document.getElementById('statusApi').textContent = '🟢 ONLINE';
+                    document.getElementById('totalPropostas').textContent = data.estatisticas?.propostas_total || 0;
+                    
+                    mostrarResultado('conectividade', 
+                        `✅ API ONLINE\n` +
+                        `Status: ${response.status}\n` +
+                        `Versão: ${data.versao}\n` +
+                        `Timestamp: ${data.timestamp}\n` +
+                        `Propostas: ${data.estatisticas?.propostas_total || 0}\n` +
+                        `Processos: ${data.estatisticas?.processos_total || 0}\n` +
+                        `Usuários: ${data.estatisticas?.usuarios_total || 0}\n` +
+                        `Tempo: ${tempo}ms`, 
+                        'success'
+                    );
+                    
+                    log(`API online - ${data.versao} - ${tempo}ms`, 'success');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+            } catch (error) {
+                document.getElementById('statusApi').textContent = '🔴 OFFLINE';
+                mostrarResultado('conectividade', 
+                    `❌ ERRO NA CONEXÃO\n` +
+                    `Erro: ${error.message}\n` +
+                    `URL: ${apiUrl}/api/status\n` +
+                    `Verifique se o backend está rodando`, 
+                    'error'
+                );
+                log(`Erro ao conectar: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function listarPropostas() {
+            try {
+                log('Listando propostas...');
+                
+                const response = await fetch(`${apiUrl}/api/propostas`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    dadosDebug.propostas = data.propostas || [];
+                    
+                    document.getElementById('totalPropostas').textContent = data.total || 0;
+                    
+                    let resultado = `✅ PROPOSTAS CARREGADAS\n`;
+                    resultado += `Total: ${data.total || 0}\n\n`;
+                    
+                    if (data.propostas && data.propostas.length > 0) {
+                        resultado += `📋 LISTA DE PROPOSTAS:\n`;
+                        data.propostas.forEach((prop, index) => {
+                            resultado += `${index + 1}. ${prop.protocolo || 'N/A'}\n`;
+                            resultado += `   Empresa: ${prop.empresa || 'N/A'}\n`;
+                            resultado += `   Processo: ${prop.processo || 'N/A'}\n`;
+                            resultado += `   Valor: ${prop.valor || 'N/A'}\n`;
+                            resultado += `   Data: ${prop.data_formatada || prop.data || 'N/A'}\n\n`;
+                        });
+                    } else {
+                        resultado += `⚠️ Nenhuma proposta encontrada\n`;
+                    }
+                    
+                    mostrarResultado('conectividade', resultado, 'success');
+                    log(`${data.total || 0} propostas encontradas`, 'success');
+                    
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+            } catch (error) {
+                mostrarResultado('conectividade', 
+                    `❌ ERRO AO LISTAR PROPOSTAS\n${error.message}`, 
+                    'error'
+                );
+                log(`Erro ao listar propostas: ${error.message}`, 'error');
+            }
+        }
+
+        async function enviarPropostaTeste() {
+            try {
+                log('Enviando proposta de teste...');
+                
+                const propostaTeste = {
+                    dadosCadastrais: {
+                        razaoSocial: "Teste Debug LTDA",
+                        cnpj: "00.000.000/0001-00",
+                        email: "teste@debug.com",
+                        telefone: "(11) 99999-9999"
+                    },
+                    processo: {
+                        numero: "1600003456-150",
+                        objeto: "Teste de Debug"
+                    },
+                    propostaComercial: {
+                        valorTotal: "50000,00",
+                        totais: {
+                            custoDirecto: "45000,00"
+                        }
+                    },
+                    propostaTecnica: {
+                        prazoExecucao: "60 dias"
+                    },
+                    resumo: {
+                        prazoExecucao: "60 dias",
+                        formaPagamento: "30 dias"
+                    },
+                    metadata: {
+                        teste: true,
+                        timestamp: new Date().toISOString()
+                    }
+                };
+                
+                const response = await fetch(`${apiUrl}/api/propostas/enviar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(propostaTeste)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    ultimoProtocolo = data.protocolo;
+                    
+                    let resultado = `✅ PROPOSTA ENVIADA COM SUCESSO!\n\n`;
+                    resultado += `📋 DETALHES:\n`;
+                    resultado += `Protocolo: ${data.protocolo}\n`;
+                    resultado += `Mensagem: ${data.mensagem}\n`;
+                    
+                    if (data.detalhes) {
+                        resultado += `Empresa: ${data.detalhes.empresa}\n`;
+                        resultado += `Processo: ${data.detalhes.processo}\n`;
+                        resultado += `Valor: ${data.detalhes.valor}\n`;
+                        resultado += `Data: ${data.detalhes.data_envio}\n`;
+                    }
+                    
+                    mostrarResultado('envio', resultado, 'success');
+                    log(`Proposta enviada: ${data.protocolo}`, 'success');
+                    
+                    // Atualizar estatísticas
+                    setTimeout(() => {
+                        testarStatus();
+                    }, 1000);
+                    
+                } else {
+                    throw new Error(`${response.status}: ${data.erro || data.mensagem || 'Erro desconhecido'}`);
+                }
+                
+            } catch (error) {
+                mostrarResultado('envio', 
+                    `❌ ERRO AO ENVIAR PROPOSTA\n` +
+                    `Erro: ${error.message}\n` +
+                    `Verifique o backend e tente novamente`, 
+                    'error'
+                );
+                log(`Erro ao enviar proposta: ${error.message}`, 'error');
+                dadosDebug.erros.push({
+                    acao: 'enviar_proposta',
+                    erro: error.message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+
+        async function verificarUltimaProposta() {
+            if (!ultimoProtocolo) {
+                mostrarResultado('envio', '⚠️ Nenhuma proposta enviada ainda', 'warning');
+                return;
+            }
+            
+            try {
+                log(`Verificando proposta ${ultimoProtocolo}...`);
+                
+                const response = await fetch(`${apiUrl}/api/propostas/verificar/${ultimoProtocolo}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    let resultado = `✅ PROPOSTA ENCONTRADA!\n\n`;
+                    resultado += `📋 VERIFICAÇÃO:\n`;
+                    resultado += `Protocolo: ${data.protocolo}\n`;
+                    resultado += `Status: ${data.status}\n`;
+                    resultado += `Data Envio: ${data.data_envio}\n`;
+                    
+                    if (data.resumo) {
+                        resultado += `\n📊 RESUMO:\n`;
+                        resultado += `Empresa: ${data.resumo.razao_social || 'N/A'}\n`;
+                        resultado += `CNPJ: ${data.resumo.cnpj || 'N/A'}\n`;
+                        resultado += `Processo: ${data.resumo.processo || 'N/A'}\n`;
+                        resultado += `Valor: ${data.resumo.valor_total || 'N/A'}\n`;
+                    }
+                    
+                    mostrarResultado('envio', resultado, 'success');
+                    log(`Proposta verificada: ${data.protocolo}`, 'success');
+                    
+                } else {
+                    mostrarResultado('envio', 
+                        `❌ PROPOSTA NÃO ENCONTRADA\n` +
+                        `Protocolo: ${ultimoProtocolo}\n` +
+                        `Erro: ${data.erro || 'Proposta não foi salva'}`, 
+                        'error'
+                    );
+                    log(`Proposta não encontrada: ${ultimoProtocolo}`, 'error');
+                }
+                
+            } catch (error) {
+                mostrarResultado('envio', 
+                    `❌ ERRO NA VERIFICAÇÃO\n${error.message}`, 
+                    'error'
+                );
+                log(`Erro na verificação: ${error.message}`, 'error');
+            }
+        }
+
+        async function testarConexao() {
+            log('Iniciando teste completo...');
+            
+            const sucesso1 = await testarStatus();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            if (sucesso1) {
+                await listarPropostas();
+            }
+            
+            document.getElementById('ultimaTentativa').textContent = new Date().toLocaleTimeString('pt-BR');
+            log('Teste completo finalizado', 'success');
+        }
+
+        async function analisarEstrutura() {
+            try {
+                log('Analisando estrutura de dados...');
+                
+                // Testar múltiplos endpoints
+                const endpoints = [
+                    '/api/status',
+                    '/api/propostas',
+                    '/api/processos',
+                    '/api/usuarios'
+                ];
+                
+                let resultado = `🧬 ANÁLISE DA ESTRUTURA\n\n`;
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(`${apiUrl}${endpoint}`);
+                        const data = await response.json();
+                        
+                        resultado += `✅ ${endpoint}\n`;
+                        resultado += `   Status: ${response.status}\n`;
+                        resultado += `   Success: ${data.success || 'N/A'}\n`;
+                        
+                        if (endpoint === '/api/propostas') {
+                            resultado += `   Total: ${data.total || 0}\n`;
+                            if (data.propostas && data.propostas.length > 0) {
+                                const prop = data.propostas[0];
+                                resultado += `   Campos: ${Object.keys(prop).join(', ')}\n`;
+                            }
+                        }
+                        resultado += `\n`;
+                        
+                    } catch (error) {
+                        resultado += `❌ ${endpoint}: ${error.message}\n\n`;
+                    }
+                }
+                
+                mostrarResultado('analise', resultado, 'success');
+                log('Análise de estrutura concluída', 'success');
+                
+            } catch (error) {
+                mostrarResultado('analise', 
+                    `❌ ERRO NA ANÁLISE\n${error.message}`, 
+                    'error'
+                );
+                log(`Erro na análise: ${error.message}`, 'error');
+            }
+        }
+
+        async function testarEndpoints() {
+            log('Testando todos os endpoints...');
+            
+            const endpoints = [
+                { metodo: 'GET', url: '/api/status', nome: 'Status API' },
+                { metodo: 'GET', url: '/api/propostas', nome: 'Listar Propostas' },
+                { metodo: 'GET', url: '/api/processos', nome: 'Listar Processos' },
+                { metodo: 'GET', url: '/api/processos/ativos', nome: 'Processos Ativos' },
+                { metodo: 'GET', url: '/api/usuarios', nome: 'Listar Usuários' },
+                { metodo: 'GET', url: '/api/notificacoes', nome: 'Notificações' }
+            ];
+            
+            let resultado = `🎯 TESTE DE ENDPOINTS\n\n`;
+            let sucessos = 0;
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${apiUrl}${endpoint.url}`, {
+                        method: endpoint.metodo
+                    });
+                    
+                    if (response.ok) {
+                        resultado += `✅ ${endpoint.nome} (${response.status})\n`;
+                        sucessos++;
+                    } else {
+                        resultado += `❌ ${endpoint.nome} (${response.status})\n`;
+                    }
+                    
+                } catch (error) {
+                    resultado += `❌ ${endpoint.nome} (ERRO: ${error.message})\n`;
+                }
+            }
+            
+            resultado += `\n📊 RESUMO: ${sucessos}/${endpoints.length} endpoints funcionando\n`;
+            
+            mostrarResultado('analise', resultado, sucessos === endpoints.length ? 'success' : 'warning');
+            log(`Teste de endpoints: ${sucessos}/${endpoints.length}`, sucessos === endpoints.length ? 'success' : 'warning');
+        }
+
+        function limparLogs() {
+            document.getElementById('logs').textContent = '';
+            dadosDebug = { testes: [], propostas: [], erros: [] };
+            log('Logs limpos', 'success');
+        }
+
+        function exportarRelatorio() {
+            const relatorio = {
+                timestamp: new Date().toISOString(),
+                apiUrl: apiUrl,
+                dadosDebug: dadosDebug,
+                estatisticas: {
+                    totalTestes: dadosDebug.testes.length,
+                    totalErros: dadosDebug.erros.length,
+                    ultimoProtocolo: ultimoProtocolo
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(relatorio, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `debug-report-${new Date().toISOString().slice(0, 19)}.json`;
+            a.click();
+            
+            log('Relatório exportado', 'success');
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedUrl = localStorage.getItem('apiUrl');
+            if (savedUrl) {
+                apiUrl = savedUrl;
+                document.getElementById('apiUrl').value = savedUrl;
+            }
+            
+            log('Sistema de debug inicializado', 'success');
+            
+            // Teste automático ao carregar
+            setTimeout(testarStatus, 1000);
+        });
+    </script>
+</body>
+</html>
