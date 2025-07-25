@@ -1778,42 +1778,42 @@
 
         // ===== INICIALIZAÇÃO =====
         // ===== VARIÁVEIS GLOBAIS =====
-let usuarioAtual = null;
-let processoAtual = null;
+        let currentTab = 'dados';  // ⭐ ADICIONE ESTA LINHA QUE ESTAVA FALTANDO!
+        let usuarioAtual = null;
+        let processoAtual = null;
 
-// ===== INICIALIZAÇÃO =====
-document.addEventListener('DOMContentLoaded', function() {
-    // Verificar autenticação PRIMEIRO
-    usuarioAtual = Auth.getUsuarioLogado();
+        // ===== INICIALIZAÇÃO =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar autenticação PRIMEIRO
+            usuarioAtual = Auth.getUsuarioLogado();
     
-    if (!usuarioAtual) {
-        alert('Você precisa estar autenticado para acessar esta página.');
-        window.location.href = 'index.html';
-        return;
-    }
-    
-    console.log('Usuário autenticado:', usuarioAtual);
-    
-    // Carregar dados do processo da URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const numeroProcesso = urlParams.get('processo');
-    
-    if (numeroProcesso) {
-        const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-        processoAtual = processos.find(p => p.numero === numeroProcesso);
-        
-        if (processoAtual) {
-            document.getElementById('numeroProcesso').value = processoAtual.numero;
-            document.getElementById('objetoProcesso').value = processoAtual.objeto || '';
-            document.getElementById('prazoEnvio').value = processoAtual.prazo || '';
+            if (!usuarioAtual) {
+            alert('Você precisa estar autenticado para acessar esta página.');
+            window.location.href = 'index.html';
+            return;
         }
-    }
     
-    // Executar funções originais
-    calcularCronograma();
-    updateProgress();
-});
-        });
-    </script>
+        console.log('Usuário autenticado:', usuarioAtual);
+    
+        // Carregar dados do processo da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const numeroProcesso = urlParams.get('processo');
+    
+        if (numeroProcesso) {
+            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+            processoAtual = processos.find(p => p.numero === numeroProcesso);
+        
+            if (processoAtual) {
+                document.getElementById('numeroProcesso').value = processoAtual.numero;
+                document.getElementById('objetoProcesso').value = processoAtual.objeto || '';
+                document.getElementById('prazoEnvio').value = processoAtual.prazo || '';
+            }
+        }
+    
+        // Executar funções originais
+        calcularCronograma();
+        updateProgress();
+    });  // ✅ APENAS UM FECHAMENTO
+        </script>
     </body>
-</html>
+    </html>
