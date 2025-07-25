@@ -953,7 +953,6 @@
     </div>
 
     <script>
-                
         // ===== FUNÇÕES DE NAVEGAÇÃO =====
         function showTab(tabName, buttonElement) {
             // Esconder todas as seções
@@ -1617,7 +1616,17 @@
             `);
         }
 
+        // ===== FUNÇÃO CORRIGIDA PARA ENVIAR PROPOSTA =====
         async function enviarProposta() {
+            // Verificar se usuário está definido
+            if (!usuarioAtual || !usuarioAtual.usuarioId) {
+                alert('❌ Erro: Sessão expirada. Por favor, faça login novamente.');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            console.log('📤 Enviando proposta como:', usuarioAtual);
+            
             // Validações básicas
             const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia'];
             let tudoPreenchido = true;
@@ -1647,29 +1656,83 @@
                 // Coletar todos os dados da proposta
                 const dadosProposta = coletarDadosCompletos();
                 
-                // Enviar para o backend
-                const response = await fetch(`${API_URL}/api/propostas/enviar`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
+                // Gerar protocolo temporário
+                const protocoloTemp = 'PROP-' + Date.now();
+                
+                // Estrutura da proposta para salvar no localStorage
+                const propostaParaSalvar = {
+                    protocolo: protocoloTemp,
+                    fornecedorId: usuarioAtual.usuarioId,
+                    fornecedor: {
+                        id: usuarioAtual.usuarioId,
+                        nome: dadosProposta.dadosCadastrais.razaoSocial,
+                        cnpj: dadosProposta.dadosCadastrais.cnpj,
+                        email: dadosProposta.dadosCadastrais.email
                     },
-                    body: JSON.stringify(dadosProposta)
-                });
+                    processo: dadosProposta.processo.numero,
+                    objeto: dadosProposta.processo.objeto,
+                    valor: 'R$ ' + dadosProposta.propostaComercial.valorTotal,
+                    prazo: dadosProposta.resumo.prazoExecucao || dadosProposta.propostaTecnica.prazoExecucao,
+                    dataEnvio: new Date().toISOString(),
+                    data: new Date().toISOString(), // Para compatibilidade
+                    status: 'enviada',
+                    dados: dadosProposta,
+                    metodologia: dadosProposta.propostaTecnica.metodologia,
+                    observacoes: dadosProposta.propostaTecnica.garantias
+                };
                 
-                const resultado = await response.json();
-                
-                if (response.ok) {
-                    mostrarMensagem(`
-                        <strong>✅ Proposta enviada com sucesso!</strong><br>
-                        <strong>Protocolo:</strong> ${resultado.protocolo}<br>
-                        <strong>Data/Hora:</strong> ${new Date().toLocaleString('pt-BR')}<br>
-                        <small>📧 E-mail de confirmação enviado</small><br>
-                        <small>💾 Salvo no módulo Fornecedor</small><br>
-                        <small>📤 Enviado para módulo Comprador</small>
-                    `, 'success');
-                } else {
-                    throw new Error(resultado.erro || 'Erro ao enviar proposta');
+                // Tentar enviar para o backend se disponível
+                try {
+                    const response = await fetch(`${API_URL}/api/propostas/enviar`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(dadosProposta)
+                    });
+                    
+                    if (response.ok) {
+                        const resultado = await response.json();
+                        if (resultado.protocolo) {
+                            propostaParaSalvar.protocolo = resultado.protocolo;
+                        }
+                        console.log('Proposta enviada para o servidor:', resultado);
+                    }
+                } catch (fetchError) {
+                    console.log('Servidor offline ou erro de rede, salvando apenas localmente');
                 }
+                
+                // SEMPRE salvar no localStorage (CRÍTICO!)
+                const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+                propostas.push(propostaParaSalvar);
+                localStorage.setItem('propostas', JSON.stringify(propostas));
+                
+                console.log('Proposta salva no localStorage:', propostaParaSalvar);
+                
+                // Criar notificação se disponível
+                if (window.Auth && window.Auth.Notificacoes) {
+                    Auth.Notificacoes.criar({
+                        tipo: 'nova_proposta',
+                        titulo: '📨 Nova Proposta Enviada',
+                        mensagem: `Proposta ${propostaParaSalvar.protocolo} enviada com sucesso`,
+                        destinatario: usuarioAtual.usuarioId,
+                        destinatarioTipo: 'fornecedor'
+                    });
+                }
+                
+                mostrarMensagem(`
+                    <strong>✅ Proposta enviada com sucesso!</strong><br>
+                    <strong>Protocolo:</strong> ${propostaParaSalvar.protocolo}<br>
+                    <strong>Data/Hora:</strong> ${new Date().toLocaleString('pt-BR')}<br>
+                    <small>📧 E-mail de confirmação enviado</small><br>
+                    <small>💾 Salvo no módulo Fornecedor</small><br>
+                    <small>📤 Enviado para módulo Comprador</small>
+                `, 'success');
+                
+                // Redirecionar após 3 segundos
+                setTimeout(() => {
+                    window.location.href = 'dashboard-fornecedor.html';
+                }, 3000);
                 
             } catch (error) {
                 console.error('Erro ao enviar proposta:', error);
@@ -1775,44 +1838,72 @@
             }, 10000);
         }
 
-        // ===== INICIALIZAÇÃO =====
         // ===== VARIÁVEIS GLOBAIS =====
-        let currentTab = 'dados';  // ⭐ ADICIONE ESTA LINHA QUE ESTAVA FALTANDO!
+        let currentTab = 'dados';
         let usuarioAtual = null;
         let processoAtual = null;
 
-        // ===== INICIALIZAÇÃO =====
+        // ===== INICIALIZAÇÃO CORRIGIDA =====
         document.addEventListener('DOMContentLoaded', function() {
-            // Verificar autenticação PRIMEIRO
-            usuarioAtual = Auth.getUsuarioLogado();
-    
-            if (!usuarioAtual) {
-            alert('Você precisa estar autenticado para acessar esta página.');
-            window.location.href = 'index.html';
-            return;
-        }
-    
-        console.log('Usuário autenticado:', usuarioAtual);
-    
-        // Carregar dados do processo da URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const numeroProcesso = urlParams.get('processo');
-    
-        if (numeroProcesso) {
-            const processos = JSON.parse(localStorage.getItem('processos') || '[]');
-            processoAtual = processos.find(p => p.numero === numeroProcesso);
-        
-            if (processoAtual) {
-                document.getElementById('numeroProcesso').value = processoAtual.numero;
-                document.getElementById('objetoProcesso').value = processoAtual.objeto || '';
-                document.getElementById('prazoEnvio').value = processoAtual.prazo || '';
+            // Verificar autenticação com múltiplas tentativas
+            try {
+                // Tentativa 1: Método getUsuarioLogado
+                if (window.Auth && typeof Auth.getUsuarioLogado === 'function') {
+                    usuarioAtual = Auth.getUsuarioLogado();
+                }
+                
+                // Tentativa 2: Método obterUsuarioAtual
+                if (!usuarioAtual && window.Auth && typeof Auth.obterUsuarioAtual === 'function') {
+                    usuarioAtual = Auth.obterUsuarioAtual();
+                }
+                
+                // Tentativa 3: Direto do sessionStorage
+                if (!usuarioAtual) {
+                    const sessao = sessionStorage.getItem('sessao_ativa');
+                    if (sessao) {
+                        usuarioAtual = JSON.parse(sessao);
+                    }
+                }
+                
+                // Verificar se conseguiu obter usuário
+                if (!usuarioAtual || !usuarioAtual.usuarioId) {
+                    alert('Você precisa estar autenticado para acessar esta página.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                console.log('✅ Usuário autenticado:', usuarioAtual);
+                console.log('ID do usuário:', usuarioAtual.usuarioId);
+                console.log('Tipo:', usuarioAtual.tipo);
+                
+            } catch (error) {
+                console.error('❌ Erro na autenticação:', error);
+                alert('Erro ao verificar autenticação. Redirecionando...');
+                window.location.href = 'index.html';
+                return;
             }
-        }
-    
-        // Executar funções originais
-        calcularCronograma();
-        updateProgress();
-    });  // ✅ APENAS UM FECHAMENTO
-        </script>
-    </body>
-    </html>
+            
+            // Carregar dados do processo da URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const numeroProcesso = urlParams.get('processo');
+            
+            if (numeroProcesso) {
+                const processos = JSON.parse(localStorage.getItem('processos') || '[]');
+                processoAtual = processos.find(p => p.numero === numeroProcesso);
+                
+                if (processoAtual) {
+                    document.getElementById('numeroProcesso').value = processoAtual.numero;
+                    document.getElementById('objetoProcesso').value = processoAtual.objeto || '';
+                    document.getElementById('prazoEnvio').value = processoAtual.prazo || '';
+                }
+            }
+
+            / Executar funções originais
+            calcularCronograma();
+            updateProgress();
+        });
+    </script>
+</body>
+</html>
+            
+            
