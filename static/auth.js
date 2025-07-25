@@ -73,6 +73,11 @@ const Auth = {
         return null;
     },
     
+    // MÉTODO ADICIONADO PARA COMPATIBILIDADE
+    getUsuarioLogado: function() {
+        return this.obterUsuarioAtual();
+    },
+    
     // Fazer logout
     logout: function(mensagem = null) {
         const usuario = this.obterUsuarioAtual();
@@ -606,4 +611,3 @@ if (!document.getElementById('auth-animations')) {
 
 // Exportar para compatibilidade
 window.Auth = Auth;
-
