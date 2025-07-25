@@ -1984,5 +1984,281 @@
             alert('✅ Documento Word baixado com sucesso!');
         }
     </script>
+    // 🔧 SCRIPT PARA CORRIGIR O DASHBOARD FORNECEDOR
+// Adicione este script no final da página, antes de </body>
+
+(function() {
+    console.log('🚀 Iniciando correção do Dashboard Fornecedor...');
+    
+    // 🔑 CONFIGURAÇÃO
+    const API_URL = 'https://portal-proposta.onrender.com';
+    const FORNECEDOR_CNPJ = localStorage.getItem('fornecedor_cnpj') || '12.345.678/0001-90';
+    const FORNECEDOR_EMPRESA = localStorage.getItem('fornecedor_empresa') || 'Empresa Demo LTDA';
+    
+    console.log('📊 Fornecedor configurado:', { cnpj: FORNECEDOR_CNPJ, empresa: FORNECEDOR_EMPRESA });
+
+    // 🚀 AGUARDAR CARREGAMENTO DA PÁGINA
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inicializar);
+    } else {
+        inicializar();
+    }
+
+    function inicializar() {
+        console.log('✅ DOM carregado, iniciando dashboard...');
+        
+        // Aguardar 1 segundo para garantir que elementos existem
+        setTimeout(() => {
+            carregarDados();
+            
+            // Auto-refresh a cada 30 segundos
+            setInterval(carregarDados, 30000);
+        }, 1000);
+    }
+
+    // 📊 CARREGAR DADOS PRINCIPAIS
+    async function carregarDados() {
+        try {
+            console.log('🔄 Carregando dados do sistema...');
+            
+            // Carregar propostas do backend
+            await carregarPropostas();
+            
+            // Carregar processos (mock por enquanto)
+            carregarProcessos();
+            
+        } catch (error) {
+            console.error('❌ Erro geral:', error);
+        }
+    }
+
+    // 📄 CARREGAR PROPOSTAS DO BACKEND
+    async function carregarPropostas() {
+        try {
+            console.log('📡 Consultando API de propostas...');
+            
+            const response = await fetch(`${API_URL}/api/propostas`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('✅ Dados recebidos:', data);
+
+            // Filtrar propostas do fornecedor logado
+            const minhasPropostas = data.propostas.filter(proposta => 
+                proposta.cnpj === FORNECEDOR_CNPJ || 
+                proposta.empresa === FORNECEDOR_EMPRESA ||
+                proposta.empresa?.toLowerCase().includes(FORNECEDOR_EMPRESA.toLowerCase())
+            );
+
+            console.log(`🔍 Propostas filtradas: ${minhasPropostas.length} de ${data.total}`);
+            console.log('📋 Minhas propostas:', minhasPropostas);
+
+            // Atualizar contadores nos cards
+            atualizarContadores(minhasPropostas, data.total);
+            
+            // Renderizar lista de propostas
+            renderizarMinhasPropostas(minhasPropostas);
+
+        } catch (error) {
+            console.error('❌ Erro ao carregar propostas:', error);
+            
+            // Atualizar interface com erro
+            const container = document.querySelector('#minhas-propostas .content') || 
+                            document.querySelector('[data-section="propostas"]') ||
+                            buscarElementoPorTexto('Carregando propostas...')?.parentElement;
+            
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #dc2626; background: #fee2e2; border-radius: 8px; margin: 10px 0;">
+                        <strong>⚠️ Erro ao carregar propostas</strong><br>
+                        ${error.message}<br>
+                        <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            🔄 Tentar Novamente
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // 📊 ATUALIZAR CONTADORES NOS CARDS
+    function atualizarContadores(minhasPropostas, totalProcessos) {
+        // Encontrar elementos dos contadores
+        const elementos = {
+            processos: buscarElementoPorTexto('Processos Disponíveis')?.previousElementSibling,
+            propostas: buscarElementoPorTexto('Propostas Enviadas')?.previousElementSibling,
+            aprovadas: buscarElementoPorTexto('Propostas Aprovadas')?.previousElementSibling
+        };
+
+        console.log('🎯 Elementos encontrados:', elementos);
+
+        // Atualizar contadores
+        if (elementos.processos) {
+            elementos.processos.textContent = '2'; // Mock de processos
+        }
+        
+        if (elementos.propostas) {
+            elementos.propostas.textContent = minhasPropostas.length;
+        }
+        
+        if (elementos.aprovadas) {
+            const aprovadas = minhasPropostas.filter(p => p.status === 'aprovada' || p.status === 'aprovado').length;
+            elementos.aprovadas.textContent = aprovadas;
+        }
+
+        console.log(`📈 Contadores atualizados: ${minhasPropostas.length} propostas, ${minhasPropostas.filter(p => p.status === 'aprovada').length} aprovadas`);
+    }
+
+    // 🎨 RENDERIZAR LISTA DE PROPOSTAS
+    function renderizarMinhasPropostas(propostas) {
+        // Encontrar container das propostas
+        const container = buscarElementoPorTexto('Carregando propostas...')?.parentElement ||
+                         document.querySelector('#minhas-propostas .content');
+
+        if (!container) {
+            console.warn('⚠️ Container de propostas não encontrado');
+            return;
+        }
+
+        if (propostas.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #64748b;">
+                    <div style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;">📄</div>
+                    <h3>Nenhuma proposta encontrada</h3>
+                    <p>CNPJ pesquisado: <strong>${FORNECEDOR_CNPJ}</strong></p>
+                    <p>Empresa: <strong>${FORNECEDOR_EMPRESA}</strong></p>
+                    <br>
+                    <a href="/portal-propostas-novo.html" style="display: inline-block; background: #2c5aa0; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">
+                        ➕ Enviar Primeira Proposta
+                    </a>
+                </div>
+            `;
+            return;
+        }
+
+        // Criar tabela de propostas
+        const tabela = `
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr style="background: #2c5aa0; color: white;">
+                            <th style="padding: 12px; text-align: left;">Protocolo</th>
+                            <th style="padding: 12px; text-align: left;">Data</th>
+                            <th style="padding: 12px; text-align: left;">Empresa</th>
+                            <th style="padding: 12px; text-align: left;">CNPJ</th>
+                            <th style="padding: 12px; text-align: left;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${propostas.map(proposta => `
+                            <tr style="border-bottom: 1px solid #e2e8f0;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+                                <td style="padding: 12px;"><strong>${proposta.protocolo}</strong></td>
+                                <td style="padding: 12px;">${formatarData(proposta.data)}</td>
+                                <td style="padding: 12px;">${proposta.empresa}</td>
+                                <td style="padding: 12px;">${proposta.cnpj || 'N/A'}</td>
+                                <td style="padding: 12px;">
+                                    <span style="padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; background: ${obterCorStatus(proposta.status)};">
+                                        ${(proposta.status || 'PENDENTE').toUpperCase()}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 6px; font-size: 0.9rem; color: #0369a1;">
+                <strong>ℹ️ Informação:</strong> Mostrando propostas para CNPJ: <strong>${FORNECEDOR_CNPJ}</strong>
+            </div>
+        `;
+
+        container.innerHTML = tabela;
+        console.log('✅ Lista de propostas renderizada');
+    }
+
+    // 📋 CARREGAR PROCESSOS (MOCK)
+    function carregarProcessos() {
+        const processosMock = [
+            { numero: "PROC-2025-001", titulo: "Aquisição de Material de Escritório", prazo: "2025-08-15" },
+            { numero: "PROC-2025-002", titulo: "Contratação de Serviços de Limpeza", prazo: "2025-08-20" }
+        ];
+
+        const container = buscarElementoPorTexto('Carregando processos...')?.parentElement;
+        
+        if (container) {
+            const tabela = `
+                <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr style="background: #2c5aa0; color: white;">
+                            <th style="padding: 12px; text-align: left;">Processo</th>
+                            <th style="padding: 12px; text-align: left;">Título</th>
+                            <th style="padding: 12px; text-align: left;">Prazo</th>
+                            <th style="padding: 12px; text-align: left;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${processosMock.map(proc => `
+                            <tr style="border-bottom: 1px solid #e2e8f0;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+                                <td style="padding: 12px;"><strong>${proc.numero}</strong></td>
+                                <td style="padding: 12px;">${proc.titulo}</td>
+                                <td style="padding: 12px;">${formatarData(proc.prazo)}</td>
+                                <td style="padding: 12px;">
+                                    <a href="/portal-propostas-novo.html" style="background: #16a34a; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 0.8rem;">
+                                        📝 Propor
+                                    </a>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = tabela;
+        }
+    }
+
+    // 🔍 FUNÇÕES AUXILIARES
+    function buscarElementoPorTexto(texto) {
+        const elementos = document.querySelectorAll('*');
+        for (let el of elementos) {
+            if (el.textContent.trim() === texto) {
+                return el;
+            }
+        }
+        return null;
+    }
+
+    function formatarData(data) {
+        if (!data) return 'N/A';
+        try {
+            return new Date(data).toLocaleDateString('pt-BR');
+        } catch {
+            return data;
+        }
+    }
+
+    function obterCorStatus(status) {
+        switch((status || '').toLowerCase()) {
+            case 'aprovada':
+            case 'aprovado':
+                return '#d1fae5; color: #059669';
+            case 'rejeitada':
+            case 'rejeitado':
+                return '#fee2e2; color: #dc2626';
+            default:
+                return '#fef3c7; color: #d97706';
+        }
+    }
+
+    console.log('✅ Script de correção do Dashboard carregado!');
+})();
 </body>
 </html>
