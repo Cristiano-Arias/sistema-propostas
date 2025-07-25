@@ -928,7 +928,8 @@
                 // Carregar propostas do fornecedor
                 const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
                 const minhasPropostas = propostasData.filter(p => 
-                    p.fornecedorId === currentUser.usuarioId
+                    p.fornecedorId === currentUser.usuarioId || 
+                    (p.fornecedor && p.fornecedor.id === currentUser.usuarioId)
                 );
                 
                 // Contar propostas aprovadas
