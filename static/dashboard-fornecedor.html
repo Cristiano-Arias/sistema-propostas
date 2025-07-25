@@ -1067,7 +1067,12 @@
                 container.innerHTML = '<div class="error">Erro ao carregar processos. Tente novamente.</div>';
             }
         }
-
+        
+        / Baixar proposta como PDF  ← Cole a nova função aqui
+        function baixarProposta(protocolo) {
+            alert('📥 Funcionalidade de download em desenvolvimento.\n\nEm breve você poderá baixar suas propostas em PDF.');
+        }
+        
         // Ver detalhes do processo
         function verDetalhesProcesso(numeroProcesso) {
             const processo = processos.find(p => p.numero === numeroProcesso);
@@ -1437,13 +1442,18 @@
         function loadPropostas() {
             const container = document.getElementById('propostasList');
             container.innerHTML = '<div class="loading">Carregando propostas...</div>';
-            
+    
             // Buscar propostas do localStorage
             const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
-            const minhasPropostas = propostasData.filter(p => 
-                p.fornecedorId === currentUser.usuarioId
-            );
-            
+    
+            // Filtrar propostas deste fornecedor - CORRIGIDO
+            const minhasPropostas = propostasData.filter(p => {
+                // Verificar múltiplas formas de identificação
+                return p.fornecedorId === currentUser.usuarioId || 
+                       p.fornecedor?.id === currentUser.usuarioId ||
+                       p.dados?.dados?.email === currentUser.email;
+            });
+    
             if (minhasPropostas.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -1454,25 +1464,30 @@
                 `;
                 return;
             }
-            
+    
+            // Ordenar por data mais recente primeiro
+            minhasPropostas.sort((a, b) => new Date(b.data || b.dataEnvio) - new Date(a.data || a.dataEnvio));
+    
             container.innerHTML = minhasPropostas.map(proposta => `
                 <div class="process-item">
                     <div class="process-title">Protocolo: ${proposta.protocolo}</div>
                     <div class="process-info">
                         <span><strong>Processo:</strong> ${proposta.processo}</span>
-                        <span><strong>Data de Envio:</strong> ${formatarData(proposta.dataEnvio || proposta.data)}</span>
-                        <span><strong>Valor Total:</strong> ${proposta.valor || 'Não informado'}</span>
+                        <span><strong>Data de Envio:</strong> ${formatarData(proposta.data || proposta.dataEnvio)}</span>
+                        <span><strong>Valor Total:</strong> R$ ${proposta.valor || proposta.dados?.comercial?.valorTotal || 'Não informado'}</span>
                         <span><strong>Status:</strong> <span class="status-badge status-${proposta.status || 'enviada'}">${getStatusLabel(proposta.status)}</span></span>
                     </div>
                     <div style="margin-top: 10px;">
                         <button class="btn btn-info" onclick="verDetalhesProposta('${proposta.protocolo}')">
                             👁️ Ver Detalhes
                         </button>
+                        <button class="btn btn-secondary" onclick="baixarProposta('${proposta.protocolo}')">
+                            📥 Baixar PDF
+                        </button>
                     </div>
                 </div>
             `).join('');
         }
-
         // Ver detalhes da proposta
         function verDetalhesProposta(protocolo) {
             const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
