@@ -402,6 +402,44 @@ def enviar_proposta():
             "erro": "Erro ao enviar proposta"
         }), 500
 
+@app.route('/api/propostas/enviar', methods=['POST'])
+def enviar_proposta_frontend():
+    """Rota específica para envio de propostas do frontend"""
+    try:
+        dados = request.get_json()
+        
+        # Gerar protocolo único
+        protocolo = f"PROP-{datetime.now().strftime('%Y%m%d%H%M%S')}-{len(DADOS_SISTEMA['propostas']) + 1:03d}"
+        
+        # Criar nova proposta com dados do frontend
+        nova_proposta = {
+            "protocolo": protocolo,
+            "processo": dados.get("processo", "1600003456-150"),
+            "empresa": dados.get("dadosCadastrais", {}).get("razaoSocial", ""),
+            "cnpj": dados.get("dadosCadastrais", {}).get("cnpj", ""),
+            "data": datetime.now().isoformat(),
+            "valor": dados.get("resumo", {}).get("precoTotal", "R$ 0,00"),
+            "dados": dados
+        }
+        
+        DADOS_SISTEMA["propostas"].append(nova_proposta)
+        
+        logger.info(f"Proposta enviada via frontend: {protocolo}")
+        
+        return jsonify({
+            "success": True,
+            "protocolo": protocolo,
+            "mensagem": "✅ Proposta enviada com sucesso!",
+            "data": datetime.now().isoformat()
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Erro ao enviar proposta via frontend: {e}")
+        return jsonify({
+            "success": False,
+            "erro": "❌ Erro ao enviar proposta"
+        }), 500
+
 @app.route('/api/fornecedor/estatisticas')
 def estatisticas_fornecedor():
     """Estatísticas específicas do fornecedor"""
@@ -660,4 +698,3 @@ if __name__ == '__main__':
         port=port,
         debug=debug_mode
     )
-
