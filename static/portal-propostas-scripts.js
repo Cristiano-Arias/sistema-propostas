@@ -84,6 +84,44 @@ function carregarProcesso(numeroProcesso) {
 }
 
 function carregarDadosEmpresa() {
+    // Primeiro tenta buscar do cadastro do dashboard
+    const empresaKey = `fornecedorData_${usuarioAtual.usuarioId}`;
+    const empresaData = localStorage.getItem(empresaKey);
+    
+    if (empresaData) {
+        try {
+            const dados = JSON.parse(empresaData);
+            
+            // Preencher os campos com os dados do cadastro
+            document.getElementById('razaoSocial').value = dados.razaoSocial || '';
+            document.getElementById('cnpj').value = dados.cnpj || '';
+            document.getElementById('email').value = dados.email || '';
+            
+            // Campos opcionais
+            if (dados.telefone) {
+                document.getElementById('telefone').value = dados.telefone;
+            }
+            if (dados.endereco) {
+                document.getElementById('endereco').value = dados.endereco;
+            }
+            if (dados.cidade) {
+                document.getElementById('cidade').value = dados.cidade;
+            }
+            if (dados.respTecnico) {
+                document.getElementById('respTecnico').value = dados.respTecnico;
+            }
+            if (dados.crea) {
+                document.getElementById('crea').value = dados.crea;
+            }
+            
+            console.log('✅ Dados carregados do cadastro do fornecedor');
+            return;
+        } catch (error) {
+            console.error('Erro ao carregar dados:', error);
+        }
+    }
+    
+    // Se não encontrou, tenta o método antigo (para compatibilidade)
     const cadastros = JSON.parse(localStorage.getItem('cadastros_fornecedores') || '[]');
     const meuCadastro = cadastros.find(c => c.usuarioId === usuarioAtual.usuarioId);
     
