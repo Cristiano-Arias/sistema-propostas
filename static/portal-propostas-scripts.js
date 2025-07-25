@@ -1142,6 +1142,7 @@ function gerarPreview() {
                 .footer { text-align: center; margin-top: 60px; padding-top: 20px; border-top: 1px solid #ddd; }
                 @media print { .no-print { display: none; } }
             </style>
+            <script src="auth.js"></script>
         </head>
         <body>
             <div class="header">
@@ -1250,5 +1251,24 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Verificar autenticação ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se Auth existe
+    if (typeof Auth !== 'undefined') {
+        usuarioAtual = Auth.verificarAutenticacao(['fornecedor']);
+        if (!usuarioAtual) {
+            alert('Você precisa estar autenticado para acessar esta página.');
+            window.location.href = 'index.html';
+            return;
+        }
+        console.log('Usuário autenticado:', usuarioAtual);
+        
+        // Carregar dados da empresa
+        carregarDadosEmpresa();
+    } else {
+        console.error('Auth.js não foi carregado!');
+    }
+});
 
 console.log('Portal de Propostas COMPLETO carregado com sucesso!');
