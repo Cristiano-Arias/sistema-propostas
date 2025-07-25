@@ -940,6 +940,7 @@ function habilitarBotaoEnvio() {
     }
 }
 
+// Correção na função confirmarEnvioFinal (linha ~1050)
 async function confirmarEnvioFinal() {
     fecharModalRevisao();
     
@@ -948,7 +949,35 @@ async function confirmarEnvioFinal() {
     
     mostrarMensagem('<span class="loading"></span> Enviando proposta...', 'info');
     
-    // Criar objeto da proposta
+    // Criar objeto da proposta no formato correto para o backend
+    const propostaParaAPI = {
+        processo: processoAtual.numero,
+        dadosCadastrais: {
+            razaoSocial: dados.dados.razaoSocial,
+            cnpj: dados.dados.cnpj,
+            endereco: dados.dados.endereco,
+            cidade: dados.dados.cidade,
+            telefone: dados.dados.telefone,
+            email: dados.dados.email,
+            respTecnico: dados.dados.respTecnico,
+            crea: dados.dados.crea
+        },
+        resumo: {
+            precoTotal: dados.comercial.valorTotal,
+            prazoExecucao: dados.tecnica.prazoExecucao,
+            formaPagamento: dados.resumo.formaPagamento
+        },
+        propostaTecnica: dados.tecnica,
+        propostaComercial: dados.comercial,
+        metadata: {
+            protocolo: protocolo,
+            dataEnvio: new Date().toISOString(),
+            fornecedorId: usuarioAtual.usuarioId,
+            fornecedorNome: usuarioAtual.nome
+        }
+    };
+    
+    // Criar objeto da proposta para localStorage
     const proposta = {
         protocolo: protocolo,
         processo: processoAtual.numero,
@@ -967,7 +996,7 @@ async function confirmarEnvioFinal() {
     };
     
     try {
-        // Salvar proposta
+        // Salvar proposta no localStorage
         const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
         propostas.push(proposta);
         localStorage.setItem('propostas', JSON.stringify(propostas));
@@ -994,16 +1023,17 @@ async function confirmarEnvioFinal() {
             });
         }
         
-        // Tentar enviar para API
+        // Tentar enviar para API - CORRIGIDO O ENDPOINT
         try {
-            const response = await fetch(`${API_URL}/api/enviar-proposta`, {
+            const response = await fetch(`${API_URL}/api/propostas/enviar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(proposta)
+                body: JSON.stringify(propostaParaAPI)
             });
             
             if (response.ok) {
-                console.log('Proposta enviada para servidor');
+                const resultado = await response.json();
+                console.log('Proposta enviada para servidor:', resultado);
             }
         } catch (error) {
             console.log('Servidor offline, proposta salva localmente');
@@ -1040,7 +1070,6 @@ async function confirmarEnvioFinal() {
         mostrarMensagem('Erro ao enviar proposta. Por favor, tente novamente.', 'error');
     }
 }
-
 function gerarProtocolo() {
     const data = new Date();
     const ano = data.getFullYear();
