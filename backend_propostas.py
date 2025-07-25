@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Backend Atualizado - Sistema de Gestão de Propostas
-Versão 3.1 - CORRIGIDO - Propostas Funcionando
+Versão 3.0 - Estrutura Revisada e Confirmada
 Compatível com Render.com e GitHub
 """
 
@@ -136,7 +136,6 @@ DADOS_SISTEMA = {
 def index():
     """Redireciona para a página de login"""
     return send_from_directory(STATIC_DIR, 'index.html')
-
 @app.route('/api/status')
 def api_status():
     """Status detalhado da API"""
@@ -155,7 +154,7 @@ def api_status():
                 "usuarios_total": len(DADOS_SISTEMA["usuarios"]),
                 "notificacoes_total": len(DADOS_SISTEMA["notificacoes"])
             },
-            "versao": "3.1-CORRIGIDO",
+            "versao": "3.0",
             "ambiente": os.environ.get('ENVIRONMENT', 'development')
         })
     except Exception as e:
@@ -405,180 +404,40 @@ def enviar_proposta():
 
 @app.route('/api/propostas/enviar', methods=['POST'])
 def enviar_proposta_frontend():
-    """Rota específica para envio de propostas do frontend - CORRIGIDA"""
+    """Rota específica para envio de propostas do frontend"""
     try:
         dados = request.get_json()
         
-        # Log para debug
-        logger.info(f"📥 Dados recebidos do frontend: {json.dumps(dados, indent=2, default=str)}")
-        
-        # Extrair dados corretamente do formato do frontend
-        dados_cadastrais = dados.get("dadosCadastrais", {})
-        processo_info = dados.get("processo", {})
-        proposta_comercial = dados.get("propostaComercial", {})
-        
-        # Validações básicas
-        if not dados_cadastrais.get("razaoSocial"):
-            return jsonify({
-                "success": False,
-                "erro": "Razão social é obrigatória"
-            }), 400
-        
-        if not dados_cadastrais.get("cnpj"):
-            return jsonify({
-                "success": False,
-                "erro": "CNPJ é obrigatório"
-            }), 400
-        
         # Gerar protocolo único
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        protocolo = f"PROP-{timestamp}-{len(DADOS_SISTEMA['propostas']) + 1:03d}"
+        protocolo = f"PROP-{datetime.now().strftime('%Y%m%d%H%M%S')}-{len(DADOS_SISTEMA['propostas']) + 1:03d}"
         
-        # Extrair valor total da proposta comercial
-        valor_total = "R$ 0,00"
-        if proposta_comercial.get("valorTotal"):
-            valor_total = f"R$ {proposta_comercial['valorTotal']}"
-        elif proposta_comercial.get("totais", {}).get("custoDirecto"):
-            valor_total = f"R$ {proposta_comercial['totais']['custoDirecto']}"
-        
-        # Criar nova proposta com estrutura correta
+        # Criar nova proposta com dados do frontend
         nova_proposta = {
             "protocolo": protocolo,
-            "processo": processo_info.get("numero", "1600003456-150"),
-            "empresa": dados_cadastrais.get("razaoSocial", ""),
-            "cnpj": dados_cadastrais.get("cnpj", ""),
-            "email": dados_cadastrais.get("email", ""),
-            "telefone": dados_cadastrais.get("telefone", ""),
+            "processo": dados.get("processo", "1600003456-150"),
+            "empresa": dados.get("dadosCadastrais", {}).get("razaoSocial", ""),
+            "cnpj": dados.get("dadosCadastrais", {}).get("cnpj", ""),
             "data": datetime.now().isoformat(),
-            "valor": valor_total,
-            "status": "enviada",
-            "dados_completos": dados,  # Salvar todos os dados originais
-            "resumo": {
-                "razao_social": dados_cadastrais.get("razaoSocial"),
-                "cnpj": dados_cadastrais.get("cnpj"),
-                "processo": processo_info.get("numero"),
-                "objeto": processo_info.get("objeto"),
-                "valor_total": valor_total,
-                "prazo_execucao": dados.get("resumo", {}).get("prazoExecucao") or 
-                               dados.get("propostaTecnica", {}).get("prazoExecucao"),
-                "forma_pagamento": dados.get("resumo", {}).get("formaPagamento"),
-                "data_envio": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            }
+            "valor": dados.get("resumo", {}).get("precoTotal", "R$ 0,00"),
+            "dados": dados
         }
         
-        # Adicionar à lista de propostas
         DADOS_SISTEMA["propostas"].append(nova_proposta)
         
-        # Log de sucesso
-        logger.info(f"✅ Proposta salva com sucesso: {protocolo} - {dados_cadastrais.get('razaoSocial')}")
+        logger.info(f"Proposta enviada via frontend: {protocolo}")
         
-        # Criar notificação para o comprador
-        notificacao = {
-            "id": f"notif_{len(DADOS_SISTEMA['notificacoes']) + 1:03d}",
-            "tipo": "nova_proposta",
-            "titulo": "Nova Proposta Recebida",
-            "mensagem": f"Nova proposta de {dados_cadastrais.get('razaoSocial')} para o processo {processo_info.get('numero')}",
-            "destinatario": "todos",
-            "destinatarioTipo": "comprador",
-            "remetente": "Sistema",
-            "lida": False,
-            "data": datetime.now().isoformat(),
-            "acao": "visualizar_proposta",
-            "processoId": processo_info.get("numero"),
-            "metadata": {
-                "protocolo": protocolo,
-                "empresa": dados_cadastrais.get("razaoSocial"),
-                "valor": valor_total
-            }
-        }
-        
-        DADOS_SISTEMA["notificacoes"].append(notificacao)
-        
-        # Resposta de sucesso
         return jsonify({
             "success": True,
             "protocolo": protocolo,
             "mensagem": "✅ Proposta enviada com sucesso!",
-            "detalhes": {
-                "empresa": dados_cadastrais.get("razaoSocial"),
-                "processo": processo_info.get("numero"),
-                "valor": valor_total,
-                "data_envio": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                "protocolo": protocolo
-            },
             "data": datetime.now().isoformat()
         }), 201
         
     except Exception as e:
-        logger.error(f"❌ Erro ao enviar proposta via frontend: {str(e)}")
-        logger.error(f"Dados recebidos: {request.get_json()}")
+        logger.error(f"Erro ao enviar proposta via frontend: {e}")
         return jsonify({
             "success": False,
-            "erro": f"❌ Erro ao enviar proposta: {str(e)}"
-        }), 500
-
-@app.route('/api/propostas/verificar/<protocolo>')
-def verificar_proposta(protocolo):
-    """Verificar se proposta foi salva corretamente"""
-    try:
-        proposta = next((p for p in DADOS_SISTEMA["propostas"] 
-                        if p["protocolo"] == protocolo), None)
-        
-        if not proposta:
-            return jsonify({
-                "success": False,
-                "erro": "Proposta não encontrada"
-            }), 404
-        
-        return jsonify({
-            "success": True,
-            "proposta_encontrada": True,
-            "resumo": proposta.get("resumo", {}),
-            "protocolo": protocolo,
-            "data_envio": proposta.get("data"),
-            "status": proposta.get("status", "enviada")
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro ao verificar proposta {protocolo}: {e}")
-        return jsonify({
-            "success": False,
-            "erro": "Erro ao verificar proposta"
-        }), 500
-
-@app.route('/api/propostas/processo/<numero_processo>')
-def propostas_por_processo(numero_processo):
-    """Listar propostas de um processo específico"""
-    try:
-        propostas_processo = [p for p in DADOS_SISTEMA["propostas"] 
-                             if p["processo"] == numero_processo]
-        
-        # Formatar dados para exibição
-        propostas_formatadas = []
-        for proposta in propostas_processo:
-            propostas_formatadas.append({
-                "protocolo": proposta["protocolo"],
-                "empresa": proposta["empresa"],
-                "cnpj": proposta["cnpj"],
-                "valor": proposta["valor"],
-                "data_envio": datetime.fromisoformat(proposta["data"]).strftime("%d/%m/%Y %H:%M"),
-                "status": proposta.get("status", "enviada"),
-                "resumo": proposta.get("resumo", {}),
-                "tem_dados_completos": "dados_completos" in proposta
-            })
-        
-        return jsonify({
-            "success": True,
-            "processo": numero_processo,
-            "propostas": propostas_formatadas,
-            "total": len(propostas_formatadas)
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro ao listar propostas do processo {numero_processo}: {e}")
-        return jsonify({
-            "success": False,
-            "erro": "Erro ao carregar propostas"
+            "erro": "❌ Erro ao enviar proposta"
         }), 500
 
 @app.route('/api/fornecedor/estatisticas')
@@ -825,15 +684,14 @@ def internal_error(e):
     return jsonify({"erro": "Erro interno do servidor"}), 500
 
 if __name__ == '__main__':
-    logger.info("🚀 Iniciando Sistema de Gestão de Propostas...")
-    logger.info(f"📁 Diretório de trabalho: {os.getcwd()}")
-    logger.info(f"📂 Diretório estático: {STATIC_DIR}")
+    logger.info("Iniciando Sistema de Gestão de Propostas...")
+    logger.info(f"Diretório de trabalho: {os.getcwd()}")
+    logger.info(f"Diretório estático: {STATIC_DIR}")
     
     port = int(os.environ.get('PORT', 5000))
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     
-    logger.info(f"🌐 Servidor iniciando na porta {port}")
-    logger.info("✅ Versão 3.1 - Propostas CORRIGIDAS")
+    logger.info(f"Servidor iniciando na porta {port}")
     
     app.run(
         host='0.0.0.0',
