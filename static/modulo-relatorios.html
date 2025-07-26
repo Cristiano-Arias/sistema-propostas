@@ -488,6 +488,7 @@
             <button class="tab-btn" onclick="mostrarTab('bdi')">📊 Análise BDI</button>
             <button class="tab-btn" onclick="mostrarTab('metodologia')">📋 Metodologia</button>
             <button class="tab-btn" onclick="mostrarTab('ia')">🤖 Análise IA</button>
+            <button class="tab-btn" onclick="mostrarTab('comparativo-completo')">🔄 Comparativo Lado a Lado</button>
         </div>
 
         <!-- TAB: RESUMO EXECUTIVO -->
@@ -726,6 +727,32 @@
             </div>
         </div>
 
+        <!-- TAB: COMPARATIVO COMPLETO LADO A LADO -->
+        <div class="tab-content" id="tab-comparativo-completo">
+            <h2 style="color: #2c3e50; margin-bottom: 20px;">🔄 Comparativo Completo Lado a Lado</h2>
+    
+            <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <p style="color: #1976d2; font-size: 16px;">
+                    <strong>📊 Visualização Completa:</strong> Todas as empresas e todos os itens comparados lado a lado em tabelas unificadas.
+                </p>
+                <p style="color: #1976d2; margin-top: 10px;">
+                    Este relatório mostra TODAS as propostas em colunas paralelas para facilitar a comparação direta.
+                </p>
+            </div>
+    
+            <div style="text-align: center; margin: 30px 0;">
+                <button class="btn btn-primary" onclick="abrirComparativoCompleto()" style="font-size: 18px; padding: 15px 30px;">
+                    🚀 Gerar Comparativo Completo Lado a Lado
+                </button>
+            </div>
+    
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                <p style="color: #856404;">
+                    <strong>💡 Dica:</strong> O relatório será aberto em uma nova janela para melhor visualização das tabelas extensas.
+                </p>
+            </div>
+        </div>
+
         <div class="acoes-export">
             <button class="btn btn-success" onclick="exportarPDF()">📄 Gerar PDF Completo</button>
             <button class="btn btn-info" onclick="exportarDetalhado()">📊 Relatório Detalhado</button>
@@ -767,8 +794,19 @@
             if (tabName === 'ia' && !analiseIA) {
                 gerarAnaliseIA();
             }
-        }
-
+         }
+        
+        // Função para abrir o comparativo completo
+        function abrirComparativoCompleto() {
+            if (!processoAtual) {
+                alert('Erro: Processo não identificado!');
+                return;
+            }
+    
+            const url = `modulo-comparativo-completo.html?processo=${processoAtual.numero}`;
+            window.open(url, '_blank');
+            }    
+        
         // Carregar dados do processo
         function carregarDados() {
             const urlParams = new URLSearchParams(window.location.search);
