@@ -601,6 +601,31 @@
             <div id="propostas" class="page">
                 <h2>💰 Análise de Propostas</h2>
                 <p>Análise comercial das propostas recebidas.</p>
+                
+                <div class="filters-section" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h3>Filtros</h3>
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <div>
+                            <label>Processo:</label>
+                            <select id="filtroProcesso" onchange="carregarPropostas()" style="margin-left: 5px; padding: 5px;">
+                                <option value="">Todos os processos</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Status:</label>
+                            <select id="filtroStatus" onchange="carregarPropostas()" style="margin-left: 5px; padding: 5px;">
+                                <option value="">Todos</option>
+                                <option value="enviada">Enviadas</option>
+                                <option value="analisada">Analisadas</option>
+                            </select>
+                        </div>
+                        <button onclick="carregarPropostas()" class="btn-primary" style="padding: 5px 15px;">🔄 Atualizar</button>
+                    </div>
+                </div>
+                
+                <div id="propostas-container" style="margin-top: 20px;">
+                    <div class="loading">Carregando propostas...</div>
+                </div>
             </div>
 
             <!-- Gerenciar Usuários -->
@@ -939,6 +964,179 @@
             // Recarregar lista
             carregarPropostasParaParecer();
         }
+
+        // Função para carregar propostas da API
+        async function carregarPropostas() {
+            const container = document.getElementById('propostas-container');
+            const filtroProcesso = document.getElementById('filtroProcesso').value;
+            const filtroStatus = document.getElementById('filtroStatus').value;
+            
+            container.innerHTML = '<div class="loading">Carregando propostas...</div>';
+            
+            try {
+                // Carregar propostas da API
+                let url = `${API_URL}/api/propostas`;
+                const params = new URLSearchParams();
+                
+                if (filtroProcesso) {
+                    params.append('processo', filtroProcesso);
+                }
+                
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar propostas');
+                }
+                
+                const resultado = await response.json();
+                const propostas = resultado.propostas || [];
+                
+                // Carregar processos para o filtro
+                await carregarProcessosParaFiltro();
+                
+                if (propostas.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px;">
+                            <div style="font-size: 48px; margin-bottom: 15px;">📄</div>
+                            <h3>Nenhuma proposta encontrada</h3>
+                            <p>Não há propostas cadastradas no sistema.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Filtrar por status se necessário
+                let propostasFiltradasStatus = propostas;
+                if (filtroStatus) {
+                    propostasFiltradasStatus = propostas.filter(p => (p.status || 'enviada') === filtroStatus);
+                }
+                
+                container.innerHTML = `
+                    <div class="propostas-stats" style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                        <h4>📊 Estatísticas</h4>
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <span><strong>Total de Propostas:</strong> ${propostas.length}</span>
+                            <span><strong>Exibindo:</strong> ${propostasFiltradasStatus.length}</span>
+                            <span><strong>Última Atualização:</strong> ${new Date().toLocaleString('pt-BR')}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="propostas-lista">
+                        ${propostasFiltradasStatus.map(proposta => `
+                            <div class="proposta-item" style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div class="proposta-header" style="display: flex; justify-content: between; align-items: center; margin-bottom: 15px;">
+                                    <h4 style="margin: 0; color: #2c3e50;">📄 Protocolo: ${proposta.protocolo}</h4>
+                                    <span class="status-badge" style="background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">
+                                        ${proposta.status || 'Enviada'}
+                                    </span>
+                                </div>
+                                
+                                <div class="proposta-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                                    <div>
+                                        <strong>🏢 Empresa:</strong><br>
+                                        ${proposta.empresa}
+                                    </div>
+                                    <div>
+                                        <strong>📋 Processo:</strong><br>
+                                        ${proposta.processo}
+                                    </div>
+                                    <div>
+                                        <strong>💰 Valor:</strong><br>
+                                        ${proposta.valor || 'Não informado'}
+                                    </div>
+                                    <div>
+                                        <strong>📅 Data de Envio:</strong><br>
+                                        ${new Date(proposta.data).toLocaleString('pt-BR')}
+                                    </div>
+                                    <div>
+                                        <strong>🏭 CNPJ:</strong><br>
+                                        ${proposta.cnpj}
+                                    </div>
+                                </div>
+                                
+                                <div class="proposta-acoes" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <button class="btn btn-info" onclick="visualizarDetalhesProposta('${proposta.protocolo}')" style="padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                        👁️ Ver Detalhes
+                                    </button>
+                                    <button class="btn btn-success" onclick="analisarProposta('${proposta.protocolo}')" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                        ✅ Analisar
+                                    </button>
+                                    <button class="btn btn-warning" onclick="exportarProposta('${proposta.protocolo}')" style="padding: 8px 16px; background: #ffc107; color: #212529; border: none; border-radius: 4px; cursor: pointer;">
+                                        📄 Exportar
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Erro ao carregar propostas:', error);
+                container.innerHTML = `
+                    <div class="error-state" style="text-align: center; padding: 40px; background: #ffebee; border-radius: 8px; border: 1px solid #f44336;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+                        <h3>Erro ao carregar propostas</h3>
+                        <p>Não foi possível conectar com o servidor.</p>
+                        <button onclick="carregarPropostas()" class="btn-primary" style="padding: 10px 20px; margin-top: 15px;">🔄 Tentar Novamente</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Carregar processos para o filtro
+        async function carregarProcessosParaFiltro() {
+            try {
+                const response = await fetch(`${API_URL}/api/processos`);
+                if (response.ok) {
+                    const resultado = await response.json();
+                    const processos = resultado.processos || [];
+                    
+                    const select = document.getElementById('filtroProcesso');
+                    const valorAtual = select.value;
+                    
+                    select.innerHTML = '<option value="">Todos os processos</option>';
+                    processos.forEach(processo => {
+                        const option = document.createElement('option');
+                        option.value = processo.numero;
+                        option.textContent = `${processo.numero} - ${processo.objeto}`;
+                        if (processo.numero === valorAtual) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar processos:', error);
+            }
+        }
+
+        // Visualizar detalhes da proposta
+        function visualizarDetalhesProposta(protocolo) {
+            alert(`Visualizando detalhes da proposta ${protocolo}\n\nEsta funcionalidade será implementada em uma próxima versão.`);
+        }
+
+        // Analisar proposta
+        function analisarProposta(protocolo) {
+            alert(`Analisando proposta ${protocolo}\n\nEsta funcionalidade será implementada em uma próxima versão.`);
+        }
+
+        // Exportar proposta
+        function exportarProposta(protocolo) {
+            alert(`Exportando proposta ${protocolo}\n\nEsta funcionalidade será implementada em uma próxima versão.`);
+        }
+
+        // Carregar propostas quando a página de propostas for exibida
+        const originalMostrarPagina = mostrarPagina;
+        mostrarPagina = function(paginaId) {
+            originalMostrarPagina(paginaId);
+            if (paginaId === 'propostas') {
+                carregarPropostas();
+            }
+        };
     </script>
 </body>
 </html>
