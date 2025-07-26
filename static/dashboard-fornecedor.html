@@ -1558,37 +1558,28 @@
                                 </div>
                             </div>
                         ` : ''}
+                        
+                        ${proposta.metodologia ? `
+                            <h4 style="margin-top: 20px;">Metodologia</h4>
+                            <p>${proposta.metodologia}</p>
+                        ` : ''}
+                    
+                        ${proposta.observacoes ? `
+                            <h4 style="margin-top: 20px;">Observações</h4>
+                            <p>${proposta.observacoes}</p>
+                        ` : ''}
                     </div>
                 `;
                 
                 // Abrir modal
-                document.getElementById('modalProposta').style.display = 'flex';
+                document.getElementById('modalProposta').style.display = 'block';
                 
             } catch (error) {
                 console.error('Erro ao carregar detalhes:', error);
                 alert('Erro ao carregar detalhes da proposta');
             }
-        }
+        }    
                     
-                    ${proposta.metodologia ? `
-                        <h4 style="margin-top: 20px;">Metodologia</h4>
-                        <p>${proposta.metodologia}</p>
-                    ` : ''}
-                    
-                    ${proposta.observacoes ? `
-                        <h4 style="margin-top: 20px;">Observações</h4>
-                        <p>${proposta.observacoes}</p>
-                    ` : ''}
-                </div>
-            `;
-            
-            document.getElementById('modalProposta').style.display = 'block';
-        } catch (error) {
-            console.error('Erro ao carregar detalhes:', error);
-            alert('Erro ao carregar detalhes da proposta');
-        }
-    }
-
         // Carregar dados da empresa
         function loadEmpresaData() {
             if (!currentUser || !currentUser.usuarioId) {
