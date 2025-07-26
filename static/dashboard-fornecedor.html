@@ -928,8 +928,7 @@
                 // Carregar propostas do fornecedor
                 const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
                 const minhasPropostas = propostasData.filter(p => 
-                    p.fornecedorId === currentUser.usuarioId || 
-                    (p.fornecedor && p.fornecedor.id === currentUser.usuarioId)
+                    p.fornecedorId === currentUser.usuarioId
                 );
                 
                 // Contar propostas aprovadas
@@ -1068,12 +1067,7 @@
                 container.innerHTML = '<div class="error">Erro ao carregar processos. Tente novamente.</div>';
             }
         }
-        
-        // Baixar proposta como PDF  ← Cole a nova função aqui
-        function baixarProposta(protocolo) {
-            alert('📥 Funcionalidade de download em desenvolvimento.\n\nEm breve você poderá baixar suas propostas em PDF.');
-        }
-        
+
         // Ver detalhes do processo
         function verDetalhesProcesso(numeroProcesso) {
             const processo = processos.find(p => p.numero === numeroProcesso);
@@ -1440,92 +1434,141 @@
         }
 
         // Carregar propostas enviadas
-        function loadPropostas() {
+        async function loadPropostas() {
             const container = document.getElementById('propostasList');
             container.innerHTML = '<div class="loading">Carregando propostas...</div>';
-    
-            // Buscar propostas do localStorage
-            const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
-    
-            // Filtrar propostas deste fornecedor - CORRIGIDO
-            const minhasPropostas = propostasData.filter(p => {
-                // Verificar múltiplas formas de identificação
-                return p.fornecedorId === currentUser.usuarioId || 
-                       p.fornecedor?.id === currentUser.usuarioId ||
-                       p.dados?.dados?.email === currentUser.email;
-            });
-    
-            if (minhasPropostas.length === 0) {
+            
+            try {
+                // Buscar propostas da API filtradas pelo CNPJ do fornecedor
+                const cnpjFornecedor = currentUser.cnpj || '';
+                const response = await fetch(`${API_URL}/api/propostas?cnpj=${encodeURIComponent(cnpjFornecedor)}`);
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar propostas');
+                }
+                
+                const resultado = await response.json();
+                const minhasPropostas = resultado.propostas || [];
+                
+                if (minhasPropostas.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📄</div>
+                            <h3>Nenhuma proposta enviada</h3>
+                            <p>Suas propostas aparecerão aqui após o envio.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = minhasPropostas.map(proposta => `
+                    <div class="process-item">
+                        <div class="process-title">Protocolo: ${proposta.protocolo}</div>
+                        <div class="process-info">
+                            <span><strong>Processo:</strong> ${proposta.processo}</span>
+                            <span><strong>Data de Envio:</strong> ${formatarData(proposta.data)}</span>
+                            <span><strong>Valor Total:</strong> ${proposta.valor || 'Não informado'}</span>
+                            <span><strong>Status:</strong> <span class="status-badge status-enviada">Enviada</span></span>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-info" onclick="verDetalhesProposta('${proposta.protocolo}')">
+                                👁️ Ver Detalhes
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Erro ao carregar propostas:', error);
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">📄</div>
-                        <h3>Nenhuma proposta enviada</h3>
-                        <p>Suas propostas aparecerão aqui após o envio.</p>
+                        <div class="empty-state-icon">⚠️</div>
+                        <h3>Erro ao carregar propostas</h3>
+                        <p>Tente novamente em alguns instantes.</p>
+                        <button class="btn btn-primary" onclick="loadPropostas()">🔄 Tentar Novamente</button>
                     </div>
                 `;
-                return;
             }
-    
-            // Ordenar por data mais recente primeiro
-            minhasPropostas.sort((a, b) => new Date(b.data || b.dataEnvio) - new Date(a.data || a.dataEnvio));
-    
-            container.innerHTML = minhasPropostas.map(proposta => `
-                <div class="process-item">
-                    <div class="process-title">Protocolo: ${proposta.protocolo}</div>
-                    <div class="process-info">
-                        <span><strong>Processo:</strong> ${proposta.processo}</span>
-                        <span><strong>Data de Envio:</strong> ${formatarData(proposta.data || proposta.dataEnvio)}</span>
-                        <span><strong>Valor Total:</strong> R$ ${proposta.valor || proposta.dados?.comercial?.valorTotal || 'Não informado'}</span>
-                        <span><strong>Status:</strong> <span class="status-badge status-${proposta.status || 'enviada'}">${getStatusLabel(proposta.status)}</span></span>
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <button class="btn btn-info" onclick="verDetalhesProposta('${proposta.protocolo}')">
-                            👁️ Ver Detalhes
-                        </button>
-                        <button class="btn btn-secondary" onclick="baixarProposta('${proposta.protocolo}')">
-                            📥 Baixar PDF
-                        </button>
-                    </div>
-                </div>
-            `).join('');
         }
+
         // Ver detalhes da proposta
-        function verDetalhesProposta(protocolo) {
-            const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
-            const proposta = propostasData.find(p => p.protocolo === protocolo);
-            
-            if (!proposta) return;
-            
-            const modalBody = document.getElementById('modalPropostaBody');
-            modalBody.innerHTML = `
-                <div class="proposta-details">
-                    <h4>Informações da Proposta</h4>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <div class="detail-label">Protocolo</div>
-                            <div class="detail-value">${proposta.protocolo}</div>
+        async function verDetalhesProposta(protocolo) {
+            try {
+                // Buscar propostas da API
+                const cnpjFornecedor = currentUser.cnpj || '';
+                const response = await fetch(`${API_URL}/api/propostas?cnpj=${encodeURIComponent(cnpjFornecedor)}`);
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar detalhes da proposta');
+                }
+                
+                const resultado = await response.json();
+                const proposta = resultado.propostas.find(p => p.protocolo === protocolo);
+                
+                if (!proposta) {
+                    alert('Proposta não encontrada');
+                    return;
+                }
+                
+                const modalBody = document.getElementById('modalPropostaBody');
+                modalBody.innerHTML = `
+                    <div class="proposta-details">
+                        <h4>Informações da Proposta</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Protocolo</div>
+                                <div class="detail-value">${proposta.protocolo}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Processo</div>
+                                <div class="detail-value">${proposta.processo}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Data de Envio</div>
+                                <div class="detail-value">${formatarData(proposta.data)}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Empresa</div>
+                                <div class="detail-value">${proposta.empresa}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">CNPJ</div>
+                                <div class="detail-value">${proposta.cnpj}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Valor Total</div>
+                                <div class="detail-value">${proposta.valor || 'Não informado'}</div>
+                            </div>
                         </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Processo</div>
-                            <div class="detail-value">${proposta.processo}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Data de Envio</div>
-                            <div class="detail-value">${formatarData(proposta.dataEnvio || proposta.data)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Valor Total</div>
-                            <div class="detail-value">${proposta.valor || 'Não informado'}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Prazo de Execução</div>
-                            <div class="detail-value">${proposta.prazo || 'Não informado'} dias</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Validade da Proposta</div>
-                            <div class="detail-value">60 dias</div>
-                        </div>
+                        
+                        ${proposta.dados ? `
+                            <h4 style="margin-top: 20px;">Dados Técnicos</h4>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Razão Social</div>
+                                    <div class="detail-value">${proposta.dados.dadosCadastrais?.razaoSocial || 'Não informado'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Email</div>
+                                    <div class="detail-value">${proposta.dados.dadosCadastrais?.email || 'Não informado'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Telefone</div>
+                                    <div class="detail-value">${proposta.dados.dadosCadastrais?.telefone || 'Não informado'}</div>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
+                `;
+                
+                // Abrir modal
+                document.getElementById('modalProposta').style.display = 'flex';
+                
+            } catch (error) {
+                console.error('Erro ao carregar detalhes:', error);
+                alert('Erro ao carregar detalhes da proposta');
+            }
+        }
                     
                     ${proposta.metodologia ? `
                         <h4 style="margin-top: 20px;">Metodologia</h4>
