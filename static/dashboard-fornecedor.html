@@ -1439,28 +1439,17 @@
             container.innerHTML = '<div class="loading">Carregando propostas...</div>';
             
             try {
-                // Buscar propostas da API filtradas pelo CNPJ do fornecedor
-                // Buscar CNPJ do currentUser ou do localStorage como fallback
+                // Buscar CNPJ do currentUser ou localStorage
                 let cnpjFornecedor = currentUser.cnpj || '';
-                
-                // Se não tiver CNPJ no currentUser, buscar no localStorage
                 if (!cnpjFornecedor && currentUser.usuarioId) {
-                    try {
-                        const empresaData = localStorage.getItem(`fornecedorData_${currentUser.usuarioId}`);
-                        if (empresaData) {
-                            const dadosEmpresa = JSON.parse(empresaData);
-                            cnpjFornecedor = dadosEmpresa.cnpj || '';
-                        }
-                    } catch (error) {
-                        console.warn('Erro ao buscar CNPJ do localStorage:', error);
+                    const empresaData = localStorage.getItem(`fornecedorData_${currentUser.usuarioId}`);
+                    if (empresaData) {
+                        const dados = JSON.parse(empresaData);
+                        cnpjFornecedor = dados.cnpj || '';
                     }
                 }
+                
                 const response = await fetch(`${API_URL}/api/propostas?cnpj=${encodeURIComponent(cnpjFornecedor)}`);
-                
-                if (!response.ok) {
-                    throw new Error('Erro ao carregar propostas');
-                }
-                
                 const resultado = await response.json();
                 const minhasPropostas = resultado.propostas || [];
                 
@@ -1480,12 +1469,12 @@
                         <div class="process-title">Protocolo: ${proposta.protocolo}</div>
                         <div class="process-info">
                             <span><strong>Processo:</strong> ${proposta.processo}</span>
-                            <span><strong>Data de Envio:</strong> ${formatarData(proposta.data)}</span>
+                            <span><strong>Data de Envio:</strong> ${new Date(proposta.data).toLocaleString('pt-BR')}</span>
                             <span><strong>Valor Total:</strong> ${proposta.valor || 'Não informado'}</span>
                             <span><strong>Status:</strong> <span class="status-badge status-enviada">Enviada</span></span>
                         </div>
                         <div style="margin-top: 10px;">
-                            <button class="btn btn-info" onclick="verDetalhesProposta('${proposta.protocolo}')">
+                            <button class="btn btn-info" onclick="alert('Protocolo: ${proposta.protocolo}\\nProcesso: ${proposta.processo}\\nValor: ${proposta.valor}')">
                                 👁️ Ver Detalhes
                             </button>
                         </div>
@@ -1493,7 +1482,6 @@
                 `).join('');
                 
             } catch (error) {
-                console.error('Erro ao carregar propostas:', error);
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">⚠️</div>
@@ -1506,97 +1494,42 @@
         }
 
         // Ver detalhes da proposta
-        async function verDetalhesProposta(protocolo) {
-            try {
-                // Buscar propostas da API
-                // Buscar CNPJ do currentUser ou do localStorage como fallback
-                let cnpjFornecedor = currentUser.cnpj || '';
-                
-                // Se não tiver CNPJ no currentUser, buscar no localStorage
-                if (!cnpjFornecedor && currentUser.usuarioId) {
-                    try {
-                        const empresaData = localStorage.getItem(`fornecedorData_${currentUser.usuarioId}`);
-                        if (empresaData) {
-                            const dadosEmpresa = JSON.parse(empresaData);
-                            cnpjFornecedor = dadosEmpresa.cnpj || '';
-                        }
-                    } catch (error) {
-                        console.warn('Erro ao buscar CNPJ do localStorage:', error);
-                    }
-                }
-                const response = await fetch(`${API_URL}/api/propostas?cnpj=${encodeURIComponent(cnpjFornecedor)}`);
-                
-                if (!response.ok) {
-                    throw new Error('Erro ao carregar detalhes da proposta');
-                }
-                
-                const resultado = await response.json();
-                const proposta = resultado.propostas.find(p => p.protocolo === protocolo);
-                
-                if (!proposta) {
-                    alert('Proposta não encontrada');
-                    return;
-                }
-                
-                const modalBody = document.getElementById('modalPropostaBody');
-                modalBody.innerHTML = `
-                    <div class="proposta-details">
-                        <h4>Informações da Proposta</h4>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <div class="detail-label">Protocolo</div>
-                                <div class="detail-value">${proposta.protocolo}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Processo</div>
-                                <div class="detail-value">${proposta.processo}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Data de Envio</div>
-                                <div class="detail-value">${formatarData(proposta.data)}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Empresa</div>
-                                <div class="detail-value">${proposta.empresa}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">CNPJ</div>
-                                <div class="detail-value">${proposta.cnpj}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Valor Total</div>
-                                <div class="detail-value">${proposta.valor || 'Não informado'}</div>
-                            </div>
+        function verDetalhesProposta(protocolo) {
+            const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
+            const proposta = propostasData.find(p => p.protocolo === protocolo);
+            
+            if (!proposta) return;
+            
+            const modalBody = document.getElementById('modalPropostaBody');
+            modalBody.innerHTML = `
+                <div class="proposta-details">
+                    <h4>Informações da Proposta</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Protocolo</div>
+                            <div class="detail-value">${proposta.protocolo}</div>
                         </div>
-                        
-                        ${proposta.dados ? `
-                            <h4 style="margin-top: 20px;">Dados Técnicos</h4>
-                            <div class="detail-grid">
-                                <div class="detail-item">
-                                    <div class="detail-label">Razão Social</div>
-                                    <div class="detail-value">${proposta.dados.dadosCadastrais?.razaoSocial || 'Não informado'}</div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Email</div>
-                                    <div class="detail-value">${proposta.dados.dadosCadastrais?.email || 'Não informado'}</div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Telefone</div>
-                                    <div class="detail-value">${proposta.dados.dadosCadastrais?.telefone || 'Não informado'}</div>
-                                </div>
-                            </div>
-                        ` : ''}
+                        <div class="detail-item">
+                            <div class="detail-label">Processo</div>
+                            <div class="detail-value">${proposta.processo}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Data de Envio</div>
+                            <div class="detail-value">${formatarData(proposta.dataEnvio || proposta.data)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Valor Total</div>
+                            <div class="detail-value">${proposta.valor || 'Não informado'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Prazo de Execução</div>
+                            <div class="detail-value">${proposta.prazo || 'Não informado'} dias</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Validade da Proposta</div>
+                            <div class="detail-value">60 dias</div>
+                        </div>
                     </div>
-                `;
-                
-                // Abrir modal
-                document.getElementById('modalProposta').style.display = 'flex';
-                
-            } catch (error) {
-                console.error('Erro ao carregar detalhes:', error);
-                alert('Erro ao carregar detalhes da proposta');
-            }
-        }
                     
                     ${proposta.metodologia ? `
                         <h4 style="margin-top: 20px;">Metodologia</h4>
