@@ -1938,7 +1938,7 @@
                 dadosRascunho.dataRascunho = new Date().toISOString();
         
                 // Salvar no localStorage
-                const chaveRascunho = `rascunho_${numeroProcesso}`;
+                const chaveRascunho = `rascunho_${cnpjFornecedor.replace(/[^0-9]/g, '')}_${numeroProcesso}`;
                 localStorage.setItem(chaveRascunho, JSON.stringify(dadosRascunho));
         
                 mostrarMensagem('💾 Rascunho salvo com sucesso!', 'success');
@@ -1956,7 +1956,7 @@
                 const numeroProcesso = document.getElementById('numeroProcesso')?.value || '';
                 if (!numeroProcesso) return;
         
-                const chaveRascunho = `rascunho_${numeroProcesso}`;
+                const chaveRascunho = `rascunho_${cnpjFornecedor.replace(/[^0-9]/g, '')}_${numeroProcesso}`;
                 const rascunhoSalvo = localStorage.getItem(chaveRascunho);
         
                 if (rascunhoSalvo) {
@@ -2088,7 +2088,8 @@ window.enviarProposta = async function() {
         if (resultado !== false) {
             const numeroProcesso = document.getElementById('numeroProcesso')?.value || '';
             if (numeroProcesso) {
-                localStorage.removeItem(`rascunho_${numeroProcesso}`);
+                const chaveRascunho = `rascunho_${cnpjFornecedor.replace(/[^0-9]/g, '')}_${numeroProcesso}`;
+localStorage.removeItem(chaveRascunho);
                 console.log('Rascunho removido após envio bem-sucedido');
             }
         }
