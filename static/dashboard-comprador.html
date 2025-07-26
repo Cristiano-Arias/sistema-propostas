@@ -1982,6 +1982,9 @@
                             <button class="btn btn-primary" onclick="gerenciarFornecedores('${processo.numero}')">
                                 👥 Fornecedores
                             </button>
+                            <button class="btn btn-success" onclick="abrirComparativoCompleto('${processo.numero}')">
+                                📊 Comparativo Lado a Lado
+                            </button>
                         </div>
                     </div>
                 `;
@@ -2474,6 +2477,11 @@
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
             }
+        }
+
+        // Função para abrir comparativo completo lado a lado
+        function abrirComparativoCompleto(numeroProcesso) {
+            window.open(`modulo-comparativo-completo.html?processo=${numeroProcesso}`, '_blank');
         }
 
         // ========== FIM DO JAVASCRIPT ==========
