@@ -1902,8 +1902,235 @@
             calcularCronograma();
             updateProgress();
         });
+
+        // FUNCIONALIDADES: SALVAR RASCUNHO + BLOQUEAR REENVIO
+        // Cole este código no console do portal de propostas (F12)
+
+        // 1. Adicionar botão "Salvar Rascunho" ao lado do botão enviar
+        function adicionarBotaoRascunho() {
+            const botaoEnviar = document.querySelector('.submit-btn');
+            if (botaoEnviar && !document.getElementById('btnSalvarRascunho')) {
+                const botaoRascunho = document.createElement('button');
+                botaoRascunho.id = 'btnSalvarRascunho';
+                botaoRascunho.type = 'button';
+                botaoRascunho.className = 'submit-btn';
+                botaoRascunho.style.backgroundColor = '#6c757d';
+                botaoRascunho.style.marginRight = '10px';
+                botaoRascunho.innerHTML = '💾 Salvar Rascunho';
+                botaoRascunho.onclick = salvarRascunho;
+        
+                botaoEnviar.parentNode.insertBefore(botaoRascunho, botaoEnviar);
+            }
+        }
+
+        // 2. Função para salvar rascunho
+        function salvarRascunho() {
+            try {
+                const numeroProcesso = document.getElementById('numeroProcesso')?.value || '';
+                if (!numeroProcesso) {
+                    alert('⚠️ Número do processo não encontrado');
+                    return;
+                }
+        
+                // Coletar todos os dados do formulário
+                const dadosRascunho = coletarDadosCompletos();
+                dadosRascunho.isRascunho = true;
+                dadosRascunho.dataRascunho = new Date().toISOString();
+        
+                // Salvar no localStorage
+                const chaveRascunho = `rascunho_${numeroProcesso}`;
+                localStorage.setItem(chaveRascunho, JSON.stringify(dadosRascunho));
+        
+                mostrarMensagem('💾 Rascunho salvo com sucesso!', 'success');
+                console.log('Rascunho salvo para processo:', numeroProcesso);
+        
+            } catch (error) {
+                console.error('Erro ao salvar rascunho:', error);
+                mostrarMensagem('❌ Erro ao salvar rascunho', 'error');
+            }
+        }
+
+        // 3. Função para carregar rascunho
+        function carregarRascunho() {
+            try {
+                const numeroProcesso = document.getElementById('numeroProcesso')?.value || '';
+                if (!numeroProcesso) return;
+        
+                const chaveRascunho = `rascunho_${numeroProcesso}`;
+                const rascunhoSalvo = localStorage.getItem(chaveRascunho);
+        
+                if (rascunhoSalvo) {
+                    const dados = JSON.parse(rascunhoSalvo);
+                    preencherFormulario(dados);
+                    mostrarMensagem('📄 Rascunho carregado automaticamente', 'info');
+                    console.log('Rascunho carregado para processo:', numeroProcesso);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar rascunho:', error);
+            }
+        }
+
+        // 4. Função para preencher formulário com dados salvos
+        function preencherFormulario(dados) {
+            if (!dados) return;
+    
+            // Preencher dados cadastrais
+            if (dados.dadosCadastrais) {
+                Object.keys(dados.dadosCadastrais).forEach(campo => {
+                    const elemento = document.getElementById(campo);
+                    if (elemento && dados.dadosCadastrais[campo]) {
+                        elemento.value = dados.dadosCadastrais[campo];
+                    }
+                });
+            }
+    
+            // Preencher proposta técnica
+            if (dados.propostaTecnica) {
+                Object.keys(dados.propostaTecnica).forEach(campo => {
+                    const elemento = document.getElementById(campo);
+                    if (elemento && dados.propostaTecnica[campo]) {
+                        elemento.value = dados.propostaTecnica[campo];
+                    }
+                });
+            }
+    
+            // Preencher proposta comercial
+            if (dados.propostaComercial) {
+                Object.keys(dados.propostaComercial).forEach(campo => {
+                    const elemento = document.getElementById(campo);
+                    if (elemento && dados.propostaComercial[campo]) {
+                        elemento.value = dados.propostaComercial[campo];
+                    }
+                });
+            }
+        }
+
+        // 5. Verificar se já enviou proposta para este processo
+        async function verificarPropostaExistente() {
+            try {
+                const numeroProcesso = document.getElementById('numeroProcesso')?.value || '';
+                const cnpjFornecedor = document.getElementById('cnpj')?.value || '';
+        
+                if (!numeroProcesso || !cnpjFornecedor) return;
+        
+                // Buscar propostas existentes na API
+                const response = await fetch(`${API_URL}/api/propostas?processo=${encodeURIComponent(numeroProcesso)}&cnpj=${encodeURIComponent(cnpjFornecedor)}`);
+        
+                if (response.ok) {
+                    const resultado = await response.json();
+                    const propostas = resultado.propostas || [];
+            
+                    if (propostas.length > 0) {
+                        // Já existe proposta - bloquear envio
+                        bloquearEnvio(propostas[0]);
+                        return true;
+                    }
+                }
+        
+                return false;
+        
+        } catch (error) {
+            console.error('Erro ao verificar proposta existente:', error);
+            return false;
+        }
+    }
+
+    // 6. Bloquear envio se já existe proposta
+    function bloquearEnvio(propostaExistente) {
+        const botaoEnviar = document.querySelector('.submit-btn:not(#btnSalvarRascunho)');
+        if (botaoEnviar) {
+            botaoEnviar.disabled = true;
+            botaoEnviar.style.backgroundColor = '#dc3545';
+            botaoEnviar.innerHTML = '🚫 Já Enviada';
+            botaoEnviar.title = `Proposta já enviada em ${new Date(propostaExistente.data).toLocaleString('pt-BR')}`;
+        }
+    
+        // Mostrar aviso
+        const container = document.querySelector('.container');
+        if (container && !document.getElementById('avisoJaEnviada')) {
+            const aviso = document.createElement('div');
+            aviso.id = 'avisoJaEnviada';
+            aviso.style.cssText = `
+                background: #f8d7da; 
+                color: #721c24; 
+                padding: 15px; 
+                border-radius: 8px; 
+                margin: 20px 0; 
+                border: 1px solid #f5c6cb;
+                text-align: center;
+        `;
+        aviso.innerHTML = `
+            <strong>⚠️ PROPOSTA JÁ ENVIADA</strong><br>
+            Protocolo: ${propostaExistente.protocolo}<br>
+            Data: ${new Date(propostaExistente.data).toLocaleString('pt-BR')}<br>
+            <small>Você só pode enviar uma proposta por processo</small>
+        `;
+        
+        container.insertBefore(aviso, container.firstChild);
+    }
+}
+
+// 7. Sobrescrever função enviarProposta original para incluir verificação
+const enviarPropostaOriginal = window.enviarProposta;
+window.enviarProposta = async function() {
+    // Verificar se já enviou antes de prosseguir
+    const jaEnviou = await verificarPropostaExistente();
+    if (jaEnviou) {
+        mostrarMensagem('⚠️ Você já enviou uma proposta para este processo', 'error');
+        return;
+    }
+    
+    // Se não enviou, prosseguir com envio normal
+    if (enviarPropostaOriginal) {
+        const resultado = await enviarPropostaOriginal();
+        
+        // Se enviou com sucesso, remover rascunho
+        if (resultado !== false) {
+            const numeroProcesso = document.getElementById('numeroProcesso')?.value || '';
+            if (numeroProcesso) {
+                localStorage.removeItem(`rascunho_${numeroProcesso}`);
+                console.log('Rascunho removido após envio bem-sucedido');
+            }
+        }
+        
+        return resultado;
+    }
+};
+
+// 8. Inicializar funcionalidades
+function inicializarRascunhoEBloqueio() {
+    // Adicionar botão de rascunho
+    adicionarBotaoRascunho();
+    
+    // Carregar rascunho se existir
+    setTimeout(carregarRascunho, 1000);
+    
+    // Verificar se já enviou proposta
+    setTimeout(verificarPropostaExistente, 1500);
+    
+    // Salvar automaticamente a cada 2 minutos
+    setInterval(() => {
+        const numeroProcesso = document.getElementById('numeroProcesso')?.value;
+        if (numeroProcesso) {
+            salvarRascunho();
+        }
+    }, 120000); // 2 minutos
+}
+
+// 9. Executar quando a página carregar
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarRascunhoEBloqueio);
+} else {
+    inicializarRascunhoEBloqueio();
+}
+
+console.log('✅ Funcionalidades implementadas:');
+console.log('📝 Salvar Rascunho - botão adicionado');
+console.log('🚫 Bloquear Reenvio - verificação ativa');
+console.log('💾 Auto-save a cada 2 minutos');
+console.log('📄 Carregamento automático de rascunho');
+        
     </script>
 </body>
-</html>
-            
+</html>           
             
