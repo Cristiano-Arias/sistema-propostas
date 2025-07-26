@@ -1583,7 +1583,11 @@
             `;
             
             document.getElementById('modalProposta').style.display = 'block';
+        } catch (error) {
+            console.error('Erro ao carregar detalhes:', error);
+            alert('Erro ao carregar detalhes da proposta');
         }
+    }
 
         // Carregar dados da empresa
         function loadEmpresaData() {
