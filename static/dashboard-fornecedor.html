@@ -1440,7 +1440,21 @@
             
             try {
                 // Buscar propostas da API filtradas pelo CNPJ do fornecedor
-                const cnpjFornecedor = currentUser.cnpj || '';
+                // Buscar CNPJ do currentUser ou do localStorage como fallback
+                let cnpjFornecedor = currentUser.cnpj || '';
+                
+                // Se não tiver CNPJ no currentUser, buscar no localStorage
+                if (!cnpjFornecedor && currentUser.usuarioId) {
+                    try {
+                        const empresaData = localStorage.getItem(`fornecedorData_${currentUser.usuarioId}`);
+                        if (empresaData) {
+                            const dadosEmpresa = JSON.parse(empresaData);
+                            cnpjFornecedor = dadosEmpresa.cnpj || '';
+                        }
+                    } catch (error) {
+                        console.warn('Erro ao buscar CNPJ do localStorage:', error);
+                    }
+                }
                 const response = await fetch(`${API_URL}/api/propostas?cnpj=${encodeURIComponent(cnpjFornecedor)}`);
                 
                 if (!response.ok) {
@@ -1495,7 +1509,21 @@
         async function verDetalhesProposta(protocolo) {
             try {
                 // Buscar propostas da API
-                const cnpjFornecedor = currentUser.cnpj || '';
+                // Buscar CNPJ do currentUser ou do localStorage como fallback
+                let cnpjFornecedor = currentUser.cnpj || '';
+                
+                // Se não tiver CNPJ no currentUser, buscar no localStorage
+                if (!cnpjFornecedor && currentUser.usuarioId) {
+                    try {
+                        const empresaData = localStorage.getItem(`fornecedorData_${currentUser.usuarioId}`);
+                        if (empresaData) {
+                            const dadosEmpresa = JSON.parse(empresaData);
+                            cnpjFornecedor = dadosEmpresa.cnpj || '';
+                        }
+                    } catch (error) {
+                        console.warn('Erro ao buscar CNPJ do localStorage:', error);
+                    }
+                }
                 const response = await fetch(`${API_URL}/api/propostas?cnpj=${encodeURIComponent(cnpjFornecedor)}`);
                 
                 if (!response.ok) {
@@ -1558,28 +1586,33 @@
                                 </div>
                             </div>
                         ` : ''}
-                        
-                        ${proposta.metodologia ? `
-                            <h4 style="margin-top: 20px;">Metodologia</h4>
-                            <p>${proposta.metodologia}</p>
-                        ` : ''}
-                    
-                        ${proposta.observacoes ? `
-                            <h4 style="margin-top: 20px;">Observações</h4>
-                            <p>${proposta.observacoes}</p>
-                        ` : ''}
                     </div>
                 `;
                 
                 // Abrir modal
-                document.getElementById('modalProposta').style.display = 'block';
+                document.getElementById('modalProposta').style.display = 'flex';
                 
             } catch (error) {
                 console.error('Erro ao carregar detalhes:', error);
                 alert('Erro ao carregar detalhes da proposta');
             }
-        }    
+        }
                     
+                    ${proposta.metodologia ? `
+                        <h4 style="margin-top: 20px;">Metodologia</h4>
+                        <p>${proposta.metodologia}</p>
+                    ` : ''}
+                    
+                    ${proposta.observacoes ? `
+                        <h4 style="margin-top: 20px;">Observações</h4>
+                        <p>${proposta.observacoes}</p>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('modalProposta').style.display = 'block';
+        }
+
         // Carregar dados da empresa
         function loadEmpresaData() {
             if (!currentUser || !currentUser.usuarioId) {
