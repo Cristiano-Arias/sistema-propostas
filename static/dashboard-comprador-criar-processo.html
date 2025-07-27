@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Processo - Sistema de Gestão de Propostas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .logo h2 {
+            color: #27ae60;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+
+        .menu-section {
+            margin-bottom: 25px;
+        }
+
+        .menu-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .menu-item:hover {
+            background: #e8f5e8;
+            color: #27ae60;
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: #27ae60;
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .step-indicator {
+            display: flex;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .step {
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        .step.active {
+            background: #27ae60;
+            color: white;
+        }
+
+        .step.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            background: #fafafa;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #27ae60;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #27ae60;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .tr-selector {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tr-selector:hover {
+            border-color: #27ae60;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.1);
+        }
+
+        .tr-selector.selected {
+            border-color: #27ae60;
+            background: #f0f8f0;
+        }
+
+        .tr-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .tr-number {
+            font-size: 18px;
+            font-weight: 600;
+            color: #27ae60;
+        }
+
+        .tr-status {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .tr-object {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .tr-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .fornecedor-list {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .fornecedor-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .fornecedor-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .fornecedor-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .fornecedor-field label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .fornecedor-field input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .add-fornecedor-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .add-fornecedor-btn:hover {
+            background: #218838;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .btn-primary {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #219a52;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #27ae60;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .credenciais-preview {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .credencial-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 10px;
+        }
+
+        .credencial-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .credencial-field {
+            font-size: 14px;
+        }
+
+        .credencial-label {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .credencial-value {
+            color: #333;
+            font-family: monospace;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .tr-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .fornecedor-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .credencial-item {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <span style="font-size: 24px;">👨‍💼</span>
+            <div>
+                <h2>Portal do Comprador</h2>
+                <small style="color: #666;">Sistema de Gestão de Propostas</small>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">Principal</div>
+            <button class="menu-item" onclick="navigateTo('dashboard')">
+                📊 Dashboard
+            </button>
+            <button class="menu-item" onclick="navigateTo('aprovacao-tr')">
+                📋 Aprovação de TRs
+            </button>
+            <button class="menu-item active" onclick="navigateTo('criar-processo')">
+                🏗️ Criar Processo
+            </button>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">Propostas</div>
+            <button class="menu-item" onclick="navigateTo('propostas')">
+                📄 Propostas Recebidas
+            </button>
+            <button class="menu-item" onclick="navigateTo('analise-comparativa')">
+                📊 Análise Comparativa
+            </button>
+            <button class="menu-item" onclick="navigateTo('relatorios')">
+                📈 Relatórios
+            </button>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">Sistema</div>
+            <button class="menu-item" onclick="navigateTo('sair')">
+                🚪 Sair
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="content-card">
+            <div class="header">
+                <h1>
+                    🏗️ Criar Processo Licitatório
+                </h1>
+                <div class="step-indicator">
+                    <div class="step active" id="step1">1. Selecionar TR</div>
+                    <div class="step" id="step2">2. Dados do Processo</div>
+                    <div class="step" id="step3">3. Fornecedores</div>
+                    <div class="step" id="step4">4. Finalizar</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- ETAPA 1: SELEÇÃO DE TR -->
+            <div id="etapa1" class="form-section">
+                <div class="section-title">
+                    📋 Selecionar Termo de Referência Aprovado
+                </div>
+                
+                <div id="trList">
+                    <!-- TRs aprovados serão carregados aqui -->
+                </div>
+
+                <div id="emptyTRState" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📋</div>
+                    <h3>Nenhum TR Aprovado</h3>
+                    <p>Não há termos de referência aprovados disponíveis para criação de processo.</p>
+                </div>
+            </div>
+
+            <!-- ETAPA 2: DADOS DO PROCESSO -->
+            <div id="etapa2" class="form-section" style="display: none;">
+                <div class="section-title">
+                    🏗️ Dados do Processo Licitatório
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="numeroProcesso">Número do Processo <span class="required">*</span></label>
+                        <input type="text" id="numeroProcesso" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalidade">Modalidade <span class="required">*</span></label>
+                        <select id="modalidade" required>
+                            <option value="">Selecione a modalidade</option>
+                            <option value="pregao">Pregão</option>
+                            <option value="concorrencia">Concorrência</option>
+                            <option value="tomada_precos">Tomada de Preços</option>
+                            <option value="convite">Convite</option>
+                            <option value="dispensa">Dispensa</option>
+                            <option value="inexigibilidade">Inexigibilidade</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dataAbertura">Data de Abertura <span class="required">*</span></label>
+                        <input type="datetime-local" id="dataAbertura" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dataLimite">Data Limite para Propostas <span class="required">*</span></label>
+                        <input type="datetime-local" id="dataLimite" required>
+                    </div>
+                </div>
+
+                <div class="form-row single">
+                    <div class="form-group">
+                        <label for="localAbertura">Local de Abertura <span class="required">*</span></label>
+                        <input type="text" id="localAbertura" placeholder="Ex: Sala de Licitações - Sede da Instituição" required>
+                    </div>
+                </div>
+
+                <div class="form-row single">
+                    <div class="form-group">
+                        <label for="observacoesProcesso">Observações do Processo</label>
+                        <textarea id="observacoesProcesso" placeholder="Observações adicionais sobre o processo licitatório..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ETAPA 3: CADASTRO DE FORNECEDORES -->
+            <div id="etapa3" class="form-section" style="display: none;">
+                <div class="section-title">
+                    👥 Cadastro de Fornecedores
+                </div>
+
+                <p style="margin-bottom: 20px; color: #666; font-size: 14px;">
+                    Cadastre os fornecedores que serão convidados para participar do processo. 
+                    O sistema gerará automaticamente login e senha para cada fornecedor.
+                </p>
+
+                <div id="fornecedoresList" class="fornecedor-list">
+                    <!-- Fornecedores serão adicionados aqui -->
+                </div>
+
+                <button class="add-fornecedor-btn" onclick="adicionarFornecedor()">
+                    ➕ Adicionar Fornecedor
+                </button>
+
+                <div id="credenciaisPreview" class="credenciais-preview" style="display: none;">
+                    <h4 style="margin-bottom: 15px; color: #27ae60;">🔑 Preview das Credenciais</h4>
+                    <div id="credenciaisList">
+                        <!-- Credenciais serão mostradas aqui -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ETAPA 4: FINALIZAÇÃO -->
+            <div id="etapa4" class="form-section" style="display: none;">
+                <div class="section-title">
+                    ✅ Finalizar Processo
+                </div>
+
+                <div id="resumoProcesso">
+                    <!-- Resumo será gerado aqui -->
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="btnVoltar" onclick="voltarEtapa()" style="display: none;">
+                    ⬅️ Voltar
+                </button>
+                <button class="btn btn-primary" id="btnProximo" onclick="proximaEtapa()">
+                    Próximo ➡️
+                </button>
+                <button class="btn btn-primary" id="btnFinalizar" onclick="finalizarProcesso()" style="display: none;">
+                    🚀 Criar Processo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let etapaAtual = 1;
+        let trSelecionado = null;
+        let fornecedores = [];
+        let processData = {};
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarTRsAprovados();
+            atualizarProgresso();
+            gerarNumeroProcesso();
+        });
+
+        function carregarTRsAprovados() {
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const trsAprovados = trs.filter(tr => tr.status === 'APROVADO');
+            
+            const trList = document.getElementById('trList');
+            const emptyState = document.getElementById('emptyTRState');
+            
+            if (trsAprovados.length === 0) {
+                trList.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            trList.style.display = 'block';
+            emptyState.style.display = 'none';
+            
+            trList.innerHTML = trsAprovados.map(tr => `
+                <div class="tr-selector" onclick="selecionarTR('${tr.numeroTR}')">
+                    <div class="tr-header">
+                        <div class="tr-number">${tr.numeroTR}</div>
+                        <div class="tr-status">Aprovado</div>
+                    </div>
+                    <div class="tr-object">${tr.objeto}</div>
+                    <div class="tr-details">
+                        <div><strong>Local:</strong> ${tr.local}</div>
+                        <div><strong>Prazo:</strong> ${tr.prazoExecucao} dias</div>
+                        <div><strong>Valor:</strong> R$ ${tr.valorEstimado ? parseFloat(tr.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Não informado'}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selecionarTR(numeroTR) {
+            // Remover seleção anterior
+            document.querySelectorAll('.tr-selector').forEach(selector => {
+                selector.classList.remove('selected');
+            });
+            
+            // Adicionar seleção atual
+            event.currentTarget.classList.add('selected');
+            
+            // Buscar TR selecionado
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            trSelecionado = trs.find(tr => tr.numeroTR === numeroTR);
+            
+            console.log('TR selecionado:', trSelecionado);
+        }
+
+        function gerarNumeroProcesso() {
+            const ano = new Date().getFullYear();
+            const numero = String(Date.now()).slice(-4);
+            document.getElementById('numeroProcesso').value = `PROC-${ano}-${numero}`;
+        }
+
+        function proximaEtapa() {
+            if (!validarEtapaAtual()) {
+                return;
+            }
+
+            if (etapaAtual < 4) {
+                etapaAtual++;
+                mostrarEtapa(etapaAtual);
+                atualizarProgresso();
+                atualizarBotoes();
+            }
+        }
+
+        function voltarEtapa() {
+            if (etapaAtual > 1) {
+                etapaAtual--;
+                mostrarEtapa(etapaAtual);
+                atualizarProgresso();
+                atualizarBotoes();
+            }
+        }
+
+        function mostrarEtapa(etapa) {
+            // Ocultar todas as etapas
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`etapa${i}`).style.display = 'none';
+                document.getElementById(`step${i}`).classList.remove('active', 'completed');
+            }
+            
+            // Mostrar etapa atual
+            document.getElementById(`etapa${etapa}`).style.display = 'block';
+            document.getElementById(`step${etapa}`).classList.add('active');
+            
+            // Marcar etapas anteriores como concluídas
+            for (let i = 1; i < etapa; i++) {
+                document.getElementById(`step${i}`).classList.add('completed');
+            }
+
+            // Ações específicas por etapa
+            if (etapa === 3) {
+                if (fornecedores.length === 0) {
+                    adicionarFornecedor();
+                }
+            } else if (etapa === 4) {
+                gerarResumoProcesso();
+            }
+        }
+
+        function validarEtapaAtual() {
+            switch (etapaAtual) {
+                case 1:
+                    if (!trSelecionado) {
+                        alert('Por favor, selecione um Termo de Referência.');
+                        return false;
+                    }
+                    return true;
+                    
+                case 2:
+                    const modalidade = document.getElementById('modalidade').value;
+                    const dataAbertura = document.getElementById('dataAbertura').value;
+                    const dataLimite = document.getElementById('dataLimite').value;
+                    const localAbertura = document.getElementById('localAbertura').value;
+                    
+                    if (!modalidade || !dataAbertura || !dataLimite || !localAbertura) {
+                        alert('Por favor, preencha todos os campos obrigatórios.');
+                        return false;
+                    }
+                    
+                    if (new Date(dataLimite) <= new Date(dataAbertura)) {
+                        alert('A data limite deve ser posterior à data de abertura.');
+                        return false;
+                    }
+                    
+                    return true;
+                    
+                case 3:
+                    if (fornecedores.length === 0) {
+                        alert('Por favor, adicione pelo menos um fornecedor.');
+                        return false;
+                    }
+                    
+                    for (let i = 0; i < fornecedores.length; i++) {
+                        const fornecedor = fornecedores[i];
+                        if (!fornecedor.cnpj || !fornecedor.razaoSocial || !fornecedor.email) {
+                            alert(`Por favor, preencha todos os dados do fornecedor ${i + 1}.`);
+                            return false;
+                        }
+                        
+                        if (!validarCNPJ(fornecedor.cnpj)) {
+                            alert(`CNPJ inválido para o fornecedor ${i + 1}.`);
+                            return false;
+                        }
+                        
+                        if (!validarEmail(fornecedor.email)) {
+                            alert(`E-mail inválido para o fornecedor ${i + 1}.`);
+                            return false;
+                        }
+                    }
+                    
+                    return true;
+                    
+                default:
+                    return true;
+            }
+        }
+
+        function atualizarProgresso() {
+            const progresso = (etapaAtual / 4) * 100;
+            document.getElementById('progressFill').style.width = `${progresso}%`;
+        }
+
+        function atualizarBotoes() {
+            const btnVoltar = document.getElementById('btnVoltar');
+            const btnProximo = document.getElementById('btnProximo');
+            const btnFinalizar = document.getElementById('btnFinalizar');
+            
+            btnVoltar.style.display = etapaAtual > 1 ? 'flex' : 'none';
+            btnProximo.style.display = etapaAtual < 4 ? 'flex' : 'none';
+            btnFinalizar.style.display = etapaAtual === 4 ? 'flex' : 'none';
+        }
+
+        function adicionarFornecedor() {
+            const id = Date.now();
+            const fornecedor = {
+                id: id,
+                cnpj: '',
+                razaoSocial: '',
+                email: '',
+                login: '',
+                senha: ''
+            };
+            
+            fornecedores.push(fornecedor);
+            renderizarFornecedores();
+        }
+
+        function removerFornecedor(id) {
+            fornecedores = fornecedores.filter(f => f.id !== id);
+            renderizarFornecedores();
+            atualizarCredenciais();
+        }
+
+        function renderizarFornecedores() {
+            const container = document.getElementById('fornecedoresList');
+            
+            container.innerHTML = fornecedores.map((fornecedor, index) => `
+                <div class="fornecedor-item">
+                    <div class="fornecedor-info">
+                        <div class="fornecedor-field">
+                            <label>CNPJ *</label>
+                            <input type="text" 
+                                   placeholder="00.000.000/0000-00" 
+                                   value="${fornecedor.cnpj}"
+                                   onchange="atualizarFornecedor(${fornecedor.id}, 'cnpj', this.value)"
+                                   onblur="formatarCNPJ(this)">
+                        </div>
+                        <div class="fornecedor-field">
+                            <label>Razão Social *</label>
+                            <input type="text" 
+                                   placeholder="Nome da empresa" 
+                                   value="${fornecedor.razaoSocial}"
+                                   onchange="atualizarFornecedor(${fornecedor.id}, 'razaoSocial', this.value)">
+                        </div>
+                        <div class="fornecedor-field">
+                            <label>E-mail *</label>
+                            <input type="email" 
+                                   placeholder="contato@empresa.com" 
+                                   value="${fornecedor.email}"
+                                   onchange="atualizarFornecedor(${fornecedor.id}, 'email', this.value)">
+                        </div>
+                    </div>
+                    <button class="remove-btn" onclick="removerFornecedor(${fornecedor.id})">
+                        🗑️ Remover
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function atualizarFornecedor(id, campo, valor) {
+            const fornecedor = fornecedores.find(f => f.id === id);
+            if (fornecedor) {
+                fornecedor[campo] = valor;
+                
+                // Gerar credenciais quando CNPJ e email estiverem preenchidos
+                if (fornecedor.cnpj && fornecedor.email) {
+                    gerarCredenciais(fornecedor);
+                }
+                
+                atualizarCredenciais();
+            }
+        }
+
+        function gerarCredenciais(fornecedor) {
+            // Gerar login baseado no CNPJ (apenas números)
+            const cnpjNumeros = fornecedor.cnpj.replace(/\D/g, '');
+            fornecedor.login = `fornecedor_${cnpjNumeros.slice(-8)}`;
+            
+            // Gerar senha aleatória
+            fornecedor.senha = gerarSenhaAleatoria();
+        }
+
+        function gerarSenhaAleatoria() {
+            const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            let senha = '';
+            for (let i = 0; i < 8; i++) {
+                senha += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return senha;
+        }
+
+        function atualizarCredenciais() {
+            const preview = document.getElementById('credenciaisPreview');
+            const lista = document.getElementById('credenciaisList');
+            
+            const fornecedoresComCredenciais = fornecedores.filter(f => f.login && f.senha);
+            
+            if (fornecedoresComCredenciais.length === 0) {
+                preview.style.display = 'none';
+                return;
+            }
+            
+            preview.style.display = 'block';
+            
+            lista.innerHTML = fornecedoresComCredenciais.map(f => `
+                <div class="credencial-item">
+                    <div class="credencial-field">
+                        <div class="credencial-label">Empresa:</div>
+                        <div class="credencial-value">${f.razaoSocial}</div>
+                    </div>
+                    <div class="credencial-field">
+                        <div class="credencial-label">Login:</div>
+                        <div class="credencial-value">${f.login}</div>
+                    </div>
+                    <div class="credencial-field">
+                        <div class="credencial-label">Senha:</div>
+                        <div class="credencial-value">${f.senha}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function gerarResumoProcesso() {
+            const resumo = document.getElementById('resumoProcesso');
+            
+            resumo.innerHTML = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="color: #27ae60; margin-bottom: 15px;">📋 Resumo do Processo</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div>
+                            <strong>Número do Processo:</strong><br>
+                            ${document.getElementById('numeroProcesso').value}
+                        </div>
+                        <div>
+                            <strong>Modalidade:</strong><br>
+                            ${document.getElementById('modalidade').options[document.getElementById('modalidade').selectedIndex].text}
+                        </div>
+                        <div>
+                            <strong>TR Selecionado:</strong><br>
+                            ${trSelecionado.numeroTR} - ${trSelecionado.objeto}
+                        </div>
+                        <div>
+                            <strong>Valor Estimado:</strong><br>
+                            R$ ${trSelecionado.valorEstimado ? parseFloat(trSelecionado.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Não informado'}
+                        </div>
+                        <div>
+                            <strong>Data de Abertura:</strong><br>
+                            ${formatarDataHora(document.getElementById('dataAbertura').value)}
+                        </div>
+                        <div>
+                            <strong>Data Limite:</strong><br>
+                            ${formatarDataHora(document.getElementById('dataLimite').value)}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <strong>Local de Abertura:</strong><br>
+                        ${document.getElementById('localAbertura').value}
+                    </div>
+                    
+                    <h4 style="color: #27ae60; margin-bottom: 10px;">👥 Fornecedores Cadastrados (${fornecedores.length})</h4>
+                    <div style="display: grid; gap: 10px;">
+                        ${fornecedores.map(f => `
+                            <div style="background: white; padding: 10px; border-radius: 4px; border: 1px solid #ddd;">
+                                <strong>${f.razaoSocial}</strong> - CNPJ: ${f.cnpj} - E-mail: ${f.email}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeaa7;">
+                    <h4 style="color: #856404; margin-bottom: 10px;">⚠️ Importante</h4>
+                    <p style="color: #856404; margin: 0;">
+                        Ao finalizar, o processo será criado e as credenciais serão enviadas automaticamente 
+                        por e-mail para todos os fornecedores cadastrados. Esta ação não pode ser desfeita.
+                    </p>
+                </div>
+            `;
+        }
+
+        function finalizarProcesso() {
+            if (!confirm('Tem certeza que deseja criar este processo? As credenciais serão enviadas para os fornecedores e esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            // Coletar dados do processo
+            processData = {
+                id: Date.now(),
+                numeroProcesso: document.getElementById('numeroProcesso').value,
+                modalidade: document.getElementById('modalidade').value,
+                dataAbertura: document.getElementById('dataAbertura').value,
+                dataLimite: document.getElementById('dataLimite').value,
+                localAbertura: document.getElementById('localAbertura').value,
+                observacoes: document.getElementById('observacoesProcesso').value,
+                trVinculado: trSelecionado,
+                fornecedores: fornecedores,
+                status: 'ATIVO',
+                dataCriacao: new Date().toISOString(),
+                criadoPor: 'Comprador' // Em um sistema real, seria o usuário logado
+            };
+
+            // Salvar processo
+            const processos = JSON.parse(localStorage.getItem('processos_licitatorios') || '[]');
+            processos.push(processData);
+            localStorage.setItem('processos_licitatorios', JSON.stringify(processos));
+
+            // Salvar credenciais dos fornecedores
+            const credenciais = JSON.parse(localStorage.getItem('credenciais_fornecedores') || '[]');
+            fornecedores.forEach(fornecedor => {
+                credenciais.push({
+                    id: Date.now() + Math.random(),
+                    processoId: processData.id,
+                    numeroProcesso: processData.numeroProcesso,
+                    cnpj: fornecedor.cnpj,
+                    razaoSocial: fornecedor.razaoSocial,
+                    email: fornecedor.email,
+                    login: fornecedor.login,
+                    senha: fornecedor.senha,
+                    ativo: true,
+                    dataCriacao: new Date().toISOString()
+                });
+            });
+            localStorage.setItem('credenciais_fornecedores', JSON.stringify(credenciais));
+
+            // Simular envio de e-mails (em um sistema real, seria feito pelo backend)
+            simularEnvioEmails();
+
+            alert(`Processo ${processData.numeroProcesso} criado com sucesso!\n\nCredenciais enviadas para ${fornecedores.length} fornecedor(es).`);
+            
+            // Redirecionar para dashboard
+            window.location.href = 'dashboard-comprador-integrado.html';
+        }
+
+        function simularEnvioEmails() {
+            // Em um sistema real, aqui seria feita a integração com serviço de e-mail
+            console.log('Enviando e-mails para fornecedores...');
+            
+            fornecedores.forEach(fornecedor => {
+                console.log(`E-mail enviado para ${fornecedor.email}:`);
+                console.log(`Assunto: Credenciais de Acesso - Processo ${processData.numeroProcesso}`);
+                console.log(`Login: ${fornecedor.login}`);
+                console.log(`Senha: ${fornecedor.senha}`);
+                console.log('---');
+            });
+        }
+
+        // Funções utilitárias
+        function formatarCNPJ(input) {
+            let value = input.value.replace(/\D/g, '');
+            value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+            value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+            value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+            value = value.replace(/(\d{4})(\d)/, '$1-$2');
+            input.value = value;
+        }
+
+        function validarCNPJ(cnpj) {
+            cnpj = cnpj.replace(/\D/g, '');
+            return cnpj.length === 14;
+        }
+
+        function validarEmail(email) {
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return regex.test(email);
+        }
+
+        function formatarDataHora(dataHora) {
+            return new Date(dataHora).toLocaleString('pt-BR');
+        }
+
+        function navigateTo(page) {
+            switch(page) {
+                case 'dashboard':
+                    window.location.href = 'dashboard-comprador-integrado.html';
+                    break;
+                case 'aprovacao-tr':
+                    window.location.href = 'dashboard-comprador-aprovacao-tr.html';
+                    break;
+                case 'criar-processo':
+                    // Já estamos na página
+                    break;
+                case 'propostas':
+                    window.location.href = 'dashboard-comprador-integrado.html';
+                    break;
+                case 'analise-comparativa':
+                    window.location.href = 'dashboard-comprador-comparativo.html';
+                    break;
+                case 'relatorios':
+                    window.location.href = 'dashboard-comprador-integrado.html';
+                    break;
+                case 'sair':
+                    if (confirm('Deseja realmente sair? Dados não salvos serão perdidos.')) {
+                        window.location.href = '../index.html';
+                    }
+                    break;
+            }
+        }
+
+        // Inicializar primeira etapa
+        mostrarEtapa(1);
+        atualizarBotoes();
+    </script>
+</body>
+</html>
+
