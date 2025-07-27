@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """
-Backend Atualizado - Sistema de Gestão de Propostas
-Versão 3.0 - Estrutura Revisada e Confirmada
+Backend Corrigido - Sistema de Gestão de Propostas
+Versão 4.0 - Estrutura Revisada e Confirmada
 Compatível com Render.com e GitHub
+
+CORREÇÕES IMPLEMENTADAS:
+- Banco de dados SQLite real (substitui dados em memória)
+- Sistema de autenticação JWT seguro
+- APIs RESTful padronizadas
+- Logs de auditoria
+- Tratamento de erros robusto
 """
 
 import os
@@ -11,189 +18,217 @@ import logging
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+
+# Imports dos módulos criados
+from config import get_config
+from models import db, init_db, Usuario, Processo, Proposta, Notificacao, LogAuditoria
+from auth import init_jwt, AuthService, require_auth, require_role, log_user_action
 
 # Configuração do Flask
-app = Flask(__name__)
-CORS(app, origins="*")  # Permitir todas as origens para desenvolvimento
+app = Flask(__name__, static_folder='static')
 
-# Configuração de logging
+# Carregar configuração baseada no ambiente
+config_class = get_config()
+app.config.from_object(config_class)
+
+# Configurar CORS
+CORS(app, origins=app.config['CORS_ORIGINS'])
+
+# Inicializar extensões
+init_jwt(app)
+init_db(app)
+
+# Configurar logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=getattr(logging, app.config['LOG_LEVEL']),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Diretórios
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, 'static')
+# ========================================
+# ROTAS DE AUTENTICAÇÃO
+# ========================================
 
-# Criar diretórios se não existirem
-os.makedirs(STATIC_DIR, exist_ok=True)
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    """Login com JWT"""
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('email') or not data.get('senha'):
+            return jsonify({
+                'success': False,
+                'error': 'Dados incompletos',
+                'message': 'Email e senha são obrigatórios'
+            }), 400
+        
+        result = AuthService.login(
+            email=data['email'],
+            senha=data['senha'],
+            ip_origem=request.remote_addr
+        )
+        
+        status_code = 200 if result['success'] else 401
+        return jsonify(result), status_code
+        
+    except Exception as e:
+        logger.error(f"Erro no login: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erro interno',
+            'message': 'Erro interno do servidor'
+        }), 500
 
-# Dados de exemplo para demonstração
-DADOS_SISTEMA = {
-    "processos": [
-        {
-            "id": "proc_001",
-            "numero": "LIC-2025-001",
-            "objeto": "Construção de Escola Municipal de Ensino Fundamental",
-            "modalidade": "Concorrência",
-            "prazo": (datetime.now() + timedelta(days=15)).isoformat(),
-            "status": "ativo",
-            "criadoPor": "comprador_001",
-            "dataCadastro": datetime.now().isoformat(),
-            "fornecedoresConvidados": ["forn_001", "forn_002"]
-        },
-        {
-            "id": "proc_002",
-            "numero": "LIC-2025-002", 
-            "objeto": "Reforma e Ampliação do Centro de Saúde",
-            "modalidade": "Tomada de Preços",
-            "prazo": (datetime.now() + timedelta(days=10)).isoformat(),
-            "status": "ativo",
-            "criadoPor": "comprador_001",
-            "dataCadastro": datetime.now().isoformat(),
-            "fornecedoresConvidados": ["forn_001"]
-        },
-        {
-            "id": "proc_003",
-            "numero": "LIC-2025-003",
-            "objeto": "Pavimentação Asfáltica de Vias Urbanas",
-            "modalidade": "Concorrência", 
-            "prazo": (datetime.now() + timedelta(days=20)).isoformat(),
-            "status": "ativo",
-            "criadoPor": "comprador_002",
-            "dataCadastro": datetime.now().isoformat(),
-            "fornecedoresConvidados": ["forn_002", "forn_003"]
-        }
-    ],
-    "propostas": [
-        {
-            "protocolo": "PROP-2025-001",
-            "processo": "LIC-2025-001",
-            "empresa": "Construtora Alpha LTDA",
-            "cnpj": "12.345.678/0001-90",
-            "data": datetime.now().isoformat(),
-            "valor": "R$ 850.000,00",
-            "dados": {
-                "dados": {
-                    "razaoSocial": "Construtora Alpha LTDA",
-                    "cnpj": "12.345.678/0001-90",
-                    "email": "contato@alpha.com.br",
-                    "telefone": "(11) 3456-7890"
-                },
-                "tecnica": {
-                    "prazoExecucao": "180 dias",
-                    "metodologia": "Metodologia construtiva tradicional"
-                },
-                "comercial": {
-                    "valorTotal": "850.000,00",
-                    "validadeProposta": "60 dias"
-                }
-            }
-        }
-    ],
-    "usuarios": [
-        {
-            "id": "admin_001",
-            "nome": "Administrador Sistema",
-            "email": "admin@sistema.gov.br",
-            "tipo": "admin",
-            "ativo": True,
-            "dataCriacao": datetime.now().isoformat()
-        },
-        {
-            "id": "comprador_001",
-            "nome": "João Silva",
-            "email": "joao.silva@prefeitura.gov.br",
-            "tipo": "comprador",
-            "nivelAcesso": "comprador_senior",
-            "ativo": True,
-            "dataCriacao": datetime.now().isoformat()
-        },
-        {
-            "id": "requisitante_001",
-            "nome": "Maria Santos",
-            "email": "maria.santos@educacao.gov.br",
-            "tipo": "requisitante",
-            "ativo": True,
-            "dataCriacao": datetime.now().isoformat()
-        },
-        {
-            "id": "forn_001",
-            "nome": "Construtora Alpha LTDA",
-            "email": "contato@alpha.com.br",
-            "cnpj": "12.345.678/0001-90",
-            "tipo": "fornecedor",
-            "ativo": True,
-            "dataCriacao": datetime.now().isoformat()
-        }
-    ],
-    "notificacoes": []
-}
+@app.route('/api/auth/logout', methods=['POST'])
+@require_auth
+def logout():
+    """Logout revogando token"""
+    try:
+        from flask_jwt_extended import get_jwt
+        jti = get_jwt()['jti']
+        
+        result = AuthService.logout(jti)
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Erro no logout: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erro interno',
+            'message': 'Erro ao realizar logout'
+        }), 500
+
+@app.route('/api/auth/refresh', methods=['POST'])
+@require_auth
+def refresh():
+    """Renovar token de acesso"""
+    try:
+        result = AuthService.refresh_token()
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Erro ao renovar token: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erro interno',
+            'message': 'Erro ao renovar token'
+        }), 500
+
+@app.route('/api/auth/me', methods=['GET'])
+@require_auth
+def get_current_user():
+    """Obter dados do usuário atual"""
+    try:
+        usuario = AuthService.get_current_user()
+        if usuario:
+            return jsonify({
+                'success': True,
+                'usuario': usuario.to_dict()
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Usuário não encontrado'
+            }), 404
+            
+    except Exception as e:
+        logger.error(f"Erro ao obter usuário atual: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erro interno'
+        }), 500
+
+# ========================================
+# ROTAS DE STATUS E INFORMAÇÕES
+# ========================================
 
 @app.route('/')
 def index():
     """Redireciona para a página de login"""
-    return send_from_directory(STATIC_DIR, 'index.html')
+    return send_from_directory(app.static_folder, 'index.html')
+
 @app.route('/api/status')
 def api_status():
     """Status detalhado da API"""
     try:
-        agora = datetime.now()
-        processos_ativos = [p for p in DADOS_SISTEMA["processos"] 
-                           if datetime.fromisoformat(p["prazo"]) > agora]
+        # Estatísticas do banco
+        stats = {
+            'processos_total': Processo.query.count(),
+            'processos_ativos': Processo.query.filter_by(status='ativo').count(),
+            'propostas_total': Proposta.query.count(),
+            'usuarios_total': Usuario.query.count(),
+            'usuarios_ativos': Usuario.query.filter_by(ativo=True).count(),
+            'notificacoes_total': Notificacao.query.count()
+        }
         
         return jsonify({
             "status": "online",
-            "timestamp": agora.isoformat(),
-            "estatisticas": {
-                "processos_total": len(DADOS_SISTEMA["processos"]),
-                "processos_ativos": len(processos_ativos),
-                "propostas_total": len(DADOS_SISTEMA["propostas"]),
-                "usuarios_total": len(DADOS_SISTEMA["usuarios"]),
-                "notificacoes_total": len(DADOS_SISTEMA["notificacoes"])
-            },
-            "versao": "3.0",
-            "ambiente": os.environ.get('ENVIRONMENT', 'development')
+            "timestamp": datetime.now().isoformat(),
+            "versao": "4.0",
+            "ambiente": os.environ.get('FLASK_ENV', 'development'),
+            "estatisticas": stats
         })
+        
     except Exception as e:
         logger.error(f"Erro ao obter status: {e}")
-        return jsonify({"erro": "Erro interno"}), 500
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
 
-@app.route('/api/processos')
+# ========================================
+# ROTAS DE PROCESSOS
+# ========================================
+
+@app.route('/api/v1/processos', methods=['GET'])
+@require_auth
 def listar_processos():
-    """Lista todos os processos"""
+    """Lista todos os processos com filtros"""
     try:
+        # Parâmetros de filtro
         status_filtro = request.args.get('status', 'todos')
-        agora = datetime.now()
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 50))
         
-        processos = DADOS_SISTEMA["processos"].copy()
+        # Query base
+        query = Processo.query
         
-        # Aplicar filtro de status
-        if status_filtro == 'ativo':
-            processos = [p for p in processos 
-                        if datetime.fromisoformat(p["prazo"]) > agora]
-        elif status_filtro == 'encerrado':
-            processos = [p for p in processos 
-                        if datetime.fromisoformat(p["prazo"]) <= agora]
+        # Aplicar filtros
+        if status_filtro != 'todos':
+            if status_filtro == 'ativo':
+                query = query.filter(Processo.prazo >= datetime.now())
+            elif status_filtro == 'encerrado':
+                query = query.filter(Processo.prazo < datetime.now())
         
-        # Adicionar informações calculadas
-        for processo in processos:
-            prazo = datetime.fromisoformat(processo["prazo"])
-            processo["dias_restantes"] = (prazo - agora).days
-            processo["prazo_formatado"] = prazo.strftime("%d/%m/%Y %H:%M")
-            processo["status_calculado"] = "ativo" if prazo > agora else "encerrado"
+        # Paginação
+        processos_paginated = query.paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        # Converter para dict e calcular status
+        processos = []
+        for processo in processos_paginated.items:
+            processo_dict = processo.to_dict()
+            processo_dict['status_calculado'] = processo.calcular_status()
             
             # Contar propostas
-            propostas_processo = [p for p in DADOS_SISTEMA["propostas"] 
-                                 if p["processo"] == processo["numero"]]
-            processo["total_propostas"] = len(propostas_processo)
+            processo_dict['total_propostas'] = len(processo.propostas)
+            
+            processos.append(processo_dict)
+        
+        # Log da ação
+        log_user_action('VIEW_PROCESSOS', 'processo', detalhes={
+            'filtro': status_filtro,
+            'total': len(processos)
+        })
         
         return jsonify({
             "success": True,
             "processos": processos,
-            "total": len(processos),
+            "total": processos_paginated.total,
+            "pages": processos_paginated.pages,
+            "current_page": page,
             "filtro_aplicado": status_filtro
         })
         
@@ -201,500 +236,401 @@ def listar_processos():
         logger.error(f"Erro ao listar processos: {e}")
         return jsonify({
             "success": False,
-            "erro": "Erro ao carregar processos"
+            "error": "Erro ao carregar processos"
         }), 500
 
-@app.route('/api/processos/ativos')
-def processos_ativos():
-    """Lista apenas processos ativos (para fornecedores)"""
+@app.route('/api/v1/processos/<processo_id>', methods=['GET'])
+@require_auth
+def obter_processo(processo_id):
+    """Obtém um processo específico"""
     try:
-        agora = datetime.now()
-        processos_formatados = []
+        processo = Processo.query.get(processo_id)
         
-        for processo in DADOS_SISTEMA["processos"]:
-            try:
-                prazo = datetime.fromisoformat(processo["prazo"])
-                dias_restantes = (prazo - agora).days
-                
-                if dias_restantes > 0:  # Apenas processos ativos
-                    processos_formatados.append({
-                        "id": processo["id"],
-                        "numero": processo["numero"],
-                        "objeto": processo["objeto"],
-                        "modalidade": processo["modalidade"],
-                        "prazo": processo["prazo"],
-                        "prazo_formatado": prazo.strftime("%d/%m/%Y %H:%M"),
-                        "dias_restantes": dias_restantes,
-                        "status": "ativo"
-                    })
-            except Exception as e:
-                logger.warning(f"Erro ao processar processo {processo.get('numero', 'N/A')}: {e}")
-                continue
+        if not processo:
+            return jsonify({
+                'success': False,
+                'error': 'Processo não encontrado'
+            }), 404
         
-        # Ordenar por prazo (mais próximos primeiro)
-        processos_formatados.sort(key=lambda x: x["dias_restantes"])
+        processo_dict = processo.to_dict()
+        processo_dict['status_calculado'] = processo.calcular_status()
+        processo_dict['propostas'] = [p.to_dict() for p in processo.propostas]
+        
+        # Log da ação
+        log_user_action('VIEW_PROCESSO', 'processo', processo_id)
         
         return jsonify({
-            "success": True,
-            "processos": processos_formatados,
-            "total": len(processos_formatados)
+            'success': True,
+            'processo': processo_dict
         })
         
     except Exception as e:
-        logger.error(f"Erro ao listar processos ativos: {e}")
+        logger.error(f"Erro ao obter processo {processo_id}: {e}")
         return jsonify({
-            "success": False,
-            "erro": "Erro ao carregar processos"
+            'success': False,
+            'error': 'Erro ao carregar processo'
         }), 500
 
-@app.route('/api/processos', methods=['POST'])
+@app.route('/api/v1/processos', methods=['POST'])
+@require_role('admin', 'comprador', 'requisitante')
 def criar_processo():
-    """Criar novo processo"""
+    """Cria um novo processo"""
     try:
-        dados = request.get_json()
+        data = request.get_json()
         
         # Validações básicas
-        campos_obrigatorios = ['numero', 'objeto', 'modalidade', 'prazo']
-        for campo in campos_obrigatorios:
-            if not dados.get(campo):
+        required_fields = ['numero', 'objeto', 'modalidade', 'prazo']
+        for field in required_fields:
+            if not data.get(field):
                 return jsonify({
-                    "success": False,
-                    "erro": f"Campo '{campo}' é obrigatório"
+                    'success': False,
+                    'error': f'Campo obrigatório: {field}'
                 }), 400
         
         # Verificar se número já existe
-        if any(p["numero"] == dados["numero"] for p in DADOS_SISTEMA["processos"]):
+        if Processo.query.filter_by(numero=data['numero']).first():
             return jsonify({
-                "success": False,
-                "erro": "Já existe um processo com este número"
+                'success': False,
+                'error': 'Número de processo já existe'
             }), 400
         
-        # Criar novo processo
-        novo_processo = {
-            "id": f"proc_{len(DADOS_SISTEMA['processos']) + 1:03d}",
-            "numero": dados["numero"],
-            "objeto": dados["objeto"],
-            "modalidade": dados["modalidade"],
-            "prazo": dados["prazo"],
-            "status": "ativo",
-            "criadoPor": dados.get("criadoPor", "sistema"),
-            "dataCadastro": datetime.now().isoformat(),
-            "fornecedoresConvidados": dados.get("fornecedoresConvidados", [])
-        }
+        # Criar processo
+        from flask_jwt_extended import get_jwt_identity
+        usuario_id = get_jwt_identity()
         
-        DADOS_SISTEMA["processos"].append(novo_processo)
+        processo = Processo(
+            id=f"proc_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            numero=data['numero'],
+            objeto=data['objeto'],
+            modalidade=data['modalidade'],
+            prazo=datetime.fromisoformat(data['prazo'].replace('Z', '+00:00')),
+            criado_por=usuario_id
+        )
         
-        logger.info(f"Processo criado: {novo_processo['numero']}")
+        if data.get('fornecedores_convidados'):
+            processo.set_fornecedores_convidados(data['fornecedores_convidados'])
+        
+        db.session.add(processo)
+        db.session.commit()
+        
+        # Log da ação
+        log_user_action('CREATE_PROCESSO', 'processo', processo.id, {
+            'numero': processo.numero,
+            'objeto': processo.objeto
+        })
         
         return jsonify({
-            "success": True,
-            "processo": novo_processo,
-            "mensagem": "Processo criado com sucesso"
+            'success': True,
+            'message': 'Processo criado com sucesso',
+            'processo': processo.to_dict()
         }), 201
         
     except Exception as e:
         logger.error(f"Erro ao criar processo: {e}")
+        db.session.rollback()
         return jsonify({
-            "success": False,
-            "erro": "Erro ao criar processo"
+            'success': False,
+            'error': 'Erro ao criar processo'
         }), 500
 
-@app.route('/api/propostas')
+# ========================================
+# ROTAS DE PROPOSTAS
+# ========================================
+
+@app.route('/api/v1/propostas', methods=['GET'])
+@require_auth
 def listar_propostas():
-    """Lista todas as propostas"""
+    """Lista propostas com filtros"""
     try:
-        processo_filtro = request.args.get('processo')
-        cnpj_filtro = request.args.get('cnpj')
+        processo_id = request.args.get('processo_id')
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 50))
         
-        propostas = DADOS_SISTEMA["propostas"].copy()
+        # Query base
+        query = Proposta.query
         
-        # Aplicar filtros
-        if processo_filtro:
-            propostas = [p for p in propostas if p["processo"] == processo_filtro]
+        # Filtrar por processo se especificado
+        if processo_id:
+            query = query.filter_by(processo_id=processo_id)
         
-        if cnpj_filtro:
-            cnpj_limpo = cnpj_filtro.replace('.', '').replace('/', '').replace('-', '')
-            propostas = [p for p in propostas 
-                        if p["cnpj"].replace('.', '').replace('/', '').replace('-', '') == cnpj_limpo]
+        # Paginação
+        propostas_paginated = query.paginate(
+            page=page, per_page=per_page, error_out=False
+        )
         
-        # Adicionar informações calculadas
-        for proposta in propostas:
-            proposta["data_formatada"] = datetime.fromisoformat(proposta["data"]).strftime("%d/%m/%Y %H:%M")
+        propostas = [p.to_dict() for p in propostas_paginated.items]
+        
+        # Log da ação
+        log_user_action('VIEW_PROPOSTAS', 'proposta', detalhes={
+            'processo_id': processo_id,
+            'total': len(propostas)
+        })
         
         return jsonify({
-            "success": True,
-            "propostas": propostas,
-            "total": len(propostas),
-            "filtros": {
-                "processo": processo_filtro,
-                "cnpj": cnpj_filtro
-            }
+            'success': True,
+            'propostas': propostas,
+            'total': propostas_paginated.total,
+            'pages': propostas_paginated.pages,
+            'current_page': page
         })
         
     except Exception as e:
         logger.error(f"Erro ao listar propostas: {e}")
         return jsonify({
-            "success": False,
-            "erro": "Erro ao carregar propostas"
+            'success': False,
+            'error': 'Erro ao carregar propostas'
         }), 500
 
-@app.route('/api/propostas', methods=['POST'])
-def enviar_proposta():
-    """Enviar nova proposta"""
+@app.route('/api/v1/propostas', methods=['POST'])
+@require_role('admin', 'fornecedor')
+def criar_proposta():
+    """Cria uma nova proposta"""
     try:
-        dados = request.get_json()
+        data = request.get_json()
         
         # Validações básicas
-        campos_obrigatorios = ['processo', 'empresa', 'cnpj', 'dados']
-        for campo in campos_obrigatorios:
-            if not dados.get(campo):
+        required_fields = ['processo_id', 'empresa', 'cnpj', 'valor_total']
+        for field in required_fields:
+            if not data.get(field):
                 return jsonify({
-                    "success": False,
-                    "erro": f"Campo '{campo}' é obrigatório"
+                    'success': False,
+                    'error': f'Campo obrigatório: {field}'
                 }), 400
         
-        # Verificar se processo existe e está ativo
-        processo = next((p for p in DADOS_SISTEMA["processos"] 
-                        if p["numero"] == dados["processo"]), None)
-        
+        # Verificar se processo existe
+        processo = Processo.query.get(data['processo_id'])
         if not processo:
             return jsonify({
-                "success": False,
-                "erro": "Processo não encontrado"
+                'success': False,
+                'error': 'Processo não encontrado'
             }), 404
         
         # Verificar se processo ainda está ativo
-        if datetime.fromisoformat(processo["prazo"]) <= datetime.now():
+        if processo.prazo < datetime.now():
             return jsonify({
-                "success": False,
-                "erro": "Prazo do processo já expirou"
+                'success': False,
+                'error': 'Prazo do processo encerrado'
             }), 400
         
-        # Gerar protocolo único
-        protocolo = f"PROP-{datetime.now().strftime('%Y')}-{len(DADOS_SISTEMA['propostas']) + 1:03d}"
+        # Criar proposta
+        from flask_jwt_extended import get_jwt_identity
+        usuario_id = get_jwt_identity()
         
-        # Criar nova proposta
-        nova_proposta = {
-            "protocolo": protocolo,
-            "processo": dados["processo"],
-            "empresa": dados["empresa"],
-            "cnpj": dados["cnpj"],
-            "data": datetime.now().isoformat(),
-            "valor": dados.get("valor", "R$ 0,00"),
-            "dados": dados["dados"]
-        }
+        proposta = Proposta(
+            id=f"prop_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            protocolo=f"PROP-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
+            processo_id=data['processo_id'],
+            empresa=data['empresa'],
+            cnpj=data['cnpj'],
+            valor_total=float(data['valor_total']),
+            validade_proposta=data.get('validade_proposta', '60 dias'),
+            fornecedor_id=usuario_id
+        )
         
-        DADOS_SISTEMA["propostas"].append(nova_proposta)
+        # Adicionar dados técnicos e comerciais se fornecidos
+        if data.get('dados_tecnicos'):
+            proposta.set_dados_tecnicos(data['dados_tecnicos'])
         
-        logger.info(f"Proposta enviada: {protocolo} para processo {dados['processo']}")
+        if data.get('dados_comerciais'):
+            proposta.set_dados_comerciais(data['dados_comerciais'])
         
-        return jsonify({
-            "success": True,
-            "proposta": nova_proposta,
-            "protocolo": protocolo,
-            "mensagem": "Proposta enviada com sucesso"
-        }), 201
+        db.session.add(proposta)
+        db.session.commit()
         
-    except Exception as e:
-        logger.error(f"Erro ao enviar proposta: {e}")
-        return jsonify({
-            "success": False,
-            "erro": "Erro ao enviar proposta"
-        }), 500
-
-@app.route('/api/propostas/enviar', methods=['POST'])
-def enviar_proposta_frontend():
-    """Rota específica para envio de propostas do frontend"""
-    try:
-        dados = request.get_json()
-        
-        # Gerar protocolo único
-        protocolo = f"PROP-{datetime.now().strftime('%Y%m%d%H%M%S')}-{len(DADOS_SISTEMA['propostas']) + 1:03d}"
-        
-        # Criar nova proposta com dados do frontend
-        nova_proposta = {
-            "protocolo": protocolo,
-            "processo": dados.get("processo", "1600003456-150"),
-            "empresa": dados.get("dadosCadastrais", {}).get("razaoSocial", ""),
-            "cnpj": dados.get("dadosCadastrais", {}).get("cnpj", ""),
-            "data": datetime.now().isoformat(),
-            "valor": dados.get("resumo", {}).get("precoTotal", "R$ 0,00"),
-            "dados": dados
-        }
-        
-        DADOS_SISTEMA["propostas"].append(nova_proposta)
-        
-        logger.info(f"Proposta enviada via frontend: {protocolo}")
-        
-        return jsonify({
-            "success": True,
-            "protocolo": protocolo,
-            "mensagem": "✅ Proposta enviada com sucesso!",
-            "data": datetime.now().isoformat()
-        }), 201
-        
-    except Exception as e:
-        logger.error(f"Erro ao enviar proposta via frontend: {e}")
-        return jsonify({
-            "success": False,
-            "erro": "❌ Erro ao enviar proposta"
-        }), 500
-
-@app.route('/api/fornecedor/estatisticas')
-def estatisticas_fornecedor():
-    """Estatísticas específicas do fornecedor"""
-    try:
-        cnpj = request.args.get('cnpj', '')
-        if not cnpj:
-            return jsonify({
-                "success": False,
-                "erro": "CNPJ não fornecido"
-            }), 400
-        
-        # Limpar CNPJ
-        cnpj_limpo = cnpj.replace('.', '').replace('/', '').replace('-', '')
-        
-        # Contar propostas do fornecedor
-        propostas_fornecedor = [p for p in DADOS_SISTEMA["propostas"] 
-                               if p["cnpj"].replace('.', '').replace('/', '').replace('-', '') == cnpj_limpo]
-        
-        # Contar processos ativos
-        agora = datetime.now()
-        processos_ativos = len([p for p in DADOS_SISTEMA["processos"] 
-                               if datetime.fromisoformat(p["prazo"]) > agora])
-        
-        # Processos com prazo próximo (7 dias)
-        prazos_proximos = len([p for p in DADOS_SISTEMA["processos"] 
-                              if datetime.fromisoformat(p["prazo"]) > agora and 
-                              (datetime.fromisoformat(p["prazo"]) - agora).days <= 7])
-        
-        # Calcular valor total das propostas
-        valor_total = 0
-        for proposta in propostas_fornecedor:
-            if proposta.get("valor"):
-                valor_str = proposta["valor"].replace("R$", "").replace(".", "").replace(",", ".").strip()
-                try:
-                    valor_total += float(valor_str)
-                except:
-                    pass
-        
-        return jsonify({
-            "success": True,
-            "estatisticas": {
-                "processos_ativos": processos_ativos,
-                "propostas_enviadas": len(propostas_fornecedor),
-                "prazos_proximos": prazos_proximos,
-                "valor_total": f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            },
-            "cnpj": cnpj
+        # Log da ação
+        log_user_action('CREATE_PROPOSTA', 'proposta', proposta.id, {
+            'processo_id': data['processo_id'],
+            'empresa': data['empresa'],
+            'valor_total': data['valor_total']
         })
         
-    except Exception as e:
-        logger.error(f"Erro ao calcular estatísticas do fornecedor: {e}")
         return jsonify({
-            "success": False,
-            "erro": "Erro ao calcular estatísticas"
+            'success': True,
+            'message': 'Proposta enviada com sucesso',
+            'proposta': proposta.to_dict()
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Erro ao criar proposta: {e}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': 'Erro ao enviar proposta'
         }), 500
 
-@app.route('/api/usuarios')
+# ========================================
+# ROTAS DE USUÁRIOS
+# ========================================
+
+@app.route('/api/v1/usuarios', methods=['GET'])
+@require_role('admin', 'auditor')
 def listar_usuarios():
-    """Lista usuários do sistema"""
+    """Lista usuários (apenas admin e auditor)"""
     try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 50))
         tipo_filtro = request.args.get('tipo')
         
-        usuarios = DADOS_SISTEMA["usuarios"].copy()
+        query = Usuario.query
         
-        # Aplicar filtro de tipo
         if tipo_filtro:
-            usuarios = [u for u in usuarios if u["tipo"] == tipo_filtro]
+            query = query.filter_by(tipo=tipo_filtro)
         
-        # Remover informações sensíveis
-        for usuario in usuarios:
-            if "senha" in usuario:
-                del usuario["senha"]
+        usuarios_paginated = query.paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        usuarios = []
+        for usuario in usuarios_paginated.items:
+            user_dict = usuario.to_dict()
+            # Remover dados sensíveis
+            user_dict.pop('senha_hash', None)
+            usuarios.append(user_dict)
+        
+        # Log da ação
+        log_user_action('VIEW_USUARIOS', 'usuario', detalhes={
+            'filtro': tipo_filtro,
+            'total': len(usuarios)
+        })
         
         return jsonify({
-            "success": True,
-            "usuarios": usuarios,
-            "total": len(usuarios),
-            "filtro_tipo": tipo_filtro
+            'success': True,
+            'usuarios': usuarios,
+            'total': usuarios_paginated.total,
+            'pages': usuarios_paginated.pages,
+            'current_page': page
         })
         
     except Exception as e:
         logger.error(f"Erro ao listar usuários: {e}")
         return jsonify({
-            "success": False,
-            "erro": "Erro ao carregar usuários"
+            'success': False,
+            'error': 'Erro ao carregar usuários'
         }), 500
 
-@app.route('/api/notificacoes')
+# ========================================
+# ROTAS DE NOTIFICAÇÕES
+# ========================================
+
+@app.route('/api/v1/notificacoes', methods=['GET'])
+@require_auth
 def listar_notificacoes():
-    """Lista notificações do sistema"""
+    """Lista notificações do usuário atual"""
     try:
-        usuario_id = request.args.get('usuario_id')
-        tipo_usuario = request.args.get('tipo_usuario')
+        from flask_jwt_extended import get_jwt_identity
+        usuario_id = get_jwt_identity()
         
-        notificacoes = DADOS_SISTEMA["notificacoes"].copy()
-        
-        # Filtrar por usuário específico ou tipo
-        if usuario_id:
-            notificacoes = [n for n in notificacoes 
-                           if n.get("destinatario") == usuario_id or 
-                           n.get("destinatario") == "todos"]
-        
-        if tipo_usuario:
-            notificacoes = [n for n in notificacoes 
-                           if n.get("destinatarioTipo") == tipo_usuario or 
-                           n.get("destinatario") == "todos"]
-        
-        # Ordenar por data (mais recentes primeiro)
-        notificacoes.sort(key=lambda x: x.get("data", ""), reverse=True)
+        notificacoes = Notificacao.query.filter_by(
+            usuario_id=usuario_id
+        ).order_by(Notificacao.data_criacao.desc()).limit(50).all()
         
         return jsonify({
-            "success": True,
-            "notificacoes": notificacoes,
-            "total": len(notificacoes)
+            'success': True,
+            'notificacoes': [n.to_dict() for n in notificacoes]
         })
         
     except Exception as e:
         logger.error(f"Erro ao listar notificações: {e}")
         return jsonify({
-            "success": False,
-            "erro": "Erro ao carregar notificações"
+            'success': False,
+            'error': 'Erro ao carregar notificações'
         }), 500
 
-@app.route('/api/notificacoes', methods=['POST'])
-def criar_notificacao():
-    """Criar nova notificação"""
-    try:
-        dados = request.get_json()
-        
-        nova_notificacao = {
-            "id": f"notif_{len(DADOS_SISTEMA['notificacoes']) + 1:03d}",
-            "tipo": dados.get("tipo", "info"),
-            "titulo": dados.get("titulo", ""),
-            "mensagem": dados.get("mensagem", ""),
-            "destinatario": dados.get("destinatario", "todos"),
-            "destinatarioTipo": dados.get("destinatarioTipo"),
-            "remetente": dados.get("remetente", "Sistema"),
-            "lida": False,
-            "data": datetime.now().isoformat(),
-            "acao": dados.get("acao"),
-            "processoId": dados.get("processoId"),
-            "metadata": dados.get("metadata", {})
-        }
-        
-        DADOS_SISTEMA["notificacoes"].append(nova_notificacao)
-        
-        logger.info(f"Notificação criada: {nova_notificacao['titulo']}")
-        
-        return jsonify({
-            "success": True,
-            "notificacao": nova_notificacao,
-            "mensagem": "Notificação criada com sucesso"
-        }), 201
-        
-    except Exception as e:
-        logger.error(f"Erro ao criar notificação: {e}")
-        return jsonify({
-            "success": False,
-            "erro": "Erro ao criar notificação"
-        }), 500
+# ========================================
+# ROTAS DE LOGS E AUDITORIA
+# ========================================
 
-# Endpoints para download de arquivos (Excel/Word)
-@app.route('/api/download/proposta/<protocolo>/excel')
-def download_proposta_excel(protocolo):
-    """Download de proposta em formato Excel"""
+@app.route('/api/v1/logs', methods=['GET'])
+@require_role('admin', 'auditor')
+def listar_logs():
+    """Lista logs de auditoria"""
     try:
-        proposta = next((p for p in DADOS_SISTEMA["propostas"] 
-                        if p["protocolo"] == protocolo), None)
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 100))
+        acao_filtro = request.args.get('acao')
+        usuario_filtro = request.args.get('usuario_id')
         
-        if not proposta:
-            return jsonify({"erro": "Proposta não encontrada"}), 404
+        query = LogAuditoria.query
         
-        # Em produção, aqui seria gerado um arquivo Excel real
-        # Por enquanto, retorna JSON simulando o download
+        if acao_filtro:
+            query = query.filter_by(acao=acao_filtro)
+        
+        if usuario_filtro:
+            query = query.filter_by(usuario_id=usuario_filtro)
+        
+        logs_paginated = query.order_by(
+            LogAuditoria.data_acao.desc()
+        ).paginate(page=page, per_page=per_page, error_out=False)
+        
+        logs = [log.to_dict() for log in logs_paginated.items]
+        
         return jsonify({
-            "success": True,
-            "mensagem": "Em produção, seria gerado arquivo Excel",
-            "proposta": proposta,
-            "formato": "excel"
+            'success': True,
+            'logs': logs,
+            'total': logs_paginated.total,
+            'pages': logs_paginated.pages,
+            'current_page': page
         })
         
     except Exception as e:
-        logger.error(f"Erro ao gerar Excel: {e}")
-        return jsonify({"erro": "Erro ao gerar arquivo"}), 500
-
-@app.route('/api/download/proposta/<protocolo>/word')
-def download_proposta_word(protocolo):
-    """Download de proposta em formato Word"""
-    try:
-        proposta = next((p for p in DADOS_SISTEMA["propostas"] 
-                        if p["protocolo"] == protocolo), None)
-        
-        if not proposta:
-            return jsonify({"erro": "Proposta não encontrada"}), 404
-        
-        # Em produção, aqui seria gerado um arquivo Word real
+        logger.error(f"Erro ao listar logs: {e}")
         return jsonify({
-            "success": True,
-            "mensagem": "Em produção, seria gerado arquivo Word",
-            "proposta": proposta,
-            "formato": "word"
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro ao gerar Word: {e}")
-        return jsonify({"erro": "Erro ao gerar arquivo"}), 500
+            'success': False,
+            'error': 'Erro ao carregar logs'
+        }), 500
 
-# Servir arquivos estáticos (DEVE SER O ÚLTIMO)
+# ========================================
+# ROTAS ESTÁTICAS (COMPATIBILIDADE)
+# ========================================
+
 @app.route('/<path:filename>')
-def serve_static(filename):
+def static_files(filename):
     """Serve arquivos estáticos"""
-    try:
-        # Não interceptar rotas da API
-        if filename.startswith('api/'):
-            return jsonify({"erro": "Endpoint não encontrado"}), 404
-            
-        # Prevenir path traversal
-        if '..' in filename or filename.startswith('/'):
-            return jsonify({"erro": "Caminho inválido"}), 400
-            
-        file_path = os.path.join(STATIC_DIR, filename)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return send_from_directory(STATIC_DIR, filename)
-        else:
-            # Se arquivo não existe, retornar index.html para SPAs
-            index_path = os.path.join(STATIC_DIR, 'index.html')
-            if os.path.exists(index_path):
-                return send_from_directory(STATIC_DIR, 'index.html')
-            else:
-                return jsonify({"erro": "Arquivo não encontrado"}), 404
-            
-    except Exception as e:
-        logger.error(f"Erro ao servir arquivo {filename}: {e}")
-        return jsonify({"erro": "Erro ao acessar arquivo"}), 500
+    return send_from_directory(app.static_folder, filename)
+
+# ========================================
+# TRATAMENTO DE ERROS
+# ========================================
 
 @app.errorhandler(404)
-def not_found(e):
-    return jsonify({"erro": "Endpoint não encontrado"}), 404
+def not_found(error):
+    """Tratamento para 404"""
+    return jsonify({
+        'success': False,
+        'error': 'Recurso não encontrado',
+        'message': 'O recurso solicitado não foi encontrado'
+    }), 404
 
 @app.errorhandler(500)
-def internal_error(e):
-    return jsonify({"erro": "Erro interno do servidor"}), 500
+def internal_error(error):
+    """Tratamento para 500"""
+    logger.error(f"Erro interno: {error}")
+    return jsonify({
+        'success': False,
+        'error': 'Erro interno do servidor',
+        'message': 'Erro interno do servidor'
+    }), 500
+
+@app.errorhandler(403)
+def forbidden(error):
+    """Tratamento para 403"""
+    return jsonify({
+        'success': False,
+        'error': 'Acesso negado',
+        'message': 'Você não tem permissão para acessar este recurso'
+    }), 403
+
+# ========================================
+# INICIALIZAÇÃO
+# ========================================
 
 if __name__ == '__main__':
-    logger.info("Iniciando Sistema de Gestão de Propostas...")
-    logger.info(f"Diretório de trabalho: {os.getcwd()}")
-    logger.info(f"Diretório estático: {STATIC_DIR}")
-    
     port = int(os.environ.get('PORT', 5000))
-    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    debug = os.environ.get('FLASK_ENV') == 'development'
     
-    logger.info(f"Servidor iniciando na porta {port}")
+    logger.info(f"🚀 Iniciando Sistema de Propostas v4.0")
+    logger.info(f"📊 Ambiente: {os.environ.get('FLASK_ENV', 'development')}")
+    logger.info(f"🔌 Porta: {port}")
+    logger.info(f"🔧 Debug: {debug}")
     
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=debug_mode
-    )
+    app.run(host='0.0.0.0', port=port, debug=debug)
