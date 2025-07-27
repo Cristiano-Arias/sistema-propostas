@@ -1433,64 +1433,244 @@
             window.location.href = `portal-propostas-novo.html?processo=${processoNumero}`;
         }
 
-        // Carregar propostas enviadas
+        // Carregar propostas enviadas (VERSÃO CORRIGIDA)
         async function loadPropostas() {
             const container = document.getElementById('propostasList');
-            container.innerHTML = '<div class="loading">Carregando propostas...</div>';
+            if (!container) return;
+            
+            container.innerHTML = '<div style="text-align: center; padding: 20px;">Carregando propostas...</div>';
             
             try {
-                // Buscar CNPJ do currentUser ou localStorage
-                let cnpjFornecedor = currentUser.cnpj || '';
-                if (!cnpjFornecedor && currentUser.usuarioId) {
-                    const empresaData = localStorage.getItem(`fornecedorData_${currentUser.usuarioId}`);
-                    if (empresaData) {
-                        const dados = JSON.parse(empresaData);
-                        cnpjFornecedor = dados.cnpj || '';
+                // Buscar CNPJ do usuário atual
+                let cnpjFornecedor = '';
+                if (window.currentUser && window.currentUser.cnpj) {
+                    cnpjFornecedor = window.currentUser.cnpj;
+                } else {
+                    // Fallback: buscar do localStorage
+                    const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                    const usuario = usuarios.find(function(u) { 
+                        return u.usuarioId === currentUser.usuarioId || u.id === currentUser.usuarioId; 
+                    });
+                    if (usuario && usuario.cnpj) {
+                        cnpjFornecedor = usuario.cnpj;
                     }
                 }
                 
-                const response = await fetch(`${API_URL}/api/propostas?cnpj=${encodeURIComponent(cnpjFornecedor)}`);
-                const resultado = await response.json();
-                const minhasPropostas = resultado.propostas || [];
-                
-                if (minhasPropostas.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📄</div>
-                            <h3>Nenhuma proposta enviada</h3>
-                            <p>Suas propostas aparecerão aqui após o envio.</p>
-                        </div>
-                    `;
+                if (!cnpjFornecedor) {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px;">❌ CNPJ não encontrado</div>';
                     return;
                 }
                 
-                container.innerHTML = minhasPropostas.map(proposta => `
-                    <div class="process-item">
-                        <div class="process-title">Protocolo: ${proposta.protocolo}</div>
-                        <div class="process-info">
-                            <span><strong>Processo:</strong> ${proposta.processo}</span>
-                            <span><strong>Data de Envio:</strong> ${new Date(proposta.data).toLocaleString('pt-BR')}</span>
-                            <span><strong>Valor Total:</strong> ${proposta.valor || 'Não informado'}</span>
-                            <span><strong>Status:</strong> <span class="status-badge status-enviada">Enviada</span></span>
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <button class="btn btn-info" onclick="alert('Protocolo: ${proposta.protocolo}\\nProcesso: ${proposta.processo}\\nValor: ${proposta.valor}')">
-                                👁️ Ver Detalhes
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
+                // Buscar propostas da API
+                const urlPropostas = API_URL + '/api/propostas?cnpj=' + encodeURIComponent(cnpjFornecedor);
+                const responsePropostas = await fetch(urlPropostas);
+                const resultadoPropostas = await responsePropostas.json();
+                const propostas = resultadoPropostas.propostas || [];
+                
+                // Buscar processos da API para obter detalhes
+                const urlProcessos = API_URL + '/api/processos';
+                const responseProcessos = await fetch(urlProcessos);
+                const resultadoProcessos = await responseProcessos.json();
+                const processos = resultadoProcessos.processos || [];
+                
+                // Buscar rascunhos salvos
+                const rascunhos = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const chave = localStorage.key(i);
+                    if (chave && chave.startsWith('rascunho_' + cnpjFornecedor.replace(/[^0-9]/g, '') + '_')) {
+                        try {
+                            const dados = JSON.parse(localStorage.getItem(chave));
+                            if (dados && dados.isRascunho) {
+                                rascunhos.push(dados);
+                            }
+                        } catch (e) {
+                            console.warn('Erro ao ler rascunho:', chave);
+                        }
+                    }
+                }
+                
+                // Combinar propostas enviadas e rascunhos
+                const todosItens = [];
+                
+                // Adicionar propostas enviadas
+                propostas.forEach(function(proposta) {
+                    const processo = processos.find(function(p) { return p.numero === proposta.processo; });
+                    todosItens.push({
+                        tipo: 'enviada',
+                        protocolo: proposta.protocolo,
+                        numeroProcesso: proposta.processo,
+                        objetoProcesso: processo ? processo.objeto : 'Objeto não encontrado',
+                        dataEnvio: proposta.data,
+                        valor: proposta.valor,
+                        empresa: proposta.empresa,
+                        dados: proposta
+                    });
+                });
+                
+                // Adicionar rascunhos (apenas se não há proposta enviada para o mesmo processo)
+                rascunhos.forEach(function(rascunho) {
+                    const jaEnviada = propostas.some(function(p) { return p.processo === rascunho.numeroProcesso; });
+                    if (!jaEnviada) {
+                        const processo = processos.find(function(p) { return p.numero === rascunho.numeroProcesso; });
+                        todosItens.push({
+                            tipo: 'rascunho',
+                            protocolo: 'RASCUNHO',
+                            numeroProcesso: rascunho.numeroProcesso,
+                            objetoProcesso: processo ? processo.objeto : 'Objeto não encontrado',
+                            dataEnvio: rascunho.dataRascunho,
+                            valor: 'Em elaboração',
+                            empresa: rascunho.dadosCadastrais ? rascunho.dadosCadastrais.razaoSocial : '',
+                            dados: rascunho
+                        });
+                    }
+                });
+                
+                if (todosItens.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📄</div><h3>Nenhuma proposta encontrada</h3><p>Suas propostas e rascunhos aparecerão aqui.</p></div>';
+                    return;
+                }
+                
+                // Ordenar por data (mais recente primeiro)
+                todosItens.sort(function(a, b) { return new Date(b.dataEnvio) - new Date(a.dataEnvio); });
+                
+                // Renderizar lista com botões funcionais
+                container.innerHTML = todosItens.map(function(item) {
+                    const statusColor = item.tipo === 'enviada' ? '#28a745' : '#ffc107';
+                    const statusText = item.tipo === 'enviada' ? 'Enviada' : 'Rascunho';
+                    
+                    return '<div class="process-item">' +
+                        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">' +
+                            '<div class="process-title">📄 ' + item.protocolo + '</div>' +
+                            '<span style="background: ' + statusColor + '; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">' +
+                                statusText +
+                            '</span>' +
+                        '</div>' +
+                        '<div class="process-info">' +
+                            '<span><strong>📋 Processo:</strong> ' + item.numeroProcesso + '</span>' +
+                            '<span><strong>🎯 Objeto:</strong> ' + item.objetoProcesso + '</span>' +
+                            '<span><strong>📅 Data:</strong> ' + new Date(item.dataEnvio).toLocaleString('pt-BR') + '</span>' +
+                            '<span><strong>💰 Valor:</strong> ' + (item.valor || 'Não informado') + '</span>' +
+                        '</div>' +
+                        '<div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">' +
+                            '<button class="btn btn-info" onclick="visualizarPropostaCompleta(\'' + item.protocolo + '\', \'' + item.tipo + '\', \'' + item.numeroProcesso + '\')">' +
+                                '👁️ Ver Proposta Completa' +
+                            '</button>' +
+                            (item.tipo === 'rascunho' ? 
+                                '<button class="btn btn-success" onclick="continuarRascunho(\'' + item.numeroProcesso + '\')">' +
+                                    '✏️ Continuar Editando' +
+                                '</button>' : '') +
+                        '</div>' +
+                    '</div>';
+                }).join('');
                 
             } catch (error) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">⚠️</div>
-                        <h3>Erro ao carregar propostas</h3>
-                        <p>Tente novamente em alguns instantes.</p>
-                        <button class="btn btn-primary" onclick="loadPropostas()">🔄 Tentar Novamente</button>
-                    </div>
-                `;
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><h3>Erro ao carregar propostas</h3><p>Erro: ' + error.message + '</p><button class="btn btn-primary" onclick="loadPropostas()">🔄 Tentar Novamente</button></div>';
             }
+        }
+
+        // Visualizar proposta completa
+        function visualizarPropostaCompleta(protocolo, tipo, numeroProcesso) {
+            let dados = null;
+            
+            if (tipo === 'enviada') {
+                // Buscar proposta enviada
+                const propostasData = JSON.parse(localStorage.getItem('propostas') || '[]');
+                dados = propostasData.find(function(p) { return p.protocolo === protocolo; });
+            } else {
+                // Buscar rascunho
+                const cnpjFornecedor = window.currentUser ? window.currentUser.cnpj : '';
+                const cnpjLimpo = cnpjFornecedor.replace(/[^0-9]/g, '');
+                const chaveRascunho = 'rascunho_' + cnpjLimpo + '_' + numeroProcesso;
+                const rascunho = localStorage.getItem(chaveRascunho);
+                if (rascunho) {
+                    dados = JSON.parse(rascunho);
+                }
+            }
+            
+            if (!dados) {
+                alert('❌ Dados da proposta não encontrados');
+                return;
+            }
+            
+            // Criar modal
+            criarModalVisualizacao(dados, tipo);
+        }
+
+        // Criar modal de visualização
+        function criarModalVisualizacao(dados, tipo) {
+            // Remover modal existente
+            const modalExistente = document.getElementById('modalVisualizacao');
+            if (modalExistente) {
+                modalExistente.remove();
+            }
+            
+            // Criar novo modal
+            const modal = document.createElement('div');
+            modal.id = 'modalVisualizacao';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+            
+            const conteudo = document.createElement('div');
+            conteudo.style.cssText = 'background: white; border-radius: 8px; padding: 30px; max-width: 90%; max-height: 90%; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
+            
+            let html = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px;">' +
+                '<h2 style="margin: 0; color: #2c3e50;">📄 Visualização da Proposta</h2>' +
+                '<button onclick="document.getElementById(\'modalVisualizacao\').remove()" style="background: #dc3545; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px;">×</button>' +
+            '</div>';
+            
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">' +
+                '<div><strong>📋 Protocolo:</strong><br>' + (dados.protocolo || 'RASCUNHO') + '</div>' +
+                '<div><strong>📅 Data:</strong><br>' + new Date(dados.data || dados.dataRascunho).toLocaleString('pt-BR') + '</div>' +
+                '<div><strong>🏢 Empresa:</strong><br>' + (dados.empresa || (dados.dadosCadastrais ? dados.dadosCadastrais.razaoSocial : '') || 'N/A') + '</div>' +
+                '<div><strong>📊 Status:</strong><br><span style="color: ' + (tipo === 'enviada' ? '#28a745' : '#ffc107') + '; font-weight: bold;">' + (tipo === 'enviada' ? 'Enviada' : 'Rascunho') + '</span></div>' +
+            '</div>';
+            
+            if (dados.dadosCadastrais) {
+                html += '<div style="margin-bottom: 25px; padding: 15px; background: #f8f9fa; border-radius: 6px;">' +
+                    '<h3 style="margin-top: 0; color: #495057;">🏢 Dados Cadastrais</h3>' +
+                    '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">' +
+                        '<div><strong>Razão Social:</strong><br>' + (dados.dadosCadastrais.razaoSocial || 'N/A') + '</div>' +
+                        '<div><strong>CNPJ:</strong><br>' + (dados.dadosCadastrais.cnpj || 'N/A') + '</div>' +
+                        '<div><strong>Email:</strong><br>' + (dados.dadosCadastrais.email || 'N/A') + '</div>' +
+                        '<div><strong>Telefone:</strong><br>' + (dados.dadosCadastrais.telefone || 'N/A') + '</div>' +
+                    '</div>' +
+                '</div>';
+            }
+            
+            if (dados.propostaTecnica) {
+                html += '<div style="margin-bottom: 25px; padding: 15px; background: #e3f2fd; border-radius: 6px;">' +
+                    '<h3 style="margin-top: 0; color: #1976d2;">🔧 Proposta Técnica</h3>' +
+                    '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">' +
+                        '<div><strong>Metodologia:</strong><br>' + (dados.propostaTecnica.metodologia || 'N/A') + '</div>' +
+                        '<div><strong>Cronograma:</strong><br>' + (dados.propostaTecnica.cronograma || 'N/A') + '</div>' +
+                        '<div><strong>Equipe:</strong><br>' + (dados.propostaTecnica.equipe || 'N/A') + '</div>' +
+                    '</div>' +
+                '</div>';
+            }
+            
+            if (dados.propostaComercial) {
+                html += '<div style="margin-bottom: 25px; padding: 15px; background: #e8f5e8; border-radius: 6px;">' +
+                    '<h3 style="margin-top: 0; color: #388e3c;">💰 Proposta Comercial</h3>' +
+                    '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">' +
+                        '<div><strong>Valor Total:</strong><br>' + (dados.propostaComercial.valorTotal || dados.valor || 'N/A') + '</div>' +
+                        '<div><strong>Prazo:</strong><br>' + (dados.propostaComercial.prazo || 'N/A') + '</div>' +
+                        '<div><strong>Condições:</strong><br>' + (dados.propostaComercial.condicoes || 'N/A') + '</div>' +
+                    '</div>' +
+                '</div>';
+            }
+            
+            html += '<div style="text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;">' +
+                '<button onclick="document.getElementById(\'modalVisualizacao\').remove()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">✅ Fechar</button>' +
+            '</div>';
+            
+            conteudo.innerHTML = html;
+            modal.appendChild(conteudo);
+            document.body.appendChild(modal);
+        }
+
+        // Continuar editando rascunho
+        function continuarRascunho(numeroProcesso) {
+            const url = 'portal-propostas-final.html?processo=' + numeroProcesso;
+            window.location.href = url;
         }
 
         // Ver detalhes da proposta
