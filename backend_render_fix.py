@@ -165,6 +165,86 @@ class Proposta(db.Model):
             'validadeProposta': self.validade_proposta
         }
 
+class TermoReferencia(db.Model):
+    __tablename__ = 'termos_referencia'
+    
+    id = db.Column(db.String(50), primary_key=True)
+    titulo = db.Column(db.String(200), nullable=False)
+    modalidade = db.Column(db.String(50), nullable=False)
+    objetivo = db.Column(db.Text)
+    conformidade = db.Column(db.Text)
+    visita_local = db.Column(db.String(50))
+    local_acesso = db.Column(db.Text)
+    escopo_tecnico = db.Column(db.Text)
+    situacao_atual = db.Column(db.Text)
+    situacao_proposta = db.Column(db.Text)
+    especificacao_tecnica = db.Column(db.Text)
+    premissas = db.Column(db.Text)
+    planilha_quantidade = db.Column(db.Text)
+    tabela_servicos = db.Column(db.Text)  # JSON
+    escopo_geral = db.Column(db.Text)
+    prazos = db.Column(db.Text)
+    matriz_responsabilidade = db.Column(db.Text)  # JSON
+    seguranca_trabalho = db.Column(db.Text)
+    canteiro = db.Column(db.Text)
+    credenciamento = db.Column(db.Text)
+    meio_ambiente = db.Column(db.Text)
+    engenharia = db.Column(db.Text)
+    aquisicoes = db.Column(db.Text)
+    gestao_contratos = db.Column(db.Text)
+    planejamento_executivo = db.Column(db.Text)
+    testes = db.Column(db.Text)
+    encerramento_obra = db.Column(db.Text)
+    cap = db.Column(db.Text)
+    caf = db.Column(db.Text)
+    garantia = db.Column(db.Text)
+    criterios_avaliacao = db.Column(db.Text)
+    anexos = db.Column(db.Text)
+    status = db.Column(db.String(20), default='ativo')
+    criado_por = db.Column(db.String(50), db.ForeignKey('usuarios.id'))
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'titulo': self.titulo,
+            'modalidade': self.modalidade,
+            'objetivo': self.objetivo,
+            'conformidade': self.conformidade,
+            'visitaLocal': self.visita_local,
+            'localAcesso': self.local_acesso,
+            'escopoTecnico': self.escopo_tecnico,
+            'situacaoAtual': self.situacao_atual,
+            'situacaoProposta': self.situacao_proposta,
+            'especificacaoTecnica': self.especificacao_tecnica,
+            'premissas': self.premissas,
+            'planilhaQuantidade': self.planilha_quantidade,
+            'tabelaServicos': json.loads(self.tabela_servicos) if self.tabela_servicos else [],
+            'escopoGeral': self.escopo_geral,
+            'prazos': self.prazos,
+            'matrizResponsabilidade': json.loads(self.matriz_responsabilidade) if self.matriz_responsabilidade else [],
+            'segurancaTrabalho': self.seguranca_trabalho,
+            'canteiro': self.canteiro,
+            'credenciamento': self.credenciamento,
+            'meioAmbiente': self.meio_ambiente,
+            'engenharia': self.engenharia,
+            'aquisicoes': self.aquisicoes,
+            'gestaoContratos': self.gestao_contratos,
+            'planejamentoExecutivo': self.planejamento_executivo,
+            'testes': self.testes,
+            'encerramentoObra': self.encerramento_obra,
+            'cap': self.cap,
+            'caf': self.caf,
+            'garantia': self.garantia,
+            'criteriosAvaliacao': self.criterios_avaliacao,
+            'anexos': self.anexos,
+            'status': self.status,
+            'criadoPor': self.criado_por,
+            'dataCriacao': self.data_criacao.isoformat() if self.data_criacao else None,
+            'dataAtualizacao': self.data_atualizacao.isoformat() if self.data_atualizacao else None
+        }
+
 class LogAuditoria(db.Model):
     __tablename__ = 'logs_auditoria'
     
@@ -596,6 +676,240 @@ def listar_propostas():
         }), 500
 
 # ========================================
+# ROTAS DE TERMOS DE REFERÊNCIA
+# ========================================
+
+@app.route('/api/v1/trs', methods=['GET'])
+@require_auth
+def listar_trs():
+    try:
+        usuario_atual = get_jwt_identity()
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 50))
+        
+        # Filtrar TRs por usuário se não for admin
+        query = TermoReferencia.query
+        if usuario_atual.get('tipo') != 'admin':
+            query = query.filter_by(criado_por=usuario_atual['id'])
+        
+        trs_paginated = query.order_by(TermoReferencia.data_criacao.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        trs = [tr.to_dict() for tr in trs_paginated.items]
+        
+        return jsonify({
+            'success': True,
+            'trs': trs,
+            'total': trs_paginated.total,
+            'pages': trs_paginated.pages,
+            'current_page': page
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar TRs: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erro ao carregar TRs'
+        }), 500
+
+@app.route('/api/v1/trs', methods=['POST'])
+@require_auth
+def criar_tr():
+    try:
+        usuario_atual = get_jwt_identity()
+        dados = request.get_json()
+        
+        if not dados:
+            return jsonify({
+                'success': False,
+                'error': 'Dados não fornecidos'
+            }), 400
+        
+        # Validar campos obrigatórios
+        if not dados.get('titulo'):
+            return jsonify({
+                'success': False,
+                'error': 'Título é obrigatório'
+            }), 400
+        
+        if not dados.get('modalidade'):
+            return jsonify({
+                'success': False,
+                'error': 'Modalidade é obrigatória'
+            }), 400
+        
+        # Gerar ID único
+        tr_id = f"TR{datetime.now().strftime('%Y%m%d%H%M%S')}{random.randint(100, 999)}"
+        
+        # Criar novo TR
+        novo_tr = TermoReferencia(
+            id=tr_id,
+            titulo=dados.get('titulo'),
+            modalidade=dados.get('modalidade'),
+            objetivo=dados.get('objetivo'),
+            conformidade=dados.get('conformidade'),
+            visita_local=dados.get('visitaLocal'),
+            local_acesso=dados.get('localAcesso'),
+            escopo_tecnico=dados.get('escopoTecnico'),
+            situacao_atual=dados.get('situacaoAtual'),
+            situacao_proposta=dados.get('situacaoProposta'),
+            especificacao_tecnica=dados.get('especificacaoTecnica'),
+            premissas=dados.get('premissas'),
+            planilha_quantidade=dados.get('planilhaQuantidade'),
+            tabela_servicos=json.dumps(dados.get('tabelaServicos', [])),
+            escopo_geral=dados.get('escopoGeral'),
+            prazos=dados.get('prazos'),
+            matriz_responsabilidade=json.dumps(dados.get('matrizResponsabilidade', [])),
+            seguranca_trabalho=dados.get('segurancaTrabalho'),
+            canteiro=dados.get('canteiro'),
+            credenciamento=dados.get('credenciamento'),
+            meio_ambiente=dados.get('meioAmbiente'),
+            engenharia=dados.get('engenharia'),
+            aquisicoes=dados.get('aquisicoes'),
+            gestao_contratos=dados.get('gestaoContratos'),
+            planejamento_executivo=dados.get('planejamentoExecutivo'),
+            testes=dados.get('testes'),
+            encerramento_obra=dados.get('encerramentoObra'),
+            cap=dados.get('cap'),
+            caf=dados.get('caf'),
+            garantia=dados.get('garantia'),
+            criterios_avaliacao=dados.get('criteriosAvaliacao'),
+            anexos=dados.get('anexos'),
+            status=dados.get('status', 'ativo'),
+            criado_por=usuario_atual['id']
+        )
+        
+        db.session.add(novo_tr)
+        db.session.commit()
+        
+        # Log da ação
+        log_acao(usuario_atual['id'], 'CREATE', 'TR', tr_id, f"TR criado: {dados.get('titulo')}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'TR criado com sucesso',
+            'tr': novo_tr.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao criar TR: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erro ao criar TR'
+        }), 500
+
+@app.route('/api/v1/trs/<tr_id>', methods=['GET'])
+@require_auth
+def obter_tr(tr_id):
+    try:
+        usuario_atual = get_jwt_identity()
+        
+        tr = TermoReferencia.query.filter_by(id=tr_id).first()
+        if not tr:
+            return jsonify({
+                'success': False,
+                'error': 'TR não encontrado'
+            }), 404
+        
+        # Verificar permissão
+        if usuario_atual.get('tipo') != 'admin' and tr.criado_por != usuario_atual['id']:
+            return jsonify({
+                'success': False,
+                'error': 'Acesso negado'
+            }), 403
+        
+        return jsonify({
+            'success': True,
+            'tr': tr.to_dict()
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao obter TR {tr_id}: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erro ao carregar TR'
+        }), 500
+
+@app.route('/api/v1/trs/<tr_id>', methods=['PUT'])
+@require_auth
+def atualizar_tr(tr_id):
+    try:
+        usuario_atual = get_jwt_identity()
+        dados = request.get_json()
+        
+        tr = TermoReferencia.query.filter_by(id=tr_id).first()
+        if not tr:
+            return jsonify({
+                'success': False,
+                'error': 'TR não encontrado'
+            }), 404
+        
+        # Verificar permissão
+        if usuario_atual.get('tipo') != 'admin' and tr.criado_por != usuario_atual['id']:
+            return jsonify({
+                'success': False,
+                'error': 'Acesso negado'
+            }), 403
+        
+        # Atualizar campos
+        if dados.get('titulo'):
+            tr.titulo = dados.get('titulo')
+        if dados.get('modalidade'):
+            tr.modalidade = dados.get('modalidade')
+        
+        tr.objetivo = dados.get('objetivo')
+        tr.conformidade = dados.get('conformidade')
+        tr.visita_local = dados.get('visitaLocal')
+        tr.local_acesso = dados.get('localAcesso')
+        tr.escopo_tecnico = dados.get('escopoTecnico')
+        tr.situacao_atual = dados.get('situacaoAtual')
+        tr.situacao_proposta = dados.get('situacaoProposta')
+        tr.especificacao_tecnica = dados.get('especificacaoTecnica')
+        tr.premissas = dados.get('premissas')
+        tr.planilha_quantidade = dados.get('planilhaQuantidade')
+        tr.tabela_servicos = json.dumps(dados.get('tabelaServicos', []))
+        tr.escopo_geral = dados.get('escopoGeral')
+        tr.prazos = dados.get('prazos')
+        tr.matriz_responsabilidade = json.dumps(dados.get('matrizResponsabilidade', []))
+        tr.seguranca_trabalho = dados.get('segurancaTrabalho')
+        tr.canteiro = dados.get('canteiro')
+        tr.credenciamento = dados.get('credenciamento')
+        tr.meio_ambiente = dados.get('meioAmbiente')
+        tr.engenharia = dados.get('engenharia')
+        tr.aquisicoes = dados.get('aquisicoes')
+        tr.gestao_contratos = dados.get('gestaoContratos')
+        tr.planejamento_executivo = dados.get('planejamentoExecutivo')
+        tr.testes = dados.get('testes')
+        tr.encerramento_obra = dados.get('encerramentoObra')
+        tr.cap = dados.get('cap')
+        tr.caf = dados.get('caf')
+        tr.garantia = dados.get('garantia')
+        tr.criterios_avaliacao = dados.get('criteriosAvaliacao')
+        tr.anexos = dados.get('anexos')
+        tr.data_atualizacao = datetime.utcnow()
+        
+        db.session.commit()
+        
+        # Log da ação
+        log_acao(usuario_atual['id'], 'UPDATE', 'TR', tr_id, f"TR atualizado: {tr.titulo}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'TR atualizado com sucesso',
+            'tr': tr.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao atualizar TR {tr_id}: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erro ao atualizar TR'
+        }), 500
+
+# ========================================
 # ROTAS ESTÁTICAS
 # ========================================
 
@@ -644,4 +958,3 @@ if __name__ == '__main__':
 else:
     # Para Gunicorn
     init_app()
-
