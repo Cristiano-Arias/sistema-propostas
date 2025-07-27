@@ -1596,80 +1596,229 @@
             criarModalVisualizacao(dados, tipo);
         }
 
-        // Criar modal de visualização
-        function criarModalVisualizacao(dados, tipo) {
+        // Criar modal com visualização completa
+        function criarModalDetalhado(dados, tipo, protocolo) {
             // Remover modal existente
-            const modalExistente = document.getElementById('modalVisualizacao');
+            const modalExistente = document.getElementById('modalVisualizacaoCompleta');
             if (modalExistente) {
                 modalExistente.remove();
             }
-            
+    
             // Criar novo modal
             const modal = document.createElement('div');
-            modal.id = 'modalVisualizacao';
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;';
-            
-            const conteudo = document.createElement('div');
-            conteudo.style.cssText = 'background: white; border-radius: 8px; padding: 30px; max-width: 90%; max-height: 90%; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);';
-            
-            let html = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px;">' +
-                '<h2 style="margin: 0; color: #2c3e50;">📄 Visualização da Proposta</h2>' +
-                '<button onclick="document.getElementById(\'modalVisualizacao\').remove()" style="background: #dc3545; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px;">×</button>' +
-            '</div>';
-            
-            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">' +
-                '<div><strong>📋 Protocolo:</strong><br>' + (dados.protocolo || 'RASCUNHO') + '</div>' +
-                '<div><strong>📅 Data:</strong><br>' + new Date(dados.data || dados.dataRascunho).toLocaleString('pt-BR') + '</div>' +
-                '<div><strong>🏢 Empresa:</strong><br>' + (dados.empresa || (dados.dadosCadastrais ? dados.dadosCadastrais.razaoSocial : '') || 'N/A') + '</div>' +
-                '<div><strong>📊 Status:</strong><br><span style="color: ' + (tipo === 'enviada' ? '#28a745' : '#ffc107') + '; font-weight: bold;">' + (tipo === 'enviada' ? 'Enviada' : 'Rascunho') + '</span></div>' +
-            '</div>';
-            
-            if (dados.dadosCadastrais) {
-                html += '<div style="margin-bottom: 25px; padding: 15px; background: #f8f9fa; border-radius: 6px;">' +
-                    '<h3 style="margin-top: 0; color: #495057;">🏢 Dados Cadastrais</h3>' +
-                    '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">' +
-                        '<div><strong>Razão Social:</strong><br>' + (dados.dadosCadastrais.razaoSocial || 'N/A') + '</div>' +
-                        '<div><strong>CNPJ:</strong><br>' + (dados.dadosCadastrais.cnpj || 'N/A') + '</div>' +
-                        '<div><strong>Email:</strong><br>' + (dados.dadosCadastrais.email || 'N/A') + '</div>' +
-                        '<div><strong>Telefone:</strong><br>' + (dados.dadosCadastrais.telefone || 'N/A') + '</div>' +
-                    '</div>' +
-                '</div>';
-            }
-            
-            if (dados.propostaTecnica) {
-                html += '<div style="margin-bottom: 25px; padding: 15px; background: #e3f2fd; border-radius: 6px;">' +
-                    '<h3 style="margin-top: 0; color: #1976d2;">🔧 Proposta Técnica</h3>' +
-                    '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">' +
-                        '<div><strong>Metodologia:</strong><br>' + (dados.propostaTecnica.metodologia || 'N/A') + '</div>' +
-                        '<div><strong>Cronograma:</strong><br>' + (dados.propostaTecnica.cronograma || 'N/A') + '</div>' +
-                        '<div><strong>Equipe:</strong><br>' + (dados.propostaTecnica.equipe || 'N/A') + '</div>' +
-                    '</div>' +
-                '</div>';
-            }
-            
-            if (dados.propostaComercial) {
-                html += '<div style="margin-bottom: 25px; padding: 15px; background: #e8f5e8; border-radius: 6px;">' +
-                    '<h3 style="margin-top: 0; color: #388e3c;">💰 Proposta Comercial</h3>' +
-                    '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">' +
-                        '<div><strong>Valor Total:</strong><br>' + (dados.propostaComercial.valorTotal || dados.valor || 'N/A') + '</div>' +
-                        '<div><strong>Prazo:</strong><br>' + (dados.propostaComercial.prazo || 'N/A') + '</div>' +
-                        '<div><strong>Condições:</strong><br>' + (dados.propostaComercial.condicoes || 'N/A') + '</div>' +
-                    '</div>' +
-                '</div>';
-            }
-            
-            html += '<div style="text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;">' +
-                '<button onclick="document.getElementById(\'modalVisualizacao\').remove()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">✅ Fechar</button>' +
-            '</div>';
-            
-            conteudo.innerHTML = html;
-            modal.appendChild(conteudo);
+            modal.id = 'modalVisualizacaoCompleta';
+            modal.className = 'modal-tr';
+            modal.style.display = 'block';
+    
+            // HTML completo do modal
+            modal.innerHTML = `
+                <div class="modal-tr-content" style="max-width: 1000px;">
+                    <div class="modal-tr-header">
+                        <h2>📄 Visualização Completa da Proposta - ${protocolo || 'RASCUNHO'}</h2>
+                        <span class="close" onclick="document.getElementById('modalVisualizacaoCompleta').remove()">&times;</span>
+                    </div>
+                    <div class="modal-tr-body">
+                        <!-- Cabeçalho -->
+                        <div class="tr-section" style="background: #e3f2fd;">
+                            <h4>📋 Informações Gerais</h4>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Protocolo</div>
+                                    <div class="detail-value">${protocolo || 'RASCUNHO'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Status</div>
+                                    <div class="detail-value">
+                                        <span class="status-badge status-${tipo}">${tipo === 'enviada' ? 'Enviada' : 'Rascunho'}</span>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Data</div>
+                                    <div class="detail-value">${new Date(dados.data || dados.dataRascunho || dados.metadata?.dataEnvio).toLocaleString('pt-BR')}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Processo</div>
+                                    <div class="detail-value">${dados.processo?.numero || dados.numeroProcesso || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dados Cadastrais -->
+                        ${dados.dadosCadastrais ? `
+                        <div class="tr-section">
+                            <h4>🏢 Dados Cadastrais</h4>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Razão Social</div>
+                                    <div class="detail-value">${dados.dadosCadastrais.razaoSocial || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">CNPJ</div>
+                                    <div class="detail-value">${dados.dadosCadastrais.cnpj || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">E-mail</div>
+                                    <div class="detail-value">${dados.dadosCadastrais.email || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Telefone</div>
+                                    <div class="detail-value">${dados.dadosCadastrais.telefone || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Endereço</div>
+                                    <div class="detail-value">${dados.dadosCadastrais.endereco || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Cidade/UF</div>
+                                    <div class="detail-value">${dados.dadosCadastrais.cidade || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Responsável Técnico</div>
+                                    <div class="detail-value">${dados.dadosCadastrais.respTecnico || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">CREA/CAU</div>
+                                    <div class="detail-value">${dados.dadosCadastrais.crea || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- Proposta Técnica -->
+                        ${dados.propostaTecnica ? `
+                        <div class="tr-section">
+                            <h4>📋 Proposta Técnica</h4>
+                            <div class="tr-field">
+                                <span class="tr-field-label">Objeto da Concorrência:</span>
+                                <span class="tr-field-value">${dados.propostaTecnica.objetoConcorrencia || 'N/A'}</span>
+                            </div>
+                            <div class="tr-field">
+                                <span class="tr-field-label">Metodologia de Execução:</span>
+                                <span class="tr-field-value">${dados.propostaTecnica.metodologia || 'N/A'}</span>
+                            </div>
+                            <div class="tr-field">
+                                <span class="tr-field-label">Prazo de Execução:</span>
+                                <span class="tr-field-value">${dados.propostaTecnica.prazoExecucao || 'N/A'}</span>
+                            </div>
+                            ${dados.propostaTecnica.cronograma && dados.propostaTecnica.cronograma.length > 0 ? `
+                                <div class="tr-field">
+                                    <span class="tr-field-label">Cronograma:</span>
+                                    <table style="width: 100%; margin-top: 10px;">
+                                        <thead>
+                                            <tr style="background: #667eea; color: white;">
+                                                <th style="padding: 8px;">Atividade</th>
+                                                <th style="padding: 8px;">Duração</th>
+                                                <th style="padding: 8px;">Início</th>
+                                                <th style="padding: 8px;">Fim</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${dados.propostaTecnica.cronograma.map(item => `
+                                                <tr>
+                                                    <td style="padding: 8px; border: 1px solid #ddd;">${item[0]}</td>
+                                                    <td style="padding: 8px; border: 1px solid #ddd;">${item[1]} dias</td>
+                                                    <td style="padding: 8px; border: 1px solid #ddd;">${item[2]}</td>
+                                                    <td style="padding: 8px; border: 1px solid #ddd;">${item[3]}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ` : ''}
+
+                        <!-- Proposta Comercial -->
+                        ${dados.propostaComercial ? `
+                        <div class="tr-section" style="background: #e8f5e8;">
+                            <h4>💰 Proposta Comercial</h4>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Total Serviços</div>
+                                    <div class="detail-value">R$ ${dados.propostaComercial.totais?.servicos || '0,00'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Total Mão de Obra</div>
+                                    <div class="detail-value">R$ ${dados.propostaComercial.totais?.maoObra || '0,00'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Total Materiais</div>
+                                    <div class="detail-value">R$ ${dados.propostaComercial.totais?.materiais || '0,00'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Total Equipamentos</div>
+                                    <div class="detail-value">R$ ${dados.propostaComercial.totais?.equipamentos || '0,00'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Custo Direto</div>
+                                    <div class="detail-value">R$ ${dados.propostaComercial.totais?.custoDirecto || '0,00'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">BDI</div>
+                                    <div class="detail-value">${dados.propostaComercial.totais?.bdiPercentual || '0'}% = R$ ${dados.propostaComercial.totais?.bdiValor || '0,00'}</div>
+                                </div>
+                            </div>
+                            <div class="total-box" style="margin-top: 20px;">
+                                <div class="total-line final-total">
+                                    <span>VALOR TOTAL DA PROPOSTA:</span>
+                                    <span>R$ ${dados.propostaComercial.valorTotal || dados.valor || '0,00'}</span>
+                                </div>
+                            </div>
+                            <div class="tr-field">
+                                <span class="tr-field-label">Validade da Proposta:</span>
+                                <span class="tr-field-value">${dados.propostaComercial.validadeProposta || '60 dias'}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- Botões de Ação -->
+                        <div style="text-align: center; margin-top: 30px;">
+                            ${tipo === 'enviada' ? `
+                                <button class="btn btn-info" onclick="baixarProposta('${protocolo}', 'excel')">
+                                    📊 Baixar Excel
+                                </button>
+                                <button class="btn btn-info" onclick="baixarProposta('${protocolo}', 'word')">
+                                    📄 Baixar Word
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-secondary" onclick="window.print()">
+                                🖨️ Imprimir
+                            </button>
+                            <button class="btn btn-primary" onclick="document.getElementById('modalVisualizacaoCompleta').remove()">
+                                ✅ Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+    
             document.body.appendChild(modal);
+        }
+
+        // Função para baixar proposta
+        async function baixarProposta(protocolo, formato) {
+            try {
+                window.open(`${API_URL}/api/download/proposta/${protocolo}/${formato}`, '_blank');
+            } catch (error) {
+                console.error('Erro ao baixar:', error);
+                alert('❌ Erro ao baixar arquivo');
+            }
         }
 
         // Continuar editando rascunho
         function continuarRascunho(numeroProcesso) {
-            const url = 'portal-propostas-final.html?processo=' + numeroProcesso;
+            // Verificar se tem dados da empresa
+            const empresaKey = `fornecedorData_${currentUser.usuarioId}`;
+            const empresaData = localStorage.getItem(empresaKey);
+    
+            if (!empresaData) {
+                alert('⚠️ Complete seu cadastro antes de continuar');
+                showPage('empresa');
+                return;
+            }
+    
+            // Redirecionar com parâmetro correto
+            const url = `portal-propostas-novo.html?processo=${encodeURIComponent(numeroProcesso)}`;
             window.location.href = url;
         }
 
