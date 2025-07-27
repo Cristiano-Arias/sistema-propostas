@@ -1784,6 +1784,9 @@
                 adicionarBotaoRascunho();
                 carregarRascunho();
                 verificarPropostaExistente();
+
+            // Verificar periodicamente
+            setInterval(verificarPropostaExistente, 30000); // A cada 30 segundos
             }, 1000);
         });
 
@@ -1901,58 +1904,115 @@
         // Verificar se já enviou proposta
         async function verificarPropostaExistente() {
             try {
-                const numeroProcesso = document.getElementById('numeroProcesso') ? document.getElementById('numeroProcesso').value : '';
-                let cnpjFornecedor = '';
-                
-                if (document.getElementById('cnpj') && document.getElementById('cnpj').value) {
-                    cnpjFornecedor = document.getElementById('cnpj').value;
-                } else if (window.currentUser && window.currentUser.cnpj) {
+                const numeroProcesso = document.getElementById('numeroProcesso')?.value;
+                let cnpjFornecedor = document.getElementById('cnpj')?.value;
+        
+                // Buscar CNPJ de diferentes fontes
+                if (!cnpjFornecedor && window.currentUser) {
                     cnpjFornecedor = window.currentUser.cnpj;
                 }
-                
+        
+                if (!cnpjFornecedor) {
+                    // Buscar do localStorage
+                    const empresaData = localStorage.getItem(`fornecedorData_${window.currentUser?.usuarioId}`);
+                    if (empresaData) {
+                        const dados = JSON.parse(empresaData);
+                        cnpjFornecedor = dados.cnpj;
+                    }
+                }
+        
                 if (!numeroProcesso || !cnpjFornecedor) return false;
-                
-                const url = API_URL + '/api/propostas?processo=' + encodeURIComponent(numeroProcesso) + '&cnpj=' + encodeURIComponent(cnpjFornecedor);
-                const response = await fetch(url);
-                
+        
+                // Verificar na API
+                const response = await fetch(`${API_URL}/api/propostas/verificar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        processo: numeroProcesso,
+                        cnpj: cnpjFornecedor
+                    })
+                });
+        
                 if (response.ok) {
                     const resultado = await response.json();
-                    const propostas = resultado.propostas || [];
-                    
-                    if (propostas.length > 0) {
-                        bloquearEnvio(propostas[0]);
+            
+                    if (resultado.jaEnviou) {
+                        bloquearFormulario(resultado.proposta);
                         return true;
                     }
                 }
-                
+        
+                // Verificar também no localStorage como fallback
+                const propostas = JSON.parse(localStorage.getItem('propostas') || '[]');
+                const propostaExistente = propostas.find(p => 
+                    p.processo === numeroProcesso && 
+                    p.dados?.cnpj === cnpjFornecedor
+                );
+        
+                if (propostaExistente) {
+                    bloquearFormulario(propostaExistente);
+                    return true;
+                }
+        
                 return false;
+        
             } catch (error) {
                 console.error('Erro ao verificar proposta:', error);
                 return false;
             }
         }
 
-        // Bloquear envio
-        function bloquearEnvio(proposta) {
-            const botaoEnviar = document.querySelector('.submit-btn:not(#btnSalvarRascunho)');
+        // Função para bloquear todo o formulário
+        function bloquearFormulario(propostaExistente) {
+            // Desabilitar todos os campos
+            document.querySelectorAll('input, textarea, select, button').forEach(elemento => {
+                elemento.disabled = true;
+            });
+    
+            // Mudar visual dos botões
+            const botaoEnviar = document.querySelector('.submit-btn');
             if (botaoEnviar) {
-                botaoEnviar.disabled = true;
                 botaoEnviar.style.backgroundColor = '#dc3545';
-                botaoEnviar.innerHTML = '🚫 Já Enviada';
-                botaoEnviar.title = 'Proposta já enviada em ' + new Date(proposta.data).toLocaleString('pt-BR');
+                botaoEnviar.innerHTML = '🚫 Proposta Já Enviada';
             }
-            
-            if (!document.getElementById('avisoJaEnviada')) {
+    
+            // Adicionar aviso destacado no topo
+            if (!document.getElementById('avisoPropostaEnviada')) {
                 const aviso = document.createElement('div');
-                aviso.id = 'avisoJaEnviada';
-                aviso.style.cssText = 'background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #f5c6cb; text-align: center;';
-                aviso.innerHTML = '<strong>⚠️ PROPOSTA JÁ ENVIADA</strong><br>Protocolo: ' + proposta.protocolo + '<br>Data: ' + new Date(proposta.data).toLocaleString('pt-BR');
-                
-                const container = document.querySelector('.container');
-                if (container) {
-                    container.insertBefore(aviso, container.firstChild);
-                }
+                aviso.id = 'avisoPropostaEnviada';
+                aviso.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #dc3545;
+                    color: white;
+                    padding: 20px 40px;
+                    border-radius: 10px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    z-index: 10000;
+                    font-size: 16px;
+                    font-weight: bold;
+                    text-align: center;
+                `;
+                aviso.innerHTML = `
+                    ⚠️ ATENÇÃO: Proposta já enviada!<br>
+                    Protocolo: ${propostaExistente.protocolo}<br>
+                    Data: ${new Date(propostaExistente.data).toLocaleString('pt-BR')}<br>
+                    <button onclick="window.history.back()" style="margin-top: 10px; padding: 8px 20px; background: white; color: #dc3545; border: none; border-radius: 5px; cursor: pointer;">
+                        ← Voltar
+                    </button>
+                `;
+                document.body.appendChild(aviso);
             }
+    
+            // Mudar cor de fundo do formulário
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.style.opacity = '0.6';
+                section.style.pointerEvents = 'none';
+            });
         }
 
         // Sobrescrever enviarProposta
