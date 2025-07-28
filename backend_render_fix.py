@@ -9,22 +9,14 @@ import json
 import logging
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import Flask, request, jsonify, send_from_directory, send_file
+from flask import Flask, request, jsonify, send_from_directory, session
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token, create_refresh_token,
-    get_jwt_identity, get_jwt
-)
-from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import bcrypt
+import sqlite3
 from werkzeug.utils import secure_filename
-import uuid
+import pdfkit
 from io import BytesIO
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
 
 # Configuração do Flask
 app = Flask(__name__, static_folder='static')
