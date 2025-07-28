@@ -131,7 +131,18 @@
             left: 0;
             right: 0;
             height: 5px;
-            background: var(--card-color);
+        }
+
+        .access-card.requisitante::before {
+            background: #4facfe;
+        }
+
+        .access-card.comprador::before {
+            background: #11998e;
+        }
+
+        .access-card.fornecedor::before {
+            background: #667eea;
         }
 
         .access-card:hover {
@@ -139,25 +150,21 @@
             box-shadow: 0 30px 60px rgba(0,0,0,0.15);
         }
 
-        .access-card.requisitante {
-            --card-color: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .access-card.comprador {
-            --card-color: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        }
-
-        .access-card.fornecedor {
-            --card-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
         .access-card i {
             font-size: 64px;
             margin-bottom: 20px;
-            background: var(--card-color);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        }
+
+        .access-card.requisitante i {
+            color: #4facfe;
+        }
+
+        .access-card.comprador i {
+            color: #11998e;
+        }
+
+        .access-card.fornecedor i {
+            color: #667eea;
         }
 
         .access-card h3 {
