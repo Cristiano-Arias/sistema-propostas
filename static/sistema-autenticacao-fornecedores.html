@@ -140,6 +140,22 @@
             font-size: 14px;
         }
 
+        .demo-toggle {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .demo-toggle a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .demo-toggle a:hover {
+            text-decoration: underline;
+        }
+
         .back-link {
             text-align: center;
             margin-top: 20px;
@@ -155,23 +171,7 @@
             text-decoration: underline;
         }
 
-        .toggle-credenciais {
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .toggle-credenciais a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .toggle-credenciais a:hover {
-            text-decoration: underline;
-        }
-
-        .credenciais-demo {
+        .hidden {
             display: none;
         }
     </style>
@@ -203,17 +203,21 @@
             </button>
         </form>
 
-        <div class="toggle-credenciais">
-            <a href="#" onclick="toggleCredenciais()">Ver credenciais de demonstração</a>
+        <div class="demo-toggle">
+            <a href="#" id="toggleDemo">Ver credenciais de demonstração</a>
         </div>
 
-        <div class="credenciais-demo" id="credenciaisDemo">
-            <h4>🔑 Credenciais Disponíveis</h4>
+        <div class="credenciais-demo hidden" id="credenciaisDemo">
+            <h4>🔑 Credenciais de Demonstração</h4>
             <div id="credenciaisList">
-                <!-- Credenciais serão carregadas dinamicamente -->
+                <div class="demo-item">
+                    <div style="font-weight: 600; color: #6c757d; margin-bottom: 5px;">Exemplo:</div>
+                    <div style="color: #495057;">Login: empresa_demo</div>
+                    <div style="color: #495057;">Senha: Demo123!</div>
+                </div>
             </div>
-            <div style="text-align: center; margin-top: 15px;">
-                <a href="#" onclick="toggleCredenciais()" style="color: #6c757d; font-size: 12px;">Ocultar</a>
+            <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 6px; font-size: 12px; color: #1565c0;">
+                <i class="fas fa-info-circle"></i> As credenciais reais são geradas automaticamente pelo módulo comprador quando você é cadastrado em um processo licitatório.
             </div>
         </div>
 
@@ -223,44 +227,47 @@
     </div>
 
     <script>
-        // Sistema de dados local
-        const SistemaLocal = {
-            CHAVES: {
-                CREDENCIAIS: 'credenciais_fornecedores',
-                FORNECEDOR_LOGADO: 'fornecedor_logado'
-            },
-            
-            carregar: function(chave, padrao = []) {
-                try {
-                    const dados = localStorage.getItem(chave);
-                    return dados ? JSON.parse(dados) : padrao;
-                } catch (e) {
-                    console.error('Erro ao carregar dados:', e);
-                    return padrao;
-                }
-            },
-            
-            salvar: function(chave, dados) {
-                try {
-                    localStorage.setItem(chave, JSON.stringify(dados));
-                    return true;
-                } catch (e) {
-                    console.error('Erro ao salvar dados:', e);
-                    return false;
-                }
-            }
-        };
-
         document.addEventListener('DOMContentLoaded', function() {
             const loginForm = document.getElementById('loginForm');
+            const toggleDemo = document.getElementById('toggleDemo');
+            const credenciaisDemo = document.getElementById('credenciaisDemo');
+            
+            // Carregar credenciais dinâmicas do localStorage
+            carregarCredenciaisDisponiveis();
             
             loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 realizarLogin();
             });
-            
-            carregarCredenciaisDemo();
+
+            toggleDemo.addEventListener('click', function(e) {
+                e.preventDefault();
+                credenciaisDemo.classList.toggle('hidden');
+                toggleDemo.textContent = credenciaisDemo.classList.contains('hidden') 
+                    ? 'Ver credenciais de demonstração' 
+                    : 'Ocultar credenciais';
+            });
         });
+
+        function carregarCredenciaisDisponiveis() {
+            // Carregar credenciais geradas pelo módulo comprador
+            const credenciaisFornecedores = JSON.parse(localStorage.getItem('credenciais_fornecedores') || '[]');
+            const credenciaisList = document.getElementById('credenciaisList');
+            
+            if (credenciaisFornecedores.length > 0) {
+                credenciaisList.innerHTML = '';
+                credenciaisFornecedores.forEach(cred => {
+                    const div = document.createElement('div');
+                    div.className = 'demo-item';
+                    div.innerHTML = `
+                        <div style="font-weight: 600; color: #6c757d; margin-bottom: 5px;">${cred.empresa}:</div>
+                        <div style="color: #495057;">Login: ${cred.login}</div>
+                        <div style="color: #495057;">Senha: ${cred.senha}</div>
+                    `;
+                    credenciaisList.appendChild(div);
+                });
+            }
+        }
 
         function realizarLogin() {
             const login = document.getElementById('login').value.trim();
@@ -271,59 +278,38 @@
                 return;
             }
             
-            // Verificar credenciais no localStorage
-            const credenciais = SistemaLocal.carregar(SistemaLocal.CHAVES.CREDENCIAIS, []);
-            const credencial = credenciais.find(c => c.login === login && c.senha === senha && c.ativo);
+            // Verificar credenciais geradas pelo sistema
+            const credenciaisFornecedores = JSON.parse(localStorage.getItem('credenciais_fornecedores') || '[]');
+            const credencial = credenciaisFornecedores.find(c => c.login === login && c.senha === senha);
             
-            if (credencial) {
+            // Credenciais de demonstração
+            const credenciaisDemo = [
+                { login: 'empresa_demo', senha: 'Demo123!', empresa: 'Empresa Demonstração LTDA', cnpj: '00.000.000/0001-00' }
+            ];
+            
+            const credencialDemo = credenciaisDemo.find(c => c.login === login && c.senha === senha);
+            
+            if (credencial || credencialDemo) {
+                const dadosFornecedor = credencial || credencialDemo;
+                
                 // Salvar dados do fornecedor logado
                 const fornecedorLogado = {
-                    id: credencial.fornecedorId || credencial.id,
-                    cnpj: credencial.cnpj,
-                    razaoSocial: credencial.razaoSocial,
-                    email: credencial.email,
-                    login: credencial.login,
+                    login: dadosFornecedor.login,
+                    empresa: dadosFornecedor.empresa,
+                    cnpj: dadosFornecedor.cnpj || 'N/A',
                     dataLogin: new Date().toISOString()
                 };
                 
-                SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO, fornecedorLogado);
+                localStorage.setItem('fornecedor_logado', JSON.stringify(fornecedorLogado));
                 
                 mostrarSucesso('Login realizado com sucesso! Redirecionando...');
                 
-                // Redirecionar para o dashboard correto do fornecedor
+                // Redirecionar para o dashboard que existe no servidor
                 setTimeout(() => {
-                    window.location.href = 'dashboard-fornecedor-integrado-completo.html';
+                    window.location.href = 'dashboard-fornecedor.html';
                 }, 1500);
             } else {
-                mostrarErro('Login ou senha incorretos.');
-            }
-        }
-
-        function carregarCredenciaisDemo() {
-            const credenciais = SistemaLocal.carregar(SistemaLocal.CHAVES.CREDENCIAIS, []);
-            const lista = document.getElementById('credenciaisList');
-            
-            if (credenciais.length === 0) {
-                lista.innerHTML = '<p style="text-align: center; color: #6c757d; font-size: 14px;">Nenhuma credencial disponível.<br>Credenciais são geradas pelo módulo de compras.</p>';
-                return;
-            }
-            
-            lista.innerHTML = credenciais.filter(c => c.ativo).map(c => `
-                <div class="demo-item">
-                    <div style="font-weight: 600; color: #6c757d; margin-bottom: 5px;">Empresa: ${c.razaoSocial}</div>
-                    <div style="color: #495057;">Login: ${c.login}</div>
-                    <div style="color: #495057;">Senha: ${c.senha}</div>
-                </div>
-            `).join('');
-        }
-
-        function toggleCredenciais() {
-            const demo = document.getElementById('credenciaisDemo');
-            if (demo.style.display === 'none' || demo.style.display === '') {
-                demo.style.display = 'block';
-                carregarCredenciaisDemo();
-            } else {
-                demo.style.display = 'none';
+                mostrarErro('Login ou senha incorretos. Verifique se você foi cadastrado em algum processo licitatório.');
             }
         }
 
