@@ -194,6 +194,13 @@
             resize: vertical;
         }
 
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 12px;
+        }
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -476,6 +483,16 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="tr-valor-estimado">Valor Estimado (R$) *</label>
+                        <input type="number" id="tr-valor-estimado" 
+                               placeholder="0.00" 
+                               step="0.01" 
+                               min="0"
+                               required>
+                        <small>Informe o valor estimado para esta contratação</small>
+                    </div>
+
+                    <div class="form-group">
                         <label for="tr-objetivo">Objetivo *</label>
                         <textarea id="tr-objetivo" placeholder="Descreva o objetivo principal da contratação..." required></textarea>
                     </div>
@@ -650,6 +667,42 @@
             }
         };
 
+        // Integração com outros módulos
+        const IntegracaoModulos = {
+            enviarTRParaComprador: function(tr) {
+                try {
+                    // Atualizar status do TR
+                    const trs = JSON.parse(localStorage.getItem('sistema_trs') || '[]');
+                    const trIndex = trs.findIndex(t => t.id === tr.id);
+                    
+                    if (trIndex !== -1) {
+                        trs[trIndex].status = 'ENVIADO_APROVACAO';
+                        trs[trIndex].dataEnvioAprovacao = new Date().toISOString();
+                        localStorage.setItem('sistema_trs', JSON.stringify(trs));
+                        
+                        // Adicionar notificação para o comprador
+                        const notificacoes = JSON.parse(localStorage.getItem('notificacoes_comprador') || '[]');
+                        notificacoes.push({
+                            id: Date.now().toString(),
+                            tipo: 'novo_tr',
+                            titulo: 'Novo TR para Aprovação',
+                            mensagem: `TR "${tr.titulo}" enviado por ${tr.usuarioNome}`,
+                            data: new Date().toISOString(),
+                            lida: false,
+                            trId: tr.id
+                        });
+                        localStorage.setItem('notificacoes_comprador', JSON.stringify(notificacoes));
+                        
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Erro ao enviar TR:', error);
+                    return false;
+                }
+            }
+        };
+
         // Funções de navegação
         function mostrarPagina(pagina) {
             // Remover classe active de todos os itens de navegação
@@ -700,7 +753,7 @@
             
             // Calcular estatísticas
             const trsCriados = meusTRs.length;
-            const trsAtivos = meusTRs.filter(tr => tr.status === 'ativo' || !tr.status).length;
+            const trsAtivos = meusTRs.filter(tr => tr.status === 'ativo').length;
             const pareceresPendentes = 0; // Implementar quando houver sistema de pareceres
             const pareceresEmitidos = 0; // Implementar quando houver sistema de pareceres
 
@@ -735,7 +788,8 @@
                 responsabilidades: dados.responsabilidades,
                 criterios: dados.criterios,
                 anexos: dados.anexos,
-                status: dados.status || 'ativo',
+                valorEstimado: dados.valorEstimado || 0,
+                status: 'ativo', // SEMPRE 'ativo' ao criar
                 dataCriacao: new Date().toISOString(),
                 dataAtualizacao: new Date().toISOString()
             };
@@ -776,9 +830,9 @@
                 const dataFormatada = new Date(tr.dataCriacao).toLocaleDateString('pt-BR');
                 
                 // Determinar cor e texto do status
-                let statusClass = 'ativo';
-                let statusText = 'Rascunho';
-                let statusColor = '#6c757d';
+                let statusClass = '';
+                let statusText = 'Ativo';
+                let statusColor = '#17a2b8';
                 
                 if (tr.status === 'ENVIADO_APROVACAO') {
                     statusClass = 'pendente';
@@ -792,6 +846,9 @@
                     statusClass = 'reprovado';
                     statusText = 'Reprovado';
                     statusColor = '#dc3545';
+                } else if (tr.status === 'ativo') {
+                    statusText = 'Ativo';
+                    statusColor = '#17a2b8';
                 }
                 
                 html += `
@@ -801,6 +858,7 @@
                             <span><i class="fas fa-calendar"></i> ${dataFormatada}</span>
                             <span><i class="fas fa-tag"></i> ${tr.modalidade}</span>
                             <span><i class="fas fa-circle" style="color: ${statusColor};"></i> ${statusText}</span>
+                            <span><i class="fas fa-money-bill"></i> R$ ${tr.valorEstimado ? parseFloat(tr.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '0,00'}</span>
                         </div>
                         <div class="tr-objective">${tr.objetivo}</div>
                         
@@ -829,7 +887,7 @@
                                 <i class="fas fa-eye"></i> Visualizar
                             </button>
                             
-                            ${(tr.status === 'ativo' || !tr.status) ? `
+                            ${tr.status === 'ativo' ? `
                                 <button class="btn btn-success" onclick="enviarTRDireto('${tr.id}')">
                                     <i class="fas fa-paper-plane"></i> Enviar para Aprovação
                                 </button>
@@ -850,12 +908,30 @@
 
         // Função de visualizar TR completa
         function visualizarTR(id) {
-            const trs = JSON.parse(localStorage.getItem('sistema_trs') || '[]');
+            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             const tr = trs.find(t => t.id === id);
             
             if (!tr) {
                 alert('TR não encontrado!');
                 return;
+            }
+            
+            // Determinar status para exibição
+            let statusText = 'Rascunho';
+            let statusColor = '#6c757d';
+            
+            if (tr.status === 'ENVIADO_APROVACAO') {
+                statusText = 'Aguardando Aprovação';
+                statusColor = '#ffc107';
+            } else if (tr.status === 'APROVADO') {
+                statusText = 'Aprovado';
+                statusColor = '#28a745';
+            } else if (tr.status === 'REPROVADO') {
+                statusText = 'Reprovado';
+                statusColor = '#dc3545';
+            } else if (tr.status === 'ativo') {
+                statusText = 'Ativo';
+                statusColor = '#17a2b8';
             }
             
             // Criar modal de visualização
@@ -877,12 +953,12 @@
                 <div style="background: white; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
                     <div style="padding: 20px; border-bottom: 1px solid #dee2e6;">
                         <h3 style="margin: 0; color: #333; display: flex; justify-content: space-between; align-items: center;">
-                            TR ${tr.numeroTR || 'Sem número'}
-                            <button onclick="this.closest('div[style*=fixed]').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+                            ${tr.numeroTR || 'TR sem número'}
+                            <button onclick="this.closest('div[style*=fixed]').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </h3>
                     </div>
                     <div style="padding: 20px;">
-                        <h4 style="color: #333; margin-bottom: 15px;">${tr.titulo || tr.objeto}</h4>
+                        <h4 style="color: #333; margin-bottom: 15px;">${tr.titulo}</h4>
                         
                         <div style="margin-bottom: 15px;">
                             <strong>Status:</strong> 
@@ -890,47 +966,50 @@
                                 padding: 5px 10px;
                                 border-radius: 5px;
                                 font-size: 12px;
-                                background: ${tr.status === 'APROVADO' ? '#28a745' : tr.status === 'REPROVADO' ? '#dc3545' : tr.status === 'ENVIADO_APROVACAO' ? '#17a2b8' : '#ffc107'};
+                                background: ${statusColor};
                                 color: white;
-                            ">${tr.status || 'RASCUNHO'}</span>
+                            ">${statusText}</span>
                         </div>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                             <div>
-                                <strong>Objeto:</strong><br>
-                                ${tr.objetivo || 'Não informado'}
-                            </div>
-                            <div>
-                                <strong>Local:</strong><br>
-                                ${tr.local || 'Não informado'}
-                            </div>
-                            <div>
-                                <strong>Prazo de Execução:</strong><br>
-                                ${tr.prazoExecucao || tr.prazo || '0'} dias
+                                <strong>Modalidade:</strong><br>
+                                ${tr.modalidade || 'Não informado'}
                             </div>
                             <div>
                                 <strong>Valor Estimado:</strong><br>
-                                R$ ${tr.valorEstimado ? parseFloat(tr.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Não informado'}
+                                R$ ${tr.valorEstimado ? parseFloat(tr.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0,00'}
+                            </div>
+                            <div>
+                                <strong>Data de Criação:</strong><br>
+                                ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}
+                            </div>
+                            <div>
+                                <strong>Prazo de Execução:</strong><br>
+                                ${tr.prazo || 'Não informado'}
                             </div>
                         </div>
                         
-                        ${tr.descricaoObjeto ? `
-                            <div style="margin-bottom: 15px;">
-                                <strong>Descrição:</strong><br>
-                                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 5px;">
-                                    ${tr.descricaoObjeto}
-                                </div>
+                        <div style="margin-bottom: 15px;">
+                            <strong>Objetivo:</strong><br>
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 5px;">
+                                ${tr.objetivo || 'Não informado'}
                             </div>
-                        ` : ''}
+                        </div>
                         
-                        ${tr.justificativa ? `
-                            <div style="margin-bottom: 15px;">
-                                <strong>Justificativa:</strong><br>
-                                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 5px;">
-                                    ${tr.justificativa}
-                                </div>
+                        <div style="margin-bottom: 15px;">
+                            <strong>Local/Acesso:</strong><br>
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 5px;">
+                                ${tr.local || 'Não informado'}
                             </div>
-                        ` : ''}
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <strong>Escopo Técnico:</strong><br>
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 5px;">
+                                ${tr.escopo || 'Não informado'}
+                            </div>
+                        </div>
                         
                         ${tr.parecerComprador ? `
                             <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
@@ -947,14 +1026,10 @@
                         ` : ''}
                     </div>
                     <div style="padding: 20px; border-top: 1px solid #dee2e6; display: flex; gap: 10px; justify-content: flex-end;">
-                        <button onclick="IntegracaoModulos.downloadTRWord(${JSON.stringify(tr).replace(/"/g, '&quot;')})" 
-                                style="padding: 8px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            📄 Download Word
-                        </button>
-                        ${(tr.status === 'ativo' || tr.status === 'RASCUNHO' || !tr.status) ? `
-                            <button onclick="enviarTR('${id}')" 
+                        ${tr.status === 'ativo' ? `
+                            <button onclick="enviarTRModal('${id}')" 
                                     style="padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                                📤 Enviar para Aprovação
+                                <i class="fas fa-paper-plane"></i> Enviar para Aprovação
                             </button>
                         ` : ''}
                         <button onclick="this.closest('div[style*=fixed]').remove()" 
@@ -968,22 +1043,49 @@
             document.body.appendChild(modal);
         }
 
-        // Enviar TR para aprovação
-        function enviarTR(id) {
+        // Enviar TR do modal
+        function enviarTRModal(id) {
             if (!confirm('Deseja enviar este TR para aprovação do setor de compras?')) {
                 return;
             }
             
-            const trs = JSON.parse(localStorage.getItem('sistema_trs') || '[]');
+            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             const tr = trs.find(t => t.id === id);
             
-            if (tr && IntegracaoModulos.enviarTRParaComprador(tr)) {
-                // Fechar modal se existir
+            if (tr) {
+                // Atualizar status
+                tr.status = 'ENVIADO_APROVACAO';
+                tr.dataEnvioAprovacao = new Date().toISOString();
+                
+                // Salvar alterações
+                SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs);
+                
+                // Notificar comprador
+                const notificacoes = JSON.parse(localStorage.getItem('notificacoes_comprador') || '[]');
+                notificacoes.push({
+                    id: Date.now().toString(),
+                    tipo: 'novo_tr',
+                    titulo: 'Novo TR para Aprovação',
+                    mensagem: `TR "${tr.titulo}" enviado por ${tr.usuarioNome}`,
+                    data: new Date().toISOString(),
+                    lida: false,
+                    trId: tr.id
+                });
+                localStorage.setItem('notificacoes_comprador', JSON.stringify(notificacoes));
+                
+                alert('✅ TR enviado com sucesso para aprovação!');
+                
+                // Fechar modal
                 const modal = document.querySelector('div[style*="fixed"]');
                 if (modal) modal.remove();
                 
-                // Recarregar a lista
-                carregarMeusTRs();
+                // Recarregar lista se estiver na página de TRs
+                if (document.getElementById('meus-trs').classList.contains('active')) {
+                    carregarMeusTRs();
+                }
+                
+                // Atualizar estatísticas
+                carregarEstatisticas();
             }
         }
 
@@ -1039,6 +1141,7 @@
             return {
                 titulo: document.getElementById('tr-titulo').value,
                 modalidade: document.getElementById('tr-modalidade').value,
+                valorEstimado: document.getElementById('tr-valor-estimado').value,
                 objetivo: document.getElementById('tr-objetivo').value,
                 conformidade: document.getElementById('tr-conformidade').value,
                 local: document.getElementById('tr-local').value,
@@ -1122,10 +1225,15 @@
                 const dados = coletarDadosFormulario();
                 
                 // Validar campos obrigatórios
-                const camposObrigatorios = ['titulo', 'modalidade', 'objetivo', 'conformidade', 'local', 'escopo', 'situacaoAtual', 'situacaoProposta', 'especificacao', 'prazo', 'responsabilidades', 'criterios'];
+                const camposObrigatorios = [
+                    'titulo', 'modalidade', 'valorEstimado', 'objetivo', 
+                    'conformidade', 'local', 'escopo', 'situacaoAtual', 
+                    'situacaoProposta', 'especificacao', 'prazo', 
+                    'responsabilidades', 'criterios'
+                ];
                 
                 for (let campo of camposObrigatorios) {
-                    if (!dados[campo] || dados[campo].trim() === '') {
+                    if (!dados[campo] || dados[campo].toString().trim() === '') {
                         mostrarAlerta('error', `O campo "${campo}" é obrigatório.`);
                         return;
                     }
@@ -1149,6 +1257,5 @@
     <script src="js/auth.js"></script>
     <script src="js/api-client.js"></script>
     <script src="js/integration.js"></script>
-    <script src="js/integracao-modulos.js"></script>
 </body>
 </html>
