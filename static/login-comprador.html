@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Comprador - Sistema de Gestão de Propostas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 400px;
+            color: #333;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0d7377;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #11998e;
+            box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(17, 153, 142, 0.3);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .demo-credentials {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #11998e;
+        }
+
+        .demo-credentials h4 {
+            color: #0d7377;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .demo-credentials p {
+            margin: 5px 0;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .demo-credentials strong {
+            color: #333;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #11998e;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: #0d7377;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #fcc;
+            display: none;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #363;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #cfc;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo-section">
+            <div class="logo">🏢</div>
+            <h1 class="title">Portal do Comprador</h1>
+            <p class="subtitle">Acesse sua área para gerenciar processos licitatórios</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="login">Login</label>
+                <input type="text" id="login" name="login" placeholder="Digite seu login" required>
+            </div>
+
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                Entrar no Sistema
+            </button>
+        </form>
+
+        <div class="demo-credentials">
+            <h4>🔑 Credenciais de Demonstração</h4>
+            <p><strong>Login:</strong> comprador_admin</p>
+            <p><strong>Senha:</strong> Comp2025!</p>
+            <p><strong>Login:</strong> comprador_user</p>
+            <p><strong>Senha:</strong> User123</p>
+        </div>
+
+        <div class="back-link">
+            <a href="/">← Voltar ao Sistema Principal</a>
+        </div>
+    </div>
+
+    <script>
+        // Credenciais válidas para compradores
+        const validCredentials = [
+            { login: 'comprador_admin', senha: 'Comp2025!', nome: 'Administrador Comprador', perfil: 'admin' },
+            { login: 'comprador_user', senha: 'User123', nome: 'Usuário Comprador', perfil: 'user' },
+            { login: 'comp.oliveira', senha: 'Oliveira2025', nome: 'Carlos Oliveira', perfil: 'user' },
+            { login: 'comp.costa', senha: 'Costa123', nome: 'Ana Costa', perfil: 'user' }
+        ];
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const login = document.getElementById('login').value.trim();
+            const senha = document.getElementById('senha').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+
+            // Limpar mensagens anteriores
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+
+            // Validar campos
+            if (!login || !senha) {
+                showError('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            // Desabilitar botão durante login
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Entrando...';
+
+            // Simular delay de autenticação
+            setTimeout(() => {
+                // Verificar credenciais
+                const user = validCredentials.find(cred => 
+                    cred.login === login && cred.senha === senha
+                );
+
+                if (user) {
+                    // Login bem-sucedido
+                    showSuccess(`Bem-vindo, ${user.nome}!`);
+                    
+                    // Salvar dados do usuário
+                    localStorage.setItem('comprador_user', JSON.stringify({
+                        login: user.login,
+                        nome: user.nome,
+                        perfil: user.perfil,
+                        loginTime: new Date().toISOString()
+                    }));
+
+                    // Redirecionar após 1 segundo
+                    setTimeout(() => {
+                        window.location.href = '/static/dashboard-comprador-funcional.html';
+                    }, 1000);
+                } else {
+                    // Login falhou
+                    showError('Login ou senha incorretos. Verifique suas credenciais.');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Entrar no Sistema';
+                }
+            }, 1000);
+        });
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+        }
+
+        // Auto-preencher com credenciais demo ao clicar
+        document.querySelector('.demo-credentials').addEventListener('click', function() {
+            document.getElementById('login').value = 'comprador_admin';
+            document.getElementById('senha').value = 'Comp2025!';
+        });
+
+        // Verificar se já está logado
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = localStorage.getItem('comprador_user');
+            if (user) {
+                const userData = JSON.parse(user);
+                const loginTime = new Date(userData.loginTime);
+                const now = new Date();
+                const diffHours = (now - loginTime) / (1000 * 60 * 60);
+
+                // Se logado há menos de 8 horas, redirecionar
+                if (diffHours < 8) {
+                    showSuccess(`Bem-vindo de volta, ${userData.nome}!`);
+                    setTimeout(() => {
+                        window.location.href = '/static/dashboard-comprador-funcional.html';
+                    }, 1000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
