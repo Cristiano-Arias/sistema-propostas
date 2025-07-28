@@ -465,6 +465,12 @@
                     <div class="stat-label">Taxa de Sucesso</div>
                 </div>
             </div>
+            <div class="content-section" style="margin-top: 20px; display: block; background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 15px;">
+                <h3 class="section-title" style="color: #4CAF50; margin-bottom: 20px;">📋 Processos Disponíveis para Você</h3>
+                <div id="processos-disponiveis">
+                    <div class="loading">Carregando processos...</div>
+                </div>
+            </div>
         </div>
 
         <!-- Processos Disponíveis -->
@@ -839,6 +845,59 @@
 
         // Inicializar sistema
         document.addEventListener('DOMContentLoaded', inicializar);
+
+        // Carregar processos disponíveis ao iniciar
+        function carregarProcessosDisponiveis() {
+            const processos = IntegracaoModulos.listarProcessosDisponiveis();
+            const container = document.getElementById('processos-disponiveis');
+            
+            if (!container) return;
+            
+            if (processos.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">Nenhum processo disponível no momento.</p>';
+                return;
+            }
+            
+            container.innerHTML = processos.map(processo => `
+                <div class="processo-card" style="background: #f8f9fa; padding: 20px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #e0e0e0;">
+                    <h4 style="color: #333; margin-bottom: 10px;">${processo.numeroProcesso}</h4>
+                    <p style="color: #666; margin-bottom: 15px;">${processo.objeto}</p>
+                    <div style="display: flex; gap: 20px; color: #888; font-size: 14px; margin-bottom: 15px;">
+                        <span><strong>Modalidade:</strong> ${processo.modalidade}</span>
+                        <span><strong>Prazo:</strong> ${processo.dataLimite ? new Date(processo.dataLimite).toLocaleDateString('pt-BR') : 'Não informado'}</span>
+                    </div>
+                    <button class="btn" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;" 
+                            onclick="participarProcesso('${processo.id}')">
+                        📤 Enviar Proposta
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        // Função para participar do processo
+        function participarProcesso(processoId) {
+            // Salvar processo selecionado
+            sessionStorage.setItem('processo_selecionado', processoId);
+            
+            // Ir para a seção de propostas
+            mostrarSecao('propostas');
+            
+            // Preencher dados do processo no formulário
+            const processos = IntegracaoModulos.listarProcessosDisponiveis();
+            const processo = processos.find(p => p.id === processoId);
+            
+            if (processo && document.getElementById('processo-id')) {
+                document.getElementById('processo-id').value = processo.id;
+                document.getElementById('processo-nome').value = processo.numeroProcesso + ' - ' + processo.objeto;
+            }
+        }
+        
+        // Modificar a função inicializar para incluir o carregamento
+        const inicializarOriginal = inicializar;
+        inicializar = function() {
+            inicializarOriginal();
+            setTimeout(carregarProcessosDisponiveis, 500); // Pequeno delay para garantir que tudo carregou
+        }
 
         // Função para voltar ao sistema principal
         function voltarSistema() {
