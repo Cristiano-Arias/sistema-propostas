@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #20b2aa 0%, #008b8b 100%);
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -39,7 +39,7 @@
 
         .logo i {
             font-size: 64px;
-            color: #20b2aa;
+            color: #11998e;
             margin-bottom: 15px;
         }
 
@@ -76,13 +76,13 @@
 
         .form-group input:focus {
             outline: none;
-            border-color: #20b2aa;
+            border-color: #11998e;
         }
 
         .login-btn {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #20b2aa 0%, #008b8b 100%);
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             color: white;
             border: none;
             border-radius: 10px;
@@ -146,7 +146,7 @@
         }
 
         .back-link a {
-            color: #20b2aa;
+            color: #11998e;
             text-decoration: none;
             font-size: 14px;
         }
@@ -243,9 +243,9 @@
                 
                 mostrarSucesso('Login realizado com sucesso! Redirecionando...');
                 
-                // Redirecionar para o dashboard correto do comprador
+                // Redirecionar para o dashboard correto que existe no servidor
                 setTimeout(() => {
-                    window.location.href = 'dashboard-comprador-integrado-completo.html';
+                    window.location.href = 'dashboard-comprador-funcional.html';
                 }, 1500);
             } else {
                 mostrarErro('Login ou senha incorretos.');
