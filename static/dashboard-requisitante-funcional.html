@@ -238,6 +238,16 @@
             color: white;
         }
 
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -570,121 +580,110 @@
                         <i class="fas fa-info"></i> Informações Básicas
                     </h4>
                     
-                    <div class="form-group">
-                        <label for="tr-titulo">Título do TR *</label>
-                        <input type="text" id="tr-titulo" placeholder="Ex: Construção de Escola Municipal" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tr-modalidade">Modalidade Sugerida *</label>
-                        <select id="tr-modalidade" required>
-                            <option value="">Selecione...</option>
-                            <option value="Pregão">Pregão</option>
-                            <option value="Concorrência">Concorrência</option>
-                            <option value="Tomada de Preços">Tomada de Preços</option>
-                            <option value="Convite">Convite</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tr-valor-estimado">Valor Estimado (R$) *</label>
-                        <input type="number" id="tr-valor-estimado" 
-                               placeholder="0.00" 
-                               step="0.01" 
-                               min="0"
-                               required>
-                        <small>Informe o valor estimado para esta contratação</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tr-objetivo">Objetivo *</label>
-                        <textarea id="tr-objetivo" placeholder="Descreva o objetivo principal da contratação..." required></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tr-conformidade">Conformidade ao Termo de Referência *</label>
-                        <textarea id="tr-conformidade" placeholder="Descreva os requisitos de conformidade..." required></textarea>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        <div class="form-group">
+                            <label for="tr-titulo">Título do TR *</label>
+                            <input type="text" id="tr-titulo" name="titulo" required>
+                            <small>Título claro e descritivo do Termo de Referência</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tr-modalidade">Modalidade Sugerida *</label>
+                            <select id="tr-modalidade" name="modalidade" required>
+                                <option value="">Selecione a modalidade</option>
+                                <option value="Pregão Eletrônico">Pregão Eletrônico</option>
+                                <option value="Concorrência">Concorrência</option>
+                                <option value="Tomada de Preços">Tomada de Preços</option>
+                                <option value="Convite">Convite</option>
+                                <option value="Dispensa">Dispensa</option>
+                                <option value="Inexigibilidade">Inexigibilidade</option>
+                            </select>
+                            <small>Modalidade de licitação mais adequada</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tr-valor-estimado">Valor Estimado (R$)</label>
+                            <input type="number" id="tr-valor-estimado" name="valorEstimado" step="0.01" min="0">
+                            <small>Valor estimado para a contratação</small>
+                        </div>
                     </div>
                 </div>
 
-                <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h4 style="color: #f57c00; margin-bottom: 15px;">
-                        <i class="fas fa-map-marker-alt"></i> Local e Acesso
-                    </h4>
-                    
-                    <div class="form-group">
-                        <label for="tr-local">Local/Acesso *</label>
-                        <textarea id="tr-local" placeholder="Descreva o local e condições de acesso..." required></textarea>
-                    </div>
+                <div class="form-group">
+                    <label for="tr-objetivo">1. Objetivo *</label>
+                    <textarea id="tr-objetivo" name="objetivo" required placeholder="Descreva o objetivo da contratação..."></textarea>
+                    <small>Objetivo claro e específico da contratação</small>
                 </div>
 
-                <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h4 style="color: #2e7d32; margin-bottom: 15px;">
-                        <i class="fas fa-cogs"></i> Escopo Técnico
-                    </h4>
-                    
-                    <div class="form-group">
-                        <label for="tr-escopo">Escopo Técnico *</label>
-                        <textarea id="tr-escopo" placeholder="Detalhe o escopo técnico do projeto..." required></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tr-situacao-atual">Situação Atual *</label>
-                        <textarea id="tr-situacao-atual" placeholder="Descreva a situação atual..." required></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tr-situacao-proposta">Situação Proposta *</label>
-                        <textarea id="tr-situacao-proposta" placeholder="Descreva a situação proposta após a execução..." required></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tr-especificacao">Especificação Técnica *</label>
-                        <textarea id="tr-especificacao" placeholder="Detalhe as especificações técnicas necessárias..." required></textarea>
-                    </div>
+                <div class="form-group">
+                    <label for="tr-conformidade">2. Conformidade ao Termo de Referência *</label>
+                    <textarea id="tr-conformidade" name="conformidade" required placeholder="Descreva a conformidade..."></textarea>
+                    <small>Justificativa da conformidade com as normas aplicáveis</small>
                 </div>
 
-                <div style="background: #fce4ec; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h4 style="color: #c2185b; margin-bottom: 15px;">
-                        <i class="fas fa-clock"></i> Prazos e Responsabilidades
-                    </h4>
-                    
-                    <div class="form-group">
-                        <label for="tr-prazo">Prazo de Execução *</label>
-                        <textarea id="tr-prazo" placeholder="Defina prazos e cronograma..." required></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tr-responsabilidades">Responsabilidades *</label>
-                        <textarea id="tr-responsabilidades" placeholder="Defina responsabilidades de cada parte..." required></textarea>
-                    </div>
+                <div class="form-group">
+                    <label for="tr-local">3. Local/Acesso *</label>
+                    <textarea id="tr-local" name="local" required placeholder="Descreva o local de execução e condições de acesso..."></textarea>
+                    <small>Local de execução dos serviços e condições de acesso</small>
                 </div>
 
-                <div style="background: #e1f5fe; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h4 style="color: #0277bd; margin-bottom: 15px;">
-                        <i class="fas fa-shield-alt"></i> Avaliação e Anexos
-                    </h4>
-                    
-                    <div class="form-group">
-                        <label for="tr-criterios">Critérios de Avaliação de Propostas *</label>
-                        <textarea id="tr-criterios" placeholder="Descreva os critérios de avaliação técnica e pontuação..." required></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="tr-anexos">Anexos (Links)</label>
-                        <textarea id="tr-anexos" placeholder="Insira links para documentos anexos, separados por linha..."></textarea>
-                    </div>
+                <div class="form-group">
+                    <label for="tr-escopo">4. Escopo Técnico *</label>
+                    <textarea id="tr-escopo" name="escopo" required placeholder="Descreva detalhadamente o escopo técnico..."></textarea>
+                    <small>Descrição detalhada do escopo técnico dos serviços</small>
                 </div>
 
-                <div style="text-align: center; margin-top: 30px;">
-                    <button type="button" class="btn btn-secondary" id="btn-salvar-rascunho">
-                        <i class="fas fa-save"></i> Salvar como Rascunho
-                    </button>
+                <div class="form-group">
+                    <label for="tr-situacao-atual">5. Situação Atual *</label>
+                    <textarea id="tr-situacao-atual" name="situacaoAtual" required placeholder="Descreva a situação atual..."></textarea>
+                    <small>Descrição da situação atual que justifica a contratação</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="tr-situacao-proposta">6. Situação Proposta *</label>
+                    <textarea id="tr-situacao-proposta" name="situacaoProposta" required placeholder="Descreva a situação proposta..."></textarea>
+                    <small>Descrição da situação desejada após a contratação</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="tr-especificacao">7. Especificação Técnica *</label>
+                    <textarea id="tr-especificacao" name="especificacao" required placeholder="Detalhe as especificações técnicas..."></textarea>
+                    <small>Especificações técnicas detalhadas dos serviços/produtos</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="tr-prazo">8. Prazo de Execução *</label>
+                    <textarea id="tr-prazo" name="prazo" required placeholder="Defina o prazo de execução..."></textarea>
+                    <small>Prazo para execução dos serviços</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="tr-responsabilidades">9. Responsabilidades *</label>
+                    <textarea id="tr-responsabilidades" name="responsabilidades" required placeholder="Defina as responsabilidades..."></textarea>
+                    <small>Responsabilidades da contratada e contratante</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="tr-criterios">10. Critérios de Avaliação de Propostas *</label>
+                    <textarea id="tr-criterios" name="criterios" required placeholder="Defina os critérios de avaliação..."></textarea>
+                    <small>Critérios para avaliação das propostas</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="tr-anexos">11. Anexos</label>
+                    <textarea id="tr-anexos" name="anexos" placeholder="Liste os anexos necessários..."></textarea>
+                    <small>Documentos e anexos que acompanham o TR</small>
+                </div>
+
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-check-circle"></i> Concluir TR
                     </button>
-                    <button type="button" class="btn" id="btn-limpar" style="background: #e0e0e0; color: #333;">
-                        <i class="fas fa-undo"></i> Limpar
+                    <button type="button" class="btn btn-secondary" id="btn-salvar-rascunho">
+                        <i class="fas fa-save"></i> Salvar Rascunho
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btn-limpar-form">
+                        <i class="fas fa-trash"></i> Limpar Formulário
                     </button>
                 </div>
             </form>
@@ -696,11 +695,7 @@
                 <i class="fas fa-list"></i> Meus Termos de Referência
             </div>
 
-            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="color: #1976d2; margin: 0;">Gerencie todos os seus Termos de Referência criados</p>
-            </div>
-
-            <div class="tr-list" id="tr-list">
+            <div id="tr-list" class="tr-list">
                 <div class="loading">
                     <i class="fas fa-spinner fa-spin"></i> Carregando TRs...
                 </div>
@@ -713,17 +708,10 @@
                 <i class="fas fa-file-alt"></i> Emitir Parecer Técnico
             </div>
 
-            <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <h4 style="color: #f57c00; margin-bottom: 10px;">
-                    <i class="fas fa-exclamation-triangle"></i> Atenção
-                </h4>
-                <p style="color: #f57c00; margin: 0;">Você está visualizando apenas os aspectos técnicos das propostas. Informações comerciais e valores não são exibidos nesta análise.</p>
-            </div>
-
             <div style="text-align: center; padding: 40px; color: #666;">
-                <i class="fas fa-file-alt" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                <h3>Nenhuma proposta disponível para análise</h3>
-                <p>Aguarde a liberação de propostas pelo comprador para emitir pareceres técnicos.</p>
+                <i class="fas fa-tools" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
+                <h3>Funcionalidade em Desenvolvimento</h3>
+                <p>A funcionalidade de emissão de pareceres técnicos estará disponível em breve.</p>
             </div>
         </div>
     </div>
@@ -865,7 +853,8 @@
             };
             
             if (btnMap[pagina]) {
-                document.getElementById(btnMap[pagina]).classList.add('active');
+                const btn = document.getElementById(btnMap[pagina]);
+                if (btn) btn.classList.add('active');
             }
 
             // Esconder todas as seções
@@ -874,15 +863,18 @@
             });
 
             // Mostrar seção selecionada
-            document.getElementById(pagina).classList.add('active');
+            const section = document.getElementById(pagina);
+            if (section) section.classList.add('active');
 
             // Limpar modo de edição se sair da página de criar TR
             if (pagina !== 'criar-tr') {
                 const form = document.getElementById('tr-form');
-                form.removeAttribute('data-editing-id');
-                form.reset();
-                const btnSubmit = form.querySelector('button[type="submit"]');
-                btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
+                if (form) {
+                    form.removeAttribute('data-editing-id');
+                    form.reset();
+                    const btnSubmit = form.querySelector('button[type="submit"]');
+                    if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
+                }
             }
 
             // Carregar dados específicos da página
@@ -924,10 +916,21 @@
             };
 
             // Atualizar interface
-            document.getElementById('trs-total').textContent = estatisticas.total;
-            document.getElementById('trs-elaborados').textContent = estatisticas.elaborados;
-            document.getElementById('trs-enviados').textContent = estatisticas.enviados;
-            document.getElementById('trs-aprovados').textContent = estatisticas.aprovados;
+            const totalEl = document.getElementById('trs-total');
+            const elaboradosEl = document.getElementById('trs-elaborados');
+            const enviadosEl = document.getElementById('trs-enviados');
+            const aprovadosEl = document.getElementById('trs-aprovados');
+
+            if (totalEl) totalEl.textContent = estatisticas.total;
+            if (elaboradosEl) elaboradosEl.textContent = estatisticas.elaborados;
+            if (enviadosEl) enviadosEl.textContent = estatisticas.enviados;
+            if (aprovadosEl) aprovadosEl.textContent = estatisticas.aprovados;
+        }
+
+        // Verificar notificações
+        function verificarNotificacoes() {
+            // Função placeholder para notificações
+            console.log('Verificando notificações...');
         }
 
         // Salvar TR
@@ -969,6 +972,51 @@
             }
         }
 
+        // Coletar dados do formulário
+        function coletarDadosFormulario() {
+            return {
+                titulo: document.getElementById('tr-titulo')?.value || '',
+                modalidade: document.getElementById('tr-modalidade')?.value || '',
+                valorEstimado: document.getElementById('tr-valor-estimado')?.value || 0,
+                objetivo: document.getElementById('tr-objetivo')?.value || '',
+                conformidade: document.getElementById('tr-conformidade')?.value || '',
+                local: document.getElementById('tr-local')?.value || '',
+                escopo: document.getElementById('tr-escopo')?.value || '',
+                situacaoAtual: document.getElementById('tr-situacao-atual')?.value || '',
+                situacaoProposta: document.getElementById('tr-situacao-proposta')?.value || '',
+                especificacao: document.getElementById('tr-especificacao')?.value || '',
+                prazo: document.getElementById('tr-prazo')?.value || '',
+                responsabilidades: document.getElementById('tr-responsabilidades')?.value || '',
+                criterios: document.getElementById('tr-criterios')?.value || '',
+                anexos: document.getElementById('tr-anexos')?.value || ''
+            };
+        }
+
+        // Mostrar alerta
+        function mostrarAlerta(tipo, mensagem) {
+            const alertSuccess = document.getElementById('success-alert');
+            const alertError = document.getElementById('error-alert');
+            
+            if (tipo === 'success' && alertSuccess) {
+                alertSuccess.style.display = 'block';
+                alertSuccess.innerHTML = `<i class="fas fa-check-circle"></i> ${mensagem}`;
+                if (alertError) alertError.style.display = 'none';
+                
+                setTimeout(() => {
+                    alertSuccess.style.display = 'none';
+                }, 3000);
+            } else if (tipo === 'error' && alertError) {
+                alertError.style.display = 'block';
+                const errorMessage = alertError.querySelector('#error-message');
+                if (errorMessage) errorMessage.textContent = mensagem;
+                if (alertSuccess) alertSuccess.style.display = 'none';
+                
+                setTimeout(() => {
+                    alertError.style.display = 'none';
+                }, 5000);
+            }
+        }
+
         // Salvar como rascunho
         function salvarRascunho() {
             const dados = coletarDadosFormulario();
@@ -977,7 +1025,8 @@
                 
                 if (resultado.sucesso) {
                     mostrarAlerta('success', 'Rascunho salvo com sucesso!');
-                    document.getElementById('tr-form').reset();
+                    const form = document.getElementById('tr-form');
+                    if (form) form.reset();
                 } else {
                     mostrarAlerta('error', 'Erro ao salvar rascunho: ' + resultado.erro);
                 }
@@ -1026,6 +1075,7 @@
             const meusTRs = trs.filter(tr => tr.usuarioId === usuario.id);
 
             const container = document.getElementById('tr-list');
+            if (!container) return;
             
             if (meusTRs.length === 0) {
                 container.innerHTML = `
@@ -1033,7 +1083,7 @@
                         <i class="fas fa-file-alt" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
                         <h3>Nenhum TR encontrado</h3>
                         <p>Você ainda não criou nenhum Termo de Referência.</p>
-                        <button class="btn btn-primary" onclick="mostrarPagina('criar-tr')">
+                        <button class="btn btn-primary" data-action="criar-primeiro-tr">
                             <i class="fas fa-plus"></i> Criar Primeiro TR
                         </button>
                     </div>
@@ -1065,16 +1115,14 @@
                         
                         ${tr.parecerComprador ? `
                             <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #2196f3;">
-                                <strong style="color: #1976d2;">Parecer do Comprador:</strong>  
-
+                                <strong style="color: #1976d2;">Parecer do Comprador:</strong><br>
                                 ${tr.parecerComprador}
                             </div>
                         ` : ''}
                         
                         ${tr.motivoReprovacao ? `
                             <div style="background: #ffebee; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #f44336;">
-                                <strong style="color: #c62828;">Motivo da Reprovação:</strong>  
-
+                                <strong style="color: #c62828;">Motivo da Reprovação:</strong><br>
                                 ${tr.motivoReprovacao}
                             </div>
                         ` : ''}
@@ -1095,43 +1143,43 @@
             let botoes = '';
 
             if (config.acoes.includes('visualizar')) {
-                botoes += `<button class="btn btn-secondary" onclick="visualizarTR('${tr.id}')">
+                botoes += `<button class="btn btn-secondary" data-action="visualizar" data-id="${tr.id}">
                     <i class="fas fa-eye"></i> Visualizar
                 </button>`;
             }
 
             if (config.acoes.includes('editar')) {
-                botoes += `<button class="btn btn-primary" onclick="editarTR('${tr.id}')">
+                botoes += `<button class="btn btn-primary" data-action="editar" data-id="${tr.id}">
                     <i class="fas fa-edit"></i> Editar
                 </button>`;
             }
 
             if (config.acoes.includes('enviar')) {
-                botoes += `<button class="btn btn-success" onclick="enviarTRParaCompras('${tr.id}')">
+                botoes += `<button class="btn btn-success" data-action="enviar" data-id="${tr.id}">
                     <i class="fas fa-paper-plane"></i> Enviar para Compras
                 </button>`;
             }
 
             if (config.acoes.includes('download')) {
-                botoes += `<button class="btn btn-info" onclick="downloadTR('${tr.id}')" style="background: #17a2b8; color: white;">
+                botoes += `<button class="btn btn-info" data-action="download" data-id="${tr.id}" style="background: #17a2b8; color: white;">
                     <i class="fas fa-download"></i> Download
                 </button>`;
             }
 
             if (config.acoes.includes('concluir')) {
-                botoes += `<button class="btn btn-success" onclick="concluirTR('${tr.id}')">
+                botoes += `<button class="btn btn-success" data-action="concluir" data-id="${tr.id}">
                     <i class="fas fa-check"></i> Concluir Elaboração
                 </button>`;
             }
 
             if (config.acoes.includes('excluir')) {
-                botoes += `<button class="btn btn-danger" onclick="excluirTR('${tr.id}')">
+                botoes += `<button class="btn btn-danger" data-action="excluir" data-id="${tr.id}">
                     <i class="fas fa-trash"></i> Excluir
                 </button>`;
             }
 
             if (config.acoes.includes('reenviar')) {
-                botoes += `<button class="btn btn-warning" onclick="enviarTRParaCompras('${tr.id}')" style="background: #ffc107; color: #212529;">
+                botoes += `<button class="btn btn-warning" data-action="enviar" data-id="${tr.id}" style="background: #ffc107; color: #212529;">
                     <i class="fas fa-redo"></i> Reenviar
                 </button>`;
             }
@@ -1171,7 +1219,7 @@
                                 <i class="fas ${config.icone}"></i> ${config.label}
                             </span>
                         </div>
-                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                        <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                     </div>
                     <div class="modal-body">
                         <h4 style="color: #333; margin-bottom: 20px;">${tr.titulo}</h4>
@@ -1180,23 +1228,19 @@
                         
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <strong style="color: #666;">Modalidade:</strong>  
-
+                                <strong style="color: #666;">Modalidade:</strong><br>
                                 ${tr.modalidade}
                             </div>
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <strong style="color: #666;">Valor Estimado:</strong>  
-
+                                <strong style="color: #666;">Valor Estimado:</strong><br>
                                 R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                             </div>
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <strong style="color: #666;">Data de Criação:</strong>  
-
+                                <strong style="color: #666;">Data de Criação:</strong><br>
                                 ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}
                             </div>
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <strong style="color: #666;">Prazo de Execução:</strong>  
-
+                                <strong style="color: #666;">Prazo de Execução:</strong><br>
                                 ${tr.prazo}
                             </div>
                         </div>
@@ -1238,23 +1282,21 @@
                         
                         ${tr.parecerComprador ? `
                             <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                                <strong style="color: #0c5460;">Parecer do Comprador:</strong>  
-
+                                <strong style="color: #0c5460;">Parecer do Comprador:</strong><br>
                                 ${tr.parecerComprador}
                             </div>
                         ` : ''}
                         
                         ${tr.motivoReprovacao ? `
                             <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                                <strong style="color: #721c24;">Motivo da Reprovação:</strong>  
-
+                                <strong style="color: #721c24;">Motivo da Reprovação:</strong><br>
                                 ${tr.motivoReprovacao}
                             </div>
                         ` : ''}
                     </div>
                     <div class="modal-footer">
                         ${renderizarBotoesModal(tr)}
-                        <button onclick="this.closest('.modal-overlay').remove()" class="btn btn-secondary">
+                        <button class="btn btn-secondary btn-fechar-modal">
                             Fechar
                         </button>
                     </div>
@@ -1262,6 +1304,27 @@
             `;
             
             document.body.appendChild(modal);
+            
+            // Adicionar event listeners para fechar o modal
+            modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
+                btn.addEventListener('click', () => modal.remove());
+            });
+
+            // Adicionar event listeners para os botões de ação do modal
+            modal.addEventListener('click', (e) => {
+                const button = e.target.closest('button[data-action]');
+                if (!button) return;
+
+                const action = button.dataset.action;
+                const trId = button.dataset.id;
+
+                if (action === 'download') {
+                    downloadTR(trId);
+                } else if (action === 'enviar') {
+                    enviarTRParaCompras(trId);
+                    modal.remove();
+                }
+            });
         }
 
         // Renderizar botões do modal
@@ -1270,13 +1333,13 @@
             let botoes = '';
 
             if (config.acoes.includes('download')) {
-                botoes += `<button class="btn btn-info" onclick="downloadTR('${tr.id}')" style="background: #17a2b8; color: white;">
+                botoes += `<button class="btn btn-info" data-action="download" data-id="${tr.id}" style="background: #17a2b8; color: white;">
                     <i class="fas fa-download"></i> Download
                 </button>`;
             }
 
             if (config.acoes.includes('enviar')) {
-                botoes += `<button class="btn btn-success" onclick="enviarTRParaCompras('${tr.id}'); this.closest('.modal-overlay').remove();">
+                botoes += `<button class="btn btn-success" data-action="enviar" data-id="${tr.id}">
                     <i class="fas fa-paper-plane"></i> Enviar para Compras
                 </button>`;
             }
@@ -1465,27 +1528,32 @@
             }
             
             // Preencher o formulário com os dados do TR
-            document.getElementById('tr-titulo').value = tr.titulo || '';
-            document.getElementById('tr-modalidade').value = tr.modalidade || '';
-            document.getElementById('tr-valor-estimado').value = tr.valorEstimado || '';
-            document.getElementById('tr-objetivo').value = tr.objetivo || '';
-            document.getElementById('tr-conformidade').value = tr.conformidade || '';
-            document.getElementById('tr-local').value = tr.local || '';
-            document.getElementById('tr-escopo').value = tr.escopo || '';
-            document.getElementById('tr-situacao-atual').value = tr.situacaoAtual || '';
-            document.getElementById('tr-situacao-proposta').value = tr.situacaoProposta || '';
-            document.getElementById('tr-especificacao').value = tr.especificacao || '';
-            document.getElementById('tr-prazo').value = tr.prazo || '';
-            document.getElementById('tr-responsabilidades').value = tr.responsabilidades || '';
-            document.getElementById('tr-criterios').value = tr.criterios || '';
-            document.getElementById('tr-anexos').value = tr.anexos || '';
+            const campos = [
+                'tr-titulo', 'tr-modalidade', 'tr-valor-estimado', 'tr-objetivo',
+                'tr-conformidade', 'tr-local', 'tr-escopo', 'tr-situacao-atual',
+                'tr-situacao-proposta', 'tr-especificacao', 'tr-prazo',
+                'tr-responsabilidades', 'tr-criterios', 'tr-anexos'
+            ];
+
+            const valores = [
+                tr.titulo, tr.modalidade, tr.valorEstimado, tr.objetivo,
+                tr.conformidade, tr.local, tr.escopo, tr.situacaoAtual,
+                tr.situacaoProposta, tr.especificacao, tr.prazo,
+                tr.responsabilidades, tr.criterios, tr.anexos
+            ];
+
+            campos.forEach((campo, index) => {
+                const elemento = document.getElementById(campo);
+                if (elemento) elemento.value = valores[index] || '';
+            });
             
             // Adicionar ID do TR sendo editado
-            document.getElementById('tr-form').setAttribute('data-editing-id', id);
+            const form = document.getElementById('tr-form');
+            if (form) form.setAttribute('data-editing-id', id);
             
             // Mudar texto do botão
             const btnSubmit = document.querySelector('#tr-form button[type="submit"]');
-            btnSubmit.innerHTML = '<i class="fas fa-save"></i> Atualizar TR';
+            if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-save"></i> Atualizar TR';
             
             // Ir para a página de criação/edição
             mostrarPagina('criar-tr');
@@ -1493,219 +1561,123 @@
             // Mostrar mensagem
             mostrarAlerta('success', 'Editando TR: ' + tr.titulo);
         }
+
         // Limpar formulário
         function limparFormulario() {
             if (confirm('Deseja realmente limpar todos os campos do formulário?')) {
-                document.getElementById('tr-form').reset();
-                esconderAlertas();
-            }
-        }
-
-        // Coletar dados do formulário
-        function coletarDadosFormulario() {
-            return {
-                titulo: document.getElementById('tr-titulo').value,
-                modalidade: document.getElementById('tr-modalidade').value,
-                valorEstimado: document.getElementById('tr-valor-estimado').value,
-                objetivo: document.getElementById('tr-objetivo').value,
-                conformidade: document.getElementById('tr-conformidade').value,
-                local: document.getElementById('tr-local').value,
-                escopo: document.getElementById('tr-escopo').value,
-                situacaoAtual: document.getElementById('tr-situacao-atual').value,
-                situacaoProposta: document.getElementById('tr-situacao-proposta').value,
-                especificacao: document.getElementById('tr-especificacao').value,
-                prazo: document.getElementById('tr-prazo').value,
-                responsabilidades: document.getElementById('tr-responsabilidades').value,
-                criterios: document.getElementById('tr-criterios').value,
-                anexos: document.getElementById('tr-anexos').value
-            };
-        }
-
-        // Mostrar alertas
-        function mostrarAlerta(tipo, mensagem) {
-            esconderAlertas();
-            
-            if (tipo === 'success') {
-                document.getElementById('success-alert').style.display = 'block';
-                document.getElementById('success-alert').innerHTML = `<i class="fas fa-check-circle"></i> ${mensagem}`;
-            } else if (tipo === 'error') {
-                document.getElementById('error-message').textContent = mensagem;
-                document.getElementById('error-alert').style.display = 'block';
-            }
-
-            // Auto-esconder após 5 segundos
-            setTimeout(esconderAlertas, 5000);
-        }
-
-        // Esconder alertas
-        function esconderAlertas() {
-            document.getElementById('success-alert').style.display = 'none';
-            document.getElementById('error-alert').style.display = 'none';
-        }
-
-        // Verificar notificações
-        function verificarNotificacoes() {
-            const notificacoes = JSON.parse(localStorage.getItem('notificacoes_requisitante') || '[]');
-            const container = document.getElementById('notificacoes-container');
-            
-            if (!container) return;
-            
-            const naoLidas = notificacoes.filter(n => !n.lida);
-            
-            if (naoLidas.length > 0) {
-                container.innerHTML = naoLidas.map(notif => `
-                    <div class="alert ${notif.tipo === 'tr_aprovado' ? 'alert-success' : 'alert-error'}" 
-                         style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>${notif.titulo}</strong><br>
-                            ${notif.mensagem}
-                        </div>
-                        <button onclick="marcarComoLida('${notif.id}')" class="btn btn-sm" style="background: transparent; color: inherit; padding: 5px 10px;">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `).join('');
-            }
-        }
-
-        function marcarComoLida(notifId) {
-            let notificacoes = JSON.parse(localStorage.getItem('notificacoes_requisitante') || '[]');
-            const notif = notificacoes.find(n => n.id === notifId);
-            if (notif) {
-                notif.lida = true;
-                localStorage.setItem('notificacoes_requisitante', JSON.stringify(notificacoes));
-                verificarNotificacoes();
-            }
-        }
-
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configurar navegação
-            document.getElementById('btn-dashboard').addEventListener('click', () => mostrarPagina('dashboard'));
-            document.getElementById('btn-criar-tr').addEventListener('click', () => mostrarPagina('criar-tr'));
-            document.getElementById('btn-meus-trs').addEventListener('click', () => mostrarPagina('meus-trs'));
-            document.getElementById('btn-emitir-parecer').addEventListener('click', () => mostrarPagina('emitir-parecer'));
-            document.getElementById('btn-voltar').addEventListener('click', voltarSistema);
-            document.getElementById('btn-logout').addEventListener('click', logout);
-            
-            // Cards do dashboard
-            const cardCriarTr = document.getElementById('card-criar-tr');
-            const cardMeusTrs = document.getElementById('card-meus-trs');
-            const cardEmitirParecer = document.getElementById('card-emitir-parecer');
-            
-            if (cardCriarTr) cardCriarTr.addEventListener('click', () => mostrarPagina('criar-tr'));
-            if (cardMeusTrs) cardMeusTrs.addEventListener('click', () => mostrarPagina('meus-trs'));
-            if (cardEmitirParecer) cardEmitirParecer.addEventListener('click', () => mostrarPagina('emitir-parecer'));
-            
-            // Botões do formulário
-            document.getElementById('btn-salvar-rascunho').addEventListener('click', salvarRascunho);
-            document.getElementById('btn-limpar').addEventListener('click', limparFormulario);
-            
-            // Carregar estatísticas iniciais
-            carregarEstatisticas();
-            verificarNotificacoes();
-
-            // Configurar formulário de TR
-            document.getElementById('tr-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const dados = coletarDadosFormulario();
-                const editingId = this.getAttribute('data-editing-id');
-                
-                // Validar campos obrigatórios
-                const camposObrigatorios = [
-                    'titulo', 'modalidade', 'valorEstimado', 'objetivo', 
-                    'conformidade', 'local', 'escopo', 'situacaoAtual', 
-                    'situacaoProposta', 'especificacao', 'prazo', 
-                    'responsabilidades', 'criterios'
-                ];
-                
-                const camposNomes = {
-                    'titulo': 'Título do TR',
-                    'modalidade': 'Modalidade Sugerida',
-                    'valorEstimado': 'Valor Estimado',
-                    'objetivo': 'Objetivo',
-                    'conformidade': 'Conformidade ao Termo de Referência',
-                    'local': 'Local/Acesso',
-                    'escopo': 'Escopo Técnico',
-                    'situacaoAtual': 'Situação Atual',
-                    'situacaoProposta': 'Situação Proposta',
-                    'especificacao': 'Especificação Técnica',
-                    'prazo': 'Prazo de Execução',
-                    'responsabilidades': 'Responsabilidades',
-                    'criterios': 'Critérios de Avaliação de Propostas'
-                };
-                
-                for (let campo of camposObrigatorios) {
-                    if (!dados[campo] || dados[campo].toString().trim() === '') {
-                        mostrarAlerta('error', `O campo "${camposNomes[campo]}" é obrigatório.`);
-                        return;
-                    }
+                const form = document.getElementById('tr-form');
+                if (form) {
+                    form.reset();
+                    form.removeAttribute('data-editing-id');
+                    const btnSubmit = form.querySelector('button[type="submit"]');
+                    if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
                 }
+            }
+        }
 
-                if (editingId) {
-                    // Atualizar TR existente
-                    const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-                    const trIndex = trs.findIndex(t => t.id === editingId);
+        // Event listener principal
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Sistema carregado!');
+
+            // Navegação principal
+            document.getElementById('btn-dashboard')?.addEventListener('click', () => mostrarPagina('dashboard'));
+            document.getElementById('btn-criar-tr')?.addEventListener('click', () => mostrarPagina('criar-tr'));
+            document.getElementById('btn-meus-trs')?.addEventListener('click', () => mostrarPagina('meus-trs'));
+            document.getElementById('btn-emitir-parecer')?.addEventListener('click', () => mostrarPagina('emitir-parecer'));
+            document.getElementById('btn-voltar')?.addEventListener('click', voltarSistema);
+            document.getElementById('btn-logout')?.addEventListener('click', logout);
+
+            // Cards do dashboard
+            document.getElementById('card-criar-tr')?.addEventListener('click', () => mostrarPagina('criar-tr'));
+            document.getElementById('card-meus-trs')?.addEventListener('click', () => mostrarPagina('meus-trs'));
+            document.getElementById('card-emitir-parecer')?.addEventListener('click', () => mostrarPagina('emitir-parecer'));
+
+            // Formulário de TR
+            const trForm = document.getElementById('tr-form');
+            if (trForm) {
+                trForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
                     
-                    if (trIndex !== -1) {
-                        // Manter dados importantes
-                        const trOriginal = trs[trIndex];
-                        trs[trIndex] = {
-                            ...trOriginal,
-                            ...dados,
-                            id: trOriginal.id,
-                            numeroTR: trOriginal.numeroTR,
-                            usuarioId: trOriginal.usuarioId,
-                            usuarioNome: trOriginal.usuarioNome,
-                            status: trOriginal.status,
-                            dataCriacao: trOriginal.dataCriacao,
-                            dataAtualizacao: new Date().toISOString()
-                        };
+                    const dados = coletarDadosFormulario();
+                    const editingId = this.getAttribute('data-editing-id');
+                    
+                    if (editingId) {
+                        // Atualizar TR existente
+                        const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+                        const trIndex = trs.findIndex(t => t.id === editingId);
                         
-                        if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
-                            mostrarAlerta('success', 'TR atualizado com sucesso!');
-                            document.getElementById('tr-form').reset();
-                            this.removeAttribute('data-editing-id');
+                        if (trIndex !== -1) {
+                            trs[trIndex] = { ...trs[trIndex], ...dados, dataAtualizacao: new Date().toISOString() };
                             
-                            // Restaurar texto do botão
-                            const btnSubmit = this.querySelector('button[type="submit"]');
-                            btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
-                            
-                            carregarEstatisticas();
-                            
-                            // Voltar para lista de TRs
-                            setTimeout(() => mostrarPagina('meus-trs'), 1500);
+                            if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
+                                mostrarAlerta('success', 'TR atualizado com sucesso!');
+                                this.reset();
+                                this.removeAttribute('data-editing-id');
+                                const btnSubmit = this.querySelector('button[type="submit"]');
+                                if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
+                                mostrarPagina('meus-trs');
+                            } else {
+                                mostrarAlerta('error', 'Erro ao atualizar TR');
+                            }
+                        }
+                    } else {
+                        // Criar novo TR
+                        const resultado = salvarTR(dados, StatusTR.ELABORADO);
+                        
+                        if (resultado.sucesso) {
+                            mostrarAlerta('success', 'TR criado com sucesso!');
+                            this.reset();
+                            setTimeout(() => mostrarPagina('meus-trs'), 2000);
+                        } else {
+                            mostrarAlerta('error', 'Erro ao criar TR: ' + resultado.erro);
                         }
                     }
-                } else {
-                    // Criar novo TR
-                    const resultado = salvarTR(dados, StatusTR.ELABORADO);
-                    
-                    if (resultado.sucesso) {
-                        mostrarAlerta('success', 'TR elaborado com sucesso! Agora você pode enviá-lo para aprovação.');
-                        document.getElementById('tr-form').reset();
-                        carregarEstatisticas();
-                        
-                        // Ir para a lista de TRs após 2 segundos
-                        setTimeout(() => mostrarPagina('meus-trs'), 2000);
-                    } else {
-                        mostrarAlerta('error', 'Erro ao salvar TR: ' + resultado.erro);
-                    }
+                });
+            }
+
+            // Botão salvar rascunho
+            document.getElementById('btn-salvar-rascunho')?.addEventListener('click', salvarRascunho);
+
+            // Botão limpar formulário
+            document.getElementById('btn-limpar-form')?.addEventListener('click', limparFormulario);
+
+            // Event delegation para botões dinâmicos
+            document.addEventListener('click', function(e) {
+                const button = e.target.closest('button[data-action]');
+                if (!button) return;
+
+                const action = button.dataset.action;
+                const id = button.dataset.id;
+
+                switch (action) {
+                    case 'visualizar':
+                        visualizarTR(id);
+                        break;
+                    case 'editar':
+                        editarTR(id);
+                        break;
+                    case 'enviar':
+                        enviarTRParaCompras(id);
+                        break;
+                    case 'download':
+                        downloadTR(id);
+                        break;
+                    case 'concluir':
+                        concluirTR(id);
+                        break;
+                    case 'excluir':
+                        excluirTR(id);
+                        break;
+                    case 'criar-primeiro-tr':
+                        mostrarPagina('criar-tr');
+                        break;
                 }
             });
-        });
 
-        // Garantir que as funções estejam no escopo global
-        window.mostrarPagina = mostrarPagina;
-        window.voltarSistema = voltarSistema;
-        window.logout = logout;
-        window.salvarRascunho = salvarRascunho;
-        window.limparFormulario = limparFormulario;
-        window.visualizarTR = visualizarTR;
-        window.editarTR = editarTR;
-        window.downloadTR = downloadTR;
-        window.enviarTRParaCompras = enviarTRParaCompras;
-        window.concluirTR = concluirTR;
-        window.excluirTR = excluirTR;
-        window.marcarComoLida = marcarComoLida;
+            // Carregar dados iniciais
+            carregarEstatisticas();
+            verificarNotificacoes();
+        });
+    </script>
+</body>
+</html>
