@@ -759,8 +759,143 @@
             alert('Funcionalidade de edição será implementada em breve.');
         }
 
+        // POR ESTA VERSÃO COMPLETA:
         function visualizarTR(id) {
-            alert('Funcionalidade de visualização será implementada em breve.');
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === id);
+    
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
+    
+            // Criar modal de visualização
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 1050;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+    
+            modal.innerHTML = `
+                <div style="background: white; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <div style="padding: 20px; border-bottom: 1px solid #dee2e6;">
+                        <h3 style="margin: 0; color: #333; display: flex; justify-content: space-between; align-items: center;">
+                            TR ${tr.numeroTR || 'Sem número'}
+                            <button onclick="this.closest('div[style*=fixed]').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+                        </h3>
+                    </div>
+                    <div style="padding: 20px;">
+                        <h4 style="color: #333; margin-bottom: 15px;">${tr.titulo || tr.objeto}</h4>
+                
+                        <div style="margin-bottom: 15px;">
+                            <strong>Status:</strong> 
+                            <span style="
+                                padding: 5px 10px;
+                                border-radius: 5px;
+                                font-size: 12px;
+                                background: ${tr.status === 'APROVADO' ? '#28a745' : tr.status === 'REPROVADO' ? '#dc3545' : tr.status === 'ENVIADO_APROVACAO' ? '#17a2b8' : '#ffc107'};
+                                color: white;
+                            ">${tr.status || 'RASCUNHO'}</span>
+                        </div>
+                
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                            <div>
+                                <strong>Objeto:</strong><br>
+                                ${tr.objeto || 'Não informado'}
+                            </div>
+                            <div>
+                                <strong>Local:</strong><br>
+                                ${tr.local || 'Não informado'}
+                            </div>
+                            <div>
+                                <strong>Prazo de Execução:</strong><br>
+                                ${tr.prazoExecucao || '0'} dias
+                            </div>
+                            <div>
+                                <strong>Valor Estimado:</strong><br>
+                                R$ ${tr.valorEstimado ? parseFloat(tr.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Não informado'}
+                            </div>
+                        </div>
+                
+                        ${tr.descricaoObjeto ? `
+                            <div style="margin-bottom: 15px;">
+                                <strong>Descrição:</strong><br>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 5px;">
+                                    ${tr.descricaoObjeto}
+                                </div>
+                            </div>
+                        ` : ''}
+                
+                        ${tr.justificativa ? `
+                            <div style="margin-bottom: 15px;">
+                                <strong>Justificativa:</strong><br>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 5px;">
+                                    ${tr.justificativa}
+                                </div>
+                            </div>
+                        ` : ''}
+                
+                        ${tr.parecerComprador ? `
+                            <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                                <strong style="color: #0c5460;">Parecer do Comprador:</strong><br>
+                                ${tr.parecerComprador}
+                            </div>
+                        ` : ''}
+                
+                        ${tr.motivoReprovacao ? `
+                            <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                                <strong style="color: #721c24;">Motivo da Reprovação:</strong><br>
+                                ${tr.motivoReprovacao}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div style="padding: 20px; border-top: 1px solid #dee2e6; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="IntegracaoModulos.downloadTRWord(${JSON.stringify(tr).replace(/"/g, '&quot;')})" 
+                                style="padding: 8px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            📄 Download Word
+                        </button>
+                        ${(tr.status === 'PENDENTE' || tr.status === 'RASCUNHO' || !tr.status) ? `
+                            <button onclick="enviarTR('${id}')" 
+                                    style="padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                📤 Enviar para Aprovação
+                            </button>
+                        ` : ''}
+                        <button onclick="this.closest('div[style*=fixed]').remove()" 
+                                style="padding: 8px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            `;
+    
+            document.body.appendChild(modal);
+        }
+
+        // ADICIONAR esta nova função logo após a visualizarTR:
+        function enviarTR(id) {
+            if (!confirm('Deseja enviar este TR para aprovação do setor de compras?')) {
+                return;
+            }
+    
+            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const tr = trs.find(t => t.id === id);
+    
+            if (tr && IntegracaoModulos.enviarTRParaComprador(tr)) {
+                // Fechar modal se existir
+                const modal = document.querySelector('div[style*="fixed"]');
+                if (modal) modal.remove();
+        
+                // Recarregar a lista
+                carregarMeusTRs();
+            }
         }
 
         // Limpar formulário
