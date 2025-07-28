@@ -468,26 +468,26 @@
 
         <div class="nav-section">
             <div class="nav-title">REQUISITANTE</div>
-            <button class="nav-item active" onclick="mostrarPagina('dashboard')">
+            <button class="nav-item active" id="btn-dashboard">
                 <i class="fas fa-tachometer-alt"></i> Dashboard Requisitante
             </button>
-            <button class="nav-item" onclick="mostrarPagina('criar-tr')">
+            <button class="nav-item" id="btn-criar-tr">
                 <i class="fas fa-plus-circle"></i> Criar TR
             </button>
-            <button class="nav-item" onclick="mostrarPagina('meus-trs')">
+            <button class="nav-item" id="btn-meus-trs">
                 <i class="fas fa-list"></i> Meus TRs
             </button>
-            <button class="nav-item" onclick="mostrarPagina('emitir-parecer')">
+            <button class="nav-item" id="btn-emitir-parecer">
                 <i class="fas fa-file-alt"></i> Emitir Parecer
             </button>
         </div>
 
         <div class="nav-section">
             <div class="nav-title">SISTEMA</div>
-            <button class="nav-item" onclick="voltarSistema()">
+            <button class="nav-item" id="btn-voltar">
                 <i class="fas fa-home"></i> Voltar ao Sistema Principal
             </button>
-            <button class="nav-item" onclick="logout()">
+            <button class="nav-item" id="btn-logout">
                 <i class="fas fa-sign-out-alt"></i> Sair
             </button>
         </div>
@@ -525,17 +525,17 @@
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                <div class="stat-card" style="cursor: pointer;" onclick="mostrarPagina('criar-tr')">
+                <div class="stat-card" style="cursor: pointer;" id="card-criar-tr">
                     <i class="fas fa-plus-circle" style="font-size: 48px; color: #667eea; margin-bottom: 15px;"></i>
                     <h3 style="color: #333; margin-bottom: 10px;">Criar TR</h3>
                     <p style="color: #666;">Elaborar novo Termo de Referência</p>
                 </div>
-                <div class="stat-card" style="cursor: pointer;" onclick="mostrarPagina('meus-trs')">
+                <div class="stat-card" style="cursor: pointer;" id="card-meus-trs">
                     <i class="fas fa-list" style="font-size: 48px; color: #28a745; margin-bottom: 15px;"></i>
                     <h3 style="color: #333; margin-bottom: 10px;">Meus TRs</h3>
                     <p style="color: #666;">Visualizar TRs criados</p>
                 </div>
-                <div class="stat-card" style="cursor: pointer;" onclick="mostrarPagina('emitir-parecer')">
+                <div class="stat-card" style="cursor: pointer;" id="card-emitir-parecer">
                     <i class="fas fa-file-alt" style="font-size: 48px; color: #ffc107; margin-bottom: 15px;"></i>
                     <h3 style="color: #333; margin-bottom: 10px;">Emitir Parecer</h3>
                     <p style="color: #666;">Análise técnica de propostas</p>
@@ -677,13 +677,13 @@
                 </div>
 
                 <div style="text-align: center; margin-top: 30px;">
-                    <button type="button" class="btn btn-secondary" onclick="salvarRascunho()">
+                    <button type="button" class="btn btn-secondary" id="btn-salvar-rascunho">
                         <i class="fas fa-save"></i> Salvar como Rascunho
                     </button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-check-circle"></i> Concluir TR
                     </button>
-                    <button type="button" class="btn" onclick="limparFormulario()" style="background: #e0e0e0; color: #333;">
+                    <button type="button" class="btn" id="btn-limpar" style="background: #e0e0e0; color: #333;">
                         <i class="fas fa-undo"></i> Limpar
                     </button>
                 </div>
@@ -856,9 +856,16 @@
                 item.classList.remove('active');
             });
 
-            // Adicionar classe active ao item clicado
-            if (event && event.target) {
-                event.target.classList.add('active');
+            // Adicionar classe active ao botão correspondente
+            const btnMap = {
+                'dashboard': 'btn-dashboard',
+                'criar-tr': 'btn-criar-tr',
+                'meus-trs': 'btn-meus-trs',
+                'emitir-parecer': 'btn-emitir-parecer'
+            };
+            
+            if (btnMap[pagina]) {
+                document.getElementById(btnMap[pagina]).classList.add('active');
             }
 
             // Esconder todas as seções
@@ -1565,6 +1572,27 @@
 
         // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
+            // Configurar navegação
+            document.getElementById('btn-dashboard').addEventListener('click', () => mostrarPagina('dashboard'));
+            document.getElementById('btn-criar-tr').addEventListener('click', () => mostrarPagina('criar-tr'));
+            document.getElementById('btn-meus-trs').addEventListener('click', () => mostrarPagina('meus-trs'));
+            document.getElementById('btn-emitir-parecer').addEventListener('click', () => mostrarPagina('emitir-parecer'));
+            document.getElementById('btn-voltar').addEventListener('click', voltarSistema);
+            document.getElementById('btn-logout').addEventListener('click', logout);
+            
+            // Cards do dashboard
+            const cardCriarTr = document.getElementById('card-criar-tr');
+            const cardMeusTrs = document.getElementById('card-meus-trs');
+            const cardEmitirParecer = document.getElementById('card-emitir-parecer');
+            
+            if (cardCriarTr) cardCriarTr.addEventListener('click', () => mostrarPagina('criar-tr'));
+            if (cardMeusTrs) cardMeusTrs.addEventListener('click', () => mostrarPagina('meus-trs'));
+            if (cardEmitirParecer) cardEmitirParecer.addEventListener('click', () => mostrarPagina('emitir-parecer'));
+            
+            // Botões do formulário
+            document.getElementById('btn-salvar-rascunho').addEventListener('click', salvarRascunho);
+            document.getElementById('btn-limpar').addEventListener('click', limparFormulario);
+            
             // Carregar estatísticas iniciais
             carregarEstatisticas();
             verificarNotificacoes();
