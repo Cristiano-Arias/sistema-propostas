@@ -16,7 +16,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: white;
+            color: #333;
         }
 
         .container {
@@ -28,21 +28,23 @@
         .header {
             text-align: center;
             margin-bottom: 60px;
+            color: white;
         }
 
-        .logo {
+        .header .logo {
             font-size: 80px;
             margin-bottom: 20px;
+            opacity: 0.9;
         }
 
-        .title {
+        .header h1 {
             font-size: 48px;
             font-weight: 700;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
-        .subtitle {
+        .header p {
             font-size: 20px;
             opacity: 0.9;
             max-width: 800px;
@@ -54,7 +56,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 30px;
-            margin: 60px 0;
+            margin-bottom: 60px;
         }
 
         .feature-card {
@@ -63,6 +65,7 @@
             border-radius: 20px;
             padding: 30px;
             text-align: center;
+            color: white;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
@@ -71,36 +74,36 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
 
-        .feature-icon {
+        .feature-card i {
             font-size: 48px;
             margin-bottom: 20px;
-            color: #ffd700;
+            opacity: 0.9;
         }
 
-        .feature-title {
+        .feature-card h3 {
             font-size: 24px;
-            font-weight: 600;
             margin-bottom: 15px;
         }
 
-        .feature-description {
+        .feature-card p {
             font-size: 16px;
-            opacity: 0.9;
+            opacity: 0.8;
             line-height: 1.5;
         }
 
         .access-section {
             text-align: center;
-            margin-top: 60px;
-        }
-
-        .access-title {
-            font-size: 36px;
-            font-weight: 600;
             margin-bottom: 40px;
         }
 
-        .access-buttons {
+        .access-section h2 {
+            color: white;
+            font-size: 36px;
+            margin-bottom: 40px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .access-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
@@ -108,92 +111,88 @@
             margin: 0 auto;
         }
 
-        .access-button {
-            display: block;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+        .access-card {
+            background: white;
             border-radius: 20px;
-            padding: 30px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             text-decoration: none;
-            color: white;
-            transition: all 0.3s ease;
+            color: inherit;
             position: relative;
             overflow: hidden;
         }
 
-        .access-button:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-            border-color: rgba(255, 255, 255, 0.4);
-        }
-
-        .access-button::before {
+        .access-card::before {
             content: '';
             position: absolute;
             top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.5s ease;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--card-color);
         }
 
-        .access-button:hover::before {
-            left: 100%;
+        .access-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
         }
 
-        .access-icon {
+        .access-card.requisitante {
+            --card-color: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .access-card.comprador {
+            --card-color: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .access-card.fornecedor {
+            --card-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .access-card i {
             font-size: 64px;
             margin-bottom: 20px;
-            display: block;
+            background: var(--card-color);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .access-button-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 10px;
+        .access-card h3 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: #333;
         }
 
-        .access-button-description {
+        .access-card p {
             font-size: 16px;
-            opacity: 0.9;
-        }
-
-        .requisitante {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .comprador {
-            background: linear-gradient(135deg, #20b2aa 0%, #008b8b 100%);
-        }
-
-        .fornecedor {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #666;
+            line-height: 1.5;
         }
 
         .footer {
             text-align: center;
+            color: white;
+            opacity: 0.7;
             margin-top: 60px;
-            padding-top: 40px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            opacity: 0.8;
         }
 
         @media (max-width: 768px) {
-            .title {
+            .header h1 {
                 font-size: 36px;
             }
-            
-            .subtitle {
+
+            .header p {
                 font-size: 18px;
             }
-            
-            .access-title {
+
+            .access-section h2 {
                 font-size: 28px;
             }
-            
-            .access-buttons {
+
+            .access-cards {
                 grid-template-columns: 1fr;
             }
         }
@@ -202,74 +201,53 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🏢</div>
-            <h1 class="title">Sistema de Gestão de Propostas</h1>
-            <p class="subtitle">
-                Plataforma completa para gestão de processos licitatórios com análise técnica 
-                avançada, metodologias científicas e inteligência artificial integrada.
-            </p>
+            <div class="logo">🏛️</div>
+            <h1>Sistema de Gestão de Propostas</h1>
+            <p>Plataforma completa para gestão de processos licitatórios com análise técnica avançada, metodologias científicas e inteligência artificial integrada.</p>
         </div>
 
         <div class="features">
             <div class="feature-card">
-                <div class="feature-icon">📋</div>
-                <h3 class="feature-title">Criação de TR</h3>
-                <p class="feature-description">
-                    Formulários completos para Termos de Referência
-                </p>
+                <i class="fas fa-file-alt"></i>
+                <h3>Criação de TR</h3>
+                <p>Formulários completos para Termos de Referência</p>
             </div>
-            
             <div class="feature-card">
-                <div class="feature-icon">🔬</div>
-                <h3 class="feature-title">Análise Técnica</h3>
-                <p class="feature-description">
-                    Metodologias científicas (AHP, TOPSIS, ELECTRE, PROMETHEE)
-                </p>
+                <i class="fas fa-search"></i>
+                <h3>Análise Técnica</h3>
+                <p>Metodologias científicas (AHP, TOPSIS, ELECTRE, PROMETHEE)</p>
             </div>
-            
             <div class="feature-card">
-                <div class="feature-icon">🤖</div>
-                <h3 class="feature-title">IA Integrada</h3>
-                <p class="feature-description">
-                    Recomendações automáticas baseadas em dados
-                </p>
+                <i class="fas fa-brain"></i>
+                <h3>IA Integrada</h3>
+                <p>Recomendações automáticas baseadas em dados</p>
             </div>
-            
             <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3 class="feature-title">Relatórios</h3>
-                <p class="feature-description">
-                    Análises comparativas e dashboards executivos
-                </p>
+                <i class="fas fa-chart-bar"></i>
+                <h3>Relatórios</h3>
+                <p>Análises comparativas e dashboards executivos</p>
             </div>
         </div>
 
         <div class="access-section">
-            <h2 class="access-title">Acesso ao Sistema</h2>
-            
-            <div class="access-buttons">
-                <a href="static/login-requisitante-corrigido.html" class="access-button requisitante">
-                    <span class="access-icon">👤</span>
-                    <h3 class="access-button-title">Portal do Requisitante</h3>
-                    <p class="access-button-description">
-                        Gerenciar Termos de Referência e emitir pareceres técnicos
-                    </p>
+            <h2>Acesso ao Sistema</h2>
+            <div class="access-cards">
+                <a href="static/login-requisitante.html" class="access-card requisitante">
+                    <i class="fas fa-user"></i>
+                    <h3>Portal do Requisitante</h3>
+                    <p>Gerenciar Termos de Referência e emitir pareceres técnicos</p>
                 </a>
-                
-                <a href="static/login-comprador-corrigido.html" class="access-button comprador">
-                    <span class="access-icon">🏢</span>
-                    <h3 class="access-button-title">Portal do Comprador</h3>
-                    <p class="access-button-description">
-                        Gerenciar processos licitatórios e análises de propostas
-                    </p>
+
+                <a href="static/login-comprador.html" class="access-card comprador">
+                    <i class="fas fa-building"></i>
+                    <h3>Portal do Comprador</h3>
+                    <p>Gerenciar processos licitatórios e análises de propostas</p>
                 </a>
-                
-                <a href="static/login-fornecedor-corrigido.html" class="access-button fornecedor">
-                    <span class="access-icon">🏭</span>
-                    <h3 class="access-button-title">Portal do Fornecedor</h3>
-                    <p class="access-button-description">
-                        Participar de processos licitatórios e enviar propostas
-                    </p>
+
+                <a href="static/sistema-autenticacao-fornecedores.html" class="access-card fornecedor">
+                    <i class="fas fa-industry"></i>
+                    <h3>Portal do Fornecedor</h3>
+                    <p>Participar de processos licitatórios e enviar propostas</p>
                 </a>
             </div>
         </div>
@@ -278,29 +256,5 @@
             <p>&copy; 2025 Sistema de Gestão de Propostas Licitatórias. Todos os direitos reservados.</p>
         </div>
     </div>
-
-    <script>
-        // Adicionar efeitos de animação
-        document.addEventListener('DOMContentLoaded', function() {
-            // Animação de entrada para os cards
-            const cards = document.querySelectorAll('.feature-card, .access-button');
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }
-                });
-            });
-            
-            cards.forEach((card) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                observer.observe(card);
-            });
-        });
-    </script>
 </body>
 </html>
