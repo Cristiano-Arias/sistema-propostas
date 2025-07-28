@@ -15,7 +15,6 @@ import jwt
 import bcrypt
 import sqlite3
 from werkzeug.utils import secure_filename
-import pdfkit
 from io import BytesIO
 
 # Configuração do Flask
