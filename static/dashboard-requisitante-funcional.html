@@ -126,7 +126,7 @@
             transform: translateY(-5px);
         }
 
-        .stat-number {
+        .stat-value {
             font-size: 36px;
             font-weight: bold;
             color: #667eea;
@@ -256,11 +256,25 @@
             padding: 20px;
             margin-bottom: 15px;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: visible;
         }
 
         .tr-item:hover {
             box-shadow: 0 3px 10px rgba(0,0,0,0.1);
             transform: translateY(-2px);
+        }
+
+        .tr-item.aprovado {
+            border-left: 4px solid #28a745;
+        }
+
+        .tr-item.reprovado {
+            border-left: 4px solid #dc3545;
+        }
+
+        .tr-item.pendente {
+            border-left: 4px solid #ffc107;
         }
 
         .tr-title {
@@ -287,6 +301,29 @@
             text-align: center;
             padding: 20px;
             color: #666;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: #212529;
         }
 
         @media (max-width: 768px) {
@@ -353,21 +390,25 @@
                 <p>Gerencie Termos de Referência e análises técnicas</p>
             </div>
 
+            <div id="notificacoes-container" style="margin-bottom: 20px;">
+                <!-- Notificações aparecerão aqui -->
+            </div>
+
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-number" id="trs-criados">0</div>
+                    <div class="stat-value" id="trs-criados">0</div>
                     <div class="stat-label">TRs Criados</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" id="trs-ativos">0</div>
+                    <div class="stat-value" id="trs-ativos">0</div>
                     <div class="stat-label">TRs Ativos</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" id="pareceres-pendentes">0</div>
+                    <div class="stat-value" id="pareceres-pendentes">0</div>
                     <div class="stat-label">Pareceres Pendentes</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" id="pareceres-emitidos">0</div>
+                    <div class="stat-value" id="pareceres-emitidos">0</div>
                     <div class="stat-label">Pareceres Emitidos</div>
                 </div>
             </div>
@@ -630,6 +671,7 @@
             // Carregar dados específicos da página
             if (pagina === 'dashboard') {
                 carregarEstatisticas();
+                verificarNotificacoes();
             } else if (pagina === 'meus-trs') {
                 carregarMeusTRs();
             }
@@ -637,14 +679,14 @@
 
         // Função para voltar ao sistema principal
         function voltarSistema() {
-            window.location.href = 'sistema-gestao-corrigido2.html';
+            window.location.href = '/';
         }
 
         // Função de logout
         function logout() {
             if (confirm('Deseja realmente sair do sistema?')) {
                 localStorage.removeItem(SistemaLocal.CHAVES.USUARIO);
-                window.location.href = 'index.html';
+                window.location.href = '/';
             }
         }
 
@@ -658,7 +700,7 @@
             
             // Calcular estatísticas
             const trsCriados = meusTRs.length;
-            const trsAtivos = meusTRs.filter(tr => tr.status === 'ativo').length;
+            const trsAtivos = meusTRs.filter(tr => tr.status === 'ativo' || !tr.status).length;
             const pareceresPendentes = 0; // Implementar quando houver sistema de pareceres
             const pareceresEmitidos = 0; // Implementar quando houver sistema de pareceres
 
@@ -676,6 +718,7 @@
 
             const novoTR = {
                 id: SistemaLocal.gerarId(),
+                numeroTR: `TR-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`,
                 usuarioId: usuario.id,
                 usuarioNome: usuario.nome,
                 titulo: dados.titulo,
@@ -688,10 +731,11 @@
                 situacaoProposta: dados.situacaoProposta,
                 especificacao: dados.especificacao,
                 prazo: dados.prazo,
+                prazoExecucao: dados.prazo,
                 responsabilidades: dados.responsabilidades,
                 criterios: dados.criterios,
                 anexos: dados.anexos,
-                status: 'ativo',
+                status: dados.status || 'ativo',
                 dataCriacao: new Date().toISOString(),
                 dataAtualizacao: new Date().toISOString()
             };
@@ -705,7 +749,7 @@
             }
         }
 
-        // Carregar meus TRs
+        // Carregar meus TRs com nova interface
         function carregarMeusTRs() {
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             const usuario = SistemaLocal.obterUsuario();
@@ -730,22 +774,72 @@
             let html = '';
             meusTRs.forEach(tr => {
                 const dataFormatada = new Date(tr.dataCriacao).toLocaleDateString('pt-BR');
+                
+                // Determinar cor e texto do status
+                let statusClass = 'ativo';
+                let statusText = 'Rascunho';
+                let statusColor = '#6c757d';
+                
+                if (tr.status === 'ENVIADO_APROVACAO') {
+                    statusClass = 'pendente';
+                    statusText = 'Aguardando Aprovação';
+                    statusColor = '#ffc107';
+                } else if (tr.status === 'APROVADO') {
+                    statusClass = 'aprovado';
+                    statusText = 'Aprovado';
+                    statusColor = '#28a745';
+                } else if (tr.status === 'REPROVADO') {
+                    statusClass = 'reprovado';
+                    statusText = 'Reprovado';
+                    statusColor = '#dc3545';
+                }
+                
                 html += `
-                    <div class="tr-item">
+                    <div class="tr-item ${statusClass}" style="position: relative;">
                         <div class="tr-title">${tr.titulo}</div>
                         <div class="tr-meta">
                             <span><i class="fas fa-calendar"></i> ${dataFormatada}</span>
                             <span><i class="fas fa-tag"></i> ${tr.modalidade}</span>
-                            <span><i class="fas fa-circle" style="color: #28a745;"></i> ${tr.status}</span>
+                            <span><i class="fas fa-circle" style="color: ${statusColor};"></i> ${statusText}</span>
                         </div>
                         <div class="tr-objective">${tr.objetivo}</div>
-                        <div style="margin-top: 15px;">
-                            <button class="btn btn-primary" onclick="editarTR('${tr.id}')">
-                                <i class="fas fa-edit"></i> Editar
-                            </button>
+                        
+                        ${tr.parecerComprador ? `
+                            <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #2196f3;">
+                                <strong style="color: #1976d2;">Parecer do Comprador:</strong><br>
+                                ${tr.parecerComprador}
+                            </div>
+                        ` : ''}
+                        
+                        ${tr.motivoReprovacao ? `
+                            <div style="background: #ffebee; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #f44336;">
+                                <strong style="color: #c62828;">Motivo da Reprovação:</strong><br>
+                                ${tr.motivoReprovacao}
+                            </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            ${tr.status === 'ativo' || tr.status === 'REPROVADO' ? `
+                                <button class="btn btn-primary" onclick="editarTR('${tr.id}')">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                            ` : ''}
+                            
                             <button class="btn btn-secondary" onclick="visualizarTR('${tr.id}')">
                                 <i class="fas fa-eye"></i> Visualizar
                             </button>
+                            
+                            ${(tr.status === 'ativo' || !tr.status) ? `
+                                <button class="btn btn-success" onclick="enviarTRDireto('${tr.id}')">
+                                    <i class="fas fa-paper-plane"></i> Enviar para Aprovação
+                                </button>
+                            ` : ''}
+                            
+                            ${tr.status === 'APROVADO' ? `
+                                <span style="position: absolute; top: 10px; right: 10px; background: #28a745; color: white; padding: 5px 15px; border-radius: 20px; font-size: 12px;">
+                                    <i class="fas fa-check-circle"></i> Pronto para Processo
+                                </span>
+                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -754,21 +848,16 @@
             container.innerHTML = html;
         }
 
-        // Funções de ação para TRs
-        function editarTR(id) {
-            alert('Funcionalidade de edição será implementada em breve.');
-        }
-
-        // POR ESTA VERSÃO COMPLETA:
+        // Função de visualizar TR completa
         function visualizarTR(id) {
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            const trs = JSON.parse(localStorage.getItem('sistema_trs') || '[]');
             const tr = trs.find(t => t.id === id);
-    
+            
             if (!tr) {
                 alert('TR não encontrado!');
                 return;
             }
-    
+            
             // Criar modal de visualização
             const modal = document.createElement('div');
             modal.style.cssText = `
@@ -783,7 +872,7 @@
                 align-items: center;
                 justify-content: center;
             `;
-    
+            
             modal.innerHTML = `
                 <div style="background: white; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
                     <div style="padding: 20px; border-bottom: 1px solid #dee2e6;">
@@ -794,7 +883,7 @@
                     </div>
                     <div style="padding: 20px;">
                         <h4 style="color: #333; margin-bottom: 15px;">${tr.titulo || tr.objeto}</h4>
-                
+                        
                         <div style="margin-bottom: 15px;">
                             <strong>Status:</strong> 
                             <span style="
@@ -805,11 +894,11 @@
                                 color: white;
                             ">${tr.status || 'RASCUNHO'}</span>
                         </div>
-                
+                        
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                             <div>
                                 <strong>Objeto:</strong><br>
-                                ${tr.objeto || 'Não informado'}
+                                ${tr.objetivo || 'Não informado'}
                             </div>
                             <div>
                                 <strong>Local:</strong><br>
@@ -817,14 +906,14 @@
                             </div>
                             <div>
                                 <strong>Prazo de Execução:</strong><br>
-                                ${tr.prazoExecucao || '0'} dias
+                                ${tr.prazoExecucao || tr.prazo || '0'} dias
                             </div>
                             <div>
                                 <strong>Valor Estimado:</strong><br>
                                 R$ ${tr.valorEstimado ? parseFloat(tr.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Não informado'}
                             </div>
                         </div>
-                
+                        
                         ${tr.descricaoObjeto ? `
                             <div style="margin-bottom: 15px;">
                                 <strong>Descrição:</strong><br>
@@ -833,7 +922,7 @@
                                 </div>
                             </div>
                         ` : ''}
-                
+                        
                         ${tr.justificativa ? `
                             <div style="margin-bottom: 15px;">
                                 <strong>Justificativa:</strong><br>
@@ -842,14 +931,14 @@
                                 </div>
                             </div>
                         ` : ''}
-                
+                        
                         ${tr.parecerComprador ? `
                             <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
                                 <strong style="color: #0c5460;">Parecer do Comprador:</strong><br>
                                 ${tr.parecerComprador}
                             </div>
                         ` : ''}
-                
+                        
                         ${tr.motivoReprovacao ? `
                             <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
                                 <strong style="color: #721c24;">Motivo da Reprovação:</strong><br>
@@ -862,7 +951,7 @@
                                 style="padding: 8px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
                             📄 Download Word
                         </button>
-                        ${(tr.status === 'PENDENTE' || tr.status === 'RASCUNHO' || !tr.status) ? `
+                        ${(tr.status === 'ativo' || tr.status === 'RASCUNHO' || !tr.status) ? `
                             <button onclick="enviarTR('${id}')" 
                                     style="padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
                                 📤 Enviar para Aprovação
@@ -875,27 +964,48 @@
                     </div>
                 </div>
             `;
-    
+            
             document.body.appendChild(modal);
         }
 
-        // ADICIONAR esta nova função logo após a visualizarTR:
+        // Enviar TR para aprovação
         function enviarTR(id) {
             if (!confirm('Deseja enviar este TR para aprovação do setor de compras?')) {
                 return;
             }
-    
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            
+            const trs = JSON.parse(localStorage.getItem('sistema_trs') || '[]');
             const tr = trs.find(t => t.id === id);
-    
+            
             if (tr && IntegracaoModulos.enviarTRParaComprador(tr)) {
                 // Fechar modal se existir
                 const modal = document.querySelector('div[style*="fixed"]');
                 if (modal) modal.remove();
-        
+                
                 // Recarregar a lista
                 carregarMeusTRs();
             }
+        }
+
+        // Enviar TR direto da lista
+        function enviarTRDireto(id) {
+            if (!confirm('Deseja enviar este TR para aprovação do setor de compras?')) {
+                return;
+            }
+            
+            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+            const tr = trs.find(t => t.id === id);
+            
+            if (tr && IntegracaoModulos.enviarTRParaComprador(tr)) {
+                alert('✅ TR enviado com sucesso para aprovação!');
+                carregarMeusTRs(); // Recarregar lista
+                carregarEstatisticas(); // Atualizar estatísticas
+            }
+        }
+
+        // Funções de ação para TRs
+        function editarTR(id) {
+            alert('Funcionalidade de edição será implementada em breve.');
         }
 
         // Limpar formulário
@@ -964,10 +1074,46 @@
             document.getElementById('error-alert').style.display = 'none';
         }
 
+        // Verificar notificações
+        function verificarNotificacoes() {
+            const notificacoes = JSON.parse(localStorage.getItem('notificacoes_requisitante') || '[]');
+            const container = document.getElementById('notificacoes-container');
+            
+            if (!container) return;
+            
+            const naoLidas = notificacoes.filter(n => !n.lida);
+            
+            if (naoLidas.length > 0) {
+                container.innerHTML = naoLidas.map(notif => `
+                    <div class="alert ${notif.tipo === 'tr_aprovado' ? 'alert-success' : 'alert-error'}" 
+                         style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${notif.titulo}</strong><br>
+                            ${notif.mensagem}
+                        </div>
+                        <button onclick="marcarComoLida('${notif.id}')" class="btn btn-sm" style="background: transparent; color: inherit;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function marcarComoLida(notifId) {
+            let notificacoes = JSON.parse(localStorage.getItem('notificacoes_requisitante') || '[]');
+            const notif = notificacoes.find(n => n.id === notifId);
+            if (notif) {
+                notif.lida = true;
+                localStorage.setItem('notificacoes_requisitante', JSON.stringify(notificacoes));
+                verificarNotificacoes();
+            }
+        }
+
         // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
             // Carregar estatísticas iniciais
             carregarEstatisticas();
+            verificarNotificacoes();
 
             // Configurar formulário de TR
             document.getElementById('tr-form').addEventListener('submit', function(e) {
@@ -997,37 +1143,12 @@
                 }
             });
         });
-
-        // Função para voltar ao sistema principal
-        function voltarSistema() {
-            window.location.href = '/';
-        }
-
-        // Função para logout do sistema
-        function logout() {
-            if (confirm('Deseja realmente sair do sistema?')) {
-                localStorage.clear();
-                window.location.href = '/';
-            }
-        }
-            // Função para voltar ao sistema principal
-        function voltarSistema() {
-            window.location.href = "/";
-        }
-
-        // Função para logout do sistema
-        function logout() {
-            if (confirm("Deseja realmente sair do sistema?")) {
-                localStorage.clear();
-                window.location.href = "/";
-            }
-        }
     </script>
 
-        <!-- Scripts de Integração - Adicionar APÓS os scripts existentes -->
-        <script src="js/auth.js"></script>
-        <script src="js/api-client.js"></script>
-        <script src="js/integration.js"></script>
-        <script src="js/integracao-modulos.js"></script>
+    <!-- Scripts de Integração -->
+    <script src="js/auth.js"></script>
+    <script src="js/api-client.js"></script>
+    <script src="js/integration.js"></script>
+    <script src="js/integracao-modulos.js"></script>
 </body>
 </html>
