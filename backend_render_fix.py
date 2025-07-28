@@ -35,14 +35,101 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Extensões permitidas
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg'}
 
-# Inicializar extensões
-db = SQLAlchemy(app)
-jwt = JWTManager(app)
+# Inicializar CORS
 CORS(app, origins=['*'])
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Configuração JWT simples (sem flask-jwt-extended)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
+
+# Inicializar banco de dados SQLite
+def init_db():
+    """Inicializa o banco de dados"""
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    
+    # Criar tabela de usuários
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            senha TEXT NOT NULL,
+            perfil TEXT NOT NULL,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Criar tabela de TRs
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS termos_referencia (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            numero TEXT UNIQUE NOT NULL,
+            titulo TEXT NOT NULL,
+            objeto TEXT NOT NULL,
+            justificativa TEXT,
+            especificacoes TEXT,
+            prazo_entrega INTEGER,
+            local_entrega TEXT,
+            condicoes_pagamento TEXT,
+            garantia TEXT,
+            criterios_aceitacao TEXT,
+            status TEXT DEFAULT 'pendente',
+            usuario_id INTEGER,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            parecer TEXT,
+            motivo_reprovacao TEXT,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
+        )
+    ''')
+    
+    # Criar tabela de processos
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS processos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            numero TEXT UNIQUE NOT NULL,
+            tr_id INTEGER,
+            objeto TEXT NOT NULL,
+            modalidade TEXT,
+            data_abertura TIMESTAMP,
+            hora_abertura TEXT,
+            local_abertura TEXT,
+            prazo_proposta INTEGER,
+            contato_email TEXT,
+            contato_telefone TEXT,
+            status TEXT DEFAULT 'aberto',
+            criado_por INTEGER,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (tr_id) REFERENCES termos_referencia (id),
+            FOREIGN KEY (criado_por) REFERENCES usuarios (id)
+        )
+    ''')
+    
+    # Criar tabela de propostas
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS propostas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            processo_id INTEGER,
+            fornecedor_id INTEGER,
+            valor_total REAL,
+            prazo_entrega INTEGER,
+            validade_proposta INTEGER,
+            status TEXT DEFAULT 'enviada',
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (processo_id) REFERENCES processos (id),
+            FOREIGN KEY (fornecedor_id) REFERENCES usuarios (id)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    logger.info("Banco de dados inicializado com sucesso")
+
+# Inicializar banco ao iniciar
+init_db()
 
 # ========================================
 # MODELOS DE BANCO DE DADOS
