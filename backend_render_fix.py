@@ -958,4 +958,3 @@ if __name__ == '__main__':
 else:
     # Para Gunicorn
     init_app()
-
