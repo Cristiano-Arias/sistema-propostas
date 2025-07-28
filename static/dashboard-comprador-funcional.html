@@ -529,7 +529,7 @@
                     <h3 style="color: #333; margin-bottom: 10px;">Aprovação de TRs</h3>
                     <p style="color: #666;">Analisar e aprovar Termos de Referência</p>
                 </div>
-                <div class="stat-card" style="cursor: pointer;" id="card-criar-processo">
+                <div class="stat-card" style="cursor: pointer;" onclick="window.location.href='dashboard-comprador-criar-processo.html'">
                     <i class="fas fa-plus-circle" style="font-size: 48px; color: #28a745; margin-bottom: 15px;"></i>
                     <h3 style="color: #333; margin-bottom: 10px;">Criar Processo</h3>
                     <p style="color: #666;">Criar novo processo licitatório</p>
@@ -1443,7 +1443,7 @@
 
             // Cards do dashboard
             document.getElementById('card-aprovacao-tr')?.addEventListener('click', () => mostrarPagina('aprovacao-tr'));
-            document.getElementById('card-criar-processo')?.addEventListener('click', () => mostrarPagina('criar-processo'));
+            document.getElementById('card-criar-processo')?.addEventListener('click', () => {window.location.href = 'dashboard-comprador-criar-processo.html';});;
             document.getElementById('card-processos')?.addEventListener('click', () => mostrarPagina('processos'));
 
             // Event delegation para botões dinâmicos
