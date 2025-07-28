@@ -60,17 +60,16 @@
             background: rgba(255, 255, 255, 0.1);
             padding: 20px;
             border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .feature-icon {
-            font-size: 2rem;
+            font-size: 32px;
             margin-bottom: 10px;
         }
 
         .feature h3 {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
         }
 
         .feature p {
@@ -79,113 +78,111 @@
         }
 
         .access-section {
-            margin-top: 40px;
+            margin-bottom: 40px;
         }
 
         .access-title {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             margin-bottom: 30px;
             font-weight: 600;
         }
 
         .access-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            display: flex;
+            justify-content: center;
             gap: 20px;
-            max-width: 600px;
-            margin: 0 auto;
+            flex-wrap: wrap;
         }
 
         .access-btn {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 15px;
-            padding: 20px;
+            gap: 10px;
+            padding: 15px 25px;
             background: rgba(255, 255, 255, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 15px;
             color: white;
             text-decoration: none;
-            font-size: 1.1rem;
             font-weight: 600;
             transition: all 0.3s ease;
+            min-width: 200px;
         }
 
         .access-btn:hover {
             background: rgba(255, 255, 255, 0.3);
             border-color: rgba(255, 255, 255, 0.5);
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
 
         .btn-icon {
-            font-size: 1.5rem;
+            font-size: 24px;
         }
 
         .status-section {
-            margin-top: 40px;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
         }
 
         .status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
 
         .status-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 10px;
+            text-align: center;
         }
 
         .status-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #4ade80;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
         }
 
         .status-label {
             font-size: 0.9rem;
             opacity: 0.8;
-            margin-top: 5px;
         }
 
         .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 0.9rem;
+            margin-top: 30px;
             opacity: 0.7;
+        }
+
+        .footer p {
+            margin: 5px 0;
         }
 
         @media (max-width: 768px) {
             .container {
+                padding: 20px;
                 margin: 20px;
-                padding: 30px 20px;
             }
 
             h1 {
                 font-size: 2rem;
             }
 
-            .subtitle {
-                font-size: 1rem;
+            .access-buttons {
+                flex-direction: column;
+                align-items: center;
             }
 
-            .access-buttons {
-                grid-template-columns: 1fr;
+            .access-btn {
+                width: 100%;
+                max-width: 300px;
             }
         }
 
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
@@ -231,11 +228,11 @@
         <div class="access-section">
             <h2 class="access-title">Acesso ao Sistema</h2>
             <div class="access-buttons">
-                <a href="/static/dashboard-requisitante-funcional.html" class="access-btn">
+                <a href="/static/login-requisitante.html" class="access-btn">
                     <span class="btn-icon">👤</span>
                     <span>Portal do Requisitante</span>
                 </a>
-                <a href="/static/dashboard-comprador-funcional.html" class="access-btn">
+                <a href="/static/login-comprador.html" class="access-btn">
                     <span class="btn-icon">🏢</span>
                     <span>Portal do Comprador</span>
                 </a>
@@ -269,7 +266,7 @@
         </div>
 
         <div class="footer">
-            <p>Sistema de Gestão de Propostas Licitatórias v4.1</p>
+            <p>Sistema de Gestão de Propostas Licitatórias v4.2</p>
             <p>Desenvolvido com tecnologias modernas e metodologias científicas</p>
         </div>
     </div>
@@ -306,21 +303,21 @@
             setInterval(loadSystemStatus, 30000);
         });
 
-        // Adicionar efeito de loading nos botões
+        // Adicionar efeito de loading nos botões (CORRIGIDO - sem bloquear navegação)
         document.querySelectorAll('.access-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
+                // Adicionar efeito visual sem bloquear navegação
                 const originalText = this.innerHTML;
                 this.innerHTML = '<span class="loading"></span> Carregando...';
                 
-                // Restaurar texto original após 2 segundos se ainda na página
+                // Permitir navegação normal - apenas restaurar texto se usuário voltar
                 setTimeout(() => {
                     if (this.innerHTML.includes('Carregando')) {
                         this.innerHTML = originalText;
                     }
-                }, 2000);
+                }, 500);
             });
         });
     </script>
 </body>
 </html>
-
