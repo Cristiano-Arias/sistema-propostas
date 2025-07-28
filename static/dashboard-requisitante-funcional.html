@@ -857,7 +857,9 @@
             });
 
             // Adicionar classe active ao item clicado
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
 
             // Esconder todas as seções
             document.querySelectorAll('.content-section').forEach(section => {
@@ -1638,3 +1640,17 @@
                 }
             });
         });
+
+        // Garantir que as funções estejam no escopo global
+        window.mostrarPagina = mostrarPagina;
+        window.voltarSistema = voltarSistema;
+        window.logout = logout;
+        window.salvarRascunho = salvarRascunho;
+        window.limparFormulario = limparFormulario;
+        window.visualizarTR = visualizarTR;
+        window.editarTR = editarTR;
+        window.downloadTR = downloadTR;
+        window.enviarTRParaCompras = enviarTRParaCompras;
+        window.concluirTR = concluirTR;
+        window.excluirTR = excluirTR;
+        window.marcarComoLida = marcarComoLida;
