@@ -816,8 +816,37 @@
             currentTR = null;
         }
 
+        // SUBSTITUIR TODA A FUNÇÃO POR:
         function aprovarTR() {
             if (!currentTR) return;
+
+            const parecer = document.getElementById('parecerComprador').value.trim();
+            if (!parecer) {
+                alert('Por favor, adicione um comentário sobre a aprovação do TR.');
+                return;
+            }
+
+            if (!confirm('Tem certeza que deseja APROVAR este TR? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            // Usar a nova função de integração
+            const tr = IntegracaoModulos.aprovarTRComprador(currentTR.id, parecer);
+    
+            if (tr) {
+                alert('TR aprovado com sucesso!');
+        
+                if (confirm('Deseja criar um processo de compra agora?')) {
+                    // Salvar TR aprovado no sessionStorage para usar na criação do processo
+                    sessionStorage.setItem('tr_para_processo', JSON.stringify(tr));
+                    window.location.href = 'dashboard-comprador-criar-processo.html';
+                } else {
+                    closeModal();
+                    loadTRs();
+                    updateStats();
+                }
+            }
+        }
 
             const parecer = document.getElementById('parecerComprador').value.trim();
             if (!parecer) {
