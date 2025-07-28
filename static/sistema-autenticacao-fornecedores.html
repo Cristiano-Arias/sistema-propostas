@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Acesso - Fornecedores</title>
+    <title>Login Fornecedor - Sistema de Gestão de Propostas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -27,57 +28,30 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
             width: 100%;
-            max-width: 900px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            min-height: 600px;
-        }
-
-        .login-left {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            max-width: 400px;
             padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            color: white;
-        }
-
-        .login-right {
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
         .logo {
-            font-size: 48px;
-            margin-bottom: 20px;
+            text-align: center;
+            margin-bottom: 30px;
         }
 
-        .welcome-title {
-            font-size: 28px;
-            font-weight: 600;
+        .logo i {
+            font-size: 64px;
+            color: #667eea;
             margin-bottom: 15px;
         }
 
-        .welcome-subtitle {
-            font-size: 16px;
-            opacity: 0.9;
-            line-height: 1.6;
-        }
-
-        .login-form {
-            width: 100%;
-        }
-
-        .form-title {
-            font-size: 24px;
-            font-weight: 600;
+        .logo h1 {
             color: #333;
-            margin-bottom: 30px;
-            text-align: center;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 14px;
         }
 
         .form-group {
@@ -129,61 +103,23 @@
             transform: none;
         }
 
-        .error-message {
-            background: #fee;
-            color: #c33;
+        .error-message, .success-message {
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
-            border: 1px solid #fcc;
             display: none;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
         }
 
         .success-message {
             background: #efe;
             color: #363;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
             border: 1px solid #cfc;
-            display: none;
-        }
-
-        .help-text {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin-top: 20px;
-        }
-
-        .help-text a {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .help-text a:hover {
-            text-decoration: underline;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         .credenciais-demo {
@@ -192,12 +128,6 @@
             border-radius: 10px;
             padding: 20px;
             margin-top: 20px;
-        }
-
-        .credenciais-demo h4 {
-            color: #495057;
-            margin-bottom: 15px;
-            text-align: center;
         }
 
         .demo-item {
@@ -210,109 +140,126 @@
             font-size: 14px;
         }
 
-        .demo-item:last-child {
-            margin-bottom: 0;
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
         }
 
-        .demo-label {
-            font-weight: 600;
-            color: #6c757d;
-            margin-bottom: 5px;
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
         }
 
-        .demo-value {
-            color: #495057;
+        .back-link a:hover {
+            text-decoration: underline;
         }
 
-        @media (max-width: 768px) {
-            .login-container {
-                grid-template-columns: 1fr;
-                max-width: 400px;
-            }
-            
-            .login-left {
-                padding: 30px 20px;
-            }
-            
-            .login-right {
-                padding: 30px 20px;
-            }
-            
-            .welcome-title {
-                font-size: 24px;
-            }
-            
-            .form-title {
-                font-size: 20px;
-            }
+        .toggle-credenciais {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .toggle-credenciais a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .toggle-credenciais a:hover {
+            text-decoration: underline;
+        }
+
+        .credenciais-demo {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <div class="login-left">
-            <div class="logo">🏢</div>
-            <h1 class="welcome-title">Portal do Fornecedor</h1>
-            <p class="welcome-subtitle">
-                Acesse sua área exclusiva para participar de processos licitatórios. 
-                Envie propostas, acompanhe resultados e mantenha seus dados atualizados.
-            </p>
+        <div class="logo">
+            <i class="fas fa-industry"></i>
+            <h1>Portal do Fornecedor</h1>
+            <p>Acesse sua área exclusiva para participar de processos licitatórios</p>
         </div>
-        
-        <div class="login-right">
-            <form class="login-form" id="loginForm">
-                <h2 class="form-title">Acesso ao Sistema</h2>
-                
-                <div class="error-message" id="errorMessage"></div>
-                <div class="success-message" id="successMessage"></div>
-                
-                <div class="form-group">
-                    <label for="login">Login</label>
-                    <input type="text" id="login" name="login" required placeholder="Digite seu login">
-                </div>
-                
-                <div class="form-group">
-                    <label for="senha">Senha</label>
-                    <input type="password" id="senha" name="senha" required placeholder="Digite sua senha">
-                </div>
-                
-                <button type="submit" class="login-btn" id="loginBtn">
-                    Entrar no Sistema
-                </button>
-                
-                <div class="loading" id="loading">
-                    <div class="loading-spinner"></div>
-                    <p>Validando credenciais...</p>
-                </div>
-                
-                <div class="help-text">
-                    Não possui acesso? Entre em contato com o setor de licitações.<br>
-                    <a href="#" onclick="mostrarCredenciaisDemo()">Ver credenciais de demonstração</a>
-                </div>
-            </form>
-            
-            <div class="credenciais-demo" id="credenciaisDemo" style="display: none;">
-                <h4>🔑 Credenciais de Demonstração</h4>
-                <div id="credenciaisList">
-                    <!-- Credenciais serão carregadas aqui -->
-                </div>
-                <div style="text-align: center; margin-top: 15px;">
-                    <a href="#" onclick="ocultarCredenciaisDemo()" style="color: #6c757d; font-size: 12px;">Ocultar</a>
-                </div>
+
+        <form id="loginForm">
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <div class="form-group">
+                <label for="login">Login</label>
+                <input type="text" id="login" name="login" required placeholder="Digite seu login">
             </div>
+
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senha" required placeholder="Digite sua senha">
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                Entrar no Sistema
+            </button>
+        </form>
+
+        <div class="toggle-credenciais">
+            <a href="#" onclick="toggleCredenciais()">Ver credenciais de demonstração</a>
+        </div>
+
+        <div class="credenciais-demo" id="credenciaisDemo">
+            <h4>🔑 Credenciais Disponíveis</h4>
+            <div id="credenciaisList">
+                <!-- Credenciais serão carregadas dinamicamente -->
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="#" onclick="toggleCredenciais()" style="color: #6c757d; font-size: 12px;">Ocultar</a>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="../index.html">← Voltar ao Sistema Principal</a>
         </div>
     </div>
 
     <script>
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', function() {
-            carregarCredenciaisDemo();
+        // Sistema de dados local
+        const SistemaLocal = {
+            CHAVES: {
+                CREDENCIAIS: 'credenciais_fornecedores',
+                FORNECEDOR_LOGADO: 'fornecedor_logado'
+            },
             
-            // Adicionar event listener para o formulário
-            document.getElementById('loginForm').addEventListener('submit', function(e) {
+            carregar: function(chave, padrao = []) {
+                try {
+                    const dados = localStorage.getItem(chave);
+                    return dados ? JSON.parse(dados) : padrao;
+                } catch (e) {
+                    console.error('Erro ao carregar dados:', e);
+                    return padrao;
+                }
+            },
+            
+            salvar: function(chave, dados) {
+                try {
+                    localStorage.setItem(chave, JSON.stringify(dados));
+                    return true;
+                } catch (e) {
+                    console.error('Erro ao salvar dados:', e);
+                    return false;
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            
+            loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 realizarLogin();
             });
+            
+            carregarCredenciaisDemo();
         });
 
         function realizarLogin() {
@@ -324,171 +271,83 @@
                 return;
             }
             
-            mostrarLoading(true);
-            ocultarMensagens();
-            
-            // Simular delay de autenticação
-            setTimeout(() => {
-                const resultado = validarCredenciais(login, senha);
-                
-                mostrarLoading(false);
-                
-                if (resultado.sucesso) {
-                    mostrarSucesso('Login realizado com sucesso! Redirecionando...');
-                    
-                    // Salvar dados do fornecedor logado
-                    localStorage.setItem('fornecedor_logado', JSON.stringify(resultado.fornecedor));
-                    
-                    // Redirecionar após 2 segundos
-                    setTimeout(() => {
-                        window.location.href = 'dashboard-fornecedor-funcional.html';
-                    }, 2000);
-                } else {
-                    mostrarErro(resultado.mensagem);
-                }
-            }, 1500);
-        }
-
-        function validarCredenciais(login, senha) {
-            // Buscar credenciais salvas
-            const credenciais = JSON.parse(localStorage.getItem('credenciais_fornecedores') || '[]');
-            
-            // Procurar credencial correspondente
+            // Verificar credenciais no localStorage
+            const credenciais = SistemaLocal.carregar(SistemaLocal.CHAVES.CREDENCIAIS, []);
             const credencial = credenciais.find(c => c.login === login && c.senha === senha && c.ativo);
             
             if (credencial) {
-                return {
-                    sucesso: true,
-                    fornecedor: {
-                        id: credencial.fornecedorId || credencial.id,
-                        cnpj: credencial.cnpj,
-                        razaoSocial: credencial.razaoSocial,
-                        email: credencial.email,
-                        login: credencial.login,
-                        processoId: credencial.processoId,
-                        numeroProcesso: credencial.numeroProcesso
-                    }
+                // Salvar dados do fornecedor logado
+                const fornecedorLogado = {
+                    id: credencial.fornecedorId || credencial.id,
+                    cnpj: credencial.cnpj,
+                    razaoSocial: credencial.razaoSocial,
+                    email: credencial.email,
+                    login: credencial.login,
+                    dataLogin: new Date().toISOString()
                 };
+                
+                SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO, fornecedorLogado);
+                
+                mostrarSucesso('Login realizado com sucesso! Redirecionando...');
+                
+                // Redirecionar para o dashboard correto do fornecedor
+                setTimeout(() => {
+                    window.location.href = 'dashboard-fornecedor-integrado-completo.html';
+                }, 1500);
             } else {
-                return {
-                    sucesso: false,
-                    mensagem: 'Login ou senha incorretos. Verifique suas credenciais e tente novamente.'
-                };
+                mostrarErro('Login ou senha incorretos.');
             }
         }
 
         function carregarCredenciaisDemo() {
-            const credenciais = JSON.parse(localStorage.getItem('credenciais_fornecedores') || '[]');
+            const credenciais = SistemaLocal.carregar(SistemaLocal.CHAVES.CREDENCIAIS, []);
             const lista = document.getElementById('credenciaisList');
             
             if (credenciais.length === 0) {
-                lista.innerHTML = '<p style="text-align: center; color: #6c757d;">Nenhuma credencial disponível</p>';
+                lista.innerHTML = '<p style="text-align: center; color: #6c757d; font-size: 14px;">Nenhuma credencial disponível.<br>Credenciais são geradas pelo módulo de compras.</p>';
                 return;
             }
             
-            lista.innerHTML = credenciais.map(c => `
+            lista.innerHTML = credenciais.filter(c => c.ativo).map(c => `
                 <div class="demo-item">
-                    <div class="demo-label">Empresa: ${c.razaoSocial}</div>
-                    <div class="demo-value">Login: ${c.login}</div>
-                    <div class="demo-value">Senha: ${c.senha}</div>
+                    <div style="font-weight: 600; color: #6c757d; margin-bottom: 5px;">Empresa: ${c.razaoSocial}</div>
+                    <div style="color: #495057;">Login: ${c.login}</div>
+                    <div style="color: #495057;">Senha: ${c.senha}</div>
                 </div>
             `).join('');
         }
 
-        function mostrarCredenciaisDemo() {
-            document.getElementById('credenciaisDemo').style.display = 'block';
-        }
-
-        function ocultarCredenciaisDemo() {
-            document.getElementById('credenciaisDemo').style.display = 'none';
-        }
-
-        function mostrarLoading(mostrar) {
-            const loading = document.getElementById('loading');
-            const loginBtn = document.getElementById('loginBtn');
-            
-            if (mostrar) {
-                loading.style.display = 'block';
-                loginBtn.disabled = true;
-                loginBtn.textContent = 'Validando...';
+        function toggleCredenciais() {
+            const demo = document.getElementById('credenciaisDemo');
+            if (demo.style.display === 'none' || demo.style.display === '') {
+                demo.style.display = 'block';
+                carregarCredenciaisDemo();
             } else {
-                loading.style.display = 'none';
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Entrar no Sistema';
+                demo.style.display = 'none';
             }
         }
 
         function mostrarErro(mensagem) {
             const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            
             errorDiv.textContent = mensagem;
             errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
         }
 
         function mostrarSucesso(mensagem) {
+            const errorDiv = document.getElementById('errorMessage');
             const successDiv = document.getElementById('successMessage');
+            
             successDiv.textContent = mensagem;
             successDiv.style.display = 'block';
-        }
-
-        function ocultarMensagens() {
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
-        }
-
-        // Função para criar credenciais de teste (apenas para demonstração)
-        function criarCredenciaisTeste() {
-            const credenciaisTeste = [
-                {
-                    id: 1,
-                    processoId: 1,
-                    numeroProcesso: 'PROC-2025-8063',
-                    cnpj: '11.222.333/0001-44',
-                    razaoSocial: 'Alpha Tecnologia Ltda',
-                    email: 'contato@alpha.com',
-                    login: 'fornecedor_33000144',
-                    senha: 'Alpha123',
-                    ativo: true,
-                    dataCriacao: new Date().toISOString()
-                },
-                {
-                    id: 2,
-                    processoId: 1,
-                    numeroProcesso: 'PROC-2025-8063',
-                    cnpj: '22.333.444/0001-55',
-                    razaoSocial: 'Beta Solutions S.A.',
-                    email: 'contato@beta.com',
-                    login: 'fornecedor_44000155',
-                    senha: 'Beta456',
-                    ativo: true,
-                    dataCriacao: new Date().toISOString()
-                },
-                {
-                    id: 3,
-                    processoId: 1,
-                    numeroProcesso: 'PROC-2025-8063',
-                    cnpj: '33.444.555/0001-66',
-                    razaoSocial: 'Gamma Tech Inovação',
-                    email: 'contato@gamma.com',
-                    login: 'fornecedor_55000166',
-                    senha: 'Gamma789',
-                    ativo: true,
-                    dataCriacao: new Date().toISOString()
-                }
-            ];
-            
-            localStorage.setItem('credenciais_fornecedores', JSON.stringify(credenciaisTeste));
-            carregarCredenciaisDemo();
-        }
-
-        // Verificar se existem credenciais, se não, criar as de teste
-        if (!localStorage.getItem('credenciais_fornecedores')) {
-            criarCredenciaisTeste();
+            errorDiv.style.display = 'none';
         }
     </script>
-
-            <!-- Scripts de Integração - Adicionar APÓS os scripts existentes -->
-            <script src="js/auth.js"></script>
-            <script src="js/api-client.js"></script>
-            <script src="js/integration.js"></script>
 </body>
 </html>
