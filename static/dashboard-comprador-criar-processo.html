@@ -670,22 +670,48 @@
         });
 
         function carregarTRsAprovados() {
+            // Buscar TRs aprovados do sistema antigo
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
             const trsAprovados = trs.filter(tr => tr.status === 'APROVADO');
+    
+            // Buscar também TRs aprovados do novo sistema
+            const trsAprovadosNovo = JSON.parse(localStorage.getItem('trs_aprovados') || '[]');
+    
+            // Combinar todos os TRs aprovados (evitando duplicatas)
+            const todosTRsAprovados = [...trsAprovados];
+            trsAprovadosNovo.forEach(trNovo => {
+                if (!todosTRsAprovados.find(tr => tr.numeroTR === trNovo.numeroTR)) {
+                    todosTRsAprovados.push(trNovo);
+                }
+            });
+    
+            // Verificar se veio de uma aprovação recente
+            const trRecente = sessionStorage.getItem('tr_para_processo');
+            if (trRecente) {
+                const tr = JSON.parse(trRecente);
+                // Auto-selecionar o TR recém-aprovado
+                setTimeout(() => {
+                    const selector = document.querySelector(`[onclick*="${tr.numeroTR}"]`);
+                    if (selector) {
+                        selector.click();
+                    }
+                }, 100);
+                sessionStorage.removeItem('tr_para_processo');
+            }
             
             const trList = document.getElementById('trList');
             const emptyState = document.getElementById('emptyTRState');
             
-            if (trsAprovados.length === 0) {
+            if (todosTRsAprovados.length === 0) {
                 trList.style.display = 'none';
                 emptyState.style.display = 'block';
                 return;
             }
-
+            
             trList.style.display = 'block';
             emptyState.style.display = 'none';
             
-            trList.innerHTML = trsAprovados.map(tr => `
+            trList.innerHTML = todosTRsAprovados.map(tr => `
                 <div class="tr-selector" onclick="selecionarTR('${tr.numeroTR}')">
                     <div class="tr-header">
                         <div class="tr-number">${tr.numeroTR}</div>
@@ -700,7 +726,7 @@
                 </div>
             `).join('');
         }
-
+        
         function selecionarTR(numeroTR) {
             // Remover seleção anterior
             document.querySelectorAll('.tr-selector').forEach(selector => {
@@ -710,13 +736,18 @@
             // Adicionar seleção atual
             event.currentTarget.classList.add('selected');
             
-            // Buscar TR selecionado
+            // Buscar TR selecionado no sistema antigo
             const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
             trSelecionado = trs.find(tr => tr.numeroTR === numeroTR);
             
+            // Se não encontrar, buscar no novo sistema
+            if (!trSelecionado) {
+                const trsAprovadosNovo = JSON.parse(localStorage.getItem('trs_aprovados') || '[]');
+                trSelecionado = trsAprovadosNovo.find(tr => tr.numeroTR === numeroTR);
+            }
+            
             console.log('TR selecionado:', trSelecionado);
         }
-
         function gerarNumeroProcesso() {
             const ano = new Date().getFullYear();
             const numero = String(Date.now()).slice(-4);
