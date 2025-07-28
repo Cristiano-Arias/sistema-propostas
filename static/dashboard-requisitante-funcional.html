@@ -1520,6 +1520,7 @@
             
             if (tipo === 'success') {
                 document.getElementById('success-alert').style.display = 'block';
+                document.getElementById('success-alert').innerHTML = `<i class="fas fa-check-circle"></i> ${mensagem}`;
             } else if (tipo === 'error') {
                 document.getElementById('error-message').textContent = mensagem;
                 document.getElementById('error-alert').style.display = 'block';
@@ -1612,9 +1613,25 @@
                     'responsabilidades', 'criterios'
                 ];
                 
+                const camposNomes = {
+                    'titulo': 'Título do TR',
+                    'modalidade': 'Modalidade Sugerida',
+                    'valorEstimado': 'Valor Estimado',
+                    'objetivo': 'Objetivo',
+                    'conformidade': 'Conformidade ao Termo de Referência',
+                    'local': 'Local/Acesso',
+                    'escopo': 'Escopo Técnico',
+                    'situacaoAtual': 'Situação Atual',
+                    'situacaoProposta': 'Situação Proposta',
+                    'especificacao': 'Especificação Técnica',
+                    'prazo': 'Prazo de Execução',
+                    'responsabilidades': 'Responsabilidades',
+                    'criterios': 'Critérios de Avaliação de Propostas'
+                };
+                
                 for (let campo of camposObrigatorios) {
                     if (!dados[campo] || dados[campo].toString().trim() === '') {
-                        mostrarAlerta('error', `O campo "${campo}" é obrigatório.`);
+                        mostrarAlerta('error', `O campo "${camposNomes[campo]}" é obrigatório.`);
                         return;
                     }
                 }
@@ -1662,6 +1679,9 @@
                         mostrarAlerta('success', 'TR elaborado com sucesso! Agora você pode enviá-lo para aprovação.');
                         document.getElementById('tr-form').reset();
                         carregarEstatisticas();
+                        
+                        // Ir para a lista de TRs após 2 segundos
+                        setTimeout(() => mostrarPagina('meus-trs'), 2000);
                     } else {
                         mostrarAlerta('error', 'Erro ao salvar TR: ' + resultado.erro);
                     }
