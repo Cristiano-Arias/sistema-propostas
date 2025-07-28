@@ -852,7 +852,18 @@
                 window.location.href = '/';
             }
         }
+            // Função para voltar ao sistema principal
+        function voltarSistema() {
+            window.location.href = "/";
+        }
+
+        // Função para logout do sistema
+        function logout() {
+            if (confirm("Deseja realmente sair do sistema?")) {
+                localStorage.clear();
+                window.location.href = "/";
+            }
+        }
     </script>
 </body>
 </html>
-
