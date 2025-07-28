@@ -16,16 +16,17 @@ import bcrypt
 import sqlite3
 from werkzeug.utils import secure_filename
 from io import BytesIO
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
 
 # Configuração do Flask
 app = Flask(__name__, static_folder='static')
 
 # Configurações
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=8)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///sistema_propostas.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
@@ -41,9 +42,6 @@ CORS(app, origins=['*'])
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Configuração JWT simples (sem flask-jwt-extended)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
 
 # Inicializar banco de dados SQLite
 def init_db():
@@ -124,1076 +122,948 @@ def init_db():
         )
     ''')
     
+    # Criar tabela de notificações
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS notificacoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER,
+            titulo TEXT NOT NULL,
+            mensagem TEXT NOT NULL,
+            lida INTEGER DEFAULT 0,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
+        )
+    ''')
+    
+    # Criar tabela de convites
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS convites_processo (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            processo_id INTEGER,
+            fornecedor_id INTEGER,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (processo_id) REFERENCES processos (id),
+            FOREIGN KEY (fornecedor_id) REFERENCES usuarios (id)
+        )
+    ''')
+    
     conn.commit()
+    
+    # Criar usuários de teste se não existirem
+    cursor.execute("SELECT COUNT(*) FROM usuarios")
+    if cursor.fetchone()[0] == 0:
+        usuarios_teste = [
+            ('Requisitante Teste', 'requisitante@empresa.com', 'req123', 'requisitante'),
+            ('Comprador Teste', 'comprador@empresa.com', 'comp123', 'comprador'),
+            ('Fornecedor Teste', 'fornecedor@empresa.com', 'forn123', 'fornecedor')
+        ]
+        
+        for nome, email, senha, perfil in usuarios_teste:
+            senha_hash = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt())
+            cursor.execute('''
+                INSERT INTO usuarios (nome, email, senha, perfil)
+                VALUES (?, ?, ?, ?)
+            ''', (nome, email, senha_hash, perfil))
+        
+        conn.commit()
+        logger.info("Usuários de teste criados")
+    
     conn.close()
     logger.info("Banco de dados inicializado com sucesso")
 
 # Inicializar banco ao iniciar
 init_db()
 
-# ========================================
-# MODELOS DE BANCO DE DADOS
-# ========================================
-
-class Usuario(db.Model):
-    __tablename__ = 'usuarios'
-    
-    id = db.Column(db.String(50), primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    senha_hash = db.Column(db.String(255), nullable=False)
-    tipo = db.Column(db.String(20), nullable=False)
-    ativo = db.Column(db.Boolean, default=True)
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def set_senha(self, senha):
-        self.senha_hash = generate_password_hash(senha)
-    
-    def verificar_senha(self, senha):
-        return check_password_hash(self.senha_hash, senha)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'nome': self.nome,
-            'email': self.email,
-            'tipo': self.tipo,
-            'ativo': self.ativo
-        }
-
-class TermoReferencia(db.Model):
-    __tablename__ = 'termos_referencia'
-    
-    id = db.Column(db.String(50), primary_key=True)
-    numero = db.Column(db.String(50), unique=True, nullable=False)
-    titulo = db.Column(db.String(200), nullable=False)
-    objeto = db.Column(db.Text, nullable=False)
-    descricao = db.Column(db.Text)
-    modalidade = db.Column(db.String(50))
-    local = db.Column(db.String(100))
-    prazo_execucao = db.Column(db.Integer)
-    valor_estimado = db.Column(db.Numeric(15, 2))
-    status = db.Column(db.String(20), default='PENDENTE_APROVACAO')
-    criado_por = db.Column(db.String(50), db.ForeignKey('usuarios.id'))
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-    aprovado_por = db.Column(db.String(50))
-    data_aprovacao = db.Column(db.DateTime)
-    parecer_comprador = db.Column(db.Text)
-    
-    # Campos técnicos
-    especificacoes_tecnicas = db.Column(db.Text)
-    requisitos_funcionais = db.Column(db.Text)
-    requisitos_nao_funcionais = db.Column(db.Text)
-    criterios_aceitacao = db.Column(db.Text)
-    documentacao_exigida = db.Column(db.Text)
-    qualificacao_tecnica = db.Column(db.Text)
-    local_entrega = db.Column(db.String(200))
-    condicoes_pagamento = db.Column(db.Text)
-    garantias_exigidas = db.Column(db.Text)
-    fonte_pagadora = db.Column(db.String(100))
-    justificativa = db.Column(db.Text)
-    
-    # Relações
-    criador = db.relationship('Usuario', backref='trs_criados', foreign_keys=[criado_por])
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'numeroTR': self.numero,
-            'titulo': self.titulo,
-            'objeto': self.objeto,
-            'descricao': self.descricao,
-            'modalidade': self.modalidade,
-            'local': self.local,
-            'prazoExecucao': self.prazo_execucao,
-            'valorEstimado': float(self.valor_estimado) if self.valor_estimado else None,
-            'status': self.status,
-            'criadoPor': self.criado_por,
-            'criadorNome': self.criador.nome if self.criador else None,
-            'dataCriacao': self.data_criacao.isoformat() if self.data_criacao else None,
-            'aprovadoPor': self.aprovado_por,
-            'dataAprovacao': self.data_aprovacao.isoformat() if self.data_aprovacao else None,
-            'parecerComprador': self.parecer_comprador,
-            'especificacoesTecnicas': self.especificacoes_tecnicas,
-            'requisitosFuncionais': self.requisitos_funcionais,
-            'requisitosNaoFuncionais': self.requisitos_nao_funcionais,
-            'criteriosAceitacao': self.criterios_aceitacao,
-            'documentacaoExigida': self.documentacao_exigida,
-            'qualificacaoTecnica': self.qualificacao_tecnica,
-            'localEntrega': self.local_entrega,
-            'condicoesPagamento': self.condicoes_pagamento,
-            'garantiasExigidas': self.garantias_exigidas,
-            'fontePagadora': self.fonte_pagadora,
-            'justificativa': self.justificativa
-        }
-
-class Processo(db.Model):
-    __tablename__ = 'processos'
-    
-    id = db.Column(db.String(50), primary_key=True)
-    numero = db.Column(db.String(50), unique=True, nullable=False)
-    tr_id = db.Column(db.String(50), db.ForeignKey('termos_referencia.id'))
-    objeto = db.Column(db.Text, nullable=False)
-    modalidade = db.Column(db.String(50), nullable=False)
-    data_abertura = db.Column(db.DateTime)
-    data_limite = db.Column(db.DateTime)
-    local_abertura = db.Column(db.String(200))
-    status = db.Column(db.String(20), default='ATIVO')
-    criado_por = db.Column(db.String(50), db.ForeignKey('usuarios.id'))
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relações
-    tr = db.relationship('TermoReferencia', backref='processo')
-    criador = db.relationship('Usuario', backref='processos_criados')
-    fornecedores = db.relationship('ProcessoFornecedor', backref='processo')
-    propostas = db.relationship('Proposta', backref='processo')
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'numero': self.numero,
-            'trId': self.tr_id,
-            'objeto': self.objeto,
-            'modalidade': self.modalidade,
-            'dataAbertura': self.data_abertura.isoformat() if self.data_abertura else None,
-            'dataLimite': self.data_limite.isoformat() if self.data_limite else None,
-            'localAbertura': self.local_abertura,
-            'status': self.status,
-            'criadoPor': self.criado_por,
-            'criadorNome': self.criador.nome if self.criador else None,
-            'dataCriacao': self.data_criacao.isoformat() if self.data_criacao else None,
-            'fornecedores': [f.to_dict() for f in self.fornecedores],
-            'totalPropostas': len(self.propostas)
-        }
-
-class ProcessoFornecedor(db.Model):
-    __tablename__ = 'processo_fornecedores'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    processo_id = db.Column(db.String(50), db.ForeignKey('processos.id'))
-    cnpj = db.Column(db.String(18), nullable=False)
-    razao_social = db.Column(db.String(200), nullable=False)
-    email = db.Column(db.String(120), nullable=False)
-    login = db.Column(db.String(50), unique=True)
-    senha = db.Column(db.String(50))
-    ativo = db.Column(db.Boolean, default=True)
-    data_convite = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'processoId': self.processo_id,
-            'cnpj': self.cnpj,
-            'razaoSocial': self.razao_social,
-            'email': self.email,
-            'login': self.login,
-            'ativo': self.ativo,
-            'dataConvite': self.data_convite.isoformat() if self.data_convite else None
-        }
-
-class Proposta(db.Model):
-    __tablename__ = 'propostas'
-    
-    id = db.Column(db.String(50), primary_key=True)
-    processo_id = db.Column(db.String(50), db.ForeignKey('processos.id'))
-    fornecedor_login = db.Column(db.String(50), nullable=False)
-    empresa = db.Column(db.String(200), nullable=False)
-    cnpj = db.Column(db.String(18), nullable=False)
-    valor = db.Column(db.Numeric(15, 2), nullable=False)
-    prazo_execucao = db.Column(db.Integer)
-    descricao_tecnica = db.Column(db.Text)
-    observacoes = db.Column(db.Text)
-    status = db.Column(db.String(20), default='ENVIADA')
-    data_envio = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'processoId': self.processo_id,
-            'fornecedorLogin': self.fornecedor_login,
-            'empresa': self.empresa,
-            'cnpj': self.cnpj,
-            'valor': float(self.valor) if self.valor else 0,
-            'prazoExecucao': self.prazo_execucao,
-            'descricaoTecnica': self.descricao_tecnica,
-            'observacoes': self.observacoes,
-            'status': self.status,
-            'dataEnvio': self.data_envio.isoformat() if self.data_envio else None
-        }
-
-class Notificacao(db.Model):
-    __tablename__ = 'notificacoes'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.String(50))
-    tipo = db.Column(db.String(50))
-    titulo = db.Column(db.String(200))
-    mensagem = db.Column(db.Text)
-    lida = db.Column(db.Boolean, default=False)
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'tipo': self.tipo,
-            'titulo': self.titulo,
-            'mensagem': self.mensagem,
-            'lida': self.lida,
-            'dataCriacao': self.data_criacao.isoformat() if self.data_criacao else None
-        }
-
-# ========================================
-# FUNÇÕES AUXILIARES
-# ========================================
+# Helpers
+def get_db():
+    """Obter conexão com o banco"""
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def allowed_file(filename):
+    """Verifica se o arquivo é permitido"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def gerar_id():
-    return str(uuid.uuid4())
+def gerar_token(usuario_id, perfil):
+    """Gera token JWT"""
+    payload = {
+        'usuario_id': usuario_id,
+        'perfil': perfil,
+        'exp': datetime.utcnow() + timedelta(hours=8)
+    }
+    return jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
-def gerar_login_fornecedor(cnpj):
-    cnpj_numeros = ''.join(filter(str.isdigit, cnpj))
-    return f"fornecedor_{cnpj_numeros[-8:]}"
+def verificar_token(token):
+    """Verifica e decodifica token JWT"""
+    try:
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
 
-def gerar_senha_aleatoria():
-    import random
-    import string
-    chars = string.ascii_letters + string.digits
-    return ''.join(random.choice(chars) for _ in range(8))
+# Decorator para rotas protegidas
+def require_auth(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = None
+        auth_header = request.headers.get('Authorization')
+        
+        if auth_header:
+            try:
+                token = auth_header.split(' ')[1]
+            except IndexError:
+                return jsonify({'message': 'Token inválido'}), 401
+        
+        if not token:
+            return jsonify({'message': 'Token ausente'}), 401
+        
+        payload = verificar_token(token)
+        if not payload:
+            return jsonify({'message': 'Token inválido ou expirado'}), 401
+        
+        request.usuario_id = payload['usuario_id']
+        request.perfil = payload['perfil']
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
 
-def criar_notificacao(usuario_id, tipo, titulo, mensagem):
-    """Cria uma nova notificação para um usuário"""
-    notificacao = Notificacao(
-        usuario_id=usuario_id,
-        tipo=tipo,
-        titulo=titulo,
-        mensagem=mensagem
-    )
-    db.session.add(notificacao)
-    db.session.commit()
-
-def gerar_pdf_tr(tr):
-    """Gera PDF do Termo de Referência"""
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
-    elements = []
-    
-    # Estilos
-    styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=24,
-        textColor=colors.HexColor('#2c3e50'),
-        spaceAfter=30,
-        alignment=1  # Centro
-    )
-    
-    heading_style = ParagraphStyle(
-        'CustomHeading',
-        parent=styles['Heading2'],
-        fontSize=16,
-        textColor=colors.HexColor('#34495e'),
-        spaceAfter=12
-    )
-    
-    # Título
-    elements.append(Paragraph("TERMO DE REFERÊNCIA", title_style))
-    elements.append(Paragraph(f"{tr.numero}", styles['Heading2']))
-    elements.append(Spacer(1, 0.5*inch))
-    
-    # Informações básicas
-    data = [
-        ['Campo', 'Valor'],
-        ['Objeto', tr.objeto],
-        ['Modalidade', tr.modalidade or 'Não especificada'],
-        ['Local', tr.local or 'Não especificado'],
-        ['Prazo de Execução', f"{tr.prazo_execucao} dias" if tr.prazo_execucao else 'Não especificado'],
-        ['Valor Estimado', f"R$ {tr.valor_estimado:,.2f}" if tr.valor_estimado else 'Não informado'],
-        ['Status', tr.status],
-        ['Criado por', tr.criador.nome if tr.criador else 'Sistema'],
-        ['Data de Criação', tr.data_criacao.strftime('%d/%m/%Y') if tr.data_criacao else '']
-    ]
-    
-    # Tabela de informações
-    table = Table(data, colWidths=[2*inch, 4*inch])
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    elements.append(table)
-    elements.append(Spacer(1, 0.5*inch))
-    
-    # Seções do TR
-    if tr.descricao:
-        elements.append(Paragraph("Descrição", heading_style))
-        elements.append(Paragraph(tr.descricao, styles['Normal']))
-        elements.append(Spacer(1, 0.3*inch))
-    
-    if tr.especificacoes_tecnicas:
-        elements.append(Paragraph("Especificações Técnicas", heading_style))
-        elements.append(Paragraph(tr.especificacoes_tecnicas, styles['Normal']))
-        elements.append(Spacer(1, 0.3*inch))
-    
-    if tr.requisitos_funcionais:
-        elements.append(Paragraph("Requisitos Funcionais", heading_style))
-        elements.append(Paragraph(tr.requisitos_funcionais, styles['Normal']))
-        elements.append(Spacer(1, 0.3*inch))
-    
-    if tr.justificativa:
-        elements.append(Paragraph("Justificativa", heading_style))
-        elements.append(Paragraph(tr.justificativa, styles['Normal']))
-        elements.append(Spacer(1, 0.3*inch))
-    
-    # Gerar PDF
-    doc.build(elements)
-    buffer.seek(0)
-    return buffer
-
-# ========================================
-# CONFIGURAÇÃO JWT
-# ========================================
-
-@jwt.expired_token_loader
-def expired_token_callback(jwt_header, jwt_payload):
-    return jsonify({
-        'success': False,
-        'error': 'Token expirado'
-    }), 401
-
-# ========================================
-# ROTAS DE AUTENTICAÇÃO
-# ========================================
-
+# Rotas de Autenticação
 @app.route('/api/auth/login', methods=['POST'])
 def login():
+    """Login de usuário"""
     try:
-        data = request.get_json()
+        data = request.json
         email = data.get('email')
         senha = data.get('senha')
         
-        usuario = Usuario.query.filter_by(email=email).first()
+        if not email or not senha:
+            return jsonify({'message': 'Email e senha são obrigatórios'}), 400
         
-        if not usuario or not usuario.verificar_senha(senha):
-            return jsonify({
-                'success': False,
-                'error': 'Credenciais inválidas'
-            }), 401
+        conn = get_db()
+        cursor = conn.cursor()
         
-        if not usuario.ativo:
-            return jsonify({
-                'success': False,
-                'error': 'Usuário inativo'
-            }), 401
+        cursor.execute('SELECT * FROM usuarios WHERE email = ?', (email,))
+        usuario = cursor.fetchone()
         
-        access_token = create_access_token(
-            identity=usuario.id,
-            additional_claims={
-                'tipo': usuario.tipo,
-                'nome': usuario.nome
-            }
-        )
+        if not usuario:
+            conn.close()
+            return jsonify({'message': 'Usuário não encontrado'}), 404
+        
+        # Verificar senha
+        if not bcrypt.checkpw(senha.encode('utf-8'), usuario['senha']):
+            conn.close()
+            return jsonify({'message': 'Senha incorreta'}), 401
+        
+        # Gerar token
+        token = gerar_token(usuario['id'], usuario['perfil'])
+        
+        conn.close()
         
         return jsonify({
-            'success': True,
-            'access_token': access_token,
-            'usuario': usuario.to_dict()
-        })
+            'token': token,
+            'usuario': {
+                'id': usuario['id'],
+                'nome': usuario['nome'],
+                'email': usuario['email'],
+                'perfil': usuario['perfil']
+            }
+        }), 200
         
     except Exception as e:
-        logger.error(f"Erro no login: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno'
-        }), 500
+        logger.error(f"Erro no login: {str(e)}")
+        return jsonify({'message': 'Erro interno'}), 500
 
-@app.route('/api/auth/login-fornecedor', methods=['POST'])
-def login_fornecedor():
-    try:
-        data = request.get_json()
-        login = data.get('login')
-        senha = data.get('senha')
-        
-        fornecedor = ProcessoFornecedor.query.filter_by(
-            login=login,
-            senha=senha,
-            ativo=True
-        ).first()
-        
-        if not fornecedor:
-            return jsonify({
-                'success': False,
-                'error': 'Credenciais inválidas'
-            }), 401
-        
-        access_token = create_access_token(
-            identity=fornecedor.login,
-            additional_claims={
-                'tipo': 'fornecedor',
-                'cnpj': fornecedor.cnpj,
-                'razao_social': fornecedor.razao_social
-            }
-        )
-        
+@app.route('/api/auth/verify', methods=['GET'])
+@require_auth
+def verify_token():
+    """Verifica se o token é válido"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT id, nome, email, perfil FROM usuarios WHERE id = ?', (request.usuario_id,))
+    usuario = cursor.fetchone()
+    
+    conn.close()
+    
+    if usuario:
         return jsonify({
-            'success': True,
-            'access_token': access_token,
-            'fornecedor': fornecedor.to_dict()
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro no login fornecedor: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno'
-        }), 500
+            'valid': True,
+            'usuario': dict(usuario)
+        }), 200
+    else:
+        return jsonify({'valid': False}), 401
 
-# ========================================
-# ROTAS DE TERMOS DE REFERÊNCIA
-# ========================================
-
+# Rotas de Termos de Referência
 @app.route('/api/trs', methods=['GET'])
-@jwt_required()
+@require_auth
 def listar_trs():
+    """Lista TRs do usuário ou todos se for comprador"""
     try:
-        claims = get_jwt()
-        usuario_tipo = claims.get('tipo')
-        usuario_id = get_jwt_identity()
+        conn = get_db()
+        cursor = conn.cursor()
         
-        if usuario_tipo == 'requisitante':
-            # Requisitante vê apenas seus TRs
-            trs = TermoReferencia.query.filter_by(criado_por=usuario_id).all()
-        elif usuario_tipo == 'comprador':
-            # Comprador vê todos os TRs
-            trs = TermoReferencia.query.all()
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'Acesso negado'
-            }), 403
+        if request.perfil == 'requisitante':
+            cursor.execute('''
+                SELECT tr.*, u.nome as usuario_nome 
+                FROM termos_referencia tr
+                JOIN usuarios u ON tr.usuario_id = u.id
+                WHERE tr.usuario_id = ?
+                ORDER BY tr.criado_em DESC
+            ''', (request.usuario_id,))
+        else:  # comprador vê todos
+            cursor.execute('''
+                SELECT tr.*, u.nome as usuario_nome 
+                FROM termos_referencia tr
+                JOIN usuarios u ON tr.usuario_id = u.id
+                ORDER BY tr.criado_em DESC
+            ''')
         
-        return jsonify({
-            'success': True,
-            'trs': [tr.to_dict() for tr in trs]
-        })
+        trs = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify(trs), 200
         
     except Exception as e:
-        logger.error(f"Erro ao listar TRs: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno'
-        }), 500
+        logger.error(f"Erro ao listar TRs: {str(e)}")
+        return jsonify({'message': 'Erro ao listar TRs'}), 500
 
 @app.route('/api/trs', methods=['POST'])
-@jwt_required()
+@require_auth
 def criar_tr():
+    """Cria novo TR"""
     try:
-        claims = get_jwt()
-        if claims.get('tipo') != 'requisitante':
-            return jsonify({
-                'success': False,
-                'error': 'Apenas requisitantes podem criar TRs'
-            }), 403
+        if request.perfil != 'requisitante':
+            return jsonify({'message': 'Apenas requisitantes podem criar TRs'}), 403
         
-        data = request.get_json()
-        usuario_id = get_jwt_identity()
+        data = request.json
+        numero = f"TR-{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
-        # Gerar número do TR
-        numero_tr = f"TR-{datetime.now().year}-{datetime.now().strftime('%m%d%H%M%S')}"
+        conn = get_db()
+        cursor = conn.cursor()
         
-        tr = TermoReferencia(
-            id=gerar_id(),
-            numero=numero_tr,
-            titulo=data.get('titulo', data.get('objeto', '')),
-            objeto=data.get('objeto', ''),
-            descricao=data.get('descricaoObjeto', ''),
-            modalidade=data.get('modalidade'),
-            local=data.get('local'),
-            prazo_execucao=data.get('prazoExecucao'),
-            valor_estimado=data.get('valorEstimado'),
-            criado_por=usuario_id,
-            especificacoes_tecnicas=data.get('especificacoesTecnicas'),
-            requisitos_funcionais=data.get('requisitosFuncionais'),
-            requisitos_nao_funcionais=data.get('requisitosNaoFuncionais'),
-            criterios_aceitacao=data.get('criteriosAceitacao'),
-            documentacao_exigida=data.get('documentacaoExigida'),
-            qualificacao_tecnica=data.get('qualificacaoTecnica'),
-            local_entrega=data.get('localEntrega'),
-            condicoes_pagamento=data.get('condicoesPagamento'),
-            garantias_exigidas=data.get('garantiasExigidas'),
-            fonte_pagadora=data.get('fontePagadora'),
-            justificativa=data.get('justificativa')
-        )
+        cursor.execute('''
+            INSERT INTO termos_referencia (
+                numero, titulo, objeto, justificativa, especificacoes,
+                prazo_entrega, local_entrega, condicoes_pagamento,
+                garantia, criterios_aceitacao, usuario_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            numero,
+            data.get('titulo'),
+            data.get('objeto'),
+            data.get('justificativa'),
+            data.get('especificacoes'),
+            data.get('prazo_entrega'),
+            data.get('local_entrega'),
+            data.get('condicoes_pagamento'),
+            data.get('garantia'),
+            data.get('criterios_aceitacao'),
+            request.usuario_id
+        ))
         
-        db.session.add(tr)
-        db.session.commit()
+        tr_id = cursor.lastrowid
+        conn.commit()
         
-        # Criar notificação para compradores
-        compradores = Usuario.query.filter_by(tipo='comprador', ativo=True).all()
+        # Notificar compradores
+        cursor.execute('SELECT id FROM usuarios WHERE perfil = ?', ('comprador',))
+        compradores = cursor.fetchall()
+        
         for comprador in compradores:
-            criar_notificacao(
-                comprador.id,
-                'TR_PENDENTE',
-                'Novo TR para Aprovação',
-                f'TR {numero_tr} - {tr.objeto}'
-            )
+            cursor.execute('''
+                INSERT INTO notificacoes (usuario_id, titulo, mensagem)
+                VALUES (?, ?, ?)
+            ''', (
+                comprador['id'],
+                'Novo TR para aprovação',
+                f'O TR {numero} foi criado e aguarda sua aprovação'
+            ))
+        
+        conn.commit()
+        conn.close()
         
         return jsonify({
-            'success': True,
-            'message': 'TR criado com sucesso',
-            'tr': tr.to_dict()
+            'id': tr_id,
+            'numero': numero,
+            'message': 'TR criado com sucesso'
         }), 201
         
     except Exception as e:
-        logger.error(f"Erro ao criar TR: {e}")
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'error': 'Erro ao criar TR'
-        }), 500
+        logger.error(f"Erro ao criar TR: {str(e)}")
+        return jsonify({'message': 'Erro ao criar TR'}), 500
 
-@app.route('/api/trs/<tr_id>', methods=['GET'])
-@jwt_required()
+@app.route('/api/trs/<int:tr_id>', methods=['GET'])
+@require_auth
 def obter_tr(tr_id):
+    """Obtém TR específico"""
     try:
-        tr = TermoReferencia.query.get(tr_id)
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT tr.*, u.nome as usuario_nome 
+            FROM termos_referencia tr
+            JOIN usuarios u ON tr.usuario_id = u.id
+            WHERE tr.id = ?
+        ''', (tr_id,))
+        
+        tr = cursor.fetchone()
+        conn.close()
         
         if not tr:
-            return jsonify({
-                'success': False,
-                'error': 'TR não encontrado'
-            }), 404
+            return jsonify({'message': 'TR não encontrado'}), 404
         
-        return jsonify({
-            'success': True,
-            'tr': tr.to_dict()
-        })
+        return jsonify(dict(tr)), 200
         
     except Exception as e:
-        logger.error(f"Erro ao obter TR: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno'
-        }), 500
+        logger.error(f"Erro ao obter TR: {str(e)}")
+        return jsonify({'message': 'Erro ao obter TR'}), 500
 
-@app.route('/api/trs/<tr_id>/aprovar', methods=['POST'])
-@jwt_required()
+@app.route('/api/trs/<int:tr_id>/aprovar', methods=['PUT'])
+@require_auth
 def aprovar_tr(tr_id):
+    """Aprova TR"""
     try:
-        claims = get_jwt()
-        if claims.get('tipo') != 'comprador':
-            return jsonify({
-                'success': False,
-                'error': 'Apenas compradores podem aprovar TRs'
-            }), 403
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Apenas compradores podem aprovar TRs'}), 403
         
-        data = request.get_json()
+        data = request.json
         parecer = data.get('parecer', '')
-        usuario_id = get_jwt_identity()
         
-        tr = TermoReferencia.query.get(tr_id)
+        conn = get_db()
+        cursor = conn.cursor()
         
-        if not tr:
-            return jsonify({
-                'success': False,
-                'error': 'TR não encontrado'
-            }), 404
-        
-        tr.status = 'APROVADO'
-        tr.aprovado_por = usuario_id
-        tr.data_aprovacao = datetime.utcnow()
-        tr.parecer_comprador = parecer
-        
-        db.session.commit()
+        cursor.execute('''
+            UPDATE termos_referencia 
+            SET status = 'aprovado', parecer = ?
+            WHERE id = ?
+        ''', (parecer, tr_id))
         
         # Notificar requisitante
-        criar_notificacao(
-            tr.criado_por,
-            'TR_APROVADO',
-            'TR Aprovado',
-            f'TR {tr.numero} foi aprovado pelo comprador'
-        )
+        cursor.execute('''
+            SELECT usuario_id, numero FROM termos_referencia WHERE id = ?
+        ''', (tr_id,))
+        tr = cursor.fetchone()
         
-        return jsonify({
-            'success': True,
-            'message': 'TR aprovado com sucesso'
-        })
+        if tr:
+            cursor.execute('''
+                INSERT INTO notificacoes (usuario_id, titulo, mensagem)
+                VALUES (?, ?, ?)
+            ''', (
+                tr['usuario_id'],
+                'TR Aprovado',
+                f'Seu TR {tr["numero"]} foi aprovado!'
+            ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'TR aprovado com sucesso'}), 200
         
     except Exception as e:
-        logger.error(f"Erro ao aprovar TR: {e}")
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'error': 'Erro ao aprovar TR'
-        }), 500
+        logger.error(f"Erro ao aprovar TR: {str(e)}")
+        return jsonify({'message': 'Erro ao aprovar TR'}), 500
 
-@app.route('/api/trs/<tr_id>/reprovar', methods=['POST'])
-@jwt_required()
+@app.route('/api/trs/<int:tr_id>/reprovar', methods=['PUT'])
+@require_auth
 def reprovar_tr(tr_id):
+    """Reprova TR"""
     try:
-        claims = get_jwt()
-        if claims.get('tipo') != 'comprador':
-            return jsonify({
-                'success': False,
-                'error': 'Apenas compradores podem reprovar TRs'
-            }), 403
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Apenas compradores podem reprovar TRs'}), 403
         
-        data = request.get_json()
-        parecer = data.get('parecer', '')
-        usuario_id = get_jwt_identity()
+        data = request.json
+        motivo = data.get('motivo', '')
         
-        tr = TermoReferencia.query.get(tr_id)
+        conn = get_db()
+        cursor = conn.cursor()
         
-        if not tr:
-            return jsonify({
-                'success': False,
-                'error': 'TR não encontrado'
-            }), 404
-        
-        tr.status = 'REPROVADO'
-        tr.aprovado_por = usuario_id
-        tr.data_aprovacao = datetime.utcnow()
-        tr.parecer_comprador = parecer
-        
-        db.session.commit()
+        cursor.execute('''
+            UPDATE termos_referencia 
+            SET status = 'reprovado', motivo_reprovacao = ?
+            WHERE id = ?
+        ''', (motivo, tr_id))
         
         # Notificar requisitante
-        criar_notificacao(
-            tr.criado_por,
-            'TR_REPROVADO',
-            'TR Reprovado',
-            f'TR {tr.numero} foi reprovado pelo comprador. Motivo: {parecer}'
-        )
+        cursor.execute('''
+            SELECT usuario_id, numero FROM termos_referencia WHERE id = ?
+        ''', (tr_id,))
+        tr = cursor.fetchone()
         
-        return jsonify({
-            'success': True,
-            'message': 'TR reprovado'
-        })
+        if tr:
+            cursor.execute('''
+                INSERT INTO notificacoes (usuario_id, titulo, mensagem)
+                VALUES (?, ?, ?)
+            ''', (
+                tr['usuario_id'],
+                'TR Reprovado',
+                f'Seu TR {tr["numero"]} foi reprovado. Motivo: {motivo}'
+            ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'TR reprovado'}), 200
         
     except Exception as e:
-        logger.error(f"Erro ao reprovar TR: {e}")
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'error': 'Erro ao reprovar TR'
-        }), 500
+        logger.error(f"Erro ao reprovar TR: {str(e)}")
+        return jsonify({'message': 'Erro ao reprovar TR'}), 500
 
-@app.route('/api/trs/<tr_id>/download', methods=['GET'])
-@jwt_required()
-def download_tr(tr_id):
+@app.route('/api/trs/pendentes', methods=['GET'])
+@require_auth
+def listar_trs_pendentes():
+    """Lista TRs pendentes de aprovação"""
     try:
-        tr = TermoReferencia.query.get(tr_id)
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Acesso negado'}), 403
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT tr.*, u.nome as usuario_nome 
+            FROM termos_referencia tr
+            JOIN usuarios u ON tr.usuario_id = u.id
+            WHERE tr.status = 'pendente'
+            ORDER BY tr.criado_em DESC
+        ''')
+        
+        trs = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify(trs), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar TRs pendentes: {str(e)}")
+        return jsonify({'message': 'Erro ao listar TRs'}), 500
+
+@app.route('/api/trs/aprovados', methods=['GET'])
+@require_auth
+def listar_trs_aprovados():
+    """Lista TRs aprovados"""
+    try:
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Acesso negado'}), 403
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT tr.*, u.nome as usuario_nome 
+            FROM termos_referencia tr
+            JOIN usuarios u ON tr.usuario_id = u.id
+            WHERE tr.status = 'aprovado'
+            ORDER BY tr.criado_em DESC
+        ''')
+        
+        trs = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify(trs), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar TRs aprovados: {str(e)}")
+        return jsonify({'message': 'Erro ao listar TRs'}), 500
+
+@app.route('/api/trs/<int:tr_id>/pdf', methods=['GET'])
+@require_auth
+def download_tr_pdf(tr_id):
+    """Download TR como PDF usando reportlab"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM termos_referencia WHERE id = ?', (tr_id,))
+        tr = cursor.fetchone()
         
         if not tr:
-            return jsonify({
-                'success': False,
-                'error': 'TR não encontrado'
-            }), 404
+            conn.close()
+            return jsonify({'message': 'TR não encontrado'}), 404
         
         # Gerar PDF
-        pdf_buffer = gerar_pdf_tr(tr)
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        elements = []
+        
+        # Estilos
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            textColor=colors.HexColor('#2c3e50'),
+            spaceAfter=30,
+            alignment=1  # Centro
+        )
+        
+        # Título
+        elements.append(Paragraph("TERMO DE REFERÊNCIA", title_style))
+        elements.append(Paragraph(f"{tr['numero']}", styles['Heading2']))
+        elements.append(Spacer(1, 0.5*inch))
+        
+        # Informações básicas
+        data = [
+            ['Campo', 'Valor'],
+            ['Título', tr['titulo'] or ''],
+            ['Objeto', tr['objeto'] or ''],
+            ['Justificativa', tr['justificativa'] or ''],
+            ['Prazo de Entrega', f"{tr['prazo_entrega']} dias" if tr['prazo_entrega'] else 'Não especificado'],
+            ['Local de Entrega', tr['local_entrega'] or 'Não especificado'],
+            ['Status', tr['status']],
+            ['Data de Criação', tr['criado_em'] or '']
+        ]
+        
+        # Tabela de informações
+        table = Table(data, colWidths=[2*inch, 4*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        elements.append(table)
+        
+        # Construir PDF
+        doc.build(elements)
+        buffer.seek(0)
+        
+        conn.close()
         
         return send_file(
-            pdf_buffer,
+            buffer,
             mimetype='application/pdf',
             as_attachment=True,
-            download_name=f'TR_{tr.numero}.pdf'
+            download_name=f'TR_{tr["numero"]}.pdf'
         )
         
     except Exception as e:
-        logger.error(f"Erro ao gerar PDF do TR: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro ao gerar PDF'
-        }), 500
+        logger.error(f"Erro ao gerar PDF: {str(e)}")
+        return jsonify({'message': 'Erro ao gerar PDF'}), 500
 
-# ========================================
-# ROTAS DE PROCESSOS
-# ========================================
-
+# Rotas de Processos
 @app.route('/api/processos', methods=['GET'])
-@jwt_required()
+@require_auth
 def listar_processos():
+    """Lista processos"""
     try:
-        processos = Processo.query.all()
+        conn = get_db()
+        cursor = conn.cursor()
         
-        return jsonify({
-            'success': True,
-            'processos': [p.to_dict() for p in processos]
-        })
+        if request.perfil == 'comprador':
+            cursor.execute('''
+                SELECT p.*, tr.numero as tr_numero, u.nome as criador_nome
+                FROM processos p
+                LEFT JOIN termos_referencia tr ON p.tr_id = tr.id
+                JOIN usuarios u ON p.criado_por = u.id
+                ORDER BY p.criado_em DESC
+            ''')
+        elif request.perfil == 'fornecedor':
+            # Fornecedor vê apenas processos para os quais foi convidado
+            cursor.execute('''
+                SELECT DISTINCT p.*, tr.numero as tr_numero, u.nome as criador_nome
+                FROM processos p
+                JOIN convites_processo cp ON p.id = cp.processo_id
+                LEFT JOIN termos_referencia tr ON p.tr_id = tr.id
+                JOIN usuarios u ON p.criado_por = u.id
+                WHERE cp.fornecedor_id = ? AND p.status = 'aberto'
+                ORDER BY p.criado_em DESC
+            ''', (request.usuario_id,))
+        else:
+            conn.close()
+            return jsonify([]), 200
+        
+        processos = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify(processos), 200
         
     except Exception as e:
-        logger.error(f"Erro ao listar processos: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno'
-        }), 500
+        logger.error(f"Erro ao listar processos: {str(e)}")
+        return jsonify({'message': 'Erro ao listar processos'}), 500
 
 @app.route('/api/processos', methods=['POST'])
-@jwt_required()
+@require_auth
 def criar_processo():
+    """Cria novo processo"""
     try:
-        claims = get_jwt()
-        if claims.get('tipo') != 'comprador':
-            return jsonify({
-                'success': False,
-                'error': 'Apenas compradores podem criar processos'
-            }), 403
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Apenas compradores podem criar processos'}), 403
         
-        data = request.get_json()
-        usuario_id = get_jwt_identity()
+        data = request.json
+        numero = f"PROC-{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
-        # Gerar número do processo
-        numero_processo = f"PROC-{datetime.now().year}-{datetime.now().strftime('%m%d%H%M%S')}"
+        conn = get_db()
+        cursor = conn.cursor()
         
-        processo = Processo(
-            id=gerar_id(),
-            numero=numero_processo,
-            tr_id=data.get('trId'),
-            objeto=data.get('objeto'),
-            modalidade=data.get('modalidade'),
-            data_abertura=datetime.fromisoformat(data.get('dataAbertura').replace('Z', '+00:00')) if data.get('dataAbertura') else None,
-            data_limite=datetime.fromisoformat(data.get('dataLimite').replace('Z', '+00:00')) if data.get('dataLimite') else None,
-            local_abertura=data.get('localAbertura'),
-            criado_por=usuario_id
-        )
+        cursor.execute('''
+            INSERT INTO processos (
+                numero, tr_id, objeto, modalidade, data_abertura,
+                hora_abertura, local_abertura, prazo_proposta,
+                contato_email, contato_telefone, criado_por
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            numero,
+            data.get('tr_id'),
+            data.get('objeto'),
+            data.get('modalidade'),
+            data.get('data_abertura'),
+            data.get('hora_abertura'),
+            data.get('local_abertura'),
+            data.get('prazo_proposta'),
+            data.get('contato_email'),
+            data.get('contato_telefone'),
+            request.usuario_id
+        ))
         
-        db.session.add(processo)
-        
-        # Adicionar fornecedores
-        fornecedores = data.get('fornecedores', [])
-        for f in fornecedores:
-            fornecedor = ProcessoFornecedor(
-                processo_id=processo.id,
-                cnpj=f.get('cnpj'),
-                razao_social=f.get('razaoSocial'),
-                email=f.get('email'),
-                login=gerar_login_fornecedor(f.get('cnpj')),
-                senha=gerar_senha_aleatoria()
-            )
-            db.session.add(fornecedor)
-        
-        db.session.commit()
-        
-        # Notificar TR vinculado
-        if processo.tr_id:
-            tr = TermoReferencia.query.get(processo.tr_id)
-            if tr:
-                criar_notificacao(
-                    tr.criado_por,
-                    'PROCESSO_CRIADO',
-                    'Processo Criado',
-                    f'O processo {numero_processo} foi criado baseado no seu TR {tr.numero}'
-                )
+        processo_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
         
         return jsonify({
-            'success': True,
-            'message': 'Processo criado com sucesso',
-            'processo': processo.to_dict()
+            'id': processo_id,
+            'numero': numero,
+            'message': 'Processo criado com sucesso'
         }), 201
         
     except Exception as e:
-        logger.error(f"Erro ao criar processo: {e}")
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'error': 'Erro ao criar processo'
-        }), 500
+        logger.error(f"Erro ao criar processo: {str(e)}")
+        return jsonify({'message': 'Erro ao criar processo'}), 500
 
-@app.route('/api/processos/fornecedor', methods=['GET'])
-@jwt_required()
-def listar_processos_fornecedor():
+@app.route('/api/processos/<int:processo_id>', methods=['GET'])
+@require_auth
+def obter_processo(processo_id):
+    """Obtém processo específico"""
     try:
-        claims = get_jwt()
-        if claims.get('tipo') != 'fornecedor':
-            return jsonify({
-                'success': False,
-                'error': 'Acesso restrito a fornecedores'
-            }), 403
+        conn = get_db()
+        cursor = conn.cursor()
         
-        login_fornecedor = get_jwt_identity()
+        cursor.execute('''
+            SELECT p.*, tr.numero as tr_numero, u.nome as criador_nome
+            FROM processos p
+            LEFT JOIN termos_referencia tr ON p.tr_id = tr.id
+            JOIN usuarios u ON p.criado_por = u.id
+            WHERE p.id = ?
+        ''', (processo_id,))
         
-        # Buscar processos do fornecedor
-        fornecedor = ProcessoFornecedor.query.filter_by(login=login_fornecedor).all()
-        processos_ids = [f.processo_id for f in fornecedor]
+        processo = cursor.fetchone()
+        conn.close()
         
-        processos = Processo.query.filter(Processo.id.in_(processos_ids)).all()
+        if not processo:
+            return jsonify({'message': 'Processo não encontrado'}), 404
         
-        return jsonify({
-            'success': True,
-            'processos': [p.to_dict() for p in processos]
-        })
+        return jsonify(dict(processo)), 200
         
     except Exception as e:
-        logger.error(f"Erro ao listar processos do fornecedor: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno'
-        }), 500
+        logger.error(f"Erro ao obter processo: {str(e)}")
+        return jsonify({'message': 'Erro ao obter processo'}), 500
 
-# ========================================
-# ROTAS DE PROPOSTAS
-# ========================================
+@app.route('/api/processos/<int:processo_id>/convidar', methods=['POST'])
+@require_auth
+def convidar_fornecedores(processo_id):
+    """Convida fornecedores para processo"""
+    try:
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Apenas compradores podem convidar fornecedores'}), 403
+        
+        data = request.json
+        fornecedores_ids = data.get('fornecedores', [])
+        
+        if not fornecedores_ids:
+            return jsonify({'message': 'Selecione pelo menos um fornecedor'}), 400
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Verificar se processo existe
+        cursor.execute('SELECT numero FROM processos WHERE id = ?', (processo_id,))
+        processo = cursor.fetchone()
+        
+        if not processo:
+            conn.close()
+            return jsonify({'message': 'Processo não encontrado'}), 404
+        
+        # Inserir convites
+        for fornecedor_id in fornecedores_ids:
+            cursor.execute('''
+                INSERT INTO convites_processo (processo_id, fornecedor_id)
+                VALUES (?, ?)
+            ''', (processo_id, fornecedor_id))
+            
+            # Notificar fornecedor
+            cursor.execute('''
+                INSERT INTO notificacoes (usuario_id, titulo, mensagem)
+                VALUES (?, ?, ?)
+            ''', (
+                fornecedor_id,
+                'Novo convite para processo',
+                f'Você foi convidado para participar do processo {processo["numero"]}'
+            ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': f'{len(fornecedores_ids)} fornecedores convidados com sucesso'
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao convidar fornecedores: {str(e)}")
+        return jsonify({'message': 'Erro ao convidar fornecedores'}), 500
+
+@app.route('/api/processos/disponiveis', methods=['GET'])
+@require_auth
+def listar_processos_disponiveis():
+    """Lista processos disponíveis para o fornecedor"""
+    try:
+        if request.perfil != 'fornecedor':
+            return jsonify({'message': 'Acesso negado'}), 403
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT DISTINCT p.*, tr.numero as tr_numero
+            FROM processos p
+            JOIN convites_processo cp ON p.id = cp.processo_id
+            LEFT JOIN termos_referencia tr ON p.tr_id = tr.id
+            WHERE cp.fornecedor_id = ? AND p.status = 'aberto'
+            ORDER BY p.criado_em DESC
+        ''', (request.usuario_id,))
+        
+        processos = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify(processos), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar processos disponíveis: {str(e)}")
+        return jsonify({'message': 'Erro ao listar processos'}), 500
+
+# Rotas de Propostas
+@app.route('/api/propostas', methods=['GET'])
+@require_auth
+def listar_propostas():
+    """Lista propostas"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        if request.perfil == 'fornecedor':
+            cursor.execute('''
+                SELECT p.*, proc.numero as processo_numero
+                FROM propostas p
+                JOIN processos proc ON p.processo_id = proc.id
+                WHERE p.fornecedor_id = ?
+                ORDER BY p.criado_em DESC
+            ''', (request.usuario_id,))
+        elif request.perfil == 'comprador':
+            cursor.execute('''
+                SELECT p.*, proc.numero as processo_numero, u.nome as fornecedor_nome
+                FROM propostas p
+                JOIN processos proc ON p.processo_id = proc.id
+                JOIN usuarios u ON p.fornecedor_id = u.id
+                ORDER BY p.criado_em DESC
+            ''')
+        else:
+            conn.close()
+            return jsonify([]), 200
+        
+        propostas = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify(propostas), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar propostas: {str(e)}")
+        return jsonify({'message': 'Erro ao listar propostas'}), 500
 
 @app.route('/api/propostas', methods=['POST'])
-@jwt_required()
+@require_auth
 def criar_proposta():
+    """Cria nova proposta"""
     try:
-        claims = get_jwt()
-        if claims.get('tipo') != 'fornecedor':
-            return jsonify({
-                'success': False,
-                'error': 'Apenas fornecedores podem enviar propostas'
-            }), 403
+        if request.perfil != 'fornecedor':
+            return jsonify({'message': 'Apenas fornecedores podem criar propostas'}), 403
         
-        data = request.get_json()
-        login_fornecedor = get_jwt_identity()
+        data = request.json
         
-        # Buscar dados do fornecedor
-        fornecedor = ProcessoFornecedor.query.filter_by(login=login_fornecedor).first()
+        conn = get_db()
+        cursor = conn.cursor()
         
-        if not fornecedor:
-            return jsonify({
-                'success': False,
-                'error': 'Fornecedor não encontrado'
-            }), 404
+        # Verificar se foi convidado para o processo
+        cursor.execute('''
+            SELECT COUNT(*) FROM convites_processo
+            WHERE processo_id = ? AND fornecedor_id = ?
+        ''', (data.get('processo_id'), request.usuario_id))
         
-        proposta = Proposta(
-            id=gerar_id(),
-            processo_id=data.get('processoId'),
-            fornecedor_login=login_fornecedor,
-            empresa=fornecedor.razao_social,
-            cnpj=fornecedor.cnpj,
-            valor=data.get('valor'),
-            prazo_execucao=data.get('prazoExecucao'),
-            descricao_tecnica=data.get('descricaoTecnica'),
-            observacoes=data.get('observacoes')
-        )
+        if cursor.fetchone()[0] == 0:
+            conn.close()
+            return jsonify({'message': 'Você não foi convidado para este processo'}), 403
         
-        db.session.add(proposta)
-        db.session.commit()
+        cursor.execute('''
+            INSERT INTO propostas (
+                processo_id, fornecedor_id, valor_total,
+                prazo_entrega, validade_proposta
+            ) VALUES (?, ?, ?, ?, ?)
+        ''', (
+            data.get('processo_id'),
+            request.usuario_id,
+            data.get('valor_total'),
+            data.get('prazo_entrega'),
+            data.get('validade_proposta')
+        ))
+        
+        proposta_id = cursor.lastrowid
+        conn.commit()
         
         # Notificar comprador
-        processo = Processo.query.get(proposta.processo_id)
+        cursor.execute('''
+            SELECT criado_por, numero FROM processos WHERE id = ?
+        ''', (data.get('processo_id'),))
+        processo = cursor.fetchone()
+        
         if processo:
-            criar_notificacao(
-                processo.criado_por,
-                'NOVA_PROPOSTA',
-                'Nova Proposta Recebida',
-                f'Nova proposta recebida de {fornecedor.razao_social} para o processo {processo.numero}'
-            )
+            cursor.execute('''
+                INSERT INTO notificacoes (usuario_id, titulo, mensagem)
+                VALUES (?, ?, ?)
+            ''', (
+                processo['criado_por'],
+                'Nova proposta recebida',
+                f'Uma nova proposta foi enviada para o processo {processo["numero"]}'
+            ))
+            conn.commit()
+        
+        conn.close()
         
         return jsonify({
-            'success': True,
-            'message': 'Proposta enviada com sucesso',
-            'proposta': proposta.to_dict()
+            'id': proposta_id,
+            'message': 'Proposta enviada com sucesso'
         }), 201
         
     except Exception as e:
-        logger.error(f"Erro ao criar proposta: {e}")
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'error': 'Erro ao enviar proposta'
-        }), 500
+        logger.error(f"Erro ao criar proposta: {str(e)}")
+        return jsonify({'message': 'Erro ao criar proposta'}), 500
 
-@app.route('/api/propostas/processo/<processo_id>', methods=['GET'])
-@jwt_required()
-def listar_propostas_processo(processo_id):
+# Rotas de Fornecedores
+@app.route('/api/fornecedores', methods=['GET'])
+@require_auth
+def listar_fornecedores():
+    """Lista fornecedores"""
     try:
-        propostas = Proposta.query.filter_by(processo_id=processo_id).all()
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Acesso negado'}), 403
         
-        return jsonify({
-            'success': True,
-            'propostas': [p.to_dict() for p in propostas]
-        })
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, nome, email 
+            FROM usuarios 
+            WHERE perfil = 'fornecedor'
+            ORDER BY nome
+        ''')
+        
+        fornecedores = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify(fornecedores), 200
         
     except Exception as e:
-        logger.error(f"Erro ao listar propostas: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno'
-        }), 500
+        logger.error(f"Erro ao listar fornecedores: {str(e)}")
+        return jsonify({'message': 'Erro ao listar fornecedores'}), 500
 
-# ========================================
-# ROTAS DE NOTIFICAÇÕES
-# ========================================
-
+# Rotas de Notificações
 @app.route('/api/notificacoes', methods=['GET'])
-@jwt_required()
+@require_auth
 def listar_notificacoes():
+    """Lista notificações do usuário"""
     try:
-        usuario_id = get_jwt_identity()
+        conn = get_db()
+        cursor = conn.cursor()
         
-        notificacoes = Notificacao.query.filter_by(
-            usuario_id=usuario_id
-        ).order_by(Notificacao.data_criacao.desc()).limit(50).all()
+        cursor.execute('''
+            SELECT * FROM notificacoes
+            WHERE usuario_id = ?
+            ORDER BY criado_em DESC
+            LIMIT 20
+        ''', (request.usuario_id,))
         
-        return jsonify({
-            'success': True,
-            'notificacoes': [n.to_dict() for n in notificacoes]
-        })
+        notificacoes = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify(notificacoes), 200
         
     except Exception as e:
-        logger.error(f"Erro ao listar notificações: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno'
-        }), 500
+        logger.error(f"Erro ao listar notificações: {str(e)}")
+        return jsonify({'message': 'Erro ao listar notificações'}), 500
 
-@app.route('/api/notificacoes/<int:notificacao_id>/lida', methods=['POST'])
-@jwt_required()
-def marcar_notificacao_lida(notificacao_id):
+@app.route('/api/notificacoes/<int:notif_id>/lida', methods=['PUT'])
+@require_auth
+def marcar_notificacao_lida(notif_id):
+    """Marca notificação como lida"""
     try:
-        usuario_id = get_jwt_identity()
+        conn = get_db()
+        cursor = conn.cursor()
         
-        notificacao = Notificacao.query.filter_by(
-            id=notificacao_id,
-            usuario_id=usuario_id
-        ).first()
+        cursor.execute('''
+            UPDATE notificacoes 
+            SET lida = 1 
+            WHERE id = ? AND usuario_id = ?
+        ''', (notif_id, request.usuario_id))
         
-        if not notificacao:
-            return jsonify({
-                'success': False,
-                'error': 'Notificação não encontrada'
-            }), 404
+        conn.commit()
+        conn.close()
         
-        notificacao.lida = True
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Notificação marcada como lida'
-        })
+        return jsonify({'message': 'Notificação marcada como lida'}), 200
         
     except Exception as e:
-        logger.error(f"Erro ao marcar notificação: {e}")
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno'
-        }), 500
+        logger.error(f"Erro ao marcar notificação: {str(e)}")
+        return jsonify({'message': 'Erro ao marcar notificação'}), 500
 
-# ========================================
-# ROTAS DE STATUS E ARQUIVOS ESTÁTICOS
-# ========================================
-
+# Rotas de arquivos estáticos
 @app.route('/')
 def index():
-    return send_from_directory(app.static_folder, 'index.html')
+    """Rota principal"""
+    return send_from_directory('static', 'index.html')
 
-@app.route('/api/status')
-def api_status():
-    try:
-        stats = {
-            'processos_total': Processo.query.count(),
-            'processos_ativos': Processo.query.filter_by(status='ATIVO').count(),
-            'propostas_total': Proposta.query.count(),
-            'usuarios_total': Usuario.query.count(),
-            'usuarios_ativos': Usuario.query.filter_by(ativo=True).count(),
-            'trs_total': TermoReferencia.query.count(),
-            'trs_pendentes': TermoReferencia.query.filter_by(status='PENDENTE_APROVACAO').count()
-        }
-        
-        return jsonify({
-            "status": "online",
-            "timestamp": datetime.now().isoformat(),
-            "versao": "5.0",
-            "ambiente": os.environ.get('FLASK_ENV', 'development'),
-            "estatisticas": stats
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro ao obter status: {e}")
-        return jsonify({
-            "status": "error",
-            "error": str(e)
-        }), 500
+@app.route('/<path:path>')
+def serve_static(path):
+    """Serve arquivos estáticos"""
+    if path and os.path.exists(os.path.join('static', path)):
+        return send_from_directory('static', path)
+    else:
+        return send_from_directory('static', 'index.html')
 
-@app.route('/<path:filename>')
-def static_files(filename):
-    return send_from_directory(app.static_folder, filename)
+# Tratamento de erros
+@app.errorhandler(404)
+def not_found(error):
+    """Erro 404"""
+    return jsonify({'message': 'Recurso não encontrado'}), 404
 
-# ========================================
-# INICIALIZAÇÃO DO BANCO
-# ========================================
+@app.errorhandler(500)
+def internal_error(error):
+    """Erro 500"""
+    logger.error(f"Erro interno: {str(error)}")
+    return jsonify({'message': 'Erro interno do servidor'}), 500
 
-def popular_dados_iniciais():
-    """Popula o banco com dados iniciais"""
-    
-    # Verificar se já existe dados
-    if Usuario.query.count() > 0:
-        return
-    
-    # Criar usuários
-    usuarios = [
-        {
-            'id': 'req_001',
-            'nome': 'Maria Santos',
-            'email': 'maria.santos@empresa.com',
-            'senha': 'requisitante123',
-            'tipo': 'requisitante'
-        },
-        {
-            'id': 'comp_001',
-            'nome': 'João Silva',
-            'email': 'joao.silva@empresa.com',
-            'senha': 'comprador123',
-            'tipo': 'comprador'
-        },
-        {
-            'id': 'admin_001',
-            'nome': 'Admin Sistema',
-            'email': 'admin@sistema.com',
-            'senha': 'admin123',
-            'tipo': 'admin'
-        }
-    ]
-    
-    for u in usuarios:
-        usuario = Usuario(
-            id=u['id'],
-            nome=u['nome'],
-            email=u['email'],
-            tipo=u['tipo']
-        )
-        usuario.set_senha(u['senha'])
-        db.session.add(usuario)
-    
-    try:
-        db.session.commit()
-        logger.info("✅ Dados iniciais populados com sucesso!")
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"❌ Erro ao popular dados iniciais: {e}")
-
-# ========================================
-# INICIALIZAÇÃO
-# ========================================
-
-def init_app():
-    with app.app_context():
-        db.create_all()
-        popular_dados_iniciais()
-
+# Inicialização
 if __name__ == '__main__':
-    init_app()
     port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_ENV') == 'development'
+    debug = os.environ.get('DEBUG', 'True').lower() == 'true'
     
-    logger.info(f"🚀 Iniciando Sistema de Propostas v5.0")
-    logger.info(f"📊 Ambiente: {os.environ.get('FLASK_ENV', 'development')}")
-    logger.info(f"🔌 Porta: {port}")
+    logger.info(f"Iniciando servidor na porta {port}")
+    logger.info(f"Debug mode: {debug}")
     
-    app.run(host='0.0.0.0', port=port, debug=debug)
-else:
-    # Para Gunicorn
-    init_app()
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=debug
+    
