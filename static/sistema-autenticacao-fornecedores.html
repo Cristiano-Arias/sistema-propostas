@@ -360,7 +360,7 @@
                 return {
                     sucesso: true,
                     fornecedor: {
-                        id: credencial.id,
+                        id: credencial.fornecedorId || credencial.id,
                         cnpj: credencial.cnpj,
                         razaoSocial: credencial.razaoSocial,
                         email: credencial.email,
