@@ -25,49 +25,50 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 40px;
+            padding: 50px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
             text-align: center;
         }
 
         .logo {
             color: #667eea;
-            font-size: 48px;
-            margin-bottom: 20px;
+            font-size: 64px;
+            margin-bottom: 30px;
         }
 
         .login-container h1 {
             color: #333;
-            margin-bottom: 10px;
-            font-size: 24px;
+            margin-bottom: 15px;
+            font-size: 32px;
         }
 
         .login-container p {
             color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
+            margin-bottom: 40px;
+            font-size: 16px;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-align: left;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             color: #333;
             font-weight: 500;
+            font-size: 16px;
         }
 
         .form-group input {
             width: 100%;
-            padding: 12px 16px;
+            padding: 16px 20px;
             border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 18px;
             transition: border-color 0.3s ease;
         }
 
@@ -78,12 +79,12 @@
 
         .login-btn {
             width: 100%;
-            padding: 14px;
+            padding: 18px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 18px;
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.3s ease;
@@ -94,24 +95,25 @@
         }
 
         .login-info {
-            margin-top: 20px;
-            padding: 15px;
+            margin-top: 25px;
+            padding: 20px;
             background: #f8f9fa;
-            border-radius: 10px;
-            font-size: 12px;
+            border-radius: 12px;
+            font-size: 14px;
             color: #666;
         }
 
         .error-message {
             background: #fee;
             color: #c33;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
             display: none;
+            font-size: 16px;
         }
 
-        /* Dashboard Styles */
+        /* Dashboard Styles - Ajustado para Desktop */
         .dashboard-container {
             display: none;
             min-height: 100vh;
@@ -119,10 +121,10 @@
         }
 
         .sidebar {
-            width: 250px;
+            width: 320px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 20px;
+            padding: 30px;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             position: fixed;
             height: 100vh;
@@ -131,45 +133,45 @@
 
         .sidebar .logo {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
             border-bottom: 1px solid #e0e0e0;
         }
 
         .sidebar .logo h2 {
             color: #333;
-            font-size: 18px;
-            margin-top: 10px;
+            font-size: 22px;
+            margin-top: 15px;
         }
 
         .nav-section {
-            margin-bottom: 30px;
+            margin-bottom: 35px;
         }
 
         .nav-title {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 600;
             color: #666;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .nav-item {
             width: 100%;
-            padding: 12px 16px;
+            padding: 16px 20px;
             background: none;
             border: none;
             text-align: left;
             color: #666;
-            font-size: 14px;
+            font-size: 16px;
             cursor: pointer;
-            border-radius: 8px;
-            margin-bottom: 5px;
+            border-radius: 10px;
+            margin-bottom: 8px;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
         }
 
         .nav-item:hover {
@@ -182,17 +184,22 @@
             color: white;
         }
 
+        .nav-item i {
+            font-size: 18px;
+            width: 20px;
+        }
+
         .main-content {
-            margin-left: 250px;
-            padding: 30px;
+            margin-left: 320px;
+            padding: 40px;
             min-height: 100vh;
         }
 
         .content-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
+            border-radius: 20px;
+            padding: 40px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             display: none;
         }
@@ -202,25 +209,29 @@
         }
 
         .section-title {
-            font-size: 24px;
+            font-size: 32px;
             color: #333;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+        }
+
+        .section-title i {
+            font-size: 28px;
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
         }
 
         .stat-card {
             background: rgba(255, 255, 255, 0.9);
-            padding: 25px;
-            border-radius: 15px;
+            padding: 35px;
+            border-radius: 20px;
             text-align: center;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
@@ -231,27 +242,27 @@
         }
 
         .stat-value {
-            font-size: 36px;
+            font-size: 48px;
             font-weight: bold;
             color: #667eea;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .stat-label {
             color: #666;
-            font-size: 14px;
+            font-size: 16px;
         }
 
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
         }
 
         .action-card {
             background: rgba(255, 255, 255, 0.9);
-            padding: 30px;
-            border-radius: 15px;
+            padding: 40px;
+            border-radius: 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -264,28 +275,28 @@
         }
 
         .action-card i {
-            font-size: 48px;
-            margin-bottom: 20px;
+            font-size: 64px;
+            margin-bottom: 25px;
             color: #667eea;
         }
 
         .action-card h3 {
             color: #333;
-            margin-bottom: 10px;
-            font-size: 18px;
+            margin-bottom: 15px;
+            font-size: 22px;
         }
 
         .action-card p {
             color: #666;
-            font-size: 14px;
+            font-size: 16px;
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 500;
             transition: all 0.3s ease;
         }
@@ -314,12 +325,17 @@
             color: white;
         }
 
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
         .processo-item {
             background: #fff;
             border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
             transition: all 0.3s ease;
         }
 
@@ -330,11 +346,11 @@
 
         .processo-status {
             display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 6px 16px;
+            border-radius: 25px;
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .status-ativo {
@@ -345,6 +361,16 @@
         .status-vencido {
             background: #f8d7da;
             color: #721c24;
+        }
+
+        .processo-item h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .processo-item p {
+            font-size: 16px;
+            margin-bottom: 10px;
         }
 
         .modal {
@@ -361,10 +387,10 @@
         .modal-content {
             background-color: #fff;
             margin: 5% auto;
-            padding: 30px;
-            border-radius: 15px;
+            padding: 40px;
+            border-radius: 20px;
             width: 90%;
-            max-width: 600px;
+            max-width: 700px;
             max-height: 80vh;
             overflow-y: auto;
         }
@@ -372,7 +398,7 @@
         .close {
             color: #aaa;
             float: right;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             cursor: pointer;
         }
@@ -382,49 +408,52 @@
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: 500;
             color: #333;
+            font-size: 16px;
         }
 
         .form-group input,
         .form-group textarea,
         .form-group select {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 10px;
+            font-size: 16px;
         }
 
         .form-group textarea {
-            height: 100px;
+            height: 120px;
             resize: vertical;
         }
 
         .empresa-info {
             background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
         }
 
         .empresa-info h3 {
             color: #333;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 20px;
         }
 
         .info-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
             border-bottom: 1px solid #e0e0e0;
+            font-size: 16px;
         }
 
         .info-item:last-child {
@@ -441,24 +470,13 @@
             color: #333;
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            }
-
-            .cards-grid {
-                grid-template-columns: 1fr;
-            }
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ffeaa7;
         }
     </style>
 </head>
@@ -496,9 +514,9 @@
     <div id="dashboard-screen" class="dashboard-container">
         <div class="sidebar">
             <div class="logo">
-                <i class="fas fa-building" style="font-size: 24px; color: #667eea;"></i>
+                <i class="fas fa-building" style="font-size: 32px; color: #667eea;"></i>
                 <h2>Portal do Fornecedor</h2>
-                <p id="empresa-nome" style="font-size: 12px; color: #666; margin-top: 5px;"></p>
+                <p id="empresa-nome" style="font-size: 14px; color: #666; margin-top: 8px;"></p>
             </div>
 
             <div class="nav-section">
@@ -541,7 +559,7 @@
                 <div class="section-title">
                     <i class="fas fa-tachometer-alt"></i> Dashboard Fornecedor
                 </div>
-                <p style="color: #666; margin-bottom: 30px;">Acompanhe seus processos licitatórios e propostas em tempo real</p>
+                <p style="color: #666; margin-bottom: 40px; font-size: 18px;">Acompanhe seus processos licitatórios e propostas em tempo real</p>
 
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -592,9 +610,9 @@
                     <i class="fas fa-file-contract"></i> Meus Processos Licitatórios
                 </div>
                 <div id="processos-list">
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 20px;"></i>
-                        <h3>Carregando processos...</h3>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando processos...</h3>
                     </div>
                 </div>
             </div>
@@ -605,9 +623,9 @@
                     <i class="fas fa-paper-plane"></i> Minhas Propostas
                 </div>
                 <div id="propostas-list">
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 20px;"></i>
-                        <h3>Carregando propostas...</h3>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando propostas...</h3>
                     </div>
                 </div>
             </div>
@@ -618,9 +636,9 @@
                     <i class="fas fa-history"></i> Histórico de Participações
                 </div>
                 <div id="historico-list">
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 20px;"></i>
-                        <h3>Carregando histórico...</h3>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando histórico...</h3>
                     </div>
                 </div>
             </div>
@@ -631,9 +649,9 @@
                     <i class="fas fa-user"></i> Meu Perfil
                 </div>
                 <div id="perfil-content">
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 20px;"></i>
-                        <h3>Carregando perfil...</h3>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando perfil...</h3>
                     </div>
                 </div>
             </div>
@@ -643,10 +661,10 @@
                 <div class="section-title">
                     <i class="fas fa-folder"></i> Documentos
                 </div>
-                <div style="text-align: center; padding: 40px; color: #666;">
-                    <i class="fas fa-tools" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                    <h3>Área de Documentos</h3>
-                    <p>Funcionalidade em desenvolvimento para upload e gerenciamento de documentos da empresa.</p>
+                <div style="text-align: center; padding: 60px; color: #666;">
+                    <i class="fas fa-tools" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                    <h3 style="font-size: 24px;">Área de Documentos</h3>
+                    <p style="font-size: 18px;">Funcionalidade em desenvolvimento para upload e gerenciamento de documentos da empresa.</p>
                 </div>
             </div>
         </div>
@@ -667,6 +685,7 @@
             <h2><i class="fas fa-paper-plane"></i> Enviar Proposta</h2>
             <form id="form-proposta">
                 <div id="processo-info"></div>
+                <div id="proposta-existente-aviso"></div>
                 <div class="form-group">
                     <label for="valor-proposta">Valor da Proposta (R$)</label>
                     <input type="number" id="valor-proposta" step="0.01" required>
@@ -693,9 +712,9 @@
                     <label for="garantia">Garantia Oferecida</label>
                     <input type="text" id="garantia" placeholder="Ex: 12 meses">
                 </div>
-                <div style="text-align: right; margin-top: 20px;">
+                <div style="text-align: right; margin-top: 25px;">
                     <button type="button" class="btn btn-secondary" onclick="fecharModal('modal-enviar-proposta')">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Enviar Proposta</button>
+                    <button type="submit" class="btn btn-primary" id="btn-enviar-proposta">Enviar Proposta</button>
                 </div>
             </form>
         </div>
@@ -816,16 +835,17 @@
             );
         }
 
+        // CORREÇÃO 1: Remover valor estimado da exibição para fornecedores
         function carregarProcessos() {
             const processos = obterProcessosFornecedor();
             const container = document.getElementById('processos-list');
             
             if (processos.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-inbox" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                        <h3>Nenhum processo disponível</h3>
-                        <p>Você ainda não foi convidado para participar de processos licitatórios.</p>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-inbox" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                        <h3 style="font-size: 24px;">Nenhum processo disponível</h3>
+                        <p style="font-size: 18px;">Você ainda não foi convidado para participar de processos licitatórios.</p>
                     </div>
                 `;
                 return;
@@ -838,6 +858,10 @@
                 const status = dataLimite < agora ? 'VENCIDO' : 'ATIVO';
                 const statusClass = status === 'ATIVO' ? 'status-ativo' : 'status-vencido';
                 
+                // CORREÇÃO 2: Verificar se já existe proposta para este processo
+                const propostas = obterPropostasFornecedor();
+                const jaEnviouProposta = propostas.some(p => p.processoId === processo.processoId);
+                
                 html += `
                     <div class="processo-item">
                         <div class="processo-status ${statusClass}">${status}</div>
@@ -845,21 +869,26 @@
                         <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
                         <p><strong>Data de Abertura:</strong> ${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}</p>
                         <p><strong>Data Limite:</strong> ${dataLimite.toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Valor Estimado:</strong> R$ ${parseFloat(processo.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
                         <p><strong>TR:</strong> ${processo.trTitulo}</p>
                         
-                        <div style="margin-top: 15px;">
+                        ${jaEnviouProposta ? `
+                            <div class="alert-warning">
+                                <i class="fas fa-check-circle"></i> Você já enviou uma proposta para este processo
+                            </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 20px;">
                             <button class="btn btn-primary" onclick="verDetalhesProcesso('${processo.processoId}')">
                                 <i class="fas fa-eye"></i> Visualizar Detalhes
                             </button>
-                            ${status === 'ATIVO' ? `
+                            ${status === 'ATIVO' && !jaEnviouProposta ? `
                                 <button class="btn btn-success" onclick="enviarProposta('${processo.processoId}')" style="margin-left: 10px;">
                                     <i class="fas fa-paper-plane"></i> Enviar Proposta
                                 </button>
-                                <button class="btn btn-warning" onclick="baixarEdital('${processo.processoId}')" style="margin-left: 10px;">
-                                    <i class="fas fa-download"></i> Baixar Edital
-                                </button>
                             ` : ''}
+                            <button class="btn btn-warning" onclick="baixarEdital('${processo.processoId}')" style="margin-left: 10px;">
+                                <i class="fas fa-download"></i> Baixar Edital
+                            </button>
                         </div>
                     </div>
                 `;
@@ -874,10 +903,10 @@
             
             if (propostas.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-paper-plane" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                        <h3>Nenhuma proposta enviada</h3>
-                        <p>Você ainda não enviou propostas para processos licitatórios.</p>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-paper-plane" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                        <h3 style="font-size: 24px;">Nenhuma proposta enviada</h3>
+                        <p style="font-size: 18px;">Você ainda não enviou propostas para processos licitatórios.</p>
                     </div>
                 `;
                 return;
@@ -898,7 +927,7 @@
                         <p><strong>Observações:</strong> ${proposta.observacoes || 'Nenhuma observação'}</p>
                         <p><strong>Garantia:</strong> ${proposta.garantia || 'Não informada'}</p>
                         
-                        <div style="margin-top: 15px;">
+                        <div style="margin-top: 20px;">
                             <button class="btn btn-primary" onclick="verDetalhesProposta('${proposta.id}')">
                                 <i class="fas fa-eye"></i> Ver Detalhes
                             </button>
@@ -940,10 +969,10 @@
             
             if (historico.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-history" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                        <h3>Nenhum histórico disponível</h3>
-                        <p>Seu histórico de participações aparecerá aqui.</p>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-history" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                        <h3 style="font-size: 24px;">Nenhum histórico disponível</h3>
+                        <p style="font-size: 18px;">Seu histórico de participações aparecerá aqui.</p>
                     </div>
                 `;
                 return;
@@ -959,14 +988,13 @@
                         <h3>${item.processo.numeroProcesso}</h3>
                         <p><strong>Modalidade:</strong> ${item.processo.modalidade}</p>
                         <p><strong>Data de Abertura:</strong> ${new Date(item.processo.dataAbertura).toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Valor Estimado:</strong> R$ ${parseFloat(item.processo.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
                         
                         ${item.proposta ? `
                             <p><strong>Valor da Proposta:</strong> R$ ${parseFloat(item.proposta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
                             <p><strong>Status da Proposta:</strong> ${item.proposta.status}</p>
                         ` : ''}
                         
-                        <div style="margin-top: 15px;">
+                        <div style="margin-top: 20px;">
                             <button class="btn btn-primary" onclick="verDetalhesProcesso('${item.processo.processoId}')">
                                 <i class="fas fa-eye"></i> Ver Processo
                             </button>
@@ -1012,11 +1040,11 @@
                 
                 <div class="empresa-info">
                     <h3><i class="fas fa-info-circle"></i> Informações Importantes</h3>
-                    <p style="color: #666; margin-bottom: 15px;">
+                    <p style="color: #666; margin-bottom: 15px; font-size: 16px;">
                         Suas credenciais de acesso foram geradas automaticamente pelo setor de compras. 
                         Para alterações nos dados da empresa, entre em contato com o setor responsável.
                     </p>
-                    <p style="color: #666;">
+                    <p style="color: #666; font-size: 16px;">
                         <strong>Suporte:</strong> compras@prefeitura.gov.br | (11) 3333-4444
                     </p>
                 </div>
@@ -1089,6 +1117,7 @@
             const dataLimite = new Date(processo.dataLimite);
             const status = dataLimite < agora ? 'VENCIDO' : 'ATIVO';
             
+            // CORREÇÃO 1: Não mostrar valor estimado nos detalhes
             document.getElementById('detalhes-processo-content').innerHTML = `
                 <div class="empresa-info">
                     <div class="info-item">
@@ -1112,10 +1141,6 @@
                         <span class="info-value">${dataLimite.toLocaleDateString('pt-BR')}</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">Valor Estimado:</span>
-                        <span class="info-value">R$ ${parseFloat(processo.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="info-item">
                         <span class="info-label">Local de Abertura:</span>
                         <span class="info-value">${processo.localAbertura || 'Não informado'}</span>
                     </div>
@@ -1133,7 +1158,7 @@
                     </div>
                 </div>
                 
-                <div style="text-align: right; margin-top: 20px;">
+                <div style="text-align: right; margin-top: 25px;">
                     <button class="btn btn-secondary" onclick="fecharModal('modal-detalhes-processo')">Fechar</button>
                     ${status === 'ATIVO' ? `
                         <button class="btn btn-primary" onclick="fecharModal('modal-detalhes-processo'); enviarProposta('${processoId}')" style="margin-left: 10px;">
@@ -1146,22 +1171,35 @@
             abrirModal('modal-detalhes-processo');
         }
 
+        // CORREÇÃO 2: Controle de uma proposta por processo
         function enviarProposta(processoId) {
             const processos = obterProcessosFornecedor();
             const processo = processos.find(p => p.processoId === processoId);
             
             if (!processo) return;
             
+            // Verificar se já existe proposta para este processo
+            const propostas = obterPropostasFornecedor();
+            const propostaExistente = propostas.find(p => p.processoId === processoId);
+            
+            if (propostaExistente) {
+                alert('Você já enviou uma proposta para este processo. Cada fornecedor pode enviar apenas uma proposta por processo.');
+                return;
+            }
+            
             processoAtual = processo;
             
+            // CORREÇÃO 1: Não mostrar valor estimado no modal de proposta
             document.getElementById('processo-info').innerHTML = `
                 <div class="empresa-info">
                     <h3><i class="fas fa-file-contract"></i> ${processo.numeroProcesso}</h3>
                     <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
-                    <p><strong>Valor Estimado:</strong> R$ ${parseFloat(processo.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
                     <p><strong>Data Limite:</strong> ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')}</p>
                 </div>
             `;
+            
+            // Limpar aviso de proposta existente
+            document.getElementById('proposta-existente-aviso').innerHTML = '';
             
             // Limpar formulário
             document.getElementById('form-proposta').reset();
@@ -1169,8 +1207,18 @@
             abrirModal('modal-enviar-proposta');
         }
 
+        // CORREÇÃO 2: Validação no envio da proposta
         document.getElementById('form-proposta').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // Verificar novamente se já existe proposta
+            const propostas = obterPropostasFornecedor();
+            const propostaExistente = propostas.find(p => p.processoId === processoAtual.processoId);
+            
+            if (propostaExistente) {
+                alert('Erro: Você já enviou uma proposta para este processo.');
+                return;
+            }
             
             const proposta = {
                 id: Date.now().toString(),
@@ -1189,9 +1237,9 @@
             };
             
             // Salvar proposta
-            const propostas = SistemaLocal.carregar('propostas_fornecedores', []);
-            propostas.push(proposta);
-            SistemaLocal.salvar('propostas_fornecedores', propostas);
+            const todasPropostas = SistemaLocal.carregar('propostas_fornecedores', []);
+            todasPropostas.push(proposta);
+            SistemaLocal.salvar('propostas_fornecedores', todasPropostas);
             
             fecharModal('modal-enviar-proposta');
             alert('Proposta enviada com sucesso!');
@@ -1200,6 +1248,7 @@
             carregarEstatisticas();
             carregarPropostas();
             carregarHistorico();
+            carregarProcessos(); // Recarregar para atualizar status de proposta enviada
         });
 
         function verDetalhesProposta(propostaId) {
@@ -1240,11 +1289,11 @@
                 ${proposta.observacoes ? `
                     <div class="empresa-info">
                         <h3><i class="fas fa-comment"></i> Observações Técnicas</h3>
-                        <p style="color: #666;">${proposta.observacoes}</p>
+                        <p style="color: #666; font-size: 16px;">${proposta.observacoes}</p>
                     </div>
                 ` : ''}
                 
-                <div style="text-align: right; margin-top: 20px;">
+                <div style="text-align: right; margin-top: 25px;">
                     <button class="btn btn-secondary" onclick="fecharModal('modal-detalhes-proposta')">Fechar</button>
                 </div>
             `;
@@ -1252,8 +1301,52 @@
             abrirModal('modal-detalhes-proposta');
         }
 
+        // CORREÇÃO 3: Implementar download do edital
         function baixarEdital(processoId) {
-            alert('Funcionalidade de download do edital em desenvolvimento.');
+            const processos = obterProcessosFornecedor();
+            const processo = processos.find(p => p.processoId === processoId);
+            
+            if (!processo) {
+                alert('Processo não encontrado.');
+                return;
+            }
+            
+            // Simular download do edital
+            const nomeArquivo = `Edital_${processo.numeroProcesso.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+            
+            // Criar conteúdo do edital (simulado)
+            const conteudoEdital = `
+EDITAL DE LICITAÇÃO
+${processo.numeroProcesso}
+
+MODALIDADE: ${processo.modalidade}
+DATA DE ABERTURA: ${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}
+DATA LIMITE: ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')}
+
+TERMO DE REFERÊNCIA:
+${processo.trTitulo}
+
+LOCAL DE ABERTURA:
+${processo.localAbertura || 'A ser definido'}
+
+Este é um edital simulado para demonstração do sistema.
+Para obter o edital oficial, entre em contato com o setor de compras.
+
+Contato: compras@prefeitura.gov.br | (11) 3333-4444
+            `;
+            
+            // Criar e baixar arquivo
+            const blob = new Blob([conteudoEdital], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = nomeArquivo;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            alert(`Edital "${nomeArquivo}" baixado com sucesso!`);
         }
 
         function editarProposta(propostaId) {
@@ -1300,7 +1393,7 @@
             }
         });
 
-        console.log('Sistema de fornecedor carregado!');
+        console.log('Sistema de fornecedor corrigido carregado!');
     </script>
 </body>
 </html>
