@@ -338,23 +338,16 @@
             color: #333;
         }
 
-        .form-group input,
-        .form-group select,
         .form-group textarea {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 14px;
-        }
-
-        .form-group textarea {
             min-height: 100px;
             resize: vertical;
         }
 
-        .form-group input:focus,
-        .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: #11998e;
@@ -477,7 +470,7 @@
             <button class="nav-item" id="btn-processos">
                 <i class="fas fa-cogs"></i> Processos
             </button>
-            <button class="nav-item" id="btn-criar-processo">
+            <button class="nav-item" onclick="window.location.href='dashboard-comprador-criar-processo.html'">
                 <i class="fas fa-plus-circle"></i> Criar Processo
             </button>
             <button class="nav-item" id="btn-analise">
@@ -536,7 +529,7 @@
                     <h3 style="color: #333; margin-bottom: 10px;">Aprovação de TRs</h3>
                     <p style="color: #666;">Analisar e aprovar Termos de Referência</p>
                 </div>
-                <div class="stat-card" style="cursor: pointer;" id="card-criar-processo">
+                <div class="stat-card" style="cursor: pointer;" onclick="window.location.href='dashboard-comprador-criar-processo.html'">
                     <i class="fas fa-plus-circle" style="font-size: 48px; color: #28a745; margin-bottom: 15px;"></i>
                     <h3 style="color: #333; margin-bottom: 10px;">Criar Processo</h3>
                     <p style="color: #666;">Criar novo processo licitatório</p>
@@ -575,54 +568,6 @@
         <div id="criar-processo" class="content-section">
             <div class="section-title">
                 <i class="fas fa-plus-circle"></i> Criar Processo Licitatório
-            </div>
-
-            <div id="form-criar-processo" style="display: none;">
-                <div class="form-group">
-                    <label>Número do Processo</label>
-                    <input type="text" id="processo-numero" placeholder="Ex: PROC-2024-001" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Modalidade</label>
-                    <select id="processo-modalidade" required>
-                        <option value="">Selecione...</option>
-                        <option value="Pregão Eletrônico">Pregão Eletrônico</option>
-                        <option value="Pregão Presencial">Pregão Presencial</option>
-                        <option value="Tomada de Preços">Tomada de Preços</option>
-                        <option value="Concorrência">Concorrência</option>
-                        <option value="Convite">Convite</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Data de Abertura</label>
-                    <input type="datetime-local" id="processo-data-abertura" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Data Limite para Propostas</label>
-                    <input type="datetime-local" id="processo-data-limite" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Local de Abertura</label>
-                    <textarea id="processo-local" placeholder="Endereço completo onde ocorrerá a abertura" required></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Observações</label>
-                    <textarea id="processo-observacoes" placeholder="Informações adicionais (opcional)"></textarea>
-                </div>
-
-                <div style="margin-top: 30px;">
-                    <button class="btn btn-primary" onclick="salvarProcesso()">
-                        <i class="fas fa-save"></i> Criar Processo
-                    </button>
-                    <button class="btn btn-secondary" onclick="cancelarCriacaoProcesso()">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                </div>
             </div>
 
             <div id="trs-aprovados-list">
@@ -750,9 +695,6 @@
             }
         };
 
-        // Variável global para armazenar o TR selecionado
-        let trSelecionado = null;
-
         // Funções de navegação
         function mostrarPagina(pagina) {
             // Remover classe active de todos os itens de navegação
@@ -765,7 +707,7 @@
                 'dashboard': 'btn-dashboard',
                 'aprovacao-tr': 'btn-aprovacao-tr',
                 'criar-processo': 'btn-criar-processo',
-                'processos': 'btn-processos',
+                'propostas': 'btn-propostas',
                 'analise': 'btn-analise',
                 'relatorios': 'btn-relatorios'
             };
@@ -799,16 +741,14 @@
 
         // Função para voltar ao sistema principal
         function voltarSistema() {
-            alert('Voltando ao sistema principal...');
-            // Em produção, aqui seria um redirecionamento real
+            window.location.href = '/';
         }
 
         // Função de logout
         function logout() {
             if (confirm('Deseja realmente sair do sistema?')) {
                 localStorage.removeItem(SistemaLocal.CHAVES.USUARIO_COMPRADOR);
-                alert('Logout realizado com sucesso!');
-                // Em produção, aqui seria um redirecionamento real
+                window.location.href = '/';
             }
         }
 
@@ -955,12 +895,7 @@
             const trsAprovados = trs.filter(tr => tr.status === StatusTR.APROVADO);
 
             const container = document.getElementById('trs-aprovados-list');
-            const formContainer = document.getElementById('form-criar-processo');
-            
             if (!container) return;
-            
-            // Esconder formulário por padrão
-            if (formContainer) formContainer.style.display = 'none';
             
             if (trsAprovados.length === 0) {
                 container.innerHTML = `
@@ -1483,165 +1418,8 @@
 
         // Criar processo com TR
         function criarProcessoComTR(trId) {
-            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const tr = trs.find(t => t.id === trId);
-            
-            if (!tr) {
-                alert('TR não encontrado!');
-                return;
-            }
-            
-            // Armazenar TR selecionado
-            trSelecionado = tr;
-            
-            // Mostrar formulário e esconder lista
-            const formContainer = document.getElementById('form-criar-processo');
-            const listContainer = document.getElementById('trs-aprovados-list');
-            
-            if (formContainer) {
-                formContainer.style.display = 'block';
-                
-                // Pré-preencher alguns campos com base no TR
-                const modalidadeInput = document.getElementById('processo-modalidade');
-                if (modalidadeInput && tr.modalidade) {
-                    modalidadeInput.value = tr.modalidade;
-                }
-                
-                // Gerar número do processo
-                const numeroInput = document.getElementById('processo-numero');
-                if (numeroInput) {
-                    const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-                    const numeroSequencial = processos.length + 1;
-                    numeroInput.value = `PROC-${new Date().getFullYear()}-${String(numeroSequencial).padStart(3, '0')}`;
-                }
-                
-                // Definir datas padrão
-                const dataAberturaInput = document.getElementById('processo-data-abertura');
-                const dataLimiteInput = document.getElementById('processo-data-limite');
-                
-                if (dataAberturaInput) {
-                    const dataAbertura = new Date();
-                    dataAbertura.setDate(dataAbertura.getDate() + 7); // 7 dias no futuro
-                    dataAberturaInput.value = dataAbertura.toISOString().slice(0, 16);
-                }
-                
-                if (dataLimiteInput) {
-                    const dataLimite = new Date();
-                    dataLimite.setDate(dataLimite.getDate() + 6); // 1 dia antes da abertura
-                    dataLimite.setHours(23, 59);
-                    dataLimiteInput.value = dataLimite.toISOString().slice(0, 16);
-                }
-            }
-            
-            if (listContainer) {
-                listContainer.style.display = 'none';
-            }
-            
-            // Atualizar título da seção
-            const sectionTitle = document.querySelector('#criar-processo .section-title');
-            if (sectionTitle) {
-                sectionTitle.innerHTML = `
-                    <i class="fas fa-plus-circle"></i> Criar Processo Licitatório - TR: ${tr.numeroTR}
-                `;
-            }
-        }
-
-        // Cancelar criação de processo
-        function cancelarCriacaoProcesso() {
-            trSelecionado = null;
-            
-            // Esconder formulário e mostrar lista
-            const formContainer = document.getElementById('form-criar-processo');
-            const listContainer = document.getElementById('trs-aprovados-list');
-            
-            if (formContainer) {
-                formContainer.style.display = 'none';
-                // Limpar formulário
-                const inputs = formContainer.querySelectorAll('input, select, textarea');
-                inputs.forEach(input => {
-                    if (input.type !== 'button' && input.type !== 'submit') {
-                        input.value = '';
-                    }
-                });
-            }
-            
-            if (listContainer) {
-                listContainer.style.display = 'block';
-            }
-            
-            // Restaurar título da seção
-            const sectionTitle = document.querySelector('#criar-processo .section-title');
-            if (sectionTitle) {
-                sectionTitle.innerHTML = `
-                    <i class="fas fa-plus-circle"></i> Criar Processo Licitatório
-                `;
-            }
-        }
-
-        // Salvar processo
-        function salvarProcesso() {
-            if (!trSelecionado) {
-                alert('Erro: Nenhum TR selecionado!');
-                return;
-            }
-            
-            // Obter valores do formulário
-            const numeroProcesso = document.getElementById('processo-numero').value;
-            const modalidade = document.getElementById('processo-modalidade').value;
-            const dataAbertura = document.getElementById('processo-data-abertura').value;
-            const dataLimite = document.getElementById('processo-data-limite').value;
-            const localAbertura = document.getElementById('processo-local').value;
-            const observacoes = document.getElementById('processo-observacoes').value;
-            
-            // Validar campos obrigatórios
-            if (!numeroProcesso || !modalidade || !dataAbertura || !dataLimite || !localAbertura) {
-                alert('Por favor, preencha todos os campos obrigatórios!');
-                return;
-            }
-            
-            // Validar datas
-            if (new Date(dataLimite) >= new Date(dataAbertura)) {
-                alert('A data limite deve ser anterior à data de abertura!');
-                return;
-            }
-            
-            // Criar objeto do processo
-            const novoProcesso = {
-                id: SistemaLocal.gerarId(),
-                numeroProcesso: numeroProcesso,
-                modalidade: modalidade,
-                dataAbertura: dataAbertura,
-                dataLimite: dataLimite,
-                localAbertura: localAbertura,
-                observacoes: observacoes,
-                trVinculado: {
-                    id: trSelecionado.id,
-                    numero: trSelecionado.numeroTR,
-                    titulo: trSelecionado.titulo,
-                    objetivo: trSelecionado.objetivo,
-                    valorEstimado: trSelecionado.valorEstimado
-                },
-                fornecedores: [],
-                status: 'ATIVO',
-                dataCriacao: new Date().toISOString(),
-                criadoPor: 'Comprador' // Em um sistema real, seria o usuário logado
-            };
-            
-            // Salvar processo
-            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            processos.push(novoProcesso);
-            
-            if (SistemaLocal.salvar(SistemaLocal.CHAVES.PROCESSOS, processos)) {
-                alert('Processo criado com sucesso!');
-                
-                // Limpar formulário e voltar para lista
-                cancelarCriacaoProcesso();
-                
-                // Ir para página de processos
-                mostrarPagina('processos');
-            } else {
-                alert('Erro ao criar processo!');
-            }
+            // Redirecionar para página de criação de processo com TR pré-selecionado
+            window.location.href = `dashboard-comprador-criar-processo-integrado.html?tr=${trId}`;
         }
 
         // Visualizar proposta
@@ -1657,7 +1435,7 @@
             document.getElementById('btn-dashboard')?.addEventListener('click', () => mostrarPagina('dashboard'));
             document.getElementById('btn-aprovacao-tr')?.addEventListener('click', () => mostrarPagina('aprovacao-tr'));
             document.getElementById('btn-processos')?.addEventListener('click', () => mostrarPagina('processos'));
-            document.getElementById('btn-criar-processo')?.addEventListener('click', () => mostrarPagina('criar-processo'));
+            document.getElementById('btn-criar-processo')?.addEventListener('click', () => {window.location.href = 'dashboard-comprador-criar-processo.html';});
             document.getElementById('btn-analise')?.addEventListener('click', () => mostrarPagina('analise'));
             document.getElementById('btn-relatorios')?.addEventListener('click', () => mostrarPagina('relatorios'));
             document.getElementById('btn-voltar')?.addEventListener('click', voltarSistema);
@@ -1665,7 +1443,7 @@
 
             // Cards do dashboard
             document.getElementById('card-aprovacao-tr')?.addEventListener('click', () => mostrarPagina('aprovacao-tr'));
-            document.getElementById('card-criar-processo')?.addEventListener('click', () => mostrarPagina('criar-processo'));
+            document.getElementById('card-criar-processo')?.addEventListener('click', () => {window.location.href = 'dashboard-comprador-criar-processo.html';});;
             document.getElementById('card-processos')?.addEventListener('click', () => mostrarPagina('processos'));
 
             // Event delegation para botões dinâmicos
