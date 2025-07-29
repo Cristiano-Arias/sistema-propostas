@@ -1473,8 +1473,39 @@
                     SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs);
                 }
 
+                // NOVA FUNCIONALIDADE: Criar vinculação específica de processos por fornecedor
+                const vinculacoesFornecedores = SistemaLocal.carregar('processos_por_fornecedor', []);
+                
+                processoAtual.fornecedores.forEach(fornecedor => {
+                    // Criar vinculação específica para cada fornecedor
+                    const vinculacao = {
+                        id: SistemaLocal.gerarId(),
+                        fornecedorId: fornecedor.id,
+                        fornecedorEmail: fornecedor.email,
+                        fornecedorCNPJ: fornecedor.cnpj,
+                        fornecedorRazaoSocial: fornecedor.razaoSocial,
+                        processoId: novoProcesso.id,
+                        numeroProcesso: novoProcesso.numeroProcesso,
+                        modalidade: novoProcesso.modalidade,
+                        dataAbertura: novoProcesso.dataAbertura,
+                        dataLimite: novoProcesso.dataLimite,
+                        localAbertura: novoProcesso.localAbertura,
+                        trTitulo: tr.titulo,
+                        trNumero: tr.numeroTR,
+                        valorEstimado: tr.valorEstimado,
+                        status: 'CONVIDADO',
+                        dataConvite: new Date().toISOString(),
+                        podeParticipar: true
+                    };
+                    
+                    vinculacoesFornecedores.push(vinculacao);
+                });
+
+                // Salvar vinculações
+                SistemaLocal.salvar('processos_por_fornecedor', vinculacoesFornecedores);
+
                 // Mostrar sucesso e redirecionar
-                alert(`Processo ${dados.numeroProcesso} criado com sucesso!\n\nO TR foi vinculado ao processo e os fornecedores serão notificados.`);
+                alert(`Processo ${dados.numeroProcesso} criado com sucesso!\n\nO TR foi vinculado ao processo e os ${processoAtual.fornecedores.length} fornecedores foram convidados.\n\nCada fornecedor verá apenas este processo específico em seu painel quando fizer login.`);
                 
                 // Resetar e voltar para dashboard
                 resetarCriacaoProcesso();
