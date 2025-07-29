@@ -1007,7 +1007,8 @@
         // Carregar TRs aprovados para criar processo
         function carregarTRsAprovados() {
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const trsAprovados = trs.filter(tr => tr.status === StatusTR.APROVADO);
+            // Filtrar apenas TRs aprovados que ainda não foram usados em processos
+            const trsAprovados = trs.filter(tr => tr.status === StatusTR.APROVADO && !tr.processoVinculado);
 
             const container = document.getElementById('trs-aprovados-list');
             if (!container) return;
@@ -1248,15 +1249,35 @@
                 return;
             }
 
+            // Gerar usuário e senha automaticamente
+            const usuario = cnpj.replace(/[^\d]/g, ''); // Usar apenas números do CNPJ como usuário
+            const senha = Math.random().toString(36).slice(-8).toUpperCase(); // Senha aleatória de 8 caracteres
+
             const fornecedor = {
                 id: SistemaLocal.gerarId(),
                 razaoSocial,
                 cnpj,
                 email,
-                dataConvite: new Date().toISOString()
+                usuario,
+                senha,
+                dataConvite: new Date().toISOString(),
+                dataCadastro: new Date().toISOString()
             };
 
+            // Salvar fornecedor no sistema para acesso ao módulo fornecedor
+            const fornecedoresCadastrados = SistemaLocal.carregar('fornecedores_sistema', []);
+            
+            // Verificar se fornecedor já existe no sistema
+            const fornecedorExistente = fornecedoresCadastrados.find(f => f.cnpj === cnpj);
+            if (!fornecedorExistente) {
+                fornecedoresCadastrados.push(fornecedor);
+                SistemaLocal.salvar('fornecedores_sistema', fornecedoresCadastrados);
+            }
+
             processoAtual.fornecedores.push(fornecedor);
+            
+            // Mostrar dados de acesso gerados
+            alert(`Fornecedor cadastrado com sucesso!\n\nDados de acesso gerados:\nUsuário: ${usuario}\nSenha: ${senha}\n\nEsses dados serão enviados por e-mail para: ${email}`);
             
             // Limpar formulário
             document.getElementById('form-adicionar-fornecedor').reset();
@@ -1286,7 +1307,8 @@
                             <div>
                                 <strong>${fornecedor.razaoSocial}</strong><br>
                                 <small style="color: #666;">
-                                    CNPJ: ${fornecedor.cnpj} | E-mail: ${fornecedor.email}
+                                    CNPJ: ${fornecedor.cnpj} | E-mail: ${fornecedor.email}<br>
+                                    <strong style="color: #11998e;">Usuário: ${fornecedor.usuario || 'N/A'} | Senha: ${fornecedor.senha || 'N/A'}</strong>
                                 </small>
                             </div>
                             <button onclick="removerFornecedor(${index})" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">
@@ -1364,7 +1386,10 @@
                         ${processoAtual.fornecedores.map(f => `
                             <div style="background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; border-left: 3px solid #11998e;">
                                 <strong>${f.razaoSocial}</strong><br>
-                                <small style="color: #666;">CNPJ: ${f.cnpj} | E-mail: ${f.email}</small>
+                                <small style="color: #666;">
+                                    CNPJ: ${f.cnpj} | E-mail: ${f.email}<br>
+                                    <strong style="color: #11998e;">Acesso: ${f.usuario || 'N/A'} / ${f.senha || 'N/A'}</strong>
+                                </small>
                             </div>
                         `).join('')}
                     </div>
