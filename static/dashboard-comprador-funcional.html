@@ -1250,8 +1250,8 @@
             }
 
             // Gerar usuário e senha automaticamente
-            const usuario = cnpj.replace(/[^\d]/g, ''); // Usar apenas números do CNPJ como usuário
-            const senha = Math.random().toString(36).slice(-8).toUpperCase(); // Senha aleatória de 8 caracteres
+            const usuario = email; // Usar e-mail como usuário (mais padrão)
+            const senha = '123456'; // Senha padrão simples para teste
 
             const fornecedor = {
                 id: SistemaLocal.gerarId(),
@@ -1261,17 +1261,35 @@
                 usuario,
                 senha,
                 dataConvite: new Date().toISOString(),
-                dataCadastro: new Date().toISOString()
+                dataCadastro: new Date().toISOString(),
+                status: 'ativo'
             };
 
             // Salvar fornecedor no sistema para acesso ao módulo fornecedor
-            const fornecedoresCadastrados = SistemaLocal.carregar('fornecedores_sistema', []);
+            // Usar a mesma chave que o módulo fornecedor espera
+            const fornecedoresCadastrados = SistemaLocal.carregar(SistemaLocal.CHAVES.USUARIO_COMPRADOR, []);
             
             // Verificar se fornecedor já existe no sistema
-            const fornecedorExistente = fornecedoresCadastrados.find(f => f.cnpj === cnpj);
+            const fornecedorExistente = fornecedoresCadastrados.find(f => f.email === email || f.cnpj === cnpj);
             if (!fornecedorExistente) {
-                fornecedoresCadastrados.push(fornecedor);
-                SistemaLocal.salvar('fornecedores_sistema', fornecedoresCadastrados);
+                // Salvar também na chave específica para fornecedores
+                const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
+                usuariosFornecedores.push({
+                    id: fornecedor.id,
+                    email: usuario,
+                    senha: senha,
+                    razaoSocial: razaoSocial,
+                    cnpj: cnpj,
+                    tipo: 'fornecedor',
+                    ativo: true,
+                    dataCadastro: new Date().toISOString()
+                });
+                SistemaLocal.salvar('usuarios_fornecedores', usuariosFornecedores);
+                
+                // Salvar dados completos do fornecedor
+                const fornecedoresCompletos = SistemaLocal.carregar('fornecedores_cadastrados', []);
+                fornecedoresCompletos.push(fornecedor);
+                SistemaLocal.salvar('fornecedores_cadastrados', fornecedoresCompletos);
             }
 
             processoAtual.fornecedores.push(fornecedor);
