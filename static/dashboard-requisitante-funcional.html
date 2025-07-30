@@ -235,19 +235,23 @@
         }
 
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 4 colunas iguais para layout horizontal */
-            gap: 20px; /* Espaçamento otimizado */
-            margin-bottom: 30px;
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important; /* Força 4 colunas iguais */
+            gap: 15px !important;
+            margin-bottom: 25px !important;
+            width: 100% !important;
         }
 
+        /* Força cada card a ocupar espaço igual */
         .stat-card {
             background: rgba(255, 255, 255, 0.9);
-            padding: 35px; /* Era 25px */
-            border-radius: 15px;
+            padding: 25px 15px; /* Padding otimizado para layout horizontal */
+            border-radius: 12px;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
+            min-width: 0; /* Permite que o card encolha se necessário */
+            flex: 1; /* Garante distribuição igual */
         }
 
         .stat-card:hover {
@@ -255,15 +259,16 @@
         }
 
         .stat-value {
-            font-size: 48px; /* Era 36px */
+            font-size: 36px; /* Ajustado para layout horizontal */
             font-weight: bold;
             color: #667eea;
-            margin-bottom: 15px; /* Era 10px */
+            margin-bottom: 10px;
         }
 
         .stat-label {
             color: #666;
-            font-size: 16px; /* Era 14px */
+            font-size: 14px;
+            line-height: 1.2;
         }
 
         .cards-grid {
@@ -493,8 +498,16 @@
             font-size: 16px; /* Era 14px */
         }
 
-        /* Responsividade otimizada para layout horizontal */
-        @media (max-width: 1200px) {
+        /* Responsividade otimizada - garantindo layout horizontal em desktop */
+        @media (min-width: 1024px) {
+            .stats-grid {
+                display: grid !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 15px !important;
+            }
+        }
+
+        @media (max-width: 1023px) {
             .sidebar {
                 width: 140px;
             }
@@ -502,11 +515,11 @@
                 margin-left: 140px;
             }
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+                grid-template-columns: repeat(2, 1fr) !important;
                 gap: 15px;
             }
             .cards-grid {
-                grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+                grid-template-columns: repeat(2, 1fr);
                 gap: 15px;
             }
         }
@@ -525,11 +538,11 @@
                 padding: 40px;
             }
             .stats-grid {
-                grid-template-columns: 1fr; /* 1 coluna em mobile */
+                grid-template-columns: 1fr !important;
                 gap: 10px;
             }
             .cards-grid {
-                grid-template-columns: 1fr; /* 1 coluna em mobile */
+                grid-template-columns: 1fr;
                 gap: 10px;
             }
             .sidebar .logo h2 {
