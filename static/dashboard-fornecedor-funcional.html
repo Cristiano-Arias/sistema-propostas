@@ -515,7 +515,9 @@
                 margin-left: 180px;
             }
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 15px !important;
             }
             .cards-grid {
                 grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
@@ -535,7 +537,9 @@
                 padding: 40px;
             }
             .stats-grid {
-                grid-template-columns: 1fr; /* 1 coluna em mobile */
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 10px !important;
             }
             .cards-grid {
                 grid-template-columns: 1fr; /* 1 coluna em mobile */
