@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Requisitante - Sistema de Gestão de Propostas</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Portal do Fornecedor - Sistema Integrado</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -17,133 +17,203 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .sidebar {
-            width: 250px;
+        /* AJUSTE DESKTOP: Aumentar tela de login */
+        .login-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 20px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            padding: 60px; /* Era 40px */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px; /* Era 400px */
+            text-align: center;
         }
 
         .logo {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
+            color: #667eea;
+            font-size: 72px; /* Era 48px */
+            margin-bottom: 30px; /* Era 20px */
         }
 
-        .logo h2 {
+        .login-container h1 {
             color: #333;
-            font-size: 18px;
-            margin-top: 10px;
+            margin-bottom: 15px; /* Era 10px */
+            font-size: 36px; /* Era 24px */
         }
 
-        .nav-section {
-            margin-bottom: 25px;
-        }
-
-        .nav-title {
-            font-size: 12px;
-            font-weight: 600;
+        .login-container p {
             color: #666;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            padding-left: 10px;
+            margin-bottom: 40px; /* Era 30px */
+            font-size: 18px; /* Era 14px */
         }
 
-        .nav-item {
-            display: block;
-            width: 100%;
-            padding: 12px 15px;
-            margin-bottom: 5px;
-            background: none;
-            border: none;
-            border-radius: 8px;
+        .form-group {
+            margin-bottom: 30px; /* Era 20px */
             text-align: left;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #555;
-            font-size: 14px;
         }
 
-        .nav-item:hover {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            transform: translateX(5px);
-        }
-
-        .nav-item.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-        }
-
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 20px 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
+        .form-group label {
+            display: block;
+            margin-bottom: 12px; /* Era 8px */
             color: #333;
-            font-size: 28px;
-            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 18px; /* Adicionado */
         }
 
-        .header p {
-            color: #666;
-            font-size: 16px;
+        .form-group input {
+            width: 100%;
+            padding: 18px 24px; /* Era 12px 16px */
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 18px; /* Era 16px */
+            transition: border-color 0.3s ease;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
         }
 
-        .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        .login-btn {
+            width: 100%;
+            padding: 20px; /* Era 14px */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 20px; /* Era 16px */
+            font-weight: 600;
+            cursor: pointer;
             transition: transform 0.3s ease;
         }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
+        .login-btn:hover {
+            transform: translateY(-2px);
         }
 
-        .stat-value {
-            font-size: 36px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
+        .login-info {
+            margin-top: 30px; /* Era 20px */
+            padding: 20px; /* Era 15px */
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 16px; /* Era 14px */
             color: #666;
-            font-size: 14px;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        /* AJUSTE DESKTOP: Dashboard */
+        .dashboard-container {
+            display: none;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* AJUSTE DESKTOP: Sidebar otimizada */
+        .sidebar {
+            width: 200px; /* Reduzido para layout desktop horizontal */
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px; /* Reduzido para otimizar espaço */
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar .logo {
+            text-align: center;
+            margin-bottom: 20px; /* Reduzido para layout compacto */
+            padding-bottom: 15px; /* Reduzido para layout compacto */
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .sidebar .logo i {
+            font-size: 24px; /* Reduzido para layout compacto */
+            color: #667eea;
+        }
+
+        .sidebar .logo h2 {
+            color: #333;
+            font-size: 18px; /* Reduzido para layout compacto */
+            margin-top: 8px; /* Reduzido para layout compacto */
+        }
+
+        .sidebar .logo p {
+            font-size: 12px; /* Reduzido para layout compacto */
+            color: #666;
+            margin-top: 4px; /* Reduzido para layout compacto */
+        }
+
+        .nav-section {
+            margin-bottom: 20px; /* Reduzido para layout compacto */
+        }
+
+        .nav-title {
+            font-size: 11px; /* Reduzido para layout compacto */
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 10px; /* Reduzido para layout compacto */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            width: 100%;
+            padding: 12px 15px; /* Reduzido para layout compacto */
+            background: none;
+            border: none;
+            text-align: left;
+            color: #666;
+            font-size: 14px; /* Reduzido para layout compacto */
+            cursor: pointer;
+            border-radius: 8px;
+            margin-bottom: 4px; /* Reduzido para layout compacto */
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Reduzido para layout compacto */
+        }
+
+        .nav-item:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .nav-item i {
+            font-size: 14px; /* Reduzido para layout compacto */
+            width: 16px; /* Reduzido para layout compacto */
+        }
+
+        /* AJUSTE DESKTOP: Main content otimizado */
+        .main-content {
+            margin-left: 200px; /* Ajustado para nova largura da sidebar */
+            padding: 30px; /* Otimizado para desktop */
+            min-height: 100vh;
         }
 
         .content-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            padding: 40px; /* Era 30px */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             display: none;
         }
 
@@ -152,80 +222,105 @@
         }
 
         .section-title {
-            font-size: 24px;
+            font-size: 32px; /* Era 24px */
             color: #333;
-            margin-bottom: 20px;
+            margin-bottom: 30px; /* Era 20px */
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px; /* Era 10px */
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        .section-title i {
+            font-size: 28px; /* Era 20px */
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 colunas iguais para layout horizontal */
+            gap: 20px; /* Espaçamento otimizado */
+            margin-bottom: 30px;
         }
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 35px; /* Era 25px */
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
         }
 
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
+        .stat-card:hover {
+            transform: translateY(-5px);
         }
 
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
+        .stat-value {
+            font-size: 48px; /* Era 36px */
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px; /* Era 10px */
         }
 
-        .form-group small {
-            display: block;
-            margin-top: 5px;
+        .stat-label {
             color: #666;
-            font-size: 12px;
+            font-size: 16px; /* Era 14px */
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 colunas iguais para layout horizontal */
+            gap: 20px; /* Espaçamento otimizado */
+        }
+
+        .action-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px; /* Era 30px */
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-card i {
+            font-size: 64px; /* Era 48px */
+            margin-bottom: 20px; /* Era 15px */
+            color: #667eea;
+        }
+
+        .action-card h3 {
+            color: #333;
+            margin-bottom: 15px; /* Era 10px */
+            font-size: 20px; /* Era 18px */
+        }
+
+        .action-card p {
+            color: #666;
+            font-size: 16px; /* Era 14px */
         }
 
         .btn {
-            padding: 12px 24px;
+            padding: 12px 24px; /* Era 10px 20px */
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 16px; /* Era 14px */
+            font-weight: 500;
             transition: all 0.3s ease;
-            margin-right: 10px;
-            margin-bottom: 10px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
         }
 
         .btn-success {
@@ -233,511 +328,463 @@
             color: white;
         }
 
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
         .btn-danger {
             background: #dc3545;
             color: white;
         }
 
-        .btn-info {
-            background: #17a2b8;
+        .btn-secondary {
+            background: #6c757d;
             color: white;
         }
 
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .tr-list {
-            margin-top: 20px;
-        }
-
-        .tr-item {
+        .processo-item {
             background: #fff;
             border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 15px;
+            padding: 30px; /* Era 20px */
+            margin-bottom: 25px; /* Era 20px */
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
 
-        .tr-item:hover {
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        .processo-item:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
         }
 
-        /* Status específicos */
-        .tr-item.rascunho {
-            border-left: 5px solid #6c757d;
-        }
-
-        .tr-item.elaborado {
-            border-left: 5px solid #17a2b8;
-        }
-
-        .tr-item.enviado {
-            border-left: 5px solid #ffc107;
-        }
-
-        .tr-item.aprovado {
-            border-left: 5px solid #28a745;
-        }
-
-        .tr-item.reprovado {
-            border-left: 5px solid #dc3545;
-        }
-
-        .tr-status-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 6px 16px;
+        .processo-status {
+            display: inline-block;
+            padding: 8px 16px; /* Era 6px 12px */
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 14px; /* Era 12px */
             font-weight: 600;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            margin-bottom: 20px; /* Era 15px */
         }
 
-        .tr-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
-            padding-right: 150px;
+        .status-ativo {
+            background: #d4edda;
+            color: #155724;
         }
 
-        .tr-meta {
-            display: flex;
-            gap: 20px;
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
+        .status-vencido {
+            background: #f8d7da;
+            color: #721c24;
         }
 
-        .tr-objective {
-            color: #555;
-            line-height: 1.5;
-            margin-bottom: 15px;
+        .processo-item h3 {
+            font-size: 22px; /* Era 20px */
+            margin-bottom: 15px; /* Era 10px */
         }
 
-        .tr-timeline {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 15px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
+        .processo-item p {
+            font-size: 16px; /* Era 14px */
+            margin-bottom: 10px; /* Era 8px */
         }
 
-        .timeline-step {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            color: #666;
-        }
-
-        .timeline-step.active {
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        .timeline-step.completed {
-            color: #28a745;
-        }
-
-        .timeline-separator {
-            width: 30px;
-            height: 2px;
-            background: #dee2e6;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-
-        .modal-overlay {
+        .modal {
+            display: none;
             position: fixed;
-            top: 0;
+            z-index: 1000;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1050;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.5);
         }
 
         .modal-content {
-            background: white;
+            background-color: #fff;
+            margin: 2% auto;
+            padding: 40px; /* Era 30px */
+            border-radius: 20px;
             width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
+            max-width: 800px; /* Era 600px */
+            max-height: 85vh;
             overflow-y: auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
 
-        .modal-header {
-            padding: 25px;
-            border-bottom: 1px solid #dee2e6;
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 32px; /* Era 28px */
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .form-group {
+            margin-bottom: 25px; /* Era 20px */
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px; /* Era 8px */
+            font-weight: 500;
+            color: #333;
+            font-size: 16px; /* Era 14px */
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 14px; /* Era 12px */
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px; /* Era 14px */
+        }
+
+        .form-group textarea {
+            height: 120px; /* Era 100px */
+            resize: vertical;
+        }
+
+        .empresa-info {
+            background: #f8f9fa;
+            padding: 30px; /* Era 20px */
+            border-radius: 15px;
+            margin-bottom: 30px; /* Era 20px */
+        }
+
+        .empresa-info h3 {
+            color: #333;
+            margin-bottom: 20px; /* Era 15px */
+            font-size: 20px; /* Era 18px */
+        }
+
+        .info-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            margin-bottom: 15px; /* Era 10px */
+            padding-bottom: 15px; /* Era 10px */
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 16px; /* Era 14px */
         }
 
-        .modal-body {
-            padding: 25px;
+        .info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
         }
 
-        .modal-footer {
-            padding: 20px 25px;
-            border-top: 1px solid #dee2e6;
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
+        .info-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px; /* Era 12px */
+            border-radius: 10px;
+            margin-bottom: 20px; /* Era 15px */
+            border: 1px solid #ffeaa7;
+            font-size: 16px; /* Era 14px */
+        }
+
+        /* Responsividade para telas menores */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 180px;
+            }
+            .main-content {
+                margin-left: 180px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+            }
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+            }
         }
 
         @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            
             .sidebar {
-                width: 100%;
+                width: 160px;
+            }
+            .main-content {
+                margin-left: 160px;
                 padding: 15px;
             }
-            
-            .main-content {
-                padding: 20px;
+            .login-container {
+                max-width: 400px;
+                padding: 40px;
             }
-            
             .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                gap: 15px;
+                grid-template-columns: 1fr; /* 1 coluna em mobile */
             }
-
-            .tr-title {
-                padding-right: 0;
-                margin-bottom: 60px;
-            }
-
-            .tr-status-badge {
-                position: relative;
-                top: auto;
-                right: auto;
-                margin-top: -50px;
-                margin-bottom: 10px;
-                display: inline-flex;
+            .cards-grid {
+                grid-template-columns: 1fr; /* 1 coluna em mobile */
             }
         }
     </style>
 </head>
 <body>
-    <div class="sidebar">
+    <!-- Tela de Login -->
+    <div id="login-screen" class="login-container">
         <div class="logo">
-            <i class="fas fa-user-tie" style="font-size: 24px; color: #667eea;"></i>
-            <h2>Portal do Requisitante</h2>
-            <p style="font-size: 12px; color: #666; margin-top: 5px;">Gerencie Termos de Referência e emita pareceres técnicos</p>
+            <i class="fas fa-building"></i>
         </div>
+        <h1>Portal do Fornecedor</h1>
+        <p>Sistema Integrado - Credenciais do Setor de Compras</p>
 
-        <div class="nav-section">
-            <div class="nav-title">REQUISITANTE</div>
-            <button class="nav-item active" id="btn-dashboard">
-                <i class="fas fa-tachometer-alt"></i> Dashboard Requisitante
-            </button>
-            <button class="nav-item" id="btn-criar-tr">
-                <i class="fas fa-plus-circle"></i> Criar TR
-            </button>
-            <button class="nav-item" id="btn-meus-trs">
-                <i class="fas fa-list"></i> Meus TRs
-            </button>
-            <button class="nav-item" id="btn-emitir-parecer">
-                <i class="fas fa-file-alt"></i> Emitir Parecer
-            </button>
-        </div>
+        <div id="error-message" class="error-message"></div>
 
-        <div class="nav-section">
-            <div class="nav-title">SISTEMA</div>
-            <button class="nav-item" id="btn-voltar">
-                <i class="fas fa-home"></i> Voltar ao Sistema Principal
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" required>
+            </div>
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" placeholder="Digite sua senha" required>
+            </div>
+            <button type="submit" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Entrar no Sistema
             </button>
-            <button class="nav-item" id="btn-logout">
-                <i class="fas fa-sign-out-alt"></i> Sair
-            </button>
+        </form>
+
+        <div class="login-info">
+            Credenciais fornecidas pelo setor de compras
         </div>
     </div>
 
-    <div class="main-content">
-        <!-- Dashboard -->
-        <div id="dashboard" class="content-section active">
-            <div class="header">
-                <h1><i class="fas fa-tachometer-alt"></i> Dashboard Requisitante</h1>
-                <p>Gerencie Termos de Referência e análises técnicas</p>
+    <!-- Dashboard -->
+    <div id="dashboard-screen" class="dashboard-container">
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-building"></i>
+                <h2>Portal do Fornecedor</h2>
+                <p id="empresa-nome"></p>
             </div>
 
-            <div id="notificacoes-container" style="margin-bottom: 20px;">
-                <!-- Notificações aparecerão aqui -->
+            <div class="nav-section">
+                <div class="nav-title">FORNECEDOR</div>
+                <button class="nav-item active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </button>
+                <button class="nav-item" data-section="processos">
+                    <i class="fas fa-file-contract"></i> Meus Processos
+                </button>
+                <button class="nav-item" data-section="propostas">
+                    <i class="fas fa-paper-plane"></i> Minhas Propostas
+                </button>
+                <button class="nav-item" data-section="historico">
+                    <i class="fas fa-history"></i> Histórico
+                </button>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="trs-total">0</div>
-                    <div class="stat-label">Total de TRs</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="trs-elaborados">0</div>
-                    <div class="stat-label">TRs Elaborados</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="trs-enviados">0</div>
-                    <div class="stat-label">Enviados p/ Compras</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="trs-aprovados">0</div>
-                    <div class="stat-label">TRs Aprovados</div>
-                </div>
+            <div class="nav-section">
+                <div class="nav-title">CONFIGURAÇÕES</div>
+                <button class="nav-item" data-section="perfil">
+                    <i class="fas fa-user"></i> Meu Perfil
+                </button>
+                <button class="nav-item" data-section="documentos">
+                    <i class="fas fa-folder"></i> Documentos
+                </button>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                <div class="stat-card" style="cursor: pointer;" id="card-criar-tr">
-                    <i class="fas fa-plus-circle" style="font-size: 48px; color: #667eea; margin-bottom: 15px;"></i>
-                    <h3 style="color: #333; margin-bottom: 10px;">Criar TR</h3>
-                    <p style="color: #666;">Elaborar novo Termo de Referência</p>
-                </div>
-                <div class="stat-card" style="cursor: pointer;" id="card-meus-trs">
-                    <i class="fas fa-list" style="font-size: 48px; color: #28a745; margin-bottom: 15px;"></i>
-                    <h3 style="color: #333; margin-bottom: 10px;">Meus TRs</h3>
-                    <p style="color: #666;">Visualizar TRs criados</p>
-                </div>
-                <div class="stat-card" style="cursor: pointer;" id="card-emitir-parecer">
-                    <i class="fas fa-file-alt" style="font-size: 48px; color: #ffc107; margin-bottom: 15px;"></i>
-                    <h3 style="color: #333; margin-bottom: 10px;">Emitir Parecer</h3>
-                    <p style="color: #666;">Análise técnica de propostas</p>
-                </div>
+            <div class="nav-section">
+                <div class="nav-title">SISTEMA</div>
+                <button class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
             </div>
         </div>
 
-        <!-- Criar TR -->
-        <div id="criar-tr" class="content-section">
-            <div class="section-title">
-                <i class="fas fa-plus-circle"></i> Criar Termo de Referência
-            </div>
-
-            <div class="alert alert-success" id="success-alert">
-                <i class="fas fa-check-circle"></i> TR salvo com sucesso!
-            </div>
-
-            <div class="alert alert-error" id="error-alert">
-                <i class="fas fa-exclamation-triangle"></i> <span id="error-message">Erro ao salvar TR</span>
-            </div>
-
-            <form id="tr-form">
-                <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                    <h4 style="color: #1976d2; margin-bottom: 10px;">
-                        <i class="fas fa-info-circle"></i> Novo Termo de Referência
-                    </h4>
-                    <p style="color: #1976d2;">Preencha todos os campos obrigatórios para criar um TR completo e detalhado.</p>
+        <div class="main-content">
+            <!-- Dashboard -->
+            <div id="dashboard" class="content-section active">
+                <div class="section-title">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard Fornecedor
                 </div>
+                <p style="color: #666; margin-bottom: 40px;">Acompanhe seus processos licitatórios e propostas em tempo real</p>
 
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h4 style="color: #333; margin-bottom: 15px;">
-                        <i class="fas fa-info"></i> Informações Básicas
-                    </h4>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                        <div class="form-group">
-                            <label for="tr-titulo">Título do TR *</label>
-                            <input type="text" id="tr-titulo" name="titulo" required>
-                            <small>Título claro e descritivo do Termo de Referência</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="tr-modalidade">Modalidade Sugerida *</label>
-                            <select id="tr-modalidade" name="modalidade" required>
-                                <option value="">Selecione a modalidade</option>
-                                <option value="Pregão Eletrônico">Pregão Eletrônico</option>
-                                <option value="Concorrência">Concorrência</option>
-                                <option value="Tomada de Preços">Tomada de Preços</option>
-                                <option value="Convite">Convite</option>
-                                <option value="Dispensa">Dispensa</option>
-                                <option value="Inexigibilidade">Inexigibilidade</option>
-                            </select>
-                            <small>Modalidade de licitação mais adequada</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="tr-valor-estimado">Valor Estimado (R$)</label>
-                            <input type="number" id="tr-valor-estimado" name="valorEstimado" step="0.01" min="0">
-                            <small>Valor estimado para a contratação</small>
-                        </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-processos">0</div>
+                        <div class="stat-label">Processos Disponíveis</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-propostas">0</div>
+                        <div class="stat-label">Propostas Enviadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-vencidos">0</div>
+                        <div class="stat-label">Prazos Vencidos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-aceitas">0</div>
+                        <div class="stat-label">Propostas Aceitas</div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="tr-objetivo">1. Objetivo *</label>
-                    <textarea id="tr-objetivo" name="objetivo" required placeholder="Descreva o objetivo da contratação..."></textarea>
-                    <small>Objetivo claro e específico da contratação</small>
+                <div class="cards-grid">
+                    <div class="action-card" onclick="mostrarSecao('processos')">
+                        <i class="fas fa-file-contract"></i>
+                        <h3>Meus Processos</h3>
+                        <p>Visualizar processos disponíveis para participação</p>
+                    </div>
+                    <div class="action-card" onclick="mostrarSecao('propostas')">
+                        <i class="fas fa-paper-plane"></i>
+                        <h3>Enviar Propostas</h3>
+                        <p>Participar dos processos licitatórios</p>
+                    </div>
+                    <div class="action-card" onclick="mostrarSecao('historico')">
+                        <i class="fas fa-history"></i>
+                        <h3>Histórico</h3>
+                        <p>Acompanhar resultados e histórico</p>
+                    </div>
+                    <div class="action-card" onclick="mostrarSecao('perfil')">
+                        <i class="fas fa-user"></i>
+                        <h3>Meu Perfil</h3>
+                        <p>Gerenciar dados da empresa</p>
+                    </div>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="tr-conformidade">2. Conformidade ao Termo de Referência *</label>
-                    <textarea id="tr-conformidade" name="conformidade" required placeholder="Descreva a conformidade..."></textarea>
-                    <small>Justificativa da conformidade com as normas aplicáveis</small>
+            <!-- Meus Processos -->
+            <div id="processos" class="content-section">
+                <div class="section-title">
+                    <i class="fas fa-file-contract"></i> Meus Processos Licitatórios
                 </div>
-
-                <div class="form-group">
-                    <label for="tr-local">3. Local/Acesso *</label>
-                    <textarea id="tr-local" name="local" required placeholder="Descreva o local de execução e condições de acesso..."></textarea>
-                    <small>Local de execução dos serviços e condições de acesso</small>
+                <div id="processos-list">
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando processos...</h3>
+                    </div>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="tr-escopo">4. Escopo Técnico *</label>
-                    <textarea id="tr-escopo" name="escopo" required placeholder="Descreva detalhadamente o escopo técnico..."></textarea>
-                    <small>Descrição detalhada do escopo técnico dos serviços</small>
+            <!-- Minhas Propostas -->
+            <div id="propostas" class="content-section">
+                <div class="section-title">
+                    <i class="fas fa-paper-plane"></i> Minhas Propostas
                 </div>
-
-                <div class="form-group">
-                    <label for="tr-situacao-atual">5. Situação Atual *</label>
-                    <textarea id="tr-situacao-atual" name="situacaoAtual" required placeholder="Descreva a situação atual..."></textarea>
-                    <small>Descrição da situação atual que justifica a contratação</small>
+                <div id="propostas-list">
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando propostas...</h3>
+                    </div>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="tr-situacao-proposta">6. Situação Proposta *</label>
-                    <textarea id="tr-situacao-proposta" name="situacaoProposta" required placeholder="Descreva a situação proposta..."></textarea>
-                    <small>Descrição da situação desejada após a contratação</small>
+            <!-- Histórico -->
+            <div id="historico" class="content-section">
+                <div class="section-title">
+                    <i class="fas fa-history"></i> Histórico de Participações
                 </div>
-
-                <div class="form-group">
-                    <label for="tr-especificacao">7. Especificação Técnica *</label>
-                    <textarea id="tr-especificacao" name="especificacao" required placeholder="Detalhe as especificações técnicas..."></textarea>
-                    <small>Especificações técnicas detalhadas dos serviços/produtos</small>
+                <div id="historico-list">
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando histórico...</h3>
+                    </div>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="tr-prazo">8. Prazo de Execução *</label>
-                    <textarea id="tr-prazo" name="prazo" required placeholder="Defina o prazo de execução..."></textarea>
-                    <small>Prazo para execução dos serviços</small>
+            <!-- Meu Perfil -->
+            <div id="perfil" class="content-section">
+                <div class="section-title">
+                    <i class="fas fa-user"></i> Meu Perfil
                 </div>
-
-                <div class="form-group">
-                    <label for="tr-responsabilidades">9. Responsabilidades *</label>
-                    <textarea id="tr-responsabilidades" name="responsabilidades" required placeholder="Defina as responsabilidades..."></textarea>
-                    <small>Responsabilidades da contratada e contratante</small>
+                <div id="perfil-content">
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando perfil...</h3>
+                    </div>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="tr-criterios">10. Critérios de Avaliação de Propostas *</label>
-                    <textarea id="tr-criterios" name="criterios" required placeholder="Defina os critérios de avaliação..."></textarea>
-                    <small>Critérios para avaliação das propostas</small>
+            <!-- Documentos -->
+            <div id="documentos" class="content-section">
+                <div class="section-title">
+                    <i class="fas fa-folder"></i> Documentos
                 </div>
-
-                <div class="form-group">
-                    <label for="tr-anexos">11. Anexos</label>
-                    <textarea id="tr-anexos" name="anexos" placeholder="Liste os anexos necessários..."></textarea>
-                    <small>Documentos e anexos que acompanham o TR</small>
+                <div style="text-align: center; padding: 60px; color: #666;">
+                    <i class="fas fa-tools" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                    <h3 style="font-size: 24px;">Área de Documentos</h3>
+                    <p style="font-size: 16px;">Funcionalidade em desenvolvimento para upload e gerenciamento de documentos da empresa.</p>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-check-circle"></i> Concluir TR
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="btn-salvar-rascunho">
-                        <i class="fas fa-save"></i> Salvar Rascunho
-                    </button>
-                    <button type="button" class="btn btn-danger" id="btn-limpar-form">
-                        <i class="fas fa-trash"></i> Limpar Formulário
-                    </button>
+    <!-- Modais -->
+    <div id="modal-detalhes-processo" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-file-contract"></i> Detalhes do Processo</h2>
+            <div id="detalhes-processo-content"></div>
+        </div>
+    </div>
+
+    <div id="modal-enviar-proposta" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-paper-plane"></i> Enviar Proposta</h2>
+            <form id="form-proposta">
+                <div id="processo-info"></div>
+                <div id="proposta-existente-aviso"></div>
+                <div class="form-group">
+                    <label for="valor-proposta">Valor da Proposta (R$)</label>
+                    <input type="number" id="valor-proposta" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="prazo-execucao">Prazo de Execução (dias)</label>
+                    <input type="number" id="prazo-execucao" required>
+                </div>
+                <div class="form-group">
+                    <label for="condicoes-pagamento">Condições de Pagamento</label>
+                    <select id="condicoes-pagamento" required>
+                        <option value="">Selecione...</option>
+                        <option value="30 dias">30 dias</option>
+                        <option value="45 dias">45 dias</option>
+                        <option value="60 dias">60 dias</option>
+                        <option value="À vista">À vista</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="observacoes">Observações Técnicas</label>
+                    <textarea id="observacoes" placeholder="Descreva detalhes técnicos da proposta..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="garantia">Garantia Oferecida</label>
+                    <input type="text" id="garantia" placeholder="Ex: 12 meses">
+                </div>
+                <div style="text-align: right; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="fecharModal('modal-enviar-proposta')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-enviar-proposta">Enviar Proposta</button>
                 </div>
             </form>
         </div>
+    </div>
 
-        <!-- Meus TRs -->
-        <div id="meus-trs" class="content-section">
-            <div class="section-title">
-                <i class="fas fa-list"></i> Meus Termos de Referência
-            </div>
-
-            <div id="tr-list" class="tr-list">
-                <div class="loading">
-                    <i class="fas fa-spinner fa-spin"></i> Carregando TRs...
-                </div>
-            </div>
-        </div>
-
-        <!-- Emitir Parecer -->
-        <div id="emitir-parecer" class="content-section">
-            <div class="section-title">
-                <i class="fas fa-file-alt"></i> Emitir Parecer Técnico
-            </div>
-
-            <div style="text-align: center; padding: 40px; color: #666;">
-                <i class="fas fa-tools" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                <h3>Funcionalidade em Desenvolvimento</h3>
-                <p>A funcionalidade de emissão de pareceres técnicos estará disponível em breve.</p>
-            </div>
+    <div id="modal-detalhes-proposta" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-eye"></i> Detalhes da Proposta</h2>
+            <div id="detalhes-proposta-content"></div>
         </div>
     </div>
 
     <script>
+        // Variáveis globais
+        let fornecedorLogado = null;
+        let processoAtual = null;
+
         // Sistema de dados local
         const SistemaLocal = {
-            // Chaves para localStorage
-            CHAVES: {
-                TRS: 'sistema_trs',
-                USUARIO: 'sistema_usuario_logado',
-                ESTATISTICAS: 'sistema_estatisticas'
-            },
-
-            // Salvar dados
-            salvar(chave, dados) {
-                try {
-                    localStorage.setItem(chave, JSON.stringify(dados));
-                    return true;
-                } catch (error) {
-                    console.error('Erro ao salvar dados:', error);
-                    return false;
-                }
-            },
-
-            // Carregar dados
             carregar(chave, padrao = null) {
                 try {
                     const dados = localStorage.getItem(chave);
@@ -748,936 +795,655 @@
                 }
             },
 
-            // Gerar ID único
-            gerarId() {
-                return Date.now().toString(36) + Math.random().toString(36).substr(2);
-            },
-
-            // Obter usuário logado
-            obterUsuario() {
-                return this.carregar(this.CHAVES.USUARIO, { id: 1, nome: 'Admin', email: 'admin@sistema.com' });
-            }
-        };
-
-        // Integração com outros módulos
-        const IntegracaoModulos = {
-            enviarTRParaComprador: function(tr) {
+            salvar(chave, dados) {
                 try {
-                    // Atualizar status do TR
-                    const trs = JSON.parse(localStorage.getItem('sistema_trs') || '[]');
-                    const trIndex = trs.findIndex(t => t.id === tr.id);
-                    
-                    if (trIndex !== -1) {
-                        trs[trIndex].status = 'enviado';
-                        trs[trIndex].dataEnvioAprovacao = new Date().toISOString();
-                        localStorage.setItem('sistema_trs', JSON.stringify(trs));
-                        
-                        // Adicionar notificação para o comprador
-                        const notificacoes = JSON.parse(localStorage.getItem('notificacoes_comprador') || '[]');
-                        notificacoes.push({
-                            id: Date.now().toString(),
-                            tipo: 'novo_tr',
-                            titulo: 'Novo TR para Aprovação',
-                            mensagem: `TR "${tr.titulo}" enviado por ${tr.usuarioNome}`,
-                            data: new Date().toISOString(),
-                            lida: false,
-                            trId: tr.id
-                        });
-                        localStorage.setItem('notificacoes_comprador', JSON.stringify(notificacoes));
-                        
-                        return true;
-                    }
-                    return false;
+                    localStorage.setItem(chave, JSON.stringify(dados));
+                    return true;
                 } catch (error) {
-                    console.error('Erro ao enviar TR:', error);
+                    console.error('Erro ao salvar dados:', error);
                     return false;
                 }
             }
         };
 
-        // Mapeamento de status
-        const StatusTR = {
-            RASCUNHO: 'rascunho',
-            ELABORADO: 'elaborado',
-            ENVIADO: 'enviado',
-            APROVADO: 'aprovado',
-            REPROVADO: 'reprovado'
-        };
-
-        const StatusConfig = {
-            rascunho: {
-                label: 'Em Rascunho',
-                cor: '#6c757d',
-                icone: 'fa-edit',
-                acoes: ['editar', 'excluir', 'concluir']
-            },
-            elaborado: {
-                label: 'TR Elaborado',
-                cor: '#17a2b8',
-                icone: 'fa-check-circle',
-                acoes: ['visualizar', 'editar', 'enviar', 'download']
-            },
-            enviado: {
-                label: 'Enviado para Compras',
-                cor: '#ffc107',
-                icone: 'fa-paper-plane',
-                acoes: ['visualizar']
-            },
-            aprovado: {
-                label: 'TR Aprovado',
-                cor: '#28a745',
-                icone: 'fa-thumbs-up',
-                acoes: ['visualizar', 'download', 'usar']
-            },
-            reprovado: {
-                label: 'Em Revisão',
-                cor: '#dc3545',
-                icone: 'fa-exclamation-circle',
-                acoes: ['visualizar', 'editar', 'reenviar']
+        // Função de login
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            
+            // Buscar credenciais nos dados gerados pelo módulo comprador
+            const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
+            
+            const fornecedor = usuariosFornecedores.find(f => 
+                f.email === email && f.senha === senha
+            );
+            
+            if (fornecedor) {
+                fornecedorLogado = fornecedor;
+                localStorage.setItem('fornecedor_logado', JSON.stringify(fornecedor));
+                
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard-screen').style.display = 'flex';
+                
+                inicializarDashboard();
+            } else {
+                mostrarErro('Login ou senha incorretos. Verifique suas credenciais e tente novamente.');
             }
-        };
+        });
 
-        // Funções de navegação
-        function mostrarPagina(pagina) {
-            // Remover classe active de todos os itens de navegação
+        function mostrarErro(mensagem) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = mensagem;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function inicializarDashboard() {
+            // Atualizar nome da empresa na sidebar
+            document.getElementById('empresa-nome').textContent = fornecedorLogado.razaoSocial;
+            
+            // Carregar dados iniciais
+            carregarEstatisticas();
+            carregarProcessos();
+            carregarPropostas();
+            carregarHistorico();
+            carregarPerfil();
+        }
+
+        function carregarEstatisticas() {
+            const processos = obterProcessosFornecedor();
+            const propostas = obterPropostasFornecedor();
+            
+            const agora = new Date();
+            const processosVencidos = processos.filter(p => new Date(p.dataLimite) < agora).length;
+            const propostasAceitas = propostas.filter(p => p.status === 'ACEITA').length;
+            
+            document.getElementById('stat-processos').textContent = processos.length;
+            document.getElementById('stat-propostas').textContent = propostas.length;
+            document.getElementById('stat-vencidos').textContent = processosVencidos;
+            document.getElementById('stat-aceitas').textContent = propostasAceitas;
+        }
+
+        function obterProcessosFornecedor() {
+            const processosPorFornecedor = SistemaLocal.carregar('processos_por_fornecedor', []);
+            return processosPorFornecedor.filter(p => 
+                p.fornecedorEmail === fornecedorLogado.email || 
+                p.fornecedorCNPJ === fornecedorLogado.cnpj
+            );
+        }
+
+        function obterPropostasFornecedor() {
+            const propostas = SistemaLocal.carregar('propostas_fornecedores', []);
+            return propostas.filter(p => 
+                p.fornecedorEmail === fornecedorLogado.email || 
+                p.fornecedorCNPJ === fornecedorLogado.cnpj
+            );
+        }
+
+        // CORREÇÃO 1: Remover valor estimado da exibição para fornecedores
+        function carregarProcessos() {
+            const processos = obterProcessosFornecedor();
+            const container = document.getElementById('processos-list');
+            
+            if (processos.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-inbox" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                        <h3 style="font-size: 24px;">Nenhum processo disponível</h3>
+                        <p style="font-size: 16px;">Você ainda não foi convidado para participar de processos licitatórios.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            processos.forEach(processo => {
+                const agora = new Date();
+                const dataLimite = new Date(processo.dataLimite);
+                const status = dataLimite < agora ? 'VENCIDO' : 'ATIVO';
+                const statusClass = status === 'ATIVO' ? 'status-ativo' : 'status-vencido';
+                
+                // CORREÇÃO 2: Verificar se já existe proposta para este processo
+                const propostas = obterPropostasFornecedor();
+                const jaEnviouProposta = propostas.some(p => p.processoId === processo.processoId);
+                
+                html += `
+                    <div class="processo-item">
+                        <div class="processo-status ${statusClass}">${status}</div>
+                        <h3>${processo.numeroProcesso}</h3>
+                        <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
+                        <p><strong>Data de Abertura:</strong> ${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}</p>
+                        <p><strong>Data Limite:</strong> ${dataLimite.toLocaleDateString('pt-BR')}</p>
+                        <p><strong>TR:</strong> ${processo.trTitulo}</p>
+                        
+                        ${jaEnviouProposta ? `
+                            <div class="alert-warning">
+                                <i class="fas fa-check-circle"></i> Você já enviou uma proposta para este processo
+                            </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="verDetalhesProcesso('${processo.processoId}')">
+                                <i class="fas fa-eye"></i> Visualizar Detalhes
+                            </button>
+                            ${status === 'ATIVO' && !jaEnviouProposta ? `
+                                <button class="btn btn-success" onclick="enviarProposta('${processo.processoId}')" style="margin-left: 10px;">
+                                    <i class="fas fa-paper-plane"></i> Enviar Proposta
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-warning" onclick="baixarEdital('${processo.processoId}')" style="margin-left: 10px;">
+                                <i class="fas fa-download"></i> Baixar Edital
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function carregarPropostas() {
+            const propostas = obterPropostasFornecedor();
+            const container = document.getElementById('propostas-list');
+            
+            if (propostas.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-paper-plane" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                        <h3 style="font-size: 24px;">Nenhuma proposta enviada</h3>
+                        <p style="font-size: 16px;">Você ainda não enviou propostas para processos licitatórios.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            propostas.forEach(proposta => {
+                const statusClass = proposta.status === 'ENVIADA' ? 'status-ativo' : 'status-vencido';
+                
+                html += `
+                    <div class="processo-item">
+                        <div class="processo-status ${statusClass}">${proposta.status}</div>
+                        <h3>Processo: ${proposta.numeroProcesso}</h3>
+                        <p><strong>Valor da Proposta:</strong> R$ ${parseFloat(proposta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                        <p><strong>Prazo de Execução:</strong> ${proposta.prazoExecucao} dias</p>
+                        <p><strong>Condições de Pagamento:</strong> ${proposta.condicoesPagamento}</p>
+                        <p><strong>Data de Envio:</strong> ${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}</p>
+                        <p><strong>Observações:</strong> ${proposta.observacoes || 'Nenhuma observação'}</p>
+                        <p><strong>Garantia:</strong> ${proposta.garantia || 'Não informada'}</p>
+                        
+                        <div style="margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="verDetalhesProposta('${proposta.id}')">
+                                <i class="fas fa-eye"></i> Ver Detalhes
+                            </button>
+                            ${proposta.status === 'ENVIADA' ? `
+                                <button class="btn btn-warning" onclick="editarProposta('${proposta.id}')" style="margin-left: 10px;">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function carregarHistorico() {
+            const processos = obterProcessosFornecedor();
+            const propostas = obterPropostasFornecedor();
+            const container = document.getElementById('historico-list');
+            
+            // Combinar processos e propostas para criar histórico
+            let historico = [];
+            
+            processos.forEach(processo => {
+                const proposta = propostas.find(p => p.processoId === processo.processoId);
+                
+                historico.push({
+                    tipo: 'processo',
+                    processo: processo,
+                    proposta: proposta,
+                    data: processo.dataAbertura,
+                    status: proposta ? 'PARTICIPOU' : 'NÃO PARTICIPOU'
+                });
+            });
+            
+            // Ordenar por data (mais recente primeiro)
+            historico.sort((a, b) => new Date(b.data) - new Date(a.data));
+            
+            if (historico.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-history" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                        <h3 style="font-size: 24px;">Nenhum histórico disponível</h3>
+                        <p style="font-size: 16px;">Seu histórico de participações aparecerá aqui.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            historico.forEach(item => {
+                const statusClass = item.status === 'PARTICIPOU' ? 'status-ativo' : 'status-vencido';
+                
+                html += `
+                    <div class="processo-item">
+                        <div class="processo-status ${statusClass}">${item.status}</div>
+                        <h3>${item.processo.numeroProcesso}</h3>
+                        <p><strong>Modalidade:</strong> ${item.processo.modalidade}</p>
+                        <p><strong>Data de Abertura:</strong> ${new Date(item.processo.dataAbertura).toLocaleDateString('pt-BR')}</p>
+                        
+                        ${item.proposta ? `
+                            <p><strong>Valor da Proposta:</strong> R$ ${parseFloat(item.proposta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                            <p><strong>Status da Proposta:</strong> ${item.proposta.status}</p>
+                        ` : ''}
+                        
+                        <div style="margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="verDetalhesProcesso('${item.processo.processoId}')">
+                                <i class="fas fa-eye"></i> Ver Processo
+                            </button>
+                            ${item.proposta ? `
+                                <button class="btn btn-success" onclick="verDetalhesProposta('${item.proposta.id}')" style="margin-left: 10px;">
+                                    <i class="fas fa-paper-plane"></i> Ver Proposta
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function carregarPerfil() {
+            const container = document.getElementById('perfil-content');
+            const processos = obterProcessosFornecedor();
+            const propostas = obterPropostasFornecedor();
+            const propostasAceitas = propostas.filter(p => p.status === 'ACEITA').length;
+            
+            container.innerHTML = `
+                <div class="empresa-info">
+                    <h3><i class="fas fa-building"></i> Dados da Empresa</h3>
+                    <div class="info-item">
+                        <span class="info-label">Razão Social:</span>
+                        <span class="info-value">${fornecedorLogado.razaoSocial}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">CNPJ:</span>
+                        <span class="info-value">${fornecedorLogado.cnpj}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">E-mail:</span>
+                        <span class="info-value">${fornecedorLogado.email}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" style="color: #28a745; font-weight: bold;">Ativo</span>
+                    </div>
+                </div>
+                
+                <div class="empresa-info">
+                    <h3><i class="fas fa-info-circle"></i> Informações Importantes</h3>
+                    <p style="color: #666; margin-bottom: 15px;">
+                        Suas credenciais de acesso foram geradas automaticamente pelo setor de compras. 
+                        Para alterações nos dados da empresa, entre em contato com o setor responsável.
+                    </p>
+                    <p style="color: #666;">
+                        <strong>Suporte:</strong> compras@prefeitura.gov.br | (11) 3333-4444
+                    </p>
+                </div>
+                
+                <div class="empresa-info">
+                    <h3><i class="fas fa-chart-bar"></i> Estatísticas de Participação</h3>
+                    <div class="info-item">
+                        <span class="info-label">Processos Convidados:</span>
+                        <span class="info-value">${processos.length}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Propostas Enviadas:</span>
+                        <span class="info-value">${propostas.length}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Propostas Aceitas:</span>
+                        <span class="info-value">${propostasAceitas}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Navegação
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', function() {
+                const section = this.getAttribute('data-section');
+                mostrarSecao(section);
+            });
+        });
+
+        function mostrarSecao(secao) {
+            // Remover classe active de todos os nav-items
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
-
-            // Adicionar classe active ao botão correspondente
-            const btnMap = {
-                'dashboard': 'btn-dashboard',
-                'criar-tr': 'btn-criar-tr',
-                'meus-trs': 'btn-meus-trs',
-                'emitir-parecer': 'btn-emitir-parecer'
-            };
             
-            if (btnMap[pagina]) {
-                const btn = document.getElementById(btnMap[pagina]);
-                if (btn) btn.classList.add('active');
-            }
-
+            // Adicionar classe active ao item clicado
+            document.querySelector(`[data-section="${secao}"]`).classList.add('active');
+            
             // Esconder todas as seções
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
-
+            
             // Mostrar seção selecionada
-            const section = document.getElementById(pagina);
-            if (section) section.classList.add('active');
-
-            // Limpar modo de edição se sair da página de criar TR
-            if (pagina !== 'criar-tr') {
-                const form = document.getElementById('tr-form');
-                if (form) {
-                    form.removeAttribute('data-editing-id');
-                    form.reset();
-                    const btnSubmit = form.querySelector('button[type="submit"]');
-                    if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
-                }
-            }
-
-            // Carregar dados específicos da página
-            if (pagina === 'dashboard') {
+            document.getElementById(secao).classList.add('active');
+            
+            // Recarregar dados se necessário
+            if (secao === 'processos') {
+                carregarProcessos();
+            } else if (secao === 'propostas') {
+                carregarPropostas();
+            } else if (secao === 'historico') {
+                carregarHistorico();
+            } else if (secao === 'perfil') {
+                carregarPerfil();
+            } else if (secao === 'dashboard') {
                 carregarEstatisticas();
-                verificarNotificacoes();
-            } else if (pagina === 'meus-trs') {
-                carregarMeusTRs();
             }
         }
 
-        // Função para voltar ao sistema principal
-        function voltarSistema() {
-            window.location.href = '/';
-        }
-
-        // Função de logout
-        function logout() {
-            if (confirm('Deseja realmente sair do sistema?')) {
-                localStorage.removeItem(SistemaLocal.CHAVES.USUARIO);
-                window.location.href = '/';
-            }
-        }
-
-        // Carregar estatísticas do dashboard
-        function carregarEstatisticas() {
-            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const usuario = SistemaLocal.obterUsuario();
+        // Funções dos modais
+        function verDetalhesProcesso(processoId) {
+            const processos = obterProcessosFornecedor();
+            const processo = processos.find(p => p.processoId === processoId);
             
-            // Filtrar TRs do usuário atual
-            const meusTRs = trs.filter(tr => tr.usuarioId === usuario.id);
+            if (!processo) return;
             
-            // Calcular estatísticas por status
-            const estatisticas = {
-                total: meusTRs.length,
-                elaborados: meusTRs.filter(tr => tr.status === StatusTR.ELABORADO).length,
-                enviados: meusTRs.filter(tr => tr.status === StatusTR.ENVIADO).length,
-                aprovados: meusTRs.filter(tr => tr.status === StatusTR.APROVADO).length
-            };
-
-            // Atualizar interface
-            const totalEl = document.getElementById('trs-total');
-            const elaboradosEl = document.getElementById('trs-elaborados');
-            const enviadosEl = document.getElementById('trs-enviados');
-            const aprovadosEl = document.getElementById('trs-aprovados');
-
-            if (totalEl) totalEl.textContent = estatisticas.total;
-            if (elaboradosEl) elaboradosEl.textContent = estatisticas.elaborados;
-            if (enviadosEl) enviadosEl.textContent = estatisticas.enviados;
-            if (aprovadosEl) aprovadosEl.textContent = estatisticas.aprovados;
-        }
-
-        // Verificar notificações
-        function verificarNotificacoes() {
-            // Função placeholder para notificações
-            console.log('Verificando notificações...');
-        }
-
-        // Salvar TR
-        function salvarTR(dados, status = StatusTR.ELABORADO) {
-            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const usuario = SistemaLocal.obterUsuario();
-
-            const novoTR = {
-                id: SistemaLocal.gerarId(),
-                numeroTR: `TR-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`,
-                usuarioId: usuario.id,
-                usuarioNome: usuario.nome,
-                titulo: dados.titulo,
-                modalidade: dados.modalidade,
-                objetivo: dados.objetivo,
-                conformidade: dados.conformidade,
-                local: dados.local,
-                escopo: dados.escopo,
-                situacaoAtual: dados.situacaoAtual,
-                situacaoProposta: dados.situacaoProposta,
-                especificacao: dados.especificacao,
-                prazo: dados.prazo,
-                prazoExecucao: dados.prazo,
-                responsabilidades: dados.responsabilidades,
-                criterios: dados.criterios,
-                anexos: dados.anexos,
-                valorEstimado: dados.valorEstimado || 0,
-                status: status,
-                dataCriacao: new Date().toISOString(),
-                dataAtualizacao: new Date().toISOString()
-            };
-
-            trs.push(novoTR);
+            const agora = new Date();
+            const dataLimite = new Date(processo.dataLimite);
+            const status = dataLimite < agora ? 'VENCIDO' : 'ATIVO';
             
-            if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
-                return { sucesso: true, id: novoTR.id };
-            } else {
-                return { sucesso: false, erro: 'Erro ao salvar no localStorage' };
-            }
-        }
-
-        // Coletar dados do formulário
-        function coletarDadosFormulario() {
-            return {
-                titulo: document.getElementById('tr-titulo')?.value || '',
-                modalidade: document.getElementById('tr-modalidade')?.value || '',
-                valorEstimado: document.getElementById('tr-valor-estimado')?.value || 0,
-                objetivo: document.getElementById('tr-objetivo')?.value || '',
-                conformidade: document.getElementById('tr-conformidade')?.value || '',
-                local: document.getElementById('tr-local')?.value || '',
-                escopo: document.getElementById('tr-escopo')?.value || '',
-                situacaoAtual: document.getElementById('tr-situacao-atual')?.value || '',
-                situacaoProposta: document.getElementById('tr-situacao-proposta')?.value || '',
-                especificacao: document.getElementById('tr-especificacao')?.value || '',
-                prazo: document.getElementById('tr-prazo')?.value || '',
-                responsabilidades: document.getElementById('tr-responsabilidades')?.value || '',
-                criterios: document.getElementById('tr-criterios')?.value || '',
-                anexos: document.getElementById('tr-anexos')?.value || ''
-            };
-        }
-
-        // Mostrar alerta
-        function mostrarAlerta(tipo, mensagem) {
-            const alertSuccess = document.getElementById('success-alert');
-            const alertError = document.getElementById('error-alert');
-            
-            if (tipo === 'success' && alertSuccess) {
-                alertSuccess.style.display = 'block';
-                alertSuccess.innerHTML = `<i class="fas fa-check-circle"></i> ${mensagem}`;
-                if (alertError) alertError.style.display = 'none';
-                
-                setTimeout(() => {
-                    alertSuccess.style.display = 'none';
-                }, 3000);
-            } else if (tipo === 'error' && alertError) {
-                alertError.style.display = 'block';
-                const errorMessage = alertError.querySelector('#error-message');
-                if (errorMessage) errorMessage.textContent = mensagem;
-                if (alertSuccess) alertSuccess.style.display = 'none';
-                
-                setTimeout(() => {
-                    alertError.style.display = 'none';
-                }, 5000);
-            }
-        }
-
-        // Salvar como rascunho
-        function salvarRascunho() {
-            const dados = coletarDadosFormulario();
-            if (dados.titulo) {
-                const resultado = salvarTR(dados, StatusTR.RASCUNHO);
-                
-                if (resultado.sucesso) {
-                    mostrarAlerta('success', 'Rascunho salvo com sucesso!');
-                    const form = document.getElementById('tr-form');
-                    if (form) form.reset();
-                } else {
-                    mostrarAlerta('error', 'Erro ao salvar rascunho: ' + resultado.erro);
-                }
-            } else {
-                mostrarAlerta('error', 'Preencha pelo menos o título para salvar como rascunho.');
-            }
-        }
-
-        // Renderizar timeline
-        function renderizarTimeline(status) {
-            const etapas = [
-                { key: 'rascunho', label: 'Rascunho' },
-                { key: 'elaborado', label: 'Elaborado' },
-                { key: 'enviado', label: 'Enviado' },
-                { key: 'aprovado', label: 'Aprovado' }
-            ];
-
-            let statusIndex = etapas.findIndex(e => e.key === status);
-            if (status === 'reprovado') statusIndex = 2; // Considera como enviado
-
-            let html = '<div class="tr-timeline">';
-            etapas.forEach((etapa, index) => {
-                const isCompleted = index < statusIndex;
-                const isActive = index === statusIndex;
-                
-                html += `
-                    <div class="timeline-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}">
-                        <i class="fas ${isCompleted ? 'fa-check-circle' : isActive ? 'fa-circle' : 'fa-circle-o'}"></i>
-                        ${etapa.label}
+            // CORREÇÃO 1: Não mostrar valor estimado nos detalhes
+            document.getElementById('detalhes-processo-content').innerHTML = `
+                <div class="empresa-info">
+                    <div class="info-item">
+                        <span class="info-label">Número do Processo:</span>
+                        <span class="info-value">${processo.numeroProcesso}</span>
                     </div>
-                `;
+                    <div class="info-item">
+                        <span class="info-label">Modalidade:</span>
+                        <span class="info-value">${processo.modalidade}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" style="color: ${status === 'ATIVO' ? '#28a745' : '#dc3545'}; font-weight: bold;">${status}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Data de Abertura:</span>
+                        <span class="info-value">${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Data Limite:</span>
+                        <span class="info-value">${dataLimite.toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Local de Abertura:</span>
+                        <span class="info-value">${processo.localAbertura || 'Não informado'}</span>
+                    </div>
+                </div>
                 
-                if (index < etapas.length - 1) {
-                    html += '<div class="timeline-separator"></div>';
-                }
-            });
-            html += '</div>';
-            
-            return html;
-        }
-
-        // Carregar meus TRs
-        function carregarMeusTRs() {
-            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const usuario = SistemaLocal.obterUsuario();
-            const meusTRs = trs.filter(tr => tr.usuarioId === usuario.id);
-
-            const container = document.getElementById('tr-list');
-            if (!container) return;
-            
-            if (meusTRs.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-file-alt" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                        <h3>Nenhum TR encontrado</h3>
-                        <p>Você ainda não criou nenhum Termo de Referência.</p>
-                        <button class="btn btn-primary" data-action="criar-primeiro-tr">
-                            <i class="fas fa-plus"></i> Criar Primeiro TR
+                <div class="empresa-info">
+                    <h3><i class="fas fa-file-alt"></i> Termo de Referência</h3>
+                    <div class="info-item">
+                        <span class="info-label">Título:</span>
+                        <span class="info-value">${processo.trTitulo}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status da Participação:</span>
+                        <span class="info-value">Convidado para participar</span>
+                    </div>
+                </div>
+                
+                <div style="text-align: right; margin-top: 30px;">
+                    <button class="btn btn-secondary" onclick="fecharModal('modal-detalhes-processo')">Fechar</button>
+                    ${status === 'ATIVO' ? `
+                        <button class="btn btn-primary" onclick="fecharModal('modal-detalhes-processo'); enviarProposta('${processoId}')" style="margin-left: 10px;">
+                            <i class="fas fa-paper-plane"></i> Enviar Proposta
                         </button>
-                    </div>
-                `;
-                return;
-            }
-
-            let html = '';
-            meusTRs.forEach(tr => {
-                const dataFormatada = new Date(tr.dataCriacao).toLocaleDateString('pt-BR');
-                const config = StatusConfig[tr.status] || StatusConfig.elaborado;
-                
-                html += `
-                    <div class="tr-item ${tr.status}" style="position: relative;">
-                        <div class="tr-status-badge" style="background: ${config.cor};">
-                            <i class="fas ${config.icone}"></i> ${config.label}
-                        </div>
-                        
-                        <div class="tr-title">${tr.titulo}</div>
-                        <div class="tr-meta">
-                            <span><i class="fas fa-hashtag"></i> ${tr.numeroTR}</span>
-                            <span><i class="fas fa-calendar"></i> ${dataFormatada}</span>
-                            <span><i class="fas fa-tag"></i> ${tr.modalidade}</span>
-                            <span><i class="fas fa-money-bill"></i> R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                        </div>
-                        <div class="tr-objective">${tr.objetivo}</div>
-                        
-                        ${renderizarTimeline(tr.status)}
-                        
-                        ${tr.parecerComprador ? `
-                            <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #2196f3;">
-                                <strong style="color: #1976d2;">Parecer do Comprador:</strong><br>
-                                ${tr.parecerComprador}
-                            </div>
-                        ` : ''}
-                        
-                        ${tr.motivoReprovacao ? `
-                            <div style="background: #ffebee; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #f44336;">
-                                <strong style="color: #c62828;">Motivo da Reprovação:</strong><br>
-                                ${tr.motivoReprovacao}
-                            </div>
-                        ` : ''}
-                        
-                        <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                            ${renderizarBotoes(tr)}
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        // Renderizar botões baseado no status
-        function renderizarBotoes(tr) {
-            const config = StatusConfig[tr.status] || StatusConfig.elaborado;
-            let botoes = '';
-
-            if (config.acoes.includes('visualizar')) {
-                botoes += `<button class="btn btn-secondary" data-action="visualizar" data-id="${tr.id}">
-                    <i class="fas fa-eye"></i> Visualizar
-                </button>`;
-            }
-
-            if (config.acoes.includes('editar')) {
-                botoes += `<button class="btn btn-primary" data-action="editar" data-id="${tr.id}">
-                    <i class="fas fa-edit"></i> Editar
-                </button>`;
-            }
-
-            if (config.acoes.includes('enviar')) {
-                botoes += `<button class="btn btn-success" data-action="enviar" data-id="${tr.id}">
-                    <i class="fas fa-paper-plane"></i> Enviar para Compras
-                </button>`;
-            }
-
-            if (config.acoes.includes('download')) {
-                botoes += `<button class="btn btn-info" data-action="download" data-id="${tr.id}" style="background: #17a2b8; color: white;">
-                    <i class="fas fa-download"></i> Download
-                </button>`;
-            }
-
-            if (config.acoes.includes('concluir')) {
-                botoes += `<button class="btn btn-success" data-action="concluir" data-id="${tr.id}">
-                    <i class="fas fa-check"></i> Concluir Elaboração
-                </button>`;
-            }
-
-            if (config.acoes.includes('excluir')) {
-                botoes += `<button class="btn btn-danger" data-action="excluir" data-id="${tr.id}">
-                    <i class="fas fa-trash"></i> Excluir
-                </button>`;
-            }
-
-            if (config.acoes.includes('reenviar')) {
-                botoes += `<button class="btn btn-warning" data-action="enviar" data-id="${tr.id}" style="background: #ffc107; color: #212529;">
-                    <i class="fas fa-redo"></i> Reenviar
-                </button>`;
-            }
-
-            return botoes;
-        }
-
-        // Visualizar TR
-        function visualizarTR(id) {
-            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const tr = trs.find(t => t.id === id);
-            
-            if (!tr) {
-                alert('TR não encontrado!');
-                return;
-            }
-            
-            const config = StatusConfig[tr.status] || StatusConfig.elaborado;
-            
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div>
-                            <h3 style="margin: 0; color: #333;">${tr.numeroTR}</h3>
-                            <span style="
-                                background: ${config.cor};
-                                color: white;
-                                padding: 4px 12px;
-                                border-radius: 20px;
-                                font-size: 12px;
-                                display: inline-block;
-                                margin-top: 5px;
-                            ">
-                                <i class="fas ${config.icone}"></i> ${config.label}
-                            </span>
-                        </div>
-                        <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <h4 style="color: #333; margin-bottom: 20px;">${tr.titulo}</h4>
-                        
-                        ${renderizarTimeline(tr.status)}
-                        
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <strong style="color: #666;">Modalidade:</strong><br>
-                                ${tr.modalidade}
-                            </div>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <strong style="color: #666;">Valor Estimado:</strong><br>
-                                R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                            </div>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <strong style="color: #666;">Data de Criação:</strong><br>
-                                ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}
-                            </div>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <strong style="color: #666;">Prazo de Execução:</strong><br>
-                                ${tr.prazo}
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <h5 style="color: #333; margin-bottom: 10px;">Objetivo</h5>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                ${tr.objetivo}
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <h5 style="color: #333; margin-bottom: 10px;">Local/Acesso</h5>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                ${tr.local}
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <h5 style="color: #333; margin-bottom: 10px;">Escopo Técnico</h5>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                ${tr.escopo}
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <h5 style="color: #333; margin-bottom: 10px;">Situação Atual</h5>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                ${tr.situacaoAtual}
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <h5 style="color: #333; margin-bottom: 10px;">Situação Proposta</h5>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                ${tr.situacaoProposta}
-                            </div>
-                        </div>
-                        
-                        ${tr.parecerComprador ? `
-                            <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                                <strong style="color: #0c5460;">Parecer do Comprador:</strong><br>
-                                ${tr.parecerComprador}
-                            </div>
-                        ` : ''}
-                        
-                        ${tr.motivoReprovacao ? `
-                            <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                                <strong style="color: #721c24;">Motivo da Reprovação:</strong><br>
-                                ${tr.motivoReprovacao}
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="modal-footer">
-                        ${renderizarBotoesModal(tr)}
-                        <button class="btn btn-secondary btn-fechar-modal">
-                            Fechar
-                        </button>
-                    </div>
+                    ` : ''}
                 </div>
             `;
             
-            document.body.appendChild(modal);
-            
-            // Adicionar event listeners para fechar o modal
-            modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
-                btn.addEventListener('click', () => modal.remove());
-            });
-
-            // Adicionar event listeners para os botões de ação do modal
-            modal.addEventListener('click', (e) => {
-                const button = e.target.closest('button[data-action]');
-                if (!button) return;
-
-                const action = button.dataset.action;
-                const trId = button.dataset.id;
-
-                if (action === 'download') {
-                    downloadTR(trId);
-                } else if (action === 'enviar') {
-                    enviarTRParaCompras(trId);
-                    modal.remove();
-                }
-            });
+            abrirModal('modal-detalhes-processo');
         }
 
-        // Renderizar botões do modal
-        function renderizarBotoesModal(tr) {
-            const config = StatusConfig[tr.status] || StatusConfig.elaborado;
-            let botoes = '';
-
-            if (config.acoes.includes('download')) {
-                botoes += `<button class="btn btn-info" data-action="download" data-id="${tr.id}" style="background: #17a2b8; color: white;">
-                    <i class="fas fa-download"></i> Download
-                </button>`;
-            }
-
-            if (config.acoes.includes('enviar')) {
-                botoes += `<button class="btn btn-success" data-action="enviar" data-id="${tr.id}">
-                    <i class="fas fa-paper-plane"></i> Enviar para Compras
-                </button>`;
-            }
-
-            return botoes;
-        }
-
-        // Download TR
-        function downloadTR(id) {
-            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const tr = trs.find(t => t.id === id);
+        // CORREÇÃO 2: Controle de uma proposta por processo
+        function enviarProposta(processoId) {
+            const processos = obterProcessosFornecedor();
+            const processo = processos.find(p => p.processoId === processoId);
             
-            if (!tr) {
-                alert('TR não encontrado!');
+            if (!processo) return;
+            
+            // Verificar se já existe proposta para este processo
+            const propostas = obterPropostasFornecedor();
+            const propostaExistente = propostas.find(p => p.processoId === processoId);
+            
+            if (propostaExistente) {
+                alert('Você já enviou uma proposta para este processo. Cada fornecedor pode enviar apenas uma proposta por processo.');
                 return;
             }
-
-            const conteudoHTML = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>${tr.numeroTR} - ${tr.titulo}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-                        h1, h2, h3 { color: #333; }
-                        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-                        .section { margin-bottom: 30px; }
-                        .section-title { background: #f0f0f0; padding: 10px; margin-bottom: 15px; font-weight: bold; }
-                        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-                        .info-item { padding: 10px; background: #f9f9f9; }
-                        @media print { body { margin: 20px; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>TERMO DE REFERÊNCIA</h1>
-                        <h2>${tr.numeroTR}</h2>
-                        <p><strong>${tr.titulo}</strong></p>
-                    </div>
-                    
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <strong>Modalidade Sugerida:</strong> ${tr.modalidade}
-                        </div>
-                        <div class="info-item">
-                            <strong>Valor Estimado:</strong> R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                        </div>
-                        <div class="info-item">
-                            <strong>Data de Criação:</strong> ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}
-                        </div>
-                        <div class="info-item">
-                            <strong>Responsável:</strong> ${tr.usuarioNome}
-                        </div>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">1. OBJETIVO</div>
-                        <p>${tr.objetivo}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">2. CONFORMIDADE AO TERMO DE REFERÊNCIA</div>
-                        <p>${tr.conformidade}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">3. LOCAL/ACESSO</div>
-                        <p>${tr.local}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">4. ESCOPO TÉCNICO</div>
-                        <p>${tr.escopo}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">5. SITUAÇÃO ATUAL</div>
-                        <p>${tr.situacaoAtual}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">6. SITUAÇÃO PROPOSTA</div>
-                        <p>${tr.situacaoProposta}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">7. ESPECIFICAÇÃO TÉCNICA</div>
-                        <p>${tr.especificacao}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">8. PRAZO DE EXECUÇÃO</div>
-                        <p>${tr.prazo}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">9. RESPONSABILIDADES</div>
-                        <p>${tr.responsabilidades}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">10. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
-                        <p>${tr.criterios}</p>
-                    </div>
-                    
-                    ${tr.anexos ? `
-                        <div class="section">
-                            <div class="section-title">11. ANEXOS</div>
-                            <p>${tr.anexos}</p>
-                        </div>
-                    ` : ''}
-                </body>
-                </html>
+            
+            processoAtual = processo;
+            
+            // CORREÇÃO 1: Não mostrar valor estimado no modal de proposta
+            document.getElementById('processo-info').innerHTML = `
+                <div class="empresa-info">
+                    <h3><i class="fas fa-file-contract"></i> ${processo.numeroProcesso}</h3>
+                    <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
+                    <p><strong>Data Limite:</strong> ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')}</p>
+                </div>
             `;
-
-            // Criar blob e fazer download
-            const blob = new Blob([conteudoHTML], { type: 'text/html' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${tr.numeroTR}_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            
+            // Limpar aviso de proposta existente
+            document.getElementById('proposta-existente-aviso').innerHTML = '';
+            
+            // Limpar formulário
+            document.getElementById('form-proposta').reset();
+            
+            abrirModal('modal-enviar-proposta');
         }
 
-        // Enviar TR para compras
-        function enviarTRParaCompras(id) {
-            if (!confirm('Deseja enviar este TR para aprovação do setor de compras?')) {
+        // CORREÇÃO 2: Validação no envio da proposta
+        document.getElementById('form-proposta').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Verificar novamente se já existe proposta
+            const propostas = obterPropostasFornecedor();
+            const propostaExistente = propostas.find(p => p.processoId === processoAtual.processoId);
+            
+            if (propostaExistente) {
+                alert('Erro: Você já enviou uma proposta para este processo.');
                 return;
             }
             
-            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const tr = trs.find(t => t.id === id);
+            const proposta = {
+                id: Date.now().toString(),
+                processoId: processoAtual.processoId,
+                numeroProcesso: processoAtual.numeroProcesso,
+                fornecedorEmail: fornecedorLogado.email,
+                fornecedorCNPJ: fornecedorLogado.cnpj,
+                fornecedorRazaoSocial: fornecedorLogado.razaoSocial,
+                valor: document.getElementById('valor-proposta').value,
+                prazoExecucao: document.getElementById('prazo-execucao').value,
+                condicoesPagamento: document.getElementById('condicoes-pagamento').value,
+                observacoes: document.getElementById('observacoes').value,
+                garantia: document.getElementById('garantia').value,
+                dataEnvio: new Date().toISOString(),
+                status: 'ENVIADA'
+            };
             
-            if (tr && IntegracaoModulos.enviarTRParaComprador(tr)) {
-                alert('✅ TR enviado com sucesso para o setor de compras!');
-                carregarMeusTRs();
-                carregarEstatisticas();
-            }
-        }
-
-        // Concluir TR (mudar de rascunho para elaborado)
-        function concluirTR(id) {
-            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const trIndex = trs.findIndex(t => t.id === id);
+            // Salvar proposta
+            const todasPropostas = SistemaLocal.carregar('propostas_fornecedores', []);
+            todasPropostas.push(proposta);
+            SistemaLocal.salvar('propostas_fornecedores', todasPropostas);
             
-            if (trIndex !== -1) {
-                trs[trIndex].status = StatusTR.ELABORADO;
-                trs[trIndex].dataAtualizacao = new Date().toISOString();
-                
-                if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
-                    alert('✅ TR concluído com sucesso!');
-                    carregarMeusTRs();
-                    carregarEstatisticas();
-                }
-            }
-        }
-
-        // Excluir TR
-        function excluirTR(id) {
-            if (!confirm('Tem certeza que deseja excluir este TR? Esta ação não pode ser desfeita.')) {
-                return;
-            }
+            fecharModal('modal-enviar-proposta');
+            alert('Proposta enviada com sucesso!');
             
-            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const trsAtualizados = trs.filter(t => t.id !== id);
-            
-            if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trsAtualizados)) {
-                alert('✅ TR excluído com sucesso!');
-                carregarMeusTRs();
-                carregarEstatisticas();
-            }
-        }
-
-        // Editar TR
-        function editarTR(id) {
-            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const tr = trs.find(t => t.id === id);
-            
-            if (!tr) {
-                alert('TR não encontrado!');
-                return;
-            }
-            
-            // Preencher o formulário com os dados do TR
-            const campos = [
-                'tr-titulo', 'tr-modalidade', 'tr-valor-estimado', 'tr-objetivo',
-                'tr-conformidade', 'tr-local', 'tr-escopo', 'tr-situacao-atual',
-                'tr-situacao-proposta', 'tr-especificacao', 'tr-prazo',
-                'tr-responsabilidades', 'tr-criterios', 'tr-anexos'
-            ];
-
-            const valores = [
-                tr.titulo, tr.modalidade, tr.valorEstimado, tr.objetivo,
-                tr.conformidade, tr.local, tr.escopo, tr.situacaoAtual,
-                tr.situacaoProposta, tr.especificacao, tr.prazo,
-                tr.responsabilidades, tr.criterios, tr.anexos
-            ];
-
-            campos.forEach((campo, index) => {
-                const elemento = document.getElementById(campo);
-                if (elemento) elemento.value = valores[index] || '';
-            });
-            
-            // Adicionar ID do TR sendo editado
-            const form = document.getElementById('tr-form');
-            if (form) form.setAttribute('data-editing-id', id);
-            
-            // Mudar texto do botão
-            const btnSubmit = document.querySelector('#tr-form button[type="submit"]');
-            if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-save"></i> Atualizar TR';
-            
-            // Ir para a página de criação/edição
-            mostrarPagina('criar-tr');
-            
-            // Mostrar mensagem
-            mostrarAlerta('success', 'Editando TR: ' + tr.titulo);
-        }
-
-        // Limpar formulário
-        function limparFormulario() {
-            if (confirm('Deseja realmente limpar todos os campos do formulário?')) {
-                const form = document.getElementById('tr-form');
-                if (form) {
-                    form.reset();
-                    form.removeAttribute('data-editing-id');
-                    const btnSubmit = form.querySelector('button[type="submit"]');
-                    if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
-                }
-            }
-        }
-
-        // Event listener principal
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Sistema carregado!');
-
-            // Navegação principal
-            document.getElementById('btn-dashboard')?.addEventListener('click', () => mostrarPagina('dashboard'));
-            document.getElementById('btn-criar-tr')?.addEventListener('click', () => mostrarPagina('criar-tr'));
-            document.getElementById('btn-meus-trs')?.addEventListener('click', () => mostrarPagina('meus-trs'));
-            document.getElementById('btn-emitir-parecer')?.addEventListener('click', () => mostrarPagina('emitir-parecer'));
-            document.getElementById('btn-voltar')?.addEventListener('click', voltarSistema);
-            document.getElementById('btn-logout')?.addEventListener('click', logout);
-
-            // Cards do dashboard
-            document.getElementById('card-criar-tr')?.addEventListener('click', () => mostrarPagina('criar-tr'));
-            document.getElementById('card-meus-trs')?.addEventListener('click', () => mostrarPagina('meus-trs'));
-            document.getElementById('card-emitir-parecer')?.addEventListener('click', () => mostrarPagina('emitir-parecer'));
-
-            // Formulário de TR
-            const trForm = document.getElementById('tr-form');
-            if (trForm) {
-                trForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const dados = coletarDadosFormulario();
-                    const editingId = this.getAttribute('data-editing-id');
-                    
-                    if (editingId) {
-                        // Atualizar TR existente
-                        const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-                        const trIndex = trs.findIndex(t => t.id === editingId);
-                        
-                        if (trIndex !== -1) {
-                            trs[trIndex] = { ...trs[trIndex], ...dados, dataAtualizacao: new Date().toISOString() };
-                            
-                            if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
-                                mostrarAlerta('success', 'TR atualizado com sucesso!');
-                                this.reset();
-                                this.removeAttribute('data-editing-id');
-                                const btnSubmit = this.querySelector('button[type="submit"]');
-                                if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
-                                mostrarPagina('meus-trs');
-                            } else {
-                                mostrarAlerta('error', 'Erro ao atualizar TR');
-                            }
-                        }
-                    } else {
-                        // Criar novo TR
-                        const resultado = salvarTR(dados, StatusTR.ELABORADO);
-                        
-                        if (resultado.sucesso) {
-                            mostrarAlerta('success', 'TR criado com sucesso!');
-                            this.reset();
-                            setTimeout(() => mostrarPagina('meus-trs'), 2000);
-                        } else {
-                            mostrarAlerta('error', 'Erro ao criar TR: ' + resultado.erro);
-                        }
-                    }
-                });
-            }
-
-            // Botão salvar rascunho
-            document.getElementById('btn-salvar-rascunho')?.addEventListener('click', salvarRascunho);
-
-            // Botão limpar formulário
-            document.getElementById('btn-limpar-form')?.addEventListener('click', limparFormulario);
-
-            // Event delegation para botões dinâmicos
-            document.addEventListener('click', function(e) {
-                const button = e.target.closest('button[data-action]');
-                if (!button) return;
-
-                const action = button.dataset.action;
-                const id = button.dataset.id;
-
-                switch (action) {
-                    case 'visualizar':
-                        visualizarTR(id);
-                        break;
-                    case 'editar':
-                        editarTR(id);
-                        break;
-                    case 'enviar':
-                        enviarTRParaCompras(id);
-                        break;
-                    case 'download':
-                        downloadTR(id);
-                        break;
-                    case 'concluir':
-                        concluirTR(id);
-                        break;
-                    case 'excluir':
-                        excluirTR(id);
-                        break;
-                    case 'criar-primeiro-tr':
-                        mostrarPagina('criar-tr');
-                        break;
-                }
-            });
-
-            // Carregar dados iniciais
+            // Recarregar dados
             carregarEstatisticas();
-            verificarNotificacoes();
+            carregarPropostas();
+            carregarHistorico();
+            carregarProcessos(); // Recarregar para atualizar status de proposta enviada
         });
+
+        function verDetalhesProposta(propostaId) {
+            const propostas = obterPropostasFornecedor();
+            const proposta = propostas.find(p => p.id === propostaId);
+            
+            if (!proposta) return;
+            
+            document.getElementById('detalhes-proposta-content').innerHTML = `
+                <div class="empresa-info">
+                    <h3><i class="fas fa-file-contract"></i> ${proposta.numeroProcesso}</h3>
+                    <div class="info-item">
+                        <span class="info-label">Valor da Proposta:</span>
+                        <span class="info-value">R$ ${parseFloat(proposta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Prazo de Execução:</span>
+                        <span class="info-value">${proposta.prazoExecucao} dias</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Condições de Pagamento:</span>
+                        <span class="info-value">${proposta.condicoesPagamento}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Data de Envio:</span>
+                        <span class="info-value">${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Garantia Oferecida:</span>
+                        <span class="info-value">${proposta.garantia || 'Não informada'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" style="color: #28a745; font-weight: bold;">${proposta.status}</span>
+                    </div>
+                </div>
+                
+                ${proposta.observacoes ? `
+                    <div class="empresa-info">
+                        <h3><i class="fas fa-comment"></i> Observações Técnicas</h3>
+                        <p style="color: #666;">${proposta.observacoes}</p>
+                    </div>
+                ` : ''}
+                
+                <div style="text-align: right; margin-top: 30px;">
+                    <button class="btn btn-secondary" onclick="fecharModal('modal-detalhes-proposta')">Fechar</button>
+                </div>
+            `;
+            
+            abrirModal('modal-detalhes-proposta');
+        }
+
+        // CORREÇÃO 3: Implementar download do edital
+        function baixarEdital(processoId) {
+            const processos = obterProcessosFornecedor();
+            const processo = processos.find(p => p.processoId === processoId);
+            
+            if (!processo) {
+                alert('Processo não encontrado.');
+                return;
+            }
+            
+            // Simular download do edital
+            const nomeArquivo = `Edital_${processo.numeroProcesso.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+            
+            // Criar conteúdo do edital (simulado)
+            const conteudoEdital = `
+EDITAL DE LICITAÇÃO
+${processo.numeroProcesso}
+
+MODALIDADE: ${processo.modalidade}
+DATA DE ABERTURA: ${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}
+DATA LIMITE: ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')}
+
+TERMO DE REFERÊNCIA:
+${processo.trTitulo}
+
+LOCAL DE ABERTURA:
+${processo.localAbertura || 'A ser definido'}
+
+Este é um edital simulado para demonstração do sistema.
+Para obter o edital oficial, entre em contato com o setor de compras.
+
+Contato: compras@prefeitura.gov.br | (11) 3333-4444
+            `;
+            
+            // Criar e baixar arquivo
+            const blob = new Blob([conteudoEdital], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = nomeArquivo;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            alert(`Edital "${nomeArquivo}" baixado com sucesso!`);
+        }
+
+        function editarProposta(propostaId) {
+            alert('Funcionalidade de edição de proposta em desenvolvimento.');
+        }
+
+        // Funções de modal
+        function abrirModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function fecharModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Event listeners para fechar modais
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', function() {
+                this.closest('.modal').style.display = 'none';
+            });
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        });
+
+        function logout() {
+            if (confirm('Deseja realmente sair do sistema?')) {
+                localStorage.removeItem('fornecedor_logado');
+                location.reload();
+            }
+        }
+
+        // Verificar se já está logado
+        window.addEventListener('load', function() {
+            const fornecedorSalvo = localStorage.getItem('fornecedor_logado');
+            if (fornecedorSalvo) {
+                fornecedorLogado = JSON.parse(fornecedorSalvo);
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard-screen').style.display = 'flex';
+                inicializarDashboard();
+            }
+        });
+
+        console.log('Sistema de fornecedor corrigido carregado!');
     </script>
 </body>
 </html>
