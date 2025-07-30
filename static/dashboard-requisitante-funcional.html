@@ -120,12 +120,12 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
-        /* AJUSTE DESKTOP: Sidebar otimizada */
+        /* AJUSTE DESKTOP: Sidebar otimizada para layout horizontal */
         .sidebar {
-            width: 200px; /* Reduzido para layout desktop horizontal */
+            width: 160px; /* Reduzido significativamente para layout desktop */
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 20px; /* Reduzido para otimizar espaço */
+            padding: 15px; /* Reduzido para layout compacto */
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             position: fixed;
             height: 100vh;
@@ -201,10 +201,10 @@
             width: 16px; /* Reduzido para layout compacto */
         }
 
-        /* AJUSTE DESKTOP: Main content otimizado */
+        /* AJUSTE DESKTOP: Main content expandido para layout horizontal */
         .main-content {
-            margin-left: 200px; /* Ajustado para nova largura da sidebar */
-            padding: 30px; /* Otimizado para desktop */
+            margin-left: 160px; /* Ajustado para nova largura da sidebar */
+            padding: 25px; /* Otimizado para desktop */
             min-height: 100vh;
         }
 
@@ -493,28 +493,31 @@
             font-size: 16px; /* Era 14px */
         }
 
-        /* Responsividade para telas menores */
+        /* Responsividade otimizada para layout horizontal */
         @media (max-width: 1200px) {
             .sidebar {
-                width: 180px;
+                width: 140px;
             }
             .main-content {
-                margin-left: 180px;
+                margin-left: 140px;
             }
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+                gap: 15px;
             }
             .cards-grid {
                 grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+                gap: 15px;
             }
         }
 
         @media (max-width: 768px) {
             .sidebar {
-                width: 160px;
+                width: 120px;
+                padding: 10px;
             }
             .main-content {
-                margin-left: 160px;
+                margin-left: 120px;
                 padding: 15px;
             }
             .login-container {
@@ -523,9 +526,18 @@
             }
             .stats-grid {
                 grid-template-columns: 1fr; /* 1 coluna em mobile */
+                gap: 10px;
             }
             .cards-grid {
                 grid-template-columns: 1fr; /* 1 coluna em mobile */
+                gap: 10px;
+            }
+            .sidebar .logo h2 {
+                font-size: 14px;
+            }
+            .nav-item {
+                padding: 8px 10px;
+                font-size: 12px;
             }
         }
     </style>
