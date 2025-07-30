@@ -21,55 +21,55 @@
             justify-content: center;
         }
 
-        /* LAYOUT DESKTOP - TELA DE LOGIN MUITO MAIOR */
+        /* AJUSTE DESKTOP: Aumentar tela de login */
         .login-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 80px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            padding: 60px; /* Era 40px */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 800px;
+            max-width: 600px; /* Era 400px */
             text-align: center;
         }
 
         .logo {
             color: #667eea;
-            font-size: 120px;
-            margin-bottom: 40px;
+            font-size: 72px; /* Era 48px */
+            margin-bottom: 30px; /* Era 20px */
         }
 
         .login-container h1 {
             color: #333;
-            margin-bottom: 20px;
-            font-size: 48px;
+            margin-bottom: 15px; /* Era 10px */
+            font-size: 36px; /* Era 24px */
         }
 
         .login-container p {
             color: #666;
-            margin-bottom: 60px;
-            font-size: 24px;
+            margin-bottom: 40px; /* Era 30px */
+            font-size: 18px; /* Era 14px */
         }
 
         .form-group {
-            margin-bottom: 40px;
+            margin-bottom: 30px; /* Era 20px */
             text-align: left;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 15px;
+            margin-bottom: 12px; /* Era 8px */
             color: #333;
             font-weight: 500;
-            font-size: 24px;
+            font-size: 18px; /* Adicionado */
         }
 
         .form-group input {
             width: 100%;
-            padding: 25px 30px;
-            border: 3px solid #e0e0e0;
-            border-radius: 15px;
-            font-size: 24px;
+            padding: 18px 24px; /* Era 12px 16px */
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 18px; /* Era 16px */
             transition: border-color 0.3s ease;
         }
 
@@ -80,53 +80,53 @@
 
         .login-btn {
             width: 100%;
-            padding: 30px;
+            padding: 20px; /* Era 14px */
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 15px;
-            font-size: 28px;
+            border-radius: 10px;
+            font-size: 20px; /* Era 16px */
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.3s ease;
         }
 
         .login-btn:hover {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
         }
 
         .login-info {
-            margin-top: 40px;
-            padding: 30px;
+            margin-top: 30px; /* Era 20px */
+            padding: 20px; /* Era 15px */
             background: #f8f9fa;
-            border-radius: 15px;
-            font-size: 20px;
+            border-radius: 10px;
+            font-size: 16px; /* Era 14px */
             color: #666;
         }
 
         .error-message {
             background: #fee;
             color: #c33;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 40px;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             display: none;
-            font-size: 20px;
         }
 
-        /* DASHBOARD DESKTOP - MUITO MAIOR */
+        /* AJUSTE DESKTOP: Dashboard */
         .dashboard-container {
             display: none;
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
+        /* AJUSTE DESKTOP: Sidebar maior */
         .sidebar {
-            width: 450px;
+            width: 350px; /* Era 250px */
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 50px;
-            box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
+            padding: 40px; /* Era 30px */
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
@@ -134,56 +134,56 @@
 
         .sidebar .logo {
             text-align: center;
-            margin-bottom: 60px;
-            padding-bottom: 40px;
-            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 40px; /* Era 30px */
+            padding-bottom: 30px; /* Era 20px */
+            border-bottom: 1px solid #e0e0e0;
         }
 
         .sidebar .logo i {
-            font-size: 48px;
+            font-size: 36px; /* Era 24px */
             color: #667eea;
         }
 
         .sidebar .logo h2 {
             color: #333;
-            font-size: 32px;
-            margin-top: 20px;
+            font-size: 24px; /* Era 18px */
+            margin-top: 15px; /* Era 10px */
         }
 
         .sidebar .logo p {
-            font-size: 18px;
+            font-size: 16px; /* Era 14px */
             color: #666;
-            margin-top: 10px;
+            margin-top: 8px; /* Era 5px */
         }
 
         .nav-section {
-            margin-bottom: 50px;
+            margin-bottom: 35px; /* Era 25px */
         }
 
         .nav-title {
-            font-size: 18px;
+            font-size: 14px; /* Era 12px */
             font-weight: 600;
             color: #666;
-            margin-bottom: 25px;
+            margin-bottom: 20px; /* Era 15px */
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
 
         .nav-item {
             width: 100%;
-            padding: 25px 30px;
+            padding: 18px 20px; /* Era 12px 15px */
             background: none;
             border: none;
             text-align: left;
             color: #666;
-            font-size: 20px;
+            font-size: 16px; /* Era 14px */
             cursor: pointer;
-            border-radius: 15px;
-            margin-bottom: 15px;
+            border-radius: 10px;
+            margin-bottom: 8px; /* Era 5px */
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px; /* Era 10px */
         }
 
         .nav-item:hover {
@@ -197,22 +197,23 @@
         }
 
         .nav-item i {
-            font-size: 24px;
-            width: 30px;
+            font-size: 18px; /* Era 16px */
+            width: 20px; /* Era 16px */
         }
 
+        /* AJUSTE DESKTOP: Main content */
         .main-content {
-            margin-left: 450px;
-            padding: 60px;
+            margin-left: 350px; /* Era 250px */
+            padding: 40px; /* Era 30px */
             min-height: 100vh;
         }
 
         .content-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 25px;
-            padding: 60px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            padding: 40px; /* Era 30px */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             display: none;
         }
 
@@ -221,94 +222,94 @@
         }
 
         .section-title {
-            font-size: 48px;
+            font-size: 32px; /* Era 24px */
             color: #333;
-            margin-bottom: 40px;
+            margin-bottom: 30px; /* Era 20px */
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px; /* Era 10px */
         }
 
         .section-title i {
-            font-size: 40px;
+            font-size: 28px; /* Era 20px */
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 40px;
-            margin-bottom: 60px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Era 200px */
+            gap: 30px; /* Era 20px */
+            margin-bottom: 40px; /* Era 30px */
         }
 
         .stat-card {
             background: rgba(255, 255, 255, 0.9);
-            padding: 50px;
-            border-radius: 25px;
+            padding: 35px; /* Era 25px */
+            border-radius: 15px;
             text-align: center;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
         }
 
         .stat-card:hover {
-            transform: translateY(-8px);
+            transform: translateY(-5px);
         }
 
         .stat-value {
-            font-size: 72px;
+            font-size: 48px; /* Era 36px */
             font-weight: bold;
             color: #667eea;
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* Era 10px */
         }
 
         .stat-label {
             color: #666;
-            font-size: 20px;
+            font-size: 16px; /* Era 14px */
         }
 
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Era 250px */
+            gap: 30px; /* Era 20px */
         }
 
         .action-card {
             background: rgba(255, 255, 255, 0.9);
-            padding: 60px;
-            border-radius: 25px;
+            padding: 40px; /* Era 30px */
+            border-radius: 15px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
         .action-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
 
         .action-card i {
-            font-size: 96px;
-            margin-bottom: 30px;
+            font-size: 64px; /* Era 48px */
+            margin-bottom: 20px; /* Era 15px */
             color: #667eea;
         }
 
         .action-card h3 {
             color: #333;
-            margin-bottom: 20px;
-            font-size: 28px;
+            margin-bottom: 15px; /* Era 10px */
+            font-size: 20px; /* Era 18px */
         }
 
         .action-card p {
             color: #666;
-            font-size: 20px;
+            font-size: 16px; /* Era 14px */
         }
 
         .btn {
-            padding: 18px 35px;
+            padding: 12px 24px; /* Era 10px 20px */
             border: none;
-            border-radius: 12px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 16px; /* Era 14px */
             font-weight: 500;
             transition: all 0.3s ease;
         }
@@ -319,7 +320,7 @@
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
         }
 
         .btn-success {
@@ -344,25 +345,25 @@
 
         .processo-item {
             background: #fff;
-            border: 3px solid #e0e0e0;
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 30px; /* Era 20px */
+            margin-bottom: 25px; /* Era 20px */
             transition: all 0.3s ease;
         }
 
         .processo-item:hover {
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
         }
 
         .processo-status {
             display: inline-block;
-            padding: 10px 25px;
-            border-radius: 30px;
-            font-size: 18px;
+            padding: 8px 16px; /* Era 6px 12px */
+            border-radius: 20px;
+            font-size: 14px; /* Era 12px */
             font-weight: 600;
-            margin-bottom: 25px;
+            margin-bottom: 20px; /* Era 15px */
         }
 
         .status-ativo {
@@ -376,13 +377,13 @@
         }
 
         .processo-item h3 {
-            font-size: 28px;
-            margin-bottom: 20px;
+            font-size: 22px; /* Era 20px */
+            margin-bottom: 15px; /* Era 10px */
         }
 
         .processo-item p {
-            font-size: 20px;
-            margin-bottom: 15px;
+            font-size: 16px; /* Era 14px */
+            margin-bottom: 10px; /* Era 8px */
         }
 
         .modal {
@@ -398,11 +399,11 @@
 
         .modal-content {
             background-color: #fff;
-            margin: 3% auto;
-            padding: 60px;
-            border-radius: 25px;
+            margin: 2% auto;
+            padding: 40px; /* Era 30px */
+            border-radius: 20px;
             width: 90%;
-            max-width: 1000px;
+            max-width: 800px; /* Era 600px */
             max-height: 85vh;
             overflow-y: auto;
         }
@@ -410,7 +411,7 @@
         .close {
             color: #aaa;
             float: right;
-            font-size: 48px;
+            font-size: 32px; /* Era 28px */
             font-weight: bold;
             cursor: pointer;
         }
@@ -420,52 +421,52 @@
         }
 
         .form-group {
-            margin-bottom: 35px;
+            margin-bottom: 25px; /* Era 20px */
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 12px;
+            margin-bottom: 10px; /* Era 8px */
             font-weight: 500;
             color: #333;
-            font-size: 20px;
+            font-size: 16px; /* Era 14px */
         }
 
         .form-group input,
         .form-group textarea,
         .form-group select {
             width: 100%;
-            padding: 18px;
-            border: 3px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 20px;
+            padding: 14px; /* Era 12px */
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px; /* Era 14px */
         }
 
         .form-group textarea {
-            height: 150px;
+            height: 120px; /* Era 100px */
             resize: vertical;
         }
 
         .empresa-info {
             background: #f8f9fa;
-            padding: 40px;
-            border-radius: 20px;
-            margin-bottom: 40px;
+            padding: 30px; /* Era 20px */
+            border-radius: 15px;
+            margin-bottom: 30px; /* Era 20px */
         }
 
         .empresa-info h3 {
             color: #333;
-            margin-bottom: 30px;
-            font-size: 28px;
+            margin-bottom: 20px; /* Era 15px */
+            font-size: 20px; /* Era 18px */
         }
 
         .info-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
-            font-size: 20px;
+            margin-bottom: 15px; /* Era 10px */
+            padding-bottom: 15px; /* Era 10px */
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 16px; /* Era 14px */
         }
 
         .info-item:last-child {
@@ -485,25 +486,36 @@
         .alert-warning {
             background: #fff3cd;
             color: #856404;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            border: 2px solid #ffeaa7;
-            font-size: 18px;
+            padding: 15px; /* Era 12px */
+            border-radius: 10px;
+            margin-bottom: 20px; /* Era 15px */
+            border: 1px solid #ffeaa7;
+            font-size: 16px; /* Era 14px */
         }
 
-        /* Textos maiores para desktop */
-        p {
-            font-size: 20px;
-            line-height: 1.6;
+        /* Responsividade para telas menores */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 280px;
+            }
+            .main-content {
+                margin-left: 280px;
+            }
         }
 
-        h1 { font-size: 48px; }
-        h2 { font-size: 40px; }
-        h3 { font-size: 32px; }
-        h4 { font-size: 28px; }
-        h5 { font-size: 24px; }
-        h6 { font-size: 20px; }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 250px;
+            }
+            .main-content {
+                margin-left: 250px;
+                padding: 20px;
+            }
+            .login-container {
+                max-width: 400px;
+                padding: 40px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -585,7 +597,7 @@
                 <div class="section-title">
                     <i class="fas fa-tachometer-alt"></i> Dashboard Fornecedor
                 </div>
-                <p style="color: #666; margin-bottom: 60px;">Acompanhe seus processos licitatórios e propostas em tempo real</p>
+                <p style="color: #666; margin-bottom: 40px;">Acompanhe seus processos licitatórios e propostas em tempo real</p>
 
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -636,9 +648,9 @@
                     <i class="fas fa-file-contract"></i> Meus Processos Licitatórios
                 </div>
                 <div id="processos-list">
-                    <div style="text-align: center; padding: 80px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 96px; margin-bottom: 40px;"></i>
-                        <h3 style="font-size: 32px;">Carregando processos...</h3>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando processos...</h3>
                     </div>
                 </div>
             </div>
@@ -649,9 +661,9 @@
                     <i class="fas fa-paper-plane"></i> Minhas Propostas
                 </div>
                 <div id="propostas-list">
-                    <div style="text-align: center; padding: 80px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 96px; margin-bottom: 40px;"></i>
-                        <h3 style="font-size: 32px;">Carregando propostas...</h3>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando propostas...</h3>
                     </div>
                 </div>
             </div>
@@ -662,9 +674,9 @@
                     <i class="fas fa-history"></i> Histórico de Participações
                 </div>
                 <div id="historico-list">
-                    <div style="text-align: center; padding: 80px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 96px; margin-bottom: 40px;"></i>
-                        <h3 style="font-size: 32px;">Carregando histórico...</h3>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando histórico...</h3>
                     </div>
                 </div>
             </div>
@@ -675,9 +687,9 @@
                     <i class="fas fa-user"></i> Meu Perfil
                 </div>
                 <div id="perfil-content">
-                    <div style="text-align: center; padding: 80px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 96px; margin-bottom: 40px;"></i>
-                        <h3 style="font-size: 32px;">Carregando perfil...</h3>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
+                        <h3 style="font-size: 24px;">Carregando perfil...</h3>
                     </div>
                 </div>
             </div>
@@ -687,10 +699,10 @@
                 <div class="section-title">
                     <i class="fas fa-folder"></i> Documentos
                 </div>
-                <div style="text-align: center; padding: 80px; color: #666;">
-                    <i class="fas fa-tools" style="font-size: 120px; margin-bottom: 40px; opacity: 0.5;"></i>
-                    <h3 style="font-size: 32px;">Área de Documentos</h3>
-                    <p style="font-size: 24px;">Funcionalidade em desenvolvimento para upload e gerenciamento de documentos da empresa.</p>
+                <div style="text-align: center; padding: 60px; color: #666;">
+                    <i class="fas fa-tools" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                    <h3 style="font-size: 24px;">Área de Documentos</h3>
+                    <p style="font-size: 16px;">Funcionalidade em desenvolvimento para upload e gerenciamento de documentos da empresa.</p>
                 </div>
             </div>
         </div>
@@ -738,7 +750,7 @@
                     <label for="garantia">Garantia Oferecida</label>
                     <input type="text" id="garantia" placeholder="Ex: 12 meses">
                 </div>
-                <div style="text-align: right; margin-top: 40px;">
+                <div style="text-align: right; margin-top: 30px;">
                     <button type="button" class="btn btn-secondary" onclick="fecharModal('modal-enviar-proposta')">Cancelar</button>
                     <button type="submit" class="btn btn-primary" id="btn-enviar-proposta">Enviar Proposta</button>
                 </div>
@@ -868,10 +880,10 @@
             
             if (processos.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 80px; color: #666;">
-                        <i class="fas fa-inbox" style="font-size: 120px; margin-bottom: 40px; opacity: 0.5;"></i>
-                        <h3 style="font-size: 32px;">Nenhum processo disponível</h3>
-                        <p style="font-size: 24px;">Você ainda não foi convidado para participar de processos licitatórios.</p>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-inbox" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                        <h3 style="font-size: 24px;">Nenhum processo disponível</h3>
+                        <p style="font-size: 16px;">Você ainda não foi convidado para participar de processos licitatórios.</p>
                     </div>
                 `;
                 return;
@@ -903,16 +915,16 @@
                             </div>
                         ` : ''}
                         
-                        <div style="margin-top: 30px;">
+                        <div style="margin-top: 20px;">
                             <button class="btn btn-primary" onclick="verDetalhesProcesso('${processo.processoId}')">
                                 <i class="fas fa-eye"></i> Visualizar Detalhes
                             </button>
                             ${status === 'ATIVO' && !jaEnviouProposta ? `
-                                <button class="btn btn-success" onclick="enviarProposta('${processo.processoId}')" style="margin-left: 15px;">
+                                <button class="btn btn-success" onclick="enviarProposta('${processo.processoId}')" style="margin-left: 10px;">
                                     <i class="fas fa-paper-plane"></i> Enviar Proposta
                                 </button>
                             ` : ''}
-                            <button class="btn btn-warning" onclick="baixarEdital('${processo.processoId}')" style="margin-left: 15px;">
+                            <button class="btn btn-warning" onclick="baixarEdital('${processo.processoId}')" style="margin-left: 10px;">
                                 <i class="fas fa-download"></i> Baixar Edital
                             </button>
                         </div>
@@ -929,10 +941,10 @@
             
             if (propostas.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 80px; color: #666;">
-                        <i class="fas fa-paper-plane" style="font-size: 120px; margin-bottom: 40px; opacity: 0.5;"></i>
-                        <h3 style="font-size: 32px;">Nenhuma proposta enviada</h3>
-                        <p style="font-size: 24px;">Você ainda não enviou propostas para processos licitatórios.</p>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-paper-plane" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                        <h3 style="font-size: 24px;">Nenhuma proposta enviada</h3>
+                        <p style="font-size: 16px;">Você ainda não enviou propostas para processos licitatórios.</p>
                     </div>
                 `;
                 return;
@@ -953,12 +965,12 @@
                         <p><strong>Observações:</strong> ${proposta.observacoes || 'Nenhuma observação'}</p>
                         <p><strong>Garantia:</strong> ${proposta.garantia || 'Não informada'}</p>
                         
-                        <div style="margin-top: 30px;">
+                        <div style="margin-top: 20px;">
                             <button class="btn btn-primary" onclick="verDetalhesProposta('${proposta.id}')">
                                 <i class="fas fa-eye"></i> Ver Detalhes
                             </button>
                             ${proposta.status === 'ENVIADA' ? `
-                                <button class="btn btn-warning" onclick="editarProposta('${proposta.id}')" style="margin-left: 15px;">
+                                <button class="btn btn-warning" onclick="editarProposta('${proposta.id}')" style="margin-left: 10px;">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
                             ` : ''}
@@ -995,10 +1007,10 @@
             
             if (historico.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 80px; color: #666;">
-                        <i class="fas fa-history" style="font-size: 120px; margin-bottom: 40px; opacity: 0.5;"></i>
-                        <h3 style="font-size: 32px;">Nenhum histórico disponível</h3>
-                        <p style="font-size: 24px;">Seu histórico de participações aparecerá aqui.</p>
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <i class="fas fa-history" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
+                        <h3 style="font-size: 24px;">Nenhum histórico disponível</h3>
+                        <p style="font-size: 16px;">Seu histórico de participações aparecerá aqui.</p>
                     </div>
                 `;
                 return;
@@ -1020,12 +1032,12 @@
                             <p><strong>Status da Proposta:</strong> ${item.proposta.status}</p>
                         ` : ''}
                         
-                        <div style="margin-top: 30px;">
+                        <div style="margin-top: 20px;">
                             <button class="btn btn-primary" onclick="verDetalhesProcesso('${item.processo.processoId}')">
                                 <i class="fas fa-eye"></i> Ver Processo
                             </button>
                             ${item.proposta ? `
-                                <button class="btn btn-success" onclick="verDetalhesProposta('${item.proposta.id}')" style="margin-left: 15px;">
+                                <button class="btn btn-success" onclick="verDetalhesProposta('${item.proposta.id}')" style="margin-left: 10px;">
                                     <i class="fas fa-paper-plane"></i> Ver Proposta
                                 </button>
                             ` : ''}
@@ -1066,7 +1078,7 @@
                 
                 <div class="empresa-info">
                     <h3><i class="fas fa-info-circle"></i> Informações Importantes</h3>
-                    <p style="color: #666; margin-bottom: 20px;">
+                    <p style="color: #666; margin-bottom: 15px;">
                         Suas credenciais de acesso foram geradas automaticamente pelo setor de compras. 
                         Para alterações nos dados da empresa, entre em contato com o setor responsável.
                     </p>
@@ -1184,10 +1196,10 @@
                     </div>
                 </div>
                 
-                <div style="text-align: right; margin-top: 40px;">
+                <div style="text-align: right; margin-top: 30px;">
                     <button class="btn btn-secondary" onclick="fecharModal('modal-detalhes-processo')">Fechar</button>
                     ${status === 'ATIVO' ? `
-                        <button class="btn btn-primary" onclick="fecharModal('modal-detalhes-processo'); enviarProposta('${processoId}')" style="margin-left: 15px;">
+                        <button class="btn btn-primary" onclick="fecharModal('modal-detalhes-processo'); enviarProposta('${processoId}')" style="margin-left: 10px;">
                             <i class="fas fa-paper-plane"></i> Enviar Proposta
                         </button>
                     ` : ''}
@@ -1319,7 +1331,7 @@
                     </div>
                 ` : ''}
                 
-                <div style="text-align: right; margin-top: 40px;">
+                <div style="text-align: right; margin-top: 30px;">
                     <button class="btn btn-secondary" onclick="fecharModal('modal-detalhes-proposta')">Fechar</button>
                 </div>
             `;
@@ -1419,7 +1431,7 @@ Contato: compras@prefeitura.gov.br | (11) 3333-4444
             }
         });
 
-        console.log('Sistema de fornecedor desktop carregado!');
+        console.log('Sistema de fornecedor corrigido carregado!');
     </script>
 </body>
 </html>
