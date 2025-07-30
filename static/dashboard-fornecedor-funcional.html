@@ -113,19 +113,20 @@
             display: none;
         }
 
-        /* AJUSTE DESKTOP: Dashboard */
+        /* LAYOUT DESKTOP COMPLETO - NOVO MODELO */
         .dashboard-container {
             display: none;
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* AJUSTE DESKTOP: Sidebar maior */
+        /* SIDEBAR DESKTOP OTIMIZADA */
         .sidebar {
-            width: 350px; /* Era 250px */
+            width: 180px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 40px; /* Era 30px */
+            padding: 15px;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             position: fixed;
             height: 100vh;
@@ -134,56 +135,57 @@
 
         .sidebar .logo {
             text-align: center;
-            margin-bottom: 40px; /* Era 30px */
-            padding-bottom: 30px; /* Era 20px */
+            margin-bottom: 15px;
+            padding-bottom: 10px;
             border-bottom: 1px solid #e0e0e0;
         }
 
         .sidebar .logo i {
-            font-size: 36px; /* Era 24px */
+            font-size: 20px;
             color: #667eea;
         }
 
         .sidebar .logo h2 {
             color: #333;
-            font-size: 24px; /* Era 18px */
-            margin-top: 15px; /* Era 10px */
+            font-size: 14px;
+            margin-top: 5px;
+            font-weight: 600;
         }
 
         .sidebar .logo p {
-            font-size: 16px; /* Era 14px */
+            font-size: 10px;
             color: #666;
-            margin-top: 8px; /* Era 5px */
+            margin-top: 2px;
         }
 
         .nav-section {
-            margin-bottom: 35px; /* Era 25px */
+            margin-bottom: 15px;
         }
 
         .nav-title {
-            font-size: 14px; /* Era 12px */
+            font-size: 9px;
             font-weight: 600;
             color: #666;
-            margin-bottom: 20px; /* Era 15px */
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .nav-item {
             width: 100%;
-            padding: 18px 20px; /* Era 12px 15px */
+            padding: 8px 10px;
             background: none;
             border: none;
             text-align: left;
             color: #666;
-            font-size: 16px; /* Era 14px */
+            font-size: 11px;
             cursor: pointer;
-            border-radius: 10px;
-            margin-bottom: 8px; /* Era 5px */
+            border-radius: 6px;
+            margin-bottom: 3px;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 15px; /* Era 10px */
+            gap: 8px;
         }
 
         .nav-item:hover {
@@ -197,23 +199,23 @@
         }
 
         .nav-item i {
-            font-size: 18px; /* Era 16px */
-            width: 20px; /* Era 16px */
+            font-size: 12px;
+            width: 14px;
         }
 
-        /* AJUSTE DESKTOP: Main content */
+        /* ÁREA PRINCIPAL DESKTOP */
         .main-content {
-            margin-left: 350px; /* Era 250px */
-            padding: 40px; /* Era 30px */
+            margin-left: 180px;
+            padding: 20px;
             min-height: 100vh;
         }
 
         .content-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px; /* Era 30px */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
             display: none;
         }
 
@@ -222,86 +224,97 @@
         }
 
         .section-title {
-            font-size: 32px; /* Era 24px */
+            font-size: 24px;
             color: #333;
-            margin-bottom: 30px; /* Era 20px */
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 15px; /* Era 10px */
+            gap: 10px;
+            font-weight: 600;
         }
 
         .section-title i {
-            font-size: 28px; /* Era 20px */
+            font-size: 20px;
+            color: #667eea;
         }
 
+        /* GRID DE ESTATÍSTICAS DESKTOP - LAYOUT HORIZONTAL FORÇADO */
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Era 200px */
-            gap: 30px; /* Era 20px */
-            margin-bottom: 40px; /* Era 30px */
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 15px !important;
+            margin-bottom: 25px !important;
+            width: 100% !important;
         }
 
         .stat-card {
+            flex: 1 !important;
             background: rgba(255, 255, 255, 0.9);
-            padding: 35px; /* Era 25px */
-            border-radius: 15px;
+            padding: 15px !important;
+            border-radius: 10px;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
+            min-width: 0 !important;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
         }
 
         .stat-value {
-            font-size: 48px; /* Era 36px */
+            font-size: 28px !important;
             font-weight: bold;
             color: #667eea;
-            margin-bottom: 15px; /* Era 10px */
+            margin-bottom: 5px !important;
         }
 
         .stat-label {
             color: #666;
-            font-size: 16px; /* Era 14px */
+            font-size: 11px !important;
+            line-height: 1.2;
+            font-weight: 500;
         }
 
+        /* GRID DE CARDS DE AÇÃO DESKTOP */
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Era 250px */
-            gap: 30px; /* Era 20px */
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
         }
 
         .action-card {
             background: rgba(255, 255, 255, 0.9);
-            padding: 40px; /* Era 30px */
-            border-radius: 15px;
+            padding: 20px;
+            border-radius: 12px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
 
         .action-card i {
-            font-size: 64px; /* Era 48px */
-            margin-bottom: 20px; /* Era 15px */
+            font-size: 32px;
+            margin-bottom: 12px;
             color: #667eea;
         }
 
         .action-card h3 {
             color: #333;
-            margin-bottom: 15px; /* Era 10px */
-            font-size: 20px; /* Era 18px */
+            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: 600;
         }
 
         .action-card p {
             color: #666;
-            font-size: 16px; /* Era 14px */
+            font-size: 12px;
+            line-height: 1.3;
         }
 
         .btn {
@@ -496,24 +509,36 @@
         /* Responsividade para telas menores */
         @media (max-width: 1200px) {
             .sidebar {
-                width: 280px;
+                width: 180px;
             }
             .main-content {
-                margin-left: 280px;
+                margin-left: 180px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+            }
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
             }
         }
 
         @media (max-width: 768px) {
             .sidebar {
-                width: 250px;
+                width: 160px;
             }
             .main-content {
-                margin-left: 250px;
-                padding: 20px;
+                margin-left: 160px;
+                padding: 15px;
             }
             .login-container {
                 max-width: 400px;
                 padding: 40px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr; /* 1 coluna em mobile */
+            }
+            .cards-grid {
+                grid-template-columns: 1fr; /* 1 coluna em mobile */
             }
         }
     </style>
