@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal do Fornecedor - Sistema Integrado</title>
+    <title>Portal do Fornecedor - Sistema Integrado de Licitações</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -13,7 +13,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -21,202 +21,347 @@
             justify-content: center;
         }
 
-        /* AJUSTE DESKTOP: Aumentar tela de login */
+        /* TELA DE LOGIN MODERNIZADA */
         .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 60px; /* Era 40px */
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 80px 60px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 600px; /* Era 400px */
+            max-width: 600px;
             text-align: center;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .login-container:hover {
+            transform: translateY(-5px);
         }
 
         .logo {
-            color: #667eea;
-            font-size: 72px; /* Era 48px */
-            margin-bottom: 30px; /* Era 20px */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 40px;
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .logo i {
+            color: white;
+            font-size: 60px;
         }
 
         .login-container h1 {
-            color: #333;
-            margin-bottom: 15px; /* Era 10px */
-            font-size: 36px; /* Era 24px */
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -1px;
         }
 
         .login-container p {
-            color: #666;
-            margin-bottom: 40px; /* Era 30px */
-            font-size: 18px; /* Era 14px */
+            color: #718096;
+            margin-bottom: 50px;
+            font-size: 18px;
+            font-weight: 400;
         }
 
         .form-group {
-            margin-bottom: 30px; /* Era 20px */
+            margin-bottom: 30px;
             text-align: left;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 12px; /* Era 8px */
-            color: #333;
-            font-weight: 500;
-            font-size: 18px; /* Adicionado */
+            margin-bottom: 12px;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group label .required {
+            color: #e53e3e;
+            margin-left: 3px;
         }
 
         .form-group input {
             width: 100%;
-            padding: 18px 24px; /* Era 12px 16px */
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 18px; /* Era 16px */
-            transition: border-color 0.3s ease;
+            padding: 20px 24px;
+            border: 2px solid transparent;
+            background: #f7fafc;
+            border-radius: 15px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
 
         .form-group input:focus {
             outline: none;
             border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input.error {
+            border-color: #e53e3e;
+        }
+
+        .error-text {
+            color: #e53e3e;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
         }
 
         .login-btn {
             width: 100%;
-            padding: 20px; /* Era 14px */
+            padding: 22px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 20px; /* Era 16px */
-            font-weight: 600;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
         .login-btn:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .login-info {
-            margin-top: 30px; /* Era 20px */
-            padding: 20px; /* Era 15px */
-            background: #f8f9fa;
-            border-radius: 10px;
-            font-size: 16px; /* Era 14px */
-            color: #666;
+            margin-top: 40px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 20px;
+            font-size: 16px;
+            color: #718096;
+            border: 1px solid rgba(102, 126, 234, 0.1);
         }
 
-        .error-message {
-            background: #fee;
-            color: #c33;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+        /* ALERTAS E NOTIFICAÇÕES */
+        .alert {
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
             display: none;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
         }
 
-        /* LAYOUT DESKTOP COMPLETO - NOVO MODELO */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-error {
+            background: #fff5f5;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #276749;
+            border: 1px solid #9ae6b4;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fffaf0 0%, #fff5e6 100%);
+            color: #744210;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 1px solid #feb2b2;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-warning i {
+            color: #f6ad55;
+            font-size: 20px;
+        }
+
+        .alert-info {
+            background: #ebf8ff;
+            color: #2b6cb0;
+            border: 1px solid #90cdf4;
+        }
+
+        /* DASHBOARD MODERNIZADO */
         .dashboard-container {
             display: none;
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* SIDEBAR DESKTOP OTIMIZADA */
+        /* SIDEBAR MODERNA */
         .sidebar {
-            width: 180px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 15px;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            width: 240px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            padding: 0;
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
         }
 
         .sidebar .logo {
+            padding: 30px 20px;
             text-align: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e0e0e0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            animation: none;
         }
 
         .sidebar .logo i {
-            font-size: 20px;
-            color: #667eea;
+            font-size: 40px;
+            margin-bottom: 15px;
+            display: block;
         }
 
         .sidebar .logo h2 {
-            color: #333;
-            font-size: 14px;
-            margin-top: 5px;
-            font-weight: 600;
+            color: white;
+            font-size: 18px;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .sidebar .logo p {
-            font-size: 10px;
-            color: #666;
-            margin-top: 2px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+            font-weight: 400;
         }
 
         .nav-section {
-            margin-bottom: 15px;
+            padding: 20px 20px 10px;
         }
 
         .nav-title {
-            font-size: 9px;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #a0aec0;
+            margin-bottom: 15px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
 
         .nav-item {
             width: 100%;
-            padding: 8px 10px;
+            padding: 14px 20px;
             background: none;
             border: none;
             text-align: left;
-            color: #666;
-            font-size: 11px;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            border-radius: 6px;
-            margin-bottom: 3px;
-            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin-bottom: 5px;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            z-index: -1;
         }
 
         .nav-item:hover {
-            background: #f0f0f0;
-            color: #333;
+            background: #f7fafc;
+            color: #667eea;
+            transform: translateX(5px);
         }
 
         .nav-item.active {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-item.active::before {
+            width: 100%;
         }
 
         .nav-item i {
-            font-size: 12px;
-            width: 14px;
+            font-size: 16px;
+            width: 20px;
         }
 
-        /* ÁREA PRINCIPAL DESKTOP */
+        /* ÁREA PRINCIPAL MODERNA */
         .main-content {
-            margin-left: 180px;
-            padding: 20px;
+            margin-left: 240px;
+            padding: 30px;
             min-height: 100vh;
         }
 
         .content-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
             display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .content-section.active {
@@ -224,107 +369,168 @@
         }
 
         .section-title {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 20px;
+            font-size: 32px;
+            color: #2d3748;
+            margin-bottom: 30px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 600;
+            gap: 15px;
+            font-weight: 700;
+            letter-spacing: -1px;
         }
 
         .section-title i {
-            font-size: 20px;
-            color: #667eea;
+            font-size: 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* GRID DE ESTATÍSTICAS DESKTOP - LAYOUT HORIZONTAL FORÇADO */
+        /* CARDS DE ESTATÍSTICAS MODERNOS */
         .stats-grid {
             display: flex !important;
-            flex-direction: row !important;
-            gap: 15px !important;
-            margin-bottom: 25px !important;
-            width: 100% !important;
+            gap: 20px !important;
+            margin-bottom: 40px !important;
         }
 
         .stat-card {
             flex: 1 !important;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px !important;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+            padding: 25px !important;
+            border-radius: 20px;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-            min-width: 0 !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .stat-card:hover {
-            transform: translateY(-3px);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
         .stat-value {
-            font-size: 28px !important;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px !important;
+            font-size: 36px !important;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px !important;
         }
 
         .stat-label {
-            color: #666;
-            font-size: 11px !important;
-            line-height: 1.2;
-            font-weight: 500;
+            color: #718096;
+            font-size: 14px !important;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
-        /* GRID DE CARDS DE AÇÃO DESKTOP */
+        /* CARDS DE AÇÃO MODERNOS */
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
         }
 
         .action-card {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 12px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+            padding: 35px;
+            border-radius: 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
         }
 
         .action-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-card:hover::before {
+            opacity: 1;
         }
 
         .action-card i {
-            font-size: 32px;
-            margin-bottom: 12px;
-            color: #667eea;
+            font-size: 48px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            z-index: 1;
         }
 
         .action-card h3 {
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-size: 20px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
         }
 
         .action-card p {
-            color: #666;
-            font-size: 12px;
-            line-height: 1.3;
+            color: #718096;
+            font-size: 14px;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
         }
 
+        /* BOTÕES MODERNOS */
         .btn {
-            padding: 12px 24px; /* Era 10px 20px */
+            padding: 14px 28px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 16px; /* Era 14px */
-            font-weight: 500;
+            font-size: 16px;
+            font-weight: 600;
             transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            letter-spacing: 0.3px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .btn-primary {
@@ -332,73 +538,110 @@
             color: white;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-        }
-
         .btn-success {
-            background: #28a745;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
             color: white;
         }
 
         .btn-warning {
-            background: #ffc107;
-            color: #333;
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
         }
 
         .btn-danger {
-            background: #dc3545;
+            background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
             color: white;
         }
 
         .btn-secondary {
-            background: #6c757d;
-            color: white;
+            background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+            color: #2d3748;
         }
 
+        /* CARDS DE PROCESSO MODERNOS */
         .processo-item {
-            background: #fff;
-            border: 2px solid #e0e0e0;
-            border-radius: 15px;
-            padding: 30px; /* Era 20px */
-            margin-bottom: 25px; /* Era 20px */
+            background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+            border: none;
+            border-radius: 20px;
+            padding: 35px;
+            margin-bottom: 25px;
             transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .processo-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .processo-item:hover {
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transform: translateY(-5px);
         }
 
         .processo-status {
             display: inline-block;
-            padding: 8px 16px; /* Era 6px 12px */
-            border-radius: 20px;
-            font-size: 14px; /* Era 12px */
-            font-weight: 600;
-            margin-bottom: 20px; /* Era 15px */
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
         }
 
         .status-ativo {
-            background: #d4edda;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
             color: #155724;
         }
 
         .status-vencido {
-            background: #f8d7da;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+        }
+
+        .status-enviada {
+            background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%);
+            color: #004085;
+        }
+
+        .status-aceita {
+            background: linear-gradient(135deg, #d1ecf1 0%, #b8e0d2 100%);
+            color: #0c5460;
+        }
+
+        .status-rejeitada {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
             color: #721c24;
         }
 
         .processo-item h3 {
-            font-size: 22px; /* Era 20px */
-            margin-bottom: 15px; /* Era 10px */
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #2d3748;
+            font-weight: 700;
         }
 
         .processo-item p {
-            font-size: 16px; /* Era 14px */
-            margin-bottom: 10px; /* Era 8px */
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #4a5568;
+            line-height: 1.6;
         }
 
+        .processo-item p strong {
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        /* MODAIS MODERNOS */
         .modal {
             display: none;
             position: fixed;
@@ -407,142 +650,252 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
         }
 
         .modal-content {
-            background-color: #fff;
-            margin: 2% auto;
-            padding: 40px; /* Era 30px */
-            border-radius: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+            margin: 3% auto;
+            padding: 50px;
+            border-radius: 30px;
             width: 90%;
-            max-width: 800px; /* Era 600px */
+            max-width: 800px;
             max-height: 85vh;
             overflow-y: auto;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
         }
 
         .close {
-            color: #aaa;
+            color: #a0aec0;
             float: right;
-            font-size: 32px; /* Era 28px */
-            font-weight: bold;
+            font-size: 36px;
+            font-weight: 300;
             cursor: pointer;
+            transition: all 0.3s ease;
+            line-height: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7fafc;
         }
 
         .close:hover {
-            color: #000;
+            color: #667eea;
+            background: #edf2f7;
+            transform: rotate(90deg);
         }
 
-        .form-group {
-            margin-bottom: 25px; /* Era 20px */
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 10px; /* Era 8px */
-            font-weight: 500;
-            color: #333;
-            font-size: 16px; /* Era 14px */
-        }
-
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 14px; /* Era 12px */
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px; /* Era 14px */
-        }
-
-        .form-group textarea {
-            height: 120px; /* Era 100px */
-            resize: vertical;
-        }
-
+        /* INFORMAÇÕES DA EMPRESA MODERNAS */
         .empresa-info {
-            background: #f8f9fa;
-            padding: 30px; /* Era 20px */
-            border-radius: 15px;
-            margin-bottom: 30px; /* Era 20px */
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 35px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.1);
         }
 
         .empresa-info h3 {
-            color: #333;
-            margin-bottom: 20px; /* Era 15px */
-            font-size: 20px; /* Era 18px */
+            color: #2d3748;
+            margin-bottom: 25px;
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .empresa-info h3 i {
+            color: #667eea;
         }
 
         .info-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px; /* Era 10px */
-            padding-bottom: 15px; /* Era 10px */
-            border-bottom: 1px solid #e0e0e0;
-            font-size: 16px; /* Era 14px */
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            font-size: 16px;
         }
 
         .info-item:last-child {
             border-bottom: none;
             margin-bottom: 0;
+            padding-bottom: 0;
         }
 
         .info-label {
-            font-weight: 500;
-            color: #666;
+            font-weight: 600;
+            color: #718096;
         }
 
         .info-value {
-            color: #333;
+            color: #2d3748;
+            font-weight: 500;
         }
 
-        .alert-warning {
+        /* FORMULÁRIOS MODERNOS */
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            background: #f7fafc;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            height: 140px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        /* LOADING */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 80px;
+            color: #718096;
+        }
+
+        .empty-state i {
+            font-size: 80px;
+            margin-bottom: 30px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 28px;
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+
+        .empty-state p {
+            font-size: 18px;
+        }
+
+        /* FEEDBACK VISUAL */
+        .feedback-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .feedback-aceito {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .feedback-rejeitado {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .feedback-pendente {
             background: #fff3cd;
             color: #856404;
-            padding: 15px; /* Era 12px */
-            border-radius: 10px;
-            margin-bottom: 20px; /* Era 15px */
-            border: 1px solid #ffeaa7;
-            font-size: 16px; /* Era 14px */
         }
 
-        /* Responsividade para telas menores */
+        /* Responsividade Aprimorada */
         @media (max-width: 1200px) {
             .sidebar {
-                width: 180px;
+                width: 220px;
             }
             .main-content {
-                margin-left: 180px;
-            }
-            .stats-grid {
-                display: flex !important;
-                flex-direction: row !important;
-                gap: 15px !important;
+                margin-left: 220px;
             }
             .cards-grid {
-                grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas médias */
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 768px) {
             .sidebar {
-                width: 160px;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
             }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
             .main-content {
-                margin-left: 160px;
-                padding: 15px;
+                margin-left: 0;
+                padding: 20px;
             }
+            
             .login-container {
-                max-width: 400px;
-                padding: 40px;
+                max-width: 100%;
+                margin: 20px;
+                padding: 40px 30px;
             }
+            
             .stats-grid {
-                display: flex !important;
                 flex-direction: column !important;
-                gap: 10px !important;
             }
+            
             .cards-grid {
-                grid-template-columns: 1fr; /* 1 coluna em mobile */
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                margin: 20px;
+                padding: 30px;
+                width: calc(100% - 40px);
             }
         }
     </style>
@@ -554,26 +907,28 @@
             <i class="fas fa-building"></i>
         </div>
         <h1>Portal do Fornecedor</h1>
-        <p>Sistema Integrado - Credenciais do Setor de Compras</p>
+        <p>Sistema Integrado de Licitações</p>
 
-        <div id="error-message" class="error-message"></div>
+        <div id="login-alert" class="alert alert-error"></div>
 
         <form id="login-form">
             <div class="form-group">
-                <label for="email">E-mail</label>
+                <label for="email">E-mail <span class="required">*</span></label>
                 <input type="email" id="email" placeholder="seu@email.com" required>
+                <span class="error-text">E-mail inválido</span>
             </div>
             <div class="form-group">
-                <label for="senha">Senha</label>
+                <label for="senha">Senha <span class="required">*</span></label>
                 <input type="password" id="senha" placeholder="Digite sua senha" required>
+                <span class="error-text">Senha é obrigatória</span>
             </div>
-            <button type="submit" class="login-btn">
+            <button type="submit" class="login-btn" id="btn-login">
                 <i class="fas fa-sign-in-alt"></i> Entrar no Sistema
             </button>
         </form>
 
         <div class="login-info">
-            Credenciais fornecidas pelo setor de compras
+            <i class="fas fa-info-circle"></i> Credenciais fornecidas pelo setor de compras
         </div>
     </div>
 
@@ -592,7 +947,7 @@
                     <i class="fas fa-tachometer-alt"></i> Dashboard
                 </button>
                 <button class="nav-item" data-section="processos">
-                    <i class="fas fa-file-contract"></i> Meus Processos
+                    <i class="fas fa-file-contract"></i> Processos Disponíveis
                 </button>
                 <button class="nav-item" data-section="propostas">
                     <i class="fas fa-paper-plane"></i> Minhas Propostas
@@ -614,7 +969,7 @@
 
             <div class="nav-section">
                 <div class="nav-title">SISTEMA</div>
-                <button class="nav-item" onclick="logout()">
+                <button class="nav-item" onclick="Sistema.logout()">
                     <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
             </div>
@@ -624,9 +979,11 @@
             <!-- Dashboard -->
             <div id="dashboard" class="content-section active">
                 <div class="section-title">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard Fornecedor
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
                 </div>
-                <p style="color: #666; margin-bottom: 40px;">Acompanhe seus processos licitatórios e propostas em tempo real</p>
+                <p style="color: #718096; margin-bottom: 50px; font-size: 18px;">
+                    Acompanhe seus processos licitatórios e propostas em tempo real
+                </p>
 
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -648,38 +1005,38 @@
                 </div>
 
                 <div class="cards-grid">
-                    <div class="action-card" onclick="mostrarSecao('processos')">
+                    <div class="action-card" onclick="Sistema.mostrarSecao('processos')">
                         <i class="fas fa-file-contract"></i>
-                        <h3>Meus Processos</h3>
-                        <p>Visualizar processos disponíveis para participação</p>
+                        <h3>Processos Disponíveis</h3>
+                        <p>Visualizar processos licitatórios para participação</p>
                     </div>
-                    <div class="action-card" onclick="mostrarSecao('propostas')">
+                    <div class="action-card" onclick="Sistema.mostrarSecao('propostas')">
                         <i class="fas fa-paper-plane"></i>
-                        <h3>Enviar Propostas</h3>
-                        <p>Participar dos processos licitatórios</p>
+                        <h3>Minhas Propostas</h3>
+                        <p>Acompanhar propostas enviadas</p>
                     </div>
-                    <div class="action-card" onclick="mostrarSecao('historico')">
+                    <div class="action-card" onclick="Sistema.mostrarSecao('historico')">
                         <i class="fas fa-history"></i>
                         <h3>Histórico</h3>
-                        <p>Acompanhar resultados e histórico</p>
+                        <p>Consultar participações anteriores</p>
                     </div>
-                    <div class="action-card" onclick="mostrarSecao('perfil')">
+                    <div class="action-card" onclick="Sistema.mostrarSecao('perfil')">
                         <i class="fas fa-user"></i>
                         <h3>Meu Perfil</h3>
-                        <p>Gerenciar dados da empresa</p>
+                        <p>Informações da empresa</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Meus Processos -->
+            <!-- Processos Disponíveis -->
             <div id="processos" class="content-section">
                 <div class="section-title">
-                    <i class="fas fa-file-contract"></i> Meus Processos Licitatórios
+                    <i class="fas fa-file-contract"></i> Processos Disponíveis
                 </div>
                 <div id="processos-list">
-                    <div style="text-align: center; padding: 60px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
-                        <h3 style="font-size: 24px;">Carregando processos...</h3>
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <h3>Carregando processos...</h3>
                     </div>
                 </div>
             </div>
@@ -690,9 +1047,9 @@
                     <i class="fas fa-paper-plane"></i> Minhas Propostas
                 </div>
                 <div id="propostas-list">
-                    <div style="text-align: center; padding: 60px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
-                        <h3 style="font-size: 24px;">Carregando propostas...</h3>
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <h3>Carregando propostas...</h3>
                     </div>
                 </div>
             </div>
@@ -703,9 +1060,9 @@
                     <i class="fas fa-history"></i> Histórico de Participações
                 </div>
                 <div id="historico-list">
-                    <div style="text-align: center; padding: 60px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
-                        <h3 style="font-size: 24px;">Carregando histórico...</h3>
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <h3>Carregando histórico...</h3>
                     </div>
                 </div>
             </div>
@@ -716,9 +1073,9 @@
                     <i class="fas fa-user"></i> Meu Perfil
                 </div>
                 <div id="perfil-content">
-                    <div style="text-align: center; padding: 60px; color: #666;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 64px; margin-bottom: 30px;"></i>
-                        <h3 style="font-size: 24px;">Carregando perfil...</h3>
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <h3>Carregando perfil...</h3>
                     </div>
                 </div>
             </div>
@@ -728,10 +1085,10 @@
                 <div class="section-title">
                     <i class="fas fa-folder"></i> Documentos
                 </div>
-                <div style="text-align: center; padding: 60px; color: #666;">
-                    <i class="fas fa-tools" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
-                    <h3 style="font-size: 24px;">Área de Documentos</h3>
-                    <p style="font-size: 16px;">Funcionalidade em desenvolvimento para upload e gerenciamento de documentos da empresa.</p>
+                <div class="empty-state">
+                    <i class="fas fa-tools"></i>
+                    <h3>Área de Documentos</h3>
+                    <p>Funcionalidade em desenvolvimento para upload e gerenciamento de documentos.</p>
                 </div>
             </div>
         </div>
@@ -740,48 +1097,66 @@
     <!-- Modais -->
     <div id="modal-detalhes-processo" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2><i class="fas fa-file-contract"></i> Detalhes do Processo</h2>
+            <span class="close" onclick="Sistema.fecharModal('modal-detalhes-processo')">&times;</span>
+            <h2 style="font-size: 28px; color: #2d3748; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-file-contract" style="color: #667eea;"></i> Detalhes do Processo
+            </h2>
             <div id="detalhes-processo-content"></div>
         </div>
     </div>
 
     <div id="modal-enviar-proposta" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2><i class="fas fa-paper-plane"></i> Enviar Proposta</h2>
+            <span class="close" onclick="Sistema.fecharModal('modal-enviar-proposta')">&times;</span>
+            <h2 style="font-size: 28px; color: #2d3748; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-paper-plane" style="color: #667eea;"></i> Enviar Proposta
+            </h2>
             <form id="form-proposta">
                 <div id="processo-info"></div>
                 <div id="proposta-existente-aviso"></div>
+                
                 <div class="form-group">
-                    <label for="valor-proposta">Valor da Proposta (R$)</label>
-                    <input type="number" id="valor-proposta" step="0.01" required>
+                    <label for="valor-proposta">Valor da Proposta (R$) <span class="required">*</span></label>
+                    <input type="number" id="valor-proposta" step="0.01" required min="0">
+                    <span class="error-text">Valor é obrigatório</span>
                 </div>
+                
                 <div class="form-group">
-                    <label for="prazo-execucao">Prazo de Execução (dias)</label>
-                    <input type="number" id="prazo-execucao" required>
+                    <label for="prazo-execucao">Prazo de Execução (dias) <span class="required">*</span></label>
+                    <input type="number" id="prazo-execucao" required min="1">
+                    <span class="error-text">Prazo é obrigatório</span>
                 </div>
+                
                 <div class="form-group">
-                    <label for="condicoes-pagamento">Condições de Pagamento</label>
+                    <label for="condicoes-pagamento">Condições de Pagamento <span class="required">*</span></label>
                     <select id="condicoes-pagamento" required>
                         <option value="">Selecione...</option>
+                        <option value="À vista">À vista</option>
                         <option value="30 dias">30 dias</option>
                         <option value="45 dias">45 dias</option>
                         <option value="60 dias">60 dias</option>
-                        <option value="À vista">À vista</option>
+                        <option value="Parcelado">Parcelado</option>
                     </select>
+                    <span class="error-text">Selecione uma condição de pagamento</span>
                 </div>
-                <div class="form-group">
-                    <label for="observacoes">Observações Técnicas</label>
-                    <textarea id="observacoes" placeholder="Descreva detalhes técnicos da proposta..."></textarea>
-                </div>
+                
                 <div class="form-group">
                     <label for="garantia">Garantia Oferecida</label>
                     <input type="text" id="garantia" placeholder="Ex: 12 meses">
                 </div>
-                <div style="text-align: right; margin-top: 30px;">
-                    <button type="button" class="btn btn-secondary" onclick="fecharModal('modal-enviar-proposta')">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="btn-enviar-proposta">Enviar Proposta</button>
+                
+                <div class="form-group">
+                    <label for="observacoes">Observações Técnicas</label>
+                    <textarea id="observacoes" placeholder="Descreva detalhes técnicos da proposta..."></textarea>
+                </div>
+                
+                <div style="text-align: right; margin-top: 40px; display: flex; gap: 15px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="Sistema.fecharModal('modal-enviar-proposta')">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btn-enviar-proposta">
+                        <i class="fas fa-paper-plane"></i> Enviar Proposta
+                    </button>
                 </div>
             </form>
         </div>
@@ -789,600 +1164,905 @@
 
     <div id="modal-detalhes-proposta" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2><i class="fas fa-eye"></i> Detalhes da Proposta</h2>
+            <span class="close" onclick="Sistema.fecharModal('modal-detalhes-proposta')">&times;</span>
+            <h2 style="font-size: 28px; color: #2d3748; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-eye" style="color: #667eea;"></i> Detalhes da Proposta
+            </h2>
             <div id="detalhes-proposta-content"></div>
         </div>
     </div>
 
-    <script>
-        // Variáveis globais
-        let fornecedorLogado = null;
-        let processoAtual = null;
+    <div id="modal-editar-proposta" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="Sistema.fecharModal('modal-editar-proposta')">&times;</span>
+            <h2 style="font-size: 28px; color: #2d3748; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-edit" style="color: #667eea;"></i> Editar Proposta
+            </h2>
+            <form id="form-editar-proposta">
+                <div id="editar-processo-info"></div>
+                
+                <div class="form-group">
+                    <label for="editar-valor-proposta">Valor da Proposta (R$) <span class="required">*</span></label>
+                    <input type="number" id="editar-valor-proposta" step="0.01" required min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editar-prazo-execucao">Prazo de Execução (dias) <span class="required">*</span></label>
+                    <input type="number" id="editar-prazo-execucao" required min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editar-condicoes-pagamento">Condições de Pagamento <span class="required">*</span></label>
+                    <select id="editar-condicoes-pagamento" required>
+                        <option value="">Selecione...</option>
+                        <option value="À vista">À vista</option>
+                        <option value="30 dias">30 dias</option>
+                        <option value="45 dias">45 dias</option>
+                        <option value="60 dias">60 dias</option>
+                        <option value="Parcelado">Parcelado</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editar-garantia">Garantia Oferecida</label>
+                    <input type="text" id="editar-garantia" placeholder="Ex: 12 meses">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editar-observacoes">Observações Técnicas</label>
+                    <textarea id="editar-observacoes" placeholder="Descreva detalhes técnicos da proposta..."></textarea>
+                </div>
+                
+                <div style="text-align: right; margin-top: 40px; display: flex; gap: 15px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="Sistema.fecharModal('modal-editar-proposta')">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        // Sistema de dados local
+    <script>
+        // Sistema de dados local padronizado
         const SistemaLocal = {
+            // Chaves padronizadas do localStorage
+            CHAVES: {
+                USUARIOS_FORNECEDORES: 'usuarios_fornecedores',
+                FORNECEDOR_LOGADO: 'fornecedor_logado',
+                PROCESSOS_LICITATORIOS: 'processos_licitatorios',
+                PROPOSTAS_FORNECEDORES: 'propostas_fornecedores',
+                PROCESSOS_POR_FORNECEDOR: 'processos_por_fornecedor'
+            },
+
+            // Carregar dados do localStorage
             carregar(chave, padrao = null) {
                 try {
                     const dados = localStorage.getItem(chave);
                     return dados ? JSON.parse(dados) : padrao;
                 } catch (error) {
-                    console.error('Erro ao carregar dados:', error);
+                    console.error(`Erro ao carregar ${chave}:`, error);
                     return padrao;
                 }
             },
 
+            // Salvar dados no localStorage
             salvar(chave, dados) {
                 try {
                     localStorage.setItem(chave, JSON.stringify(dados));
                     return true;
                 } catch (error) {
-                    console.error('Erro ao salvar dados:', error);
+                    console.error(`Erro ao salvar ${chave}:`, error);
                     return false;
                 }
+            },
+
+            // Gerar ID único
+            gerarId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
             }
         };
 
-        // Função de login
-        document.getElementById('login-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const senha = document.getElementById('senha').value;
-            
-            // Buscar credenciais nos dados gerados pelo módulo comprador
-            const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
-            
-            const fornecedor = usuariosFornecedores.find(f => 
-                f.email === email && f.senha === senha
-            );
-            
-            if (fornecedor) {
-                fornecedorLogado = fornecedor;
-                localStorage.setItem('fornecedor_logado', JSON.stringify(fornecedor));
-                
+        // Sistema principal
+        const Sistema = {
+            fornecedorLogado: null,
+            processoAtual: null,
+            propostaEditando: null,
+
+            // Inicializar sistema
+            init() {
+                this.verificarLogin();
+                this.configurarEventListeners();
+            },
+
+            // Verificar se está logado
+            verificarLogin() {
+                const fornecedor = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
+                if (fornecedor) {
+                    this.fornecedorLogado = fornecedor;
+                    this.mostrarDashboard();
+                }
+            },
+
+            // Configurar event listeners
+            configurarEventListeners() {
+                // Login form
+                document.getElementById('login-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.fazerLogin();
+                });
+
+                // Navegação
+                document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+                    item.addEventListener('click', function() {
+                        Sistema.mostrarSecao(this.getAttribute('data-section'));
+                    });
+                });
+
+                // Formulário de proposta
+                document.getElementById('form-proposta').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.enviarProposta();
+                });
+
+                // Formulário de edição
+                document.getElementById('form-editar-proposta').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.salvarEdicaoProposta();
+                });
+
+                // Fechar modais ao clicar fora
+                window.addEventListener('click', (event) => {
+                    if (event.target.classList.contains('modal')) {
+                        event.target.style.display = 'none';
+                    }
+                });
+
+                // Validação em tempo real
+                this.configurarValidacoes();
+            },
+
+            // Configurar validações
+            configurarValidacoes() {
+                // Email
+                document.getElementById('email').addEventListener('blur', function() {
+                    const valid = this.checkValidity();
+                    this.classList.toggle('error', !valid && this.value);
+                    this.nextElementSibling.style.display = !valid && this.value ? 'block' : 'none';
+                });
+
+                // Campos obrigatórios
+                document.querySelectorAll('input[required], select[required]').forEach(campo => {
+                    campo.addEventListener('blur', function() {
+                        const valid = this.value.trim() !== '';
+                        this.classList.toggle('error', !valid);
+                        const errorText = this.parentElement.querySelector('.error-text');
+                        if (errorText) {
+                            errorText.style.display = !valid ? 'block' : 'none';
+                        }
+                    });
+                });
+            },
+
+            // Fazer login
+            async fazerLogin() {
+                const email = document.getElementById('email').value;
+                const senha = document.getElementById('senha').value;
+                const btnLogin = document.getElementById('btn-login');
+
+                // Mostrar loading
+                btnLogin.innerHTML = '<span class="loading"></span> Entrando...';
+                btnLogin.disabled = true;
+
+                // Simular delay de verificação
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Verificar credenciais
+                const usuarios = SistemaLocal.carregar(SistemaLocal.CHAVES.USUARIOS_FORNECEDORES, []);
+                const fornecedor = usuarios.find(u => u.email === email && u.senha === senha);
+
+                if (fornecedor) {
+                    this.fornecedorLogado = fornecedor;
+                    SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO, fornecedor);
+                    this.mostrarDashboard();
+                } else {
+                    this.mostrarAlerta('login-alert', 'E-mail ou senha incorretos. Verifique suas credenciais.', 'error');
+                    btnLogin.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Sistema';
+                    btnLogin.disabled = false;
+                }
+            },
+
+            // Mostrar dashboard
+            mostrarDashboard() {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard-screen').style.display = 'flex';
+                document.getElementById('empresa-nome').textContent = this.fornecedorLogado.razaoSocial;
                 
-                inicializarDashboard();
-            } else {
-                mostrarErro('Login ou senha incorretos. Verifique suas credenciais e tente novamente.');
-            }
-        });
+                this.carregarDados();
+            },
 
-        function mostrarErro(mensagem) {
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.textContent = mensagem;
-            errorDiv.style.display = 'block';
-            
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
+            // Carregar todos os dados
+            carregarDados() {
+                this.carregarEstatisticas();
+                this.carregarProcessos();
+                this.carregarPropostas();
+                this.carregarHistorico();
+                this.carregarPerfil();
+            },
 
-        function inicializarDashboard() {
-            // Atualizar nome da empresa na sidebar
-            document.getElementById('empresa-nome').textContent = fornecedorLogado.razaoSocial;
-            
-            // Carregar dados iniciais
-            carregarEstatisticas();
-            carregarProcessos();
-            carregarPropostas();
-            carregarHistorico();
-            carregarPerfil();
-        }
+            // Carregar estatísticas
+            carregarEstatisticas() {
+                const processos = this.obterProcessosFornecedor();
+                const propostas = this.obterPropostasFornecedor();
+                
+                const agora = new Date();
+                const processosVencidos = processos.filter(p => new Date(p.dataLimite) < agora).length;
+                const propostasAceitas = propostas.filter(p => p.status === 'ACEITA').length;
+                
+                document.getElementById('stat-processos').textContent = processos.length;
+                document.getElementById('stat-propostas').textContent = propostas.length;
+                document.getElementById('stat-vencidos').textContent = processosVencidos;
+                document.getElementById('stat-aceitas').textContent = propostasAceitas;
+            },
 
-        function carregarEstatisticas() {
-            const processos = obterProcessosFornecedor();
-            const propostas = obterPropostasFornecedor();
-            
-            const agora = new Date();
-            const processosVencidos = processos.filter(p => new Date(p.dataLimite) < agora).length;
-            const propostasAceitas = propostas.filter(p => p.status === 'ACEITA').length;
-            
-            document.getElementById('stat-processos').textContent = processos.length;
-            document.getElementById('stat-propostas').textContent = propostas.length;
-            document.getElementById('stat-vencidos').textContent = processosVencidos;
-            document.getElementById('stat-aceitas').textContent = propostasAceitas;
-        }
+            // Obter processos do fornecedor
+            obterProcessosFornecedor() {
+                const processosPorFornecedor = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
+                return processosPorFornecedor.filter(p => 
+                    p.fornecedorEmail === this.fornecedorLogado.email || 
+                    p.fornecedorCNPJ === this.fornecedorLogado.cnpj
+                );
+            },
 
-        function obterProcessosFornecedor() {
-            const processosPorFornecedor = SistemaLocal.carregar('processos_por_fornecedor', []);
-            return processosPorFornecedor.filter(p => 
-                p.fornecedorEmail === fornecedorLogado.email || 
-                p.fornecedorCNPJ === fornecedorLogado.cnpj
-            );
-        }
+            // Obter propostas do fornecedor
+            obterPropostasFornecedor() {
+                const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                return propostas.filter(p => 
+                    p.fornecedorEmail === this.fornecedorLogado.email || 
+                    p.fornecedorCNPJ === this.fornecedorLogado.cnpj
+                );
+            },
 
-        function obterPropostasFornecedor() {
-            const propostas = SistemaLocal.carregar('propostas_fornecedores', []);
-            return propostas.filter(p => 
-                p.fornecedorEmail === fornecedorLogado.email || 
-                p.fornecedorCNPJ === fornecedorLogado.cnpj
-            );
-        }
+            // Carregar processos
+            carregarProcessos() {
+                const processos = this.obterProcessosFornecedor();
+                const container = document.getElementById('processos-list');
+                
+                if (processos.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>Nenhum processo disponível</h3>
+                            <p>Você ainda não foi convidado para participar de processos licitatórios.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                processos.forEach(processo => {
+                    const agora = new Date();
+                    const dataLimite = new Date(processo.dataLimite);
+                    const status = dataLimite < agora ? 'VENCIDO' : 'ATIVO';
+                    const statusClass = status === 'ATIVO' ? 'status-ativo' : 'status-vencido';
+                    
+                    // Verificar se já existe proposta
+                    const propostas = this.obterPropostasFornecedor();
+                    const jaEnviouProposta = propostas.some(p => p.processoId === processo.processoId);
+                    
+                    html += `
+                        <div class="processo-item">
+                            <div class="processo-status ${statusClass}">${status}</div>
+                            <h3>${processo.numeroProcesso}</h3>
+                            <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
+                            <p><strong>Objeto:</strong> ${processo.objeto || processo.trTitulo || 'Não informado'}</p>
+                            <p><strong>Data de Abertura:</strong> ${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}</p>
+                            <p><strong>Data Limite:</strong> ${dataLimite.toLocaleDateString('pt-BR')}</p>
+                            <p><strong>Local:</strong> ${processo.localAbertura || 'A definir'}</p>
+                            
+                            ${jaEnviouProposta ? `
+                                <div class="alert-warning">
+                                    <i class="fas fa-check-circle"></i> Você já enviou uma proposta para este processo
+                                </div>
+                            ` : ''}
+                            
+                            <div style="margin-top: 25px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button class="btn btn-primary" onclick="Sistema.verDetalhesProcesso('${processo.processoId}')">
+                                    <i class="fas fa-eye"></i> Ver Detalhes
+                                </button>
+                                ${status === 'ATIVO' && !jaEnviouProposta ? `
+                                    <button class="btn btn-success" onclick="Sistema.abrirFormularioProposta('${processo.processoId}')">
+                                        <i class="fas fa-paper-plane"></i> Enviar Proposta
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-warning" onclick="Sistema.baixarEdital('${processo.processoId}')">
+                                    <i class="fas fa-download"></i> Baixar Edital
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
 
-        // CORREÇÃO 1: Remover valor estimado da exibição para fornecedores
-        function carregarProcessos() {
-            const processos = obterProcessosFornecedor();
-            const container = document.getElementById('processos-list');
-            
-            if (processos.length === 0) {
+            // Carregar propostas
+            carregarPropostas() {
+                const propostas = this.obterPropostasFornecedor();
+                const container = document.getElementById('propostas-list');
+                
+                if (propostas.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-paper-plane"></i>
+                            <h3>Nenhuma proposta enviada</h3>
+                            <p>Você ainda não enviou propostas para processos licitatórios.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                propostas.forEach(proposta => {
+                    let statusClass = 'status-enviada';
+                    let statusTexto = proposta.status || 'ENVIADA';
+                    
+                    switch(proposta.status) {
+                        case 'ACEITA':
+                            statusClass = 'status-aceita';
+                            break;
+                        case 'REJEITADA':
+                            statusClass = 'status-rejeitada';
+                            break;
+                        case 'EM_ANALISE':
+                            statusTexto = 'EM ANÁLISE';
+                            break;
+                    }
+                    
+                    html += `
+                        <div class="processo-item">
+                            <div class="processo-status ${statusClass}">${statusTexto}</div>
+                            <h3>Processo: ${proposta.numeroProcesso}</h3>
+                            <p><strong>Valor da Proposta:</strong> R$ ${this.formatarMoeda(proposta.valor)}</p>
+                            <p><strong>Prazo de Execução:</strong> ${proposta.prazoExecucao} dias</p>
+                            <p><strong>Condições de Pagamento:</strong> ${proposta.condicoesPagamento}</p>
+                            <p><strong>Data de Envio:</strong> ${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}</p>
+                            <p><strong>Garantia:</strong> ${proposta.garantia || 'Não informada'}</p>
+                            
+                            ${proposta.feedbackComprador ? `
+                                <div class="empresa-info" style="margin-top: 20px;">
+                                    <h3 style="font-size: 18px;"><i class="fas fa-comment-alt"></i> Feedback do Comprador</h3>
+                                    <p style="color: #4a5568;">${proposta.feedbackComprador}</p>
+                                    ${proposta.dataFeedback ? `
+                                        <p style="font-size: 14px; color: #718096; margin-top: 10px;">
+                                            <i class="fas fa-calendar"></i> ${new Date(proposta.dataFeedback).toLocaleDateString('pt-BR')}
+                                        </p>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+                            
+                            <div style="margin-top: 25px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button class="btn btn-primary" onclick="Sistema.verDetalhesProposta('${proposta.id}')">
+                                    <i class="fas fa-eye"></i> Ver Detalhes
+                                </button>
+                                ${proposta.status === 'ENVIADA' ? `
+                                    <button class="btn btn-warning" onclick="Sistema.editarProposta('${proposta.id}')">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+
+            // Carregar histórico
+            carregarHistorico() {
+                const processos = this.obterProcessosFornecedor();
+                const propostas = this.obterPropostasFornecedor();
+                const container = document.getElementById('historico-list');
+                
+                // Combinar processos e propostas para criar histórico
+                let historico = [];
+                
+                processos.forEach(processo => {
+                    const proposta = propostas.find(p => p.processoId === processo.processoId);
+                    
+                    historico.push({
+                        tipo: 'processo',
+                        processo: processo,
+                        proposta: proposta,
+                        data: processo.dataAbertura,
+                        status: proposta ? 'PARTICIPOU' : 'NÃO PARTICIPOU'
+                    });
+                });
+                
+                // Ordenar por data (mais recente primeiro)
+                historico.sort((a, b) => new Date(b.data) - new Date(a.data));
+                
+                if (historico.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <h3>Nenhum histórico disponível</h3>
+                            <p>Seu histórico de participações aparecerá aqui.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                historico.forEach(item => {
+                    const statusClass = item.status === 'PARTICIPOU' ? 'status-ativo' : 'status-vencido';
+                    
+                    html += `
+                        <div class="processo-item">
+                            <div class="processo-status ${statusClass}">${item.status}</div>
+                            <h3>${item.processo.numeroProcesso}</h3>
+                            <p><strong>Modalidade:</strong> ${item.processo.modalidade}</p>
+                            <p><strong>Objeto:</strong> ${item.processo.objeto || item.processo.trTitulo || 'Não informado'}</p>
+                            <p><strong>Data de Abertura:</strong> ${new Date(item.processo.dataAbertura).toLocaleDateString('pt-BR')}</p>
+                            
+                            ${item.proposta ? `
+                                <p><strong>Valor da Proposta:</strong> R$ ${this.formatarMoeda(item.proposta.valor)}</p>
+                                <p><strong>Status da Proposta:</strong> ${item.proposta.status || 'ENVIADA'}
+                                    ${item.proposta.status === 'ACEITA' ? '<span class="feedback-badge feedback-aceito">Aceita</span>' : ''}
+                                    ${item.proposta.status === 'REJEITADA' ? '<span class="feedback-badge feedback-rejeitado">Rejeitada</span>' : ''}
+                                </p>
+                            ` : ''}
+                            
+                            <div style="margin-top: 25px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button class="btn btn-primary" onclick="Sistema.verDetalhesProcesso('${item.processo.processoId}')">
+                                    <i class="fas fa-eye"></i> Ver Processo
+                                </button>
+                                ${item.proposta ? `
+                                    <button class="btn btn-success" onclick="Sistema.verDetalhesProposta('${item.proposta.id}')">
+                                        <i class="fas fa-paper-plane"></i> Ver Proposta
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+
+            // Carregar perfil
+            carregarPerfil() {
+                const container = document.getElementById('perfil-content');
+                const processos = this.obterProcessosFornecedor();
+                const propostas = this.obterPropostasFornecedor();
+                const propostasAceitas = propostas.filter(p => p.status === 'ACEITA').length;
+                const propostasRejeitadas = propostas.filter(p => p.status === 'REJEITADA').length;
+                const propostasEmAnalise = propostas.filter(p => p.status === 'EM_ANALISE').length;
+                
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 60px; color: #666;">
-                        <i class="fas fa-inbox" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
-                        <h3 style="font-size: 24px;">Nenhum processo disponível</h3>
-                        <p style="font-size: 16px;">Você ainda não foi convidado para participar de processos licitatórios.</p>
+                    <div class="empresa-info">
+                        <h3><i class="fas fa-building"></i> Dados da Empresa</h3>
+                        <div class="info-item">
+                            <span class="info-label">Razão Social:</span>
+                            <span class="info-value">${this.fornecedorLogado.razaoSocial}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">CNPJ:</span>
+                            <span class="info-value">${this.formatarCNPJ(this.fornecedorLogado.cnpj)}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">E-mail:</span>
+                            <span class="info-value">${this.fornecedorLogado.email}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Telefone:</span>
+                            <span class="info-value">${this.fornecedorLogado.telefone || 'Não informado'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value" style="color: #48bb78; font-weight: bold;">
+                                <i class="fas fa-check-circle"></i> Ativo
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="empresa-info">
+                        <h3><i class="fas fa-chart-bar"></i> Estatísticas de Participação</h3>
+                        <div class="info-item">
+                            <span class="info-label">Processos Convidados:</span>
+                            <span class="info-value">${processos.length}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Propostas Enviadas:</span>
+                            <span class="info-value">${propostas.length}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Propostas Aceitas:</span>
+                            <span class="info-value">${propostasAceitas}
+                                ${propostasAceitas > 0 ? '<span class="feedback-badge feedback-aceito">Sucesso!</span>' : ''}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Propostas Rejeitadas:</span>
+                            <span class="info-value">${propostasRejeitadas}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Em Análise:</span>
+                            <span class="info-value">${propostasEmAnalise}
+                                ${propostasEmAnalise > 0 ? '<span class="feedback-badge feedback-pendente">Aguardando</span>' : ''}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Taxa de Sucesso:</span>
+                            <span class="info-value">
+                                ${propostas.length > 0 ? ((propostasAceitas / propostas.length * 100).toFixed(1) + '%') : 'N/A'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="empresa-info">
+                        <h3><i class="fas fa-info-circle"></i> Informações do Sistema</h3>
+                        <p style="color: #718096; margin-bottom: 20px; line-height: 1.6;">
+                            Suas credenciais de acesso foram fornecidas pelo setor de compras. 
+                            Para alterações nos dados cadastrais ou problemas de acesso, entre em contato com o setor responsável.
+                        </p>
+                        <p style="color: #4a5568; font-weight: 600;">
+                            <i class="fas fa-envelope" style="color: #667eea; margin-right: 5px;"></i> 
+                            Suporte: compras@prefeitura.gov.br
+                        </p>
+                        <p style="color: #4a5568; font-weight: 600; margin-top: 10px;">
+                            <i class="fas fa-phone" style="color: #667eea; margin-right: 5px;"></i> 
+                            Telefone: (11) 3333-4444
+                        </p>
+                        <p style="color: #4a5568; font-weight: 600; margin-top: 10px;">
+                            <i class="fas fa-clock" style="color: #667eea; margin-right: 5px;"></i> 
+                            Horário: Segunda a Sexta, 8h às 17h
+                        </p>
                     </div>
                 `;
-                return;
-            }
-            
-            let html = '';
-            processos.forEach(processo => {
+            },
+
+            // Ver detalhes do processo
+            verDetalhesProcesso(processoId) {
+                const processos = this.obterProcessosFornecedor();
+                const processo = processos.find(p => p.processoId === processoId);
+                
+                if (!processo) return;
+                
                 const agora = new Date();
                 const dataLimite = new Date(processo.dataLimite);
                 const status = dataLimite < agora ? 'VENCIDO' : 'ATIVO';
-                const statusClass = status === 'ATIVO' ? 'status-ativo' : 'status-vencido';
                 
-                // CORREÇÃO 2: Verificar se já existe proposta para este processo
-                const propostas = obterPropostasFornecedor();
-                const jaEnviouProposta = propostas.some(p => p.processoId === processo.processoId);
+                // Buscar processo completo do módulo do comprador
+                const processosCompletos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_LICITATORIOS, []);
+                const processoCompleto = processosCompletos.find(p => p.id === processoId);
                 
-                html += `
-                    <div class="processo-item">
-                        <div class="processo-status ${statusClass}">${status}</div>
-                        <h3>${processo.numeroProcesso}</h3>
-                        <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
-                        <p><strong>Data de Abertura:</strong> ${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Data Limite:</strong> ${dataLimite.toLocaleDateString('pt-BR')}</p>
-                        <p><strong>TR:</strong> ${processo.trTitulo}</p>
-                        
-                        ${jaEnviouProposta ? `
-                            <div class="alert-warning">
-                                <i class="fas fa-check-circle"></i> Você já enviou uma proposta para este processo
-                            </div>
-                        ` : ''}
-                        
-                        <div style="margin-top: 20px;">
-                            <button class="btn btn-primary" onclick="verDetalhesProcesso('${processo.processoId}')">
-                                <i class="fas fa-eye"></i> Visualizar Detalhes
-                            </button>
-                            ${status === 'ATIVO' && !jaEnviouProposta ? `
-                                <button class="btn btn-success" onclick="enviarProposta('${processo.processoId}')" style="margin-left: 10px;">
-                                    <i class="fas fa-paper-plane"></i> Enviar Proposta
-                                </button>
-                            ` : ''}
-                            <button class="btn btn-warning" onclick="baixarEdital('${processo.processoId}')" style="margin-left: 10px;">
-                                <i class="fas fa-download"></i> Baixar Edital
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
-
-        function carregarPropostas() {
-            const propostas = obterPropostasFornecedor();
-            const container = document.getElementById('propostas-list');
-            
-            if (propostas.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 60px; color: #666;">
-                        <i class="fas fa-paper-plane" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
-                        <h3 style="font-size: 24px;">Nenhuma proposta enviada</h3>
-                        <p style="font-size: 16px;">Você ainda não enviou propostas para processos licitatórios.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '';
-            propostas.forEach(proposta => {
-                const statusClass = proposta.status === 'ENVIADA' ? 'status-ativo' : 'status-vencido';
-                
-                html += `
-                    <div class="processo-item">
-                        <div class="processo-status ${statusClass}">${proposta.status}</div>
-                        <h3>Processo: ${proposta.numeroProcesso}</h3>
-                        <p><strong>Valor da Proposta:</strong> R$ ${parseFloat(proposta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                        <p><strong>Prazo de Execução:</strong> ${proposta.prazoExecucao} dias</p>
-                        <p><strong>Condições de Pagamento:</strong> ${proposta.condicoesPagamento}</p>
-                        <p><strong>Data de Envio:</strong> ${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Observações:</strong> ${proposta.observacoes || 'Nenhuma observação'}</p>
-                        <p><strong>Garantia:</strong> ${proposta.garantia || 'Não informada'}</p>
-                        
-                        <div style="margin-top: 20px;">
-                            <button class="btn btn-primary" onclick="verDetalhesProposta('${proposta.id}')">
-                                <i class="fas fa-eye"></i> Ver Detalhes
-                            </button>
-                            ${proposta.status === 'ENVIADA' ? `
-                                <button class="btn btn-warning" onclick="editarProposta('${proposta.id}')" style="margin-left: 10px;">
-                                    <i class="fas fa-edit"></i> Editar
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
-
-        function carregarHistorico() {
-            const processos = obterProcessosFornecedor();
-            const propostas = obterPropostasFornecedor();
-            const container = document.getElementById('historico-list');
-            
-            // Combinar processos e propostas para criar histórico
-            let historico = [];
-            
-            processos.forEach(processo => {
-                const proposta = propostas.find(p => p.processoId === processo.processoId);
-                
-                historico.push({
-                    tipo: 'processo',
-                    processo: processo,
-                    proposta: proposta,
-                    data: processo.dataAbertura,
-                    status: proposta ? 'PARTICIPOU' : 'NÃO PARTICIPOU'
-                });
-            });
-            
-            // Ordenar por data (mais recente primeiro)
-            historico.sort((a, b) => new Date(b.data) - new Date(a.data));
-            
-            if (historico.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 60px; color: #666;">
-                        <i class="fas fa-history" style="font-size: 80px; margin-bottom: 30px; opacity: 0.5;"></i>
-                        <h3 style="font-size: 24px;">Nenhum histórico disponível</h3>
-                        <p style="font-size: 16px;">Seu histórico de participações aparecerá aqui.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '';
-            historico.forEach(item => {
-                const statusClass = item.status === 'PARTICIPOU' ? 'status-ativo' : 'status-vencido';
-                
-                html += `
-                    <div class="processo-item">
-                        <div class="processo-status ${statusClass}">${item.status}</div>
-                        <h3>${item.processo.numeroProcesso}</h3>
-                        <p><strong>Modalidade:</strong> ${item.processo.modalidade}</p>
-                        <p><strong>Data de Abertura:</strong> ${new Date(item.processo.dataAbertura).toLocaleDateString('pt-BR')}</p>
-                        
-                        ${item.proposta ? `
-                            <p><strong>Valor da Proposta:</strong> R$ ${parseFloat(item.proposta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                            <p><strong>Status da Proposta:</strong> ${item.proposta.status}</p>
-                        ` : ''}
-                        
-                        <div style="margin-top: 20px;">
-                            <button class="btn btn-primary" onclick="verDetalhesProcesso('${item.processo.processoId}')">
-                                <i class="fas fa-eye"></i> Ver Processo
-                            </button>
-                            ${item.proposta ? `
-                                <button class="btn btn-success" onclick="verDetalhesProposta('${item.proposta.id}')" style="margin-left: 10px;">
-                                    <i class="fas fa-paper-plane"></i> Ver Proposta
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
-
-        function carregarPerfil() {
-            const container = document.getElementById('perfil-content');
-            const processos = obterProcessosFornecedor();
-            const propostas = obterPropostasFornecedor();
-            const propostasAceitas = propostas.filter(p => p.status === 'ACEITA').length;
-            
-            container.innerHTML = `
-                <div class="empresa-info">
-                    <h3><i class="fas fa-building"></i> Dados da Empresa</h3>
-                    <div class="info-item">
-                        <span class="info-label">Razão Social:</span>
-                        <span class="info-value">${fornecedorLogado.razaoSocial}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">CNPJ:</span>
-                        <span class="info-value">${fornecedorLogado.cnpj}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">E-mail:</span>
-                        <span class="info-value">${fornecedorLogado.email}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Status:</span>
-                        <span class="info-value" style="color: #28a745; font-weight: bold;">Ativo</span>
-                    </div>
-                </div>
-                
-                <div class="empresa-info">
-                    <h3><i class="fas fa-info-circle"></i> Informações Importantes</h3>
-                    <p style="color: #666; margin-bottom: 15px;">
-                        Suas credenciais de acesso foram geradas automaticamente pelo setor de compras. 
-                        Para alterações nos dados da empresa, entre em contato com o setor responsável.
-                    </p>
-                    <p style="color: #666;">
-                        <strong>Suporte:</strong> compras@prefeitura.gov.br | (11) 3333-4444
-                    </p>
-                </div>
-                
-                <div class="empresa-info">
-                    <h3><i class="fas fa-chart-bar"></i> Estatísticas de Participação</h3>
-                    <div class="info-item">
-                        <span class="info-label">Processos Convidados:</span>
-                        <span class="info-value">${processos.length}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Propostas Enviadas:</span>
-                        <span class="info-value">${propostas.length}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Propostas Aceitas:</span>
-                        <span class="info-value">${propostasAceitas}</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Navegação
-        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
-            item.addEventListener('click', function() {
-                const section = this.getAttribute('data-section');
-                mostrarSecao(section);
-            });
-        });
-
-        function mostrarSecao(secao) {
-            // Remover classe active de todos os nav-items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Adicionar classe active ao item clicado
-            document.querySelector(`[data-section="${secao}"]`).classList.add('active');
-            
-            // Esconder todas as seções
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Mostrar seção selecionada
-            document.getElementById(secao).classList.add('active');
-            
-            // Recarregar dados se necessário
-            if (secao === 'processos') {
-                carregarProcessos();
-            } else if (secao === 'propostas') {
-                carregarPropostas();
-            } else if (secao === 'historico') {
-                carregarHistorico();
-            } else if (secao === 'perfil') {
-                carregarPerfil();
-            } else if (secao === 'dashboard') {
-                carregarEstatisticas();
-            }
-        }
-
-        // Funções dos modais
-        function verDetalhesProcesso(processoId) {
-            const processos = obterProcessosFornecedor();
-            const processo = processos.find(p => p.processoId === processoId);
-            
-            if (!processo) return;
-            
-            const agora = new Date();
-            const dataLimite = new Date(processo.dataLimite);
-            const status = dataLimite < agora ? 'VENCIDO' : 'ATIVO';
-            
-            // CORREÇÃO 1: Não mostrar valor estimado nos detalhes
-            document.getElementById('detalhes-processo-content').innerHTML = `
-                <div class="empresa-info">
-                    <div class="info-item">
-                        <span class="info-label">Número do Processo:</span>
-                        <span class="info-value">${processo.numeroProcesso}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Modalidade:</span>
-                        <span class="info-value">${processo.modalidade}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Status:</span>
-                        <span class="info-value" style="color: ${status === 'ATIVO' ? '#28a745' : '#dc3545'}; font-weight: bold;">${status}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Data de Abertura:</span>
-                        <span class="info-value">${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Data Limite:</span>
-                        <span class="info-value">${dataLimite.toLocaleDateString('pt-BR')}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Local de Abertura:</span>
-                        <span class="info-value">${processo.localAbertura || 'Não informado'}</span>
-                    </div>
-                </div>
-                
-                <div class="empresa-info">
-                    <h3><i class="fas fa-file-alt"></i> Termo de Referência</h3>
-                    <div class="info-item">
-                        <span class="info-label">Título:</span>
-                        <span class="info-value">${processo.trTitulo}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Status da Participação:</span>
-                        <span class="info-value">Convidado para participar</span>
-                    </div>
-                </div>
-                
-                <div style="text-align: right; margin-top: 30px;">
-                    <button class="btn btn-secondary" onclick="fecharModal('modal-detalhes-processo')">Fechar</button>
-                    ${status === 'ATIVO' ? `
-                        <button class="btn btn-primary" onclick="fecharModal('modal-detalhes-processo'); enviarProposta('${processoId}')" style="margin-left: 10px;">
-                            <i class="fas fa-paper-plane"></i> Enviar Proposta
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-            
-            abrirModal('modal-detalhes-processo');
-        }
-
-        // CORREÇÃO 2: Controle de uma proposta por processo
-        function enviarProposta(processoId) {
-            const processos = obterProcessosFornecedor();
-            const processo = processos.find(p => p.processoId === processoId);
-            
-            if (!processo) return;
-            
-            // Verificar se já existe proposta para este processo
-            const propostas = obterPropostasFornecedor();
-            const propostaExistente = propostas.find(p => p.processoId === processoId);
-            
-            if (propostaExistente) {
-                alert('Você já enviou uma proposta para este processo. Cada fornecedor pode enviar apenas uma proposta por processo.');
-                return;
-            }
-            
-            processoAtual = processo;
-            
-            // CORREÇÃO 1: Não mostrar valor estimado no modal de proposta
-            document.getElementById('processo-info').innerHTML = `
-                <div class="empresa-info">
-                    <h3><i class="fas fa-file-contract"></i> ${processo.numeroProcesso}</h3>
-                    <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
-                    <p><strong>Data Limite:</strong> ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')}</p>
-                </div>
-            `;
-            
-            // Limpar aviso de proposta existente
-            document.getElementById('proposta-existente-aviso').innerHTML = '';
-            
-            // Limpar formulário
-            document.getElementById('form-proposta').reset();
-            
-            abrirModal('modal-enviar-proposta');
-        }
-
-        // CORREÇÃO 2: Validação no envio da proposta
-        document.getElementById('form-proposta').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Verificar novamente se já existe proposta
-            const propostas = obterPropostasFornecedor();
-            const propostaExistente = propostas.find(p => p.processoId === processoAtual.processoId);
-            
-            if (propostaExistente) {
-                alert('Erro: Você já enviou uma proposta para este processo.');
-                return;
-            }
-            
-            const proposta = {
-                id: Date.now().toString(),
-                processoId: processoAtual.processoId,
-                numeroProcesso: processoAtual.numeroProcesso,
-                fornecedorEmail: fornecedorLogado.email,
-                fornecedorCNPJ: fornecedorLogado.cnpj,
-                fornecedorRazaoSocial: fornecedorLogado.razaoSocial,
-                valor: document.getElementById('valor-proposta').value,
-                prazoExecucao: document.getElementById('prazo-execucao').value,
-                condicoesPagamento: document.getElementById('condicoes-pagamento').value,
-                observacoes: document.getElementById('observacoes').value,
-                garantia: document.getElementById('garantia').value,
-                dataEnvio: new Date().toISOString(),
-                status: 'ENVIADA'
-            };
-            
-            // Salvar proposta
-            const todasPropostas = SistemaLocal.carregar('propostas_fornecedores', []);
-            todasPropostas.push(proposta);
-            SistemaLocal.salvar('propostas_fornecedores', todasPropostas);
-            
-            fecharModal('modal-enviar-proposta');
-            alert('Proposta enviada com sucesso!');
-            
-            // Recarregar dados
-            carregarEstatisticas();
-            carregarPropostas();
-            carregarHistorico();
-            carregarProcessos(); // Recarregar para atualizar status de proposta enviada
-        });
-
-        function verDetalhesProposta(propostaId) {
-            const propostas = obterPropostasFornecedor();
-            const proposta = propostas.find(p => p.id === propostaId);
-            
-            if (!proposta) return;
-            
-            document.getElementById('detalhes-proposta-content').innerHTML = `
-                <div class="empresa-info">
-                    <h3><i class="fas fa-file-contract"></i> ${proposta.numeroProcesso}</h3>
-                    <div class="info-item">
-                        <span class="info-label">Valor da Proposta:</span>
-                        <span class="info-value">R$ ${parseFloat(proposta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Prazo de Execução:</span>
-                        <span class="info-value">${proposta.prazoExecucao} dias</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Condições de Pagamento:</span>
-                        <span class="info-value">${proposta.condicoesPagamento}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Data de Envio:</span>
-                        <span class="info-value">${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Garantia Oferecida:</span>
-                        <span class="info-value">${proposta.garantia || 'Não informada'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Status:</span>
-                        <span class="info-value" style="color: #28a745; font-weight: bold;">${proposta.status}</span>
-                    </div>
-                </div>
-                
-                ${proposta.observacoes ? `
+                document.getElementById('detalhes-processo-content').innerHTML = `
                     <div class="empresa-info">
-                        <h3><i class="fas fa-comment"></i> Observações Técnicas</h3>
-                        <p style="color: #666;">${proposta.observacoes}</p>
+                        <div class="info-item">
+                            <span class="info-label">Número do Processo:</span>
+                            <span class="info-value">${processo.numeroProcesso}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Modalidade:</span>
+                            <span class="info-value">${processo.modalidade}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value" style="color: ${status === 'ATIVO' ? '#48bb78' : '#f56565'}; font-weight: bold;">
+                                ${status}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Data de Abertura:</span>
+                            <span class="info-value">${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Data Limite:</span>
+                            <span class="info-value">${dataLimite.toLocaleDateString('pt-BR')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Local de Abertura:</span>
+                            <span class="info-value">${processo.localAbertura || 'A definir'}</span>
+                        </div>
                     </div>
-                ` : ''}
+                    
+                    <div class="empresa-info">
+                        <h3><i class="fas fa-file-alt"></i> Objeto da Licitação</h3>
+                        <p style="color: #4a5568; line-height: 1.6;">
+                            ${processo.objeto || processoCompleto?.objeto || processo.trTitulo || 'Não informado'}
+                        </p>
+                    </div>
+                    
+                    ${processoCompleto?.observacoes ? `
+                        <div class="empresa-info">
+                            <h3><i class="fas fa-info-circle"></i> Observações</h3>
+                            <p style="color: #4a5568; line-height: 1.6;">${processoCompleto.observacoes}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="text-align: right; margin-top: 40px; display: flex; gap: 15px; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="Sistema.fecharModal('modal-detalhes-processo')">
+                            <i class="fas fa-times"></i> Fechar
+                        </button>
+                        ${status === 'ATIVO' ? `
+                            <button class="btn btn-primary" onclick="Sistema.fecharModal('modal-detalhes-processo'); Sistema.abrirFormularioProposta('${processoId}')">
+                                <i class="fas fa-paper-plane"></i> Enviar Proposta
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
                 
-                <div style="text-align: right; margin-top: 30px;">
-                    <button class="btn btn-secondary" onclick="fecharModal('modal-detalhes-proposta')">Fechar</button>
-                </div>
-            `;
-            
-            abrirModal('modal-detalhes-proposta');
-        }
+                this.abrirModal('modal-detalhes-processo');
+            },
 
-        // CORREÇÃO 3: Implementar download do edital
-        function baixarEdital(processoId) {
-            const processos = obterProcessosFornecedor();
-            const processo = processos.find(p => p.processoId === processoId);
-            
-            if (!processo) {
-                alert('Processo não encontrado.');
-                return;
-            }
-            
-            // Simular download do edital
-            const nomeArquivo = `Edital_${processo.numeroProcesso.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-            
-            // Criar conteúdo do edital (simulado)
-            const conteudoEdital = `
+            // Abrir formulário de proposta
+            abrirFormularioProposta(processoId) {
+                const processos = this.obterProcessosFornecedor();
+                const processo = processos.find(p => p.processoId === processoId);
+                
+                if (!processo) return;
+                
+                // Verificar se já existe proposta
+                const propostas = this.obterPropostasFornecedor();
+                const propostaExistente = propostas.find(p => p.processoId === processoId);
+                
+                if (propostaExistente) {
+                    this.mostrarAlerta('proposta-existente-aviso', 
+                        'Você já enviou uma proposta para este processo. Cada fornecedor pode enviar apenas uma proposta por processo.', 
+                        'warning'
+                    );
+                    return;
+                }
+                
+                this.processoAtual = processo;
+                
+                document.getElementById('processo-info').innerHTML = `
+                    <div class="empresa-info">
+                        <h3><i class="fas fa-file-contract"></i> ${processo.numeroProcesso}</h3>
+                        <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
+                        <p><strong>Objeto:</strong> ${processo.objeto || processo.trTitulo || 'Não informado'}</p>
+                        <p><strong>Data Limite:</strong> ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                `;
+                
+                // Limpar aviso
+                document.getElementById('proposta-existente-aviso').innerHTML = '';
+                
+                // Limpar formulário
+                document.getElementById('form-proposta').reset();
+                
+                this.abrirModal('modal-enviar-proposta');
+            },
+
+            // Enviar proposta
+            async enviarProposta() {
+                if (!this.validarFormularioProposta()) return;
+                
+                const btnEnviar = document.getElementById('btn-enviar-proposta');
+                btnEnviar.innerHTML = '<span class="loading"></span> Enviando...';
+                btnEnviar.disabled = true;
+                
+                // Simular envio
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                const proposta = {
+                    id: SistemaLocal.gerarId(),
+                    processoId: this.processoAtual.processoId,
+                    numeroProcesso: this.processoAtual.numeroProcesso,
+                    fornecedorEmail: this.fornecedorLogado.email,
+                    fornecedorCNPJ: this.fornecedorLogado.cnpj,
+                    fornecedorRazaoSocial: this.fornecedorLogado.razaoSocial,
+                    valor: document.getElementById('valor-proposta').value,
+                    prazoExecucao: document.getElementById('prazo-execucao').value,
+                    condicoesPagamento: document.getElementById('condicoes-pagamento').value,
+                    observacoes: document.getElementById('observacoes').value,
+                    garantia: document.getElementById('garantia').value,
+                    dataEnvio: new Date().toISOString(),
+                    status: 'ENVIADA'
+                };
+                
+                // Salvar proposta
+                const todasPropostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                todasPropostas.push(proposta);
+                SistemaLocal.salvar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, todasPropostas);
+                
+                this.fecharModal('modal-enviar-proposta');
+                
+                // Mostrar sucesso
+                this.mostrarNotificacao('Proposta enviada com sucesso!', 'success');
+                
+                // Recarregar dados
+                this.carregarDados();
+                
+                btnEnviar.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Proposta';
+                btnEnviar.disabled = false;
+            },
+
+            // Validar formulário de proposta
+            validarFormularioProposta() {
+                let valido = true;
+                
+                // Valor
+                const valor = document.getElementById('valor-proposta');
+                if (!valor.value || parseFloat(valor.value) <= 0) {
+                    valor.classList.add('error');
+                    valido = false;
+                } else {
+                    valor.classList.remove('error');
+                }
+                
+                // Prazo
+                const prazo = document.getElementById('prazo-execucao');
+                if (!prazo.value || parseInt(prazo.value) <= 0) {
+                    prazo.classList.add('error');
+                    valido = false;
+                } else {
+                    prazo.classList.remove('error');
+                }
+                
+                // Condições
+                const condicoes = document.getElementById('condicoes-pagamento');
+                if (!condicoes.value) {
+                    condicoes.classList.add('error');
+                    valido = false;
+                } else {
+                    condicoes.classList.remove('error');
+                }
+                
+                return valido;
+            },
+
+            // Ver detalhes da proposta
+            verDetalhesProposta(propostaId) {
+                const propostas = this.obterPropostasFornecedor();
+                const proposta = propostas.find(p => p.id === propostaId);
+                
+                if (!proposta) return;
+                
+                let statusInfo = '';
+                switch(proposta.status) {
+                    case 'ACEITA':
+                        statusInfo = '<span style="color: #48bb78; font-weight: bold;"><i class="fas fa-check-circle"></i> ACEITA</span>';
+                        break;
+                    case 'REJEITADA':
+                        statusInfo = '<span style="color: #f56565; font-weight: bold;"><i class="fas fa-times-circle"></i> REJEITADA</span>';
+                        break;
+                    case 'EM_ANALISE':
+                        statusInfo = '<span style="color: #ed8936; font-weight: bold;"><i class="fas fa-clock"></i> EM ANÁLISE</span>';
+                        break;
+                    default:
+                        statusInfo = '<span style="color: #4299e1; font-weight: bold;"><i class="fas fa-paper-plane"></i> ENVIADA</span>';
+                }
+                
+                document.getElementById('detalhes-proposta-content').innerHTML = `
+                    <div class="empresa-info">
+                        <h3><i class="fas fa-file-contract"></i> ${proposta.numeroProcesso}</h3>
+                        <div class="info-item">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value">${statusInfo}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Valor da Proposta:</span>
+                            <span class="info-value" style="font-size: 20px; color: #667eea; font-weight: bold;">
+                                R$ ${this.formatarMoeda(proposta.valor)}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Prazo de Execução:</span>
+                            <span class="info-value">${proposta.prazoExecucao} dias</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Condições de Pagamento:</span>
+                            <span class="info-value">${proposta.condicoesPagamento}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Data de Envio:</span>
+                            <span class="info-value">${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')} às ${new Date(proposta.dataEnvio).toLocaleTimeString('pt-BR')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Garantia Oferecida:</span>
+                            <span class="info-value">${proposta.garantia || 'Não informada'}</span>
+                        </div>
+                    </div>
+                    
+                    ${proposta.observacoes ? `
+                        <div class="empresa-info">
+                            <h3><i class="fas fa-comment"></i> Observações Técnicas</h3>
+                            <p style="color: #718096; line-height: 1.6;">${proposta.observacoes}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${proposta.feedbackComprador ? `
+                        <div class="empresa-info">
+                            <h3><i class="fas fa-comment-alt"></i> Feedback do Comprador</h3>
+                            <p style="color: #4a5568; line-height: 1.6;">${proposta.feedbackComprador}</p>
+                            ${proposta.dataFeedback ? `
+                                <p style="font-size: 14px; color: #718096; margin-top: 15px;">
+                                    <i class="fas fa-calendar"></i> ${new Date(proposta.dataFeedback).toLocaleDateString('pt-BR')} às ${new Date(proposta.dataFeedback).toLocaleTimeString('pt-BR')}
+                                </p>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    <div style="text-align: right; margin-top: 40px;">
+                        <button class="btn btn-secondary" onclick="Sistema.fecharModal('modal-detalhes-proposta')">
+                            <i class="fas fa-times"></i> Fechar
+                        </button>
+                    </div>
+                `;
+                
+                this.abrirModal('modal-detalhes-proposta');
+            },
+
+            // Editar proposta
+            editarProposta(propostaId) {
+                const propostas = this.obterPropostasFornecedor();
+                const proposta = propostas.find(p => p.id === propostaId);
+                
+                if (!proposta || proposta.status !== 'ENVIADA') {
+                    this.mostrarNotificacao('Esta proposta não pode ser editada.', 'error');
+                    return;
+                }
+                
+                this.propostaEditando = proposta;
+                
+                // Preencher formulário
+                document.getElementById('editar-processo-info').innerHTML = `
+                    <div class="empresa-info">
+                        <h3><i class="fas fa-file-contract"></i> ${proposta.numeroProcesso}</h3>
+                        <p><strong>Status Atual:</strong> ${proposta.status}</p>
+                    </div>
+                `;
+                
+                document.getElementById('editar-valor-proposta').value = proposta.valor;
+                document.getElementById('editar-prazo-execucao').value = proposta.prazoExecucao;
+                document.getElementById('editar-condicoes-pagamento').value = proposta.condicoesPagamento;
+                document.getElementById('editar-garantia').value = proposta.garantia || '';
+                document.getElementById('editar-observacoes').value = proposta.observacoes || '';
+                
+                this.abrirModal('modal-editar-proposta');
+            },
+
+            // Salvar edição da proposta
+            async salvarEdicaoProposta() {
+                const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                const index = propostas.findIndex(p => p.id === this.propostaEditando.id);
+                
+                if (index === -1) return;
+                
+                // Atualizar dados
+                propostas[index].valor = document.getElementById('editar-valor-proposta').value;
+                propostas[index].prazoExecucao = document.getElementById('editar-prazo-execucao').value;
+                propostas[index].condicoesPagamento = document.getElementById('editar-condicoes-pagamento').value;
+                propostas[index].garantia = document.getElementById('editar-garantia').value;
+                propostas[index].observacoes = document.getElementById('editar-observacoes').value;
+                propostas[index].dataEdicao = new Date().toISOString();
+                
+                SistemaLocal.salvar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, propostas);
+                
+                this.fecharModal('modal-editar-proposta');
+                this.mostrarNotificacao('Proposta atualizada com sucesso!', 'success');
+                this.carregarPropostas();
+            },
+
+            // Baixar edital
+            baixarEdital(processoId) {
+                const processos = this.obterProcessosFornecedor();
+                const processo = processos.find(p => p.processoId === processoId);
+                
+                if (!processo) {
+                    this.mostrarNotificacao('Processo não encontrado.', 'error');
+                    return;
+                }
+                
+                // Simular download do edital
+                const nomeArquivo = `Edital_${processo.numeroProcesso.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+                
+                // Criar conteúdo do edital
+                const conteudoEdital = `
 EDITAL DE LICITAÇÃO
 ${processo.numeroProcesso}
 
@@ -1390,77 +2070,158 @@ MODALIDADE: ${processo.modalidade}
 DATA DE ABERTURA: ${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}
 DATA LIMITE: ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')}
 
-TERMO DE REFERÊNCIA:
-${processo.trTitulo}
+OBJETO:
+${processo.objeto || processo.trTitulo || 'Conforme especificações do Termo de Referência'}
 
 LOCAL DE ABERTURA:
-${processo.localAbertura || 'A ser definido'}
+${processo.localAbertura || 'Sala de Licitações - Prefeitura Municipal'}
 
-Este é um edital simulado para demonstração do sistema.
-Para obter o edital oficial, entre em contato com o setor de compras.
+OBSERVAÇÕES:
+- Este é um extrato do edital
+- O edital completo está disponível no setor de compras
+- Dúvidas: compras@prefeitura.gov.br
 
-Contato: compras@prefeitura.gov.br | (11) 3333-4444
-            `;
-            
-            // Criar e baixar arquivo
-            const blob = new Blob([conteudoEdital], { type: 'text/plain;charset=utf-8' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = nomeArquivo;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-            
-            alert(`Edital "${nomeArquivo}" baixado com sucesso!`);
-        }
+Data de geração: ${new Date().toLocaleDateString('pt-BR')}
+                `;
+                
+                // Criar e baixar arquivo
+                const blob = new Blob([conteudoEdital], { type: 'text/plain;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = nomeArquivo;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                this.mostrarNotificacao(`Edital baixado com sucesso!`, 'success');
+            },
 
-        function editarProposta(propostaId) {
-            alert('Funcionalidade de edição de proposta em desenvolvimento.');
-        }
+            // Mostrar seção
+            mostrarSecao(secao) {
+                // Remover classe active de todos os nav-items
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Adicionar classe active ao item clicado
+                document.querySelector(`[data-section="${secao}"]`).classList.add('active');
+                
+                // Esconder todas as seções
+                document.querySelectorAll('.content-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Mostrar seção selecionada
+                document.getElementById(secao).classList.add('active');
+                
+                // Recarregar dados se necessário
+                switch(secao) {
+                    case 'dashboard':
+                        this.carregarEstatisticas();
+                        break;
+                    case 'processos':
+                        this.carregarProcessos();
+                        break;
+                    case 'propostas':
+                        this.carregarPropostas();
+                        break;
+                    case 'historico':
+                        this.carregarHistorico();
+                        break;
+                    case 'perfil':
+                        this.carregarPerfil();
+                        break;
+                }
+            },
 
-        // Funções de modal
-        function abrirModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
-        }
+            // Funções auxiliares
+            abrirModal(modalId) {
+                document.getElementById(modalId).style.display = 'block';
+            },
 
-        function fecharModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
+            fecharModal(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            },
 
-        // Event listeners para fechar modais
-        document.querySelectorAll('.close').forEach(closeBtn => {
-            closeBtn.addEventListener('click', function() {
-                this.closest('.modal').style.display = 'none';
-            });
+            mostrarAlerta(elementId, mensagem, tipo) {
+                const alert = document.getElementById(elementId);
+                alert.textContent = mensagem;
+                alert.className = `alert alert-${tipo}`;
+                alert.style.display = 'block';
+                
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 5000);
+            },
+
+            mostrarNotificacao(mensagem, tipo = 'info') {
+                // Criar notificação
+                const notificacao = document.createElement('div');
+                notificacao.className = `alert alert-${tipo}`;
+                notificacao.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    max-width: 400px;
+                    z-index: 9999;
+                    animation: slideIn 0.3s ease;
+                `;
+                
+                // Ícone baseado no tipo
+                let icone = 'fas fa-info-circle';
+                if (tipo === 'success') icone = 'fas fa-check-circle';
+                if (tipo === 'error') icone = 'fas fa-exclamation-circle';
+                if (tipo === 'warning') icone = 'fas fa-exclamation-triangle';
+                
+                notificacao.innerHTML = `<i class="${icone}"></i> ${mensagem}`;
+                document.body.appendChild(notificacao);
+                
+                // Remover após 5 segundos
+                setTimeout(() => {
+                    notificacao.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => {
+                        document.body.removeChild(notificacao);
+                    }, 300);
+                }, 5000);
+            },
+
+            formatarMoeda(valor) {
+                return parseFloat(valor).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            },
+
+            formatarCNPJ(cnpj) {
+                return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+            },
+
+            logout() {
+                if (confirm('Deseja realmente sair do sistema?')) {
+                    localStorage.removeItem(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
+                    location.reload();
+                }
+            }
+        };
+
+        // Inicializar sistema quando a página carregar
+        window.addEventListener('load', () => {
+            Sistema.init();
         });
 
-        window.addEventListener('click', function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
+        // Adicionar animações CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(100%); }
             }
-        });
+        `;
+        document.head.appendChild(style);
 
-        function logout() {
-            if (confirm('Deseja realmente sair do sistema?')) {
-                localStorage.removeItem('fornecedor_logado');
-                location.reload();
-            }
-        }
-
-        // Verificar se já está logado
-        window.addEventListener('load', function() {
-            const fornecedorSalvo = localStorage.getItem('fornecedor_logado');
-            if (fornecedorSalvo) {
-                fornecedorLogado = JSON.parse(fornecedorSalvo);
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('dashboard-screen').style.display = 'flex';
-                inicializarDashboard();
-            }
-        });
-
-        console.log('Sistema de fornecedor corrigido carregado!');
+        console.log('Portal do Fornecedor v2.0 - Sistema padronizado e integrado');
     </script>
 </body>
 </html>
