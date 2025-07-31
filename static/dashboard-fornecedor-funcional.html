@@ -217,11 +217,16 @@
         
         /* DASHBOARD MODERNIZADO - ATUALIZADO PARA FLEXBOX */
         .dashboard-container {
-            display: flex;                    /* MUDANÇA: de "display: none" para "display: flex" */
+            display: none;                    /* VOLTAR PARA: display: none (oculto por padrão) */
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             width: 100%;                      /* ADICIONADO: garante largura total */
             position: relative;               /* ADICIONADO: para contexto de posicionamento */
+        }
+        
+        /* Quando ativo, usar flexbox */
+        .dashboard-container.active {
+            display: flex;
         }
 
         /* SIDEBAR MODERNA - ATUALIZADA PARA FLEXBOX */
@@ -1484,7 +1489,9 @@
             // Mostrar dashboard
             mostrarDashboard() {
                 document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('dashboard-screen').style.display = 'flex';
+                const dashboardScreen = document.getElementById('dashboard-screen');
+                dashboardScreen.style.display = 'flex';
+                dashboardScreen.classList.add('active');
                 document.getElementById('empresa-nome').textContent = this.fornecedorLogado.razaoSocial;
                 
                 this.carregarDados();
