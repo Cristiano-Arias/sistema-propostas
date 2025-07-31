@@ -201,6 +201,66 @@
             font-size: 12px;
         }
 
+        .form-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .form-section h4 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-section h4 i {
+            color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 15px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .data-table input,
+        .data-table select,
+        .data-table textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -246,6 +306,11 @@
         .btn-warning {
             background: #ffc107;
             color: #212529;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
         }
 
         .btn:disabled {
@@ -433,6 +498,35 @@
             justify-content: flex-end;
         }
 
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 8px;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .checkbox-grid label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
@@ -572,118 +666,320 @@
                     <h4 style="color: #1976d2; margin-bottom: 10px;">
                         <i class="fas fa-info-circle"></i> Novo Termo de Referência
                     </h4>
-                    <p style="color: #1976d2;">Preencha todos os campos obrigatórios para criar um TR completo e detalhado.</p>
+                    <p style="color: #1976d2;">Preencha todos os campos obrigatórios (*) para criar um TR completo e detalhado.</p>
                 </div>
 
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h4 style="color: #333; margin-bottom: 15px;">
-                        <i class="fas fa-info"></i> Informações Básicas
-                    </h4>
+                <!-- Informações Básicas -->
+                <div class="form-section">
+                    <h4><i class="fas fa-info"></i> Informações Básicas</h4>
                     
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                        <div class="form-group">
-                            <label for="tr-titulo">Título do TR *</label>
-                            <input type="text" id="tr-titulo" name="titulo" required>
-                            <small>Título claro e descritivo do Termo de Referência</small>
-                        </div>
-                        
+                    <div class="form-group">
+                        <label for="tr-titulo">Título do TR *</label>
+                        <input type="text" id="tr-titulo" name="titulo" required>
+                        <small>Título claro e descritivo do Termo de Referência</small>
+                    </div>
+                    
+                    <div class="form-row">
                         <div class="form-group">
                             <label for="tr-modalidade">Modalidade Sugerida *</label>
                             <select id="tr-modalidade" name="modalidade" required>
-                                <option value="">Selecione a modalidade</option>
-                                <option value="Pregão Eletrônico">Pregão Eletrônico</option>
+                                <option value="">Selecione...</option>
+                                <option value="Pregão">Pregão</option>
                                 <option value="Concorrência">Concorrência</option>
                                 <option value="Tomada de Preços">Tomada de Preços</option>
                                 <option value="Convite">Convite</option>
-                                <option value="Dispensa">Dispensa</option>
-                                <option value="Inexigibilidade">Inexigibilidade</option>
                             </select>
                             <small>Modalidade de licitação mais adequada</small>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="tr-valor-estimado">Valor Estimado (R$)</label>
-                            <input type="number" id="tr-valor-estimado" name="valorEstimado" step="0.01" min="0">
-                            <small>Valor estimado para a contratação</small>
-                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-objetivo">Objetivo *</label>
+                        <textarea id="tr-objetivo" name="objetivo" required placeholder="Descreva o objetivo da contratação..."></textarea>
+                        <small>Objetivo claro e específico da contratação</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-conformidade">Conformidade ao Termo de Referência *</label>
+                        <textarea id="tr-conformidade" name="conformidade" required placeholder="Descreva a conformidade..."></textarea>
+                        <small>Justificativa da conformidade com as normas aplicáveis</small>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="tr-objetivo">1. Objetivo *</label>
-                    <textarea id="tr-objetivo" name="objetivo" required placeholder="Descreva o objetivo da contratação..."></textarea>
-                    <small>Objetivo claro e específico da contratação</small>
+                <!-- Local e Acesso -->
+                <div class="form-section">
+                    <h4><i class="fas fa-map-marker-alt"></i> 📍 Local e Acesso</h4>
+                    
+                    <div class="form-group">
+                        <label for="tr-visita-local">Visita ao Local *</label>
+                        <select id="tr-visita-local" name="visitaLocal" required>
+                            <option value="">Selecione...</option>
+                            <option value="Obrigatória">Obrigatória</option>
+                            <option value="Facultativa">Facultativa</option>
+                            <option value="Não se aplica">Não se aplica</option>
+                        </select>
+                        <small>Necessidade de visita técnica ao local</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-local">Local/Acesso *</label>
+                        <textarea id="tr-local" name="local" required placeholder="Descreva o local de execução e condições de acesso..."></textarea>
+                        <small>Local de execução dos serviços e condições de acesso</small>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="tr-conformidade">2. Conformidade ao Termo de Referência *</label>
-                    <textarea id="tr-conformidade" name="conformidade" required placeholder="Descreva a conformidade..."></textarea>
-                    <small>Justificativa da conformidade com as normas aplicáveis</small>
+                <!-- Escopo Técnico -->
+                <div class="form-section">
+                    <h4><i class="fas fa-cogs"></i> 🔧 Escopo Técnico</h4>
+                    
+                    <div class="form-group">
+                        <label for="tr-escopo">Escopo Técnico *</label>
+                        <textarea id="tr-escopo" name="escopo" required placeholder="Descreva detalhadamente o escopo técnico..."></textarea>
+                        <small>Descrição detalhada do escopo técnico dos serviços</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-situacao-atual">Situação Atual *</label>
+                        <textarea id="tr-situacao-atual" name="situacaoAtual" required placeholder="Descreva a situação atual..."></textarea>
+                        <small>Descrição da situação atual que justifica a contratação</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-situacao-proposta">Situação Proposta *</label>
+                        <textarea id="tr-situacao-proposta" name="situacaoProposta" required placeholder="Descreva a situação proposta..."></textarea>
+                        <small>Descrição da situação desejada após a contratação</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-especificacao">Especificação Técnica *</label>
+                        <textarea id="tr-especificacao" name="especificacao" required placeholder="Detalhe as especificações técnicas..."></textarea>
+                        <small>Especificações técnicas detalhadas dos serviços/produtos</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-premissas">Premissas, Requisitos e Restrições *</label>
+                        <textarea id="tr-premissas" name="premissas" required placeholder="Liste as premissas, requisitos e restrições..."></textarea>
+                        <small>Condições necessárias para execução do projeto</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-planilha-quantidade">Planilha de Quantidade *</label>
+                        <textarea id="tr-planilha-quantidade" name="planilhaQuantidade" required placeholder="Descreva as quantidades necessárias..."></textarea>
+                        <small>Quantitativos de materiais e serviços</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Tabela de Serviços *</label>
+                        <div class="table-container">
+                            <table class="data-table" id="tabela-servicos">
+                                <thead>
+                                    <tr>
+                                        <th width="60">Item</th>
+                                        <th>Descrição do Serviço</th>
+                                        <th width="100">Unidade</th>
+                                        <th width="100">Quantidade</th>
+                                        <th width="80">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td><input type="text" name="servico_descricao[]" required></td>
+                                        <td>
+                                            <select name="servico_unidade[]" required>
+                                                <option value="UN">UN</option>
+                                                <option value="M²">M²</option>
+                                                <option value="M³">M³</option>
+                                                <option value="ML">ML</option>
+                                                <option value="KG">KG</option>
+                                                <option value="VB">VB</option>
+                                            </select>
+                                        </td>
+                                        <td><input type="number" name="servico_quantidade[]" required min="1"></td>
+                                        <td>
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="removerServico(this)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-success btn-sm" onclick="adicionarServico()">
+                            <i class="fas fa-plus"></i> ➕ Adicionar Serviço
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-escopo-geral">Escopo Geral *</label>
+                        <textarea id="tr-escopo-geral" name="escopoGeral" required placeholder="Descreva o escopo geral do projeto..."></textarea>
+                        <small>Visão geral do escopo do projeto</small>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="tr-local">3. Local/Acesso *</label>
-                    <textarea id="tr-local" name="local" required placeholder="Descreva o local de execução e condições de acesso..."></textarea>
-                    <small>Local de execução dos serviços e condições de acesso</small>
+                <!-- Prazos e Responsabilidades -->
+                <div class="form-section">
+                    <h4><i class="fas fa-clock"></i> ⏰ Prazos e Responsabilidades</h4>
+                    
+                    <div class="form-group">
+                        <label for="tr-prazos">Prazos *</label>
+                        <textarea id="tr-prazos" name="prazos" required placeholder="Defina os prazos de execução..."></textarea>
+                        <small>Cronograma e prazos de execução</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Matriz de Responsabilidade *</label>
+                        <div class="table-container">
+                            <table class="data-table" id="tabela-responsabilidades">
+                                <thead>
+                                    <tr>
+                                        <th>Item/Atividade</th>
+                                        <th width="120">Contratada</th>
+                                        <th width="120">Contratante</th>
+                                        <th width="120">N/A</th>
+                                        <th width="80">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="text" name="resp_item[]" required></td>
+                                        <td style="text-align: center;"><input type="radio" name="resp_tipo_0" value="contratada"></td>
+                                        <td style="text-align: center;"><input type="radio" name="resp_tipo_0" value="contratante"></td>
+                                        <td style="text-align: center;"><input type="radio" name="resp_tipo_0" value="na" checked></td>
+                                        <td>
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="removerResponsabilidade(this)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-success btn-sm" onclick="adicionarResponsabilidade()">
+                            <i class="fas fa-plus"></i> ➕ Adicionar Item
+                        </button>
+                        <button type="button" class="btn btn-info btn-sm" onclick="adicionarItensPadrao()">
+                            <i class="fas fa-clipboard"></i> 📋 Adicionar Itens Padrão
+                        </button>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="tr-escopo">4. Escopo Técnico *</label>
-                    <textarea id="tr-escopo" name="escopo" required placeholder="Descreva detalhadamente o escopo técnico..."></textarea>
-                    <small>Descrição detalhada do escopo técnico dos serviços</small>
+                <!-- Mobilização e Segurança -->
+                <div class="form-section">
+                    <h4><i class="fas fa-hard-hat"></i> 🦺 Mobilização e Segurança</h4>
+                    
+                    <div class="form-group">
+                        <label for="tr-mobilizacao">Mobilização Segurança e Saúde do Trabalho *</label>
+                        <textarea id="tr-mobilizacao" name="mobilizacao" required placeholder="Descreva os requisitos de mobilização e segurança..."></textarea>
+                        <small>Requisitos de segurança e saúde ocupacional</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-canteiro">Canteiro de Obras e Infraestrutura Temporárias *</label>
+                        <textarea id="tr-canteiro" name="canteiro" required placeholder="Descreva a estrutura do canteiro..."></textarea>
+                        <small>Especificações do canteiro de obras</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-credenciamento">Credenciamento Aeroportuário</label>
+                        <textarea id="tr-credenciamento" name="credenciamento" placeholder="Se aplicável, descreva os requisitos de credenciamento..."></textarea>
+                        <small>Requisitos para trabalhos em áreas aeroportuárias</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-meio-ambiente">Meio Ambiente *</label>
+                        <textarea id="tr-meio-ambiente" name="meioAmbiente" required placeholder="Descreva os requisitos ambientais..."></textarea>
+                        <small>Requisitos e cuidados ambientais</small>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="tr-situacao-atual">5. Situação Atual *</label>
-                    <textarea id="tr-situacao-atual" name="situacaoAtual" required placeholder="Descreva a situação atual..."></textarea>
-                    <small>Descrição da situação atual que justifica a contratação</small>
+                <!-- Gestão e Planejamento -->
+                <div class="form-section">
+                    <h4><i class="fas fa-chart-bar"></i> 📊 Gestão e Planejamento</h4>
+                    
+                    <div class="form-group">
+                        <label for="tr-engenharia">Engenharia *</label>
+                        <textarea id="tr-engenharia" name="engenharia" required placeholder="Descreva os requisitos de engenharia..."></textarea>
+                        <small>Requisitos técnicos de engenharia</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-aquisicoes">Aquisições *</label>
+                        <textarea id="tr-aquisicoes" name="aquisicoes" required placeholder="Descreva o processo de aquisições..."></textarea>
+                        <small>Processo e requisitos de aquisições</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-planejamento-gestao">Planejamento/Gestão de Contratos *</label>
+                        <textarea id="tr-planejamento-gestao" name="planejamentoGestao" required placeholder="Descreva o planejamento e gestão..."></textarea>
+                        <small>Requisitos de planejamento e gestão contratual</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-planejamento-executivo">Planejamento Executivo *</label>
+                        <textarea id="tr-planejamento-executivo" name="planejamentoExecutivo" required placeholder="Descreva o planejamento executivo..."></textarea>
+                        <small>Detalhamento do planejamento executivo</small>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="tr-situacao-proposta">6. Situação Proposta *</label>
-                    <textarea id="tr-situacao-proposta" name="situacaoProposta" required placeholder="Descreva a situação proposta..."></textarea>
-                    <small>Descrição da situação desejada após a contratação</small>
+                <!-- Testes e Encerramento -->
+                <div class="form-section">
+                    <h4><i class="fas fa-check"></i> ✅ Testes e Encerramento</h4>
+                    
+                    <div class="form-group">
+                        <label for="tr-testes">Testes, Comissionamento, Treinamento *</label>
+                        <textarea id="tr-testes" name="testes" required placeholder="Descreva os procedimentos de testes..."></textarea>
+                        <small>Procedimentos de testes e treinamento</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-encerramento">Ao Encerramento da Obra *</label>
+                        <textarea id="tr-encerramento" name="encerramento" required placeholder="Descreva os procedimentos de encerramento..."></textarea>
+                        <small>Procedimentos ao final da obra</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-cap">Certificado de Aceitação Provisória (CAP) *</label>
+                        <textarea id="tr-cap" name="cap" required placeholder="Descreva os critérios para o CAP..."></textarea>
+                        <small>Critérios para emissão do CAP</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-caf">Certificado de Aceitação Final (CAF) *</label>
+                        <textarea id="tr-caf" name="caf" required placeholder="Descreva os critérios para o CAF..."></textarea>
+                        <small>Critérios para emissão do CAF</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-garantia">Garantia *</label>
+                        <textarea id="tr-garantia" name="garantia" required placeholder="Descreva os termos de garantia..."></textarea>
+                        <small>Condições e prazos de garantia</small>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="tr-especificacao">7. Especificação Técnica *</label>
-                    <textarea id="tr-especificacao" name="especificacao" required placeholder="Detalhe as especificações técnicas..."></textarea>
-                    <small>Especificações técnicas detalhadas dos serviços/produtos</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="tr-prazo">8. Prazo de Execução *</label>
-                    <textarea id="tr-prazo" name="prazo" required placeholder="Defina o prazo de execução..."></textarea>
-                    <small>Prazo para execução dos serviços</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="tr-responsabilidades">9. Responsabilidades *</label>
-                    <textarea id="tr-responsabilidades" name="responsabilidades" required placeholder="Defina as responsabilidades..."></textarea>
-                    <small>Responsabilidades da contratada e contratante</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="tr-criterios">10. Critérios de Avaliação de Propostas *</label>
-                    <textarea id="tr-criterios" name="criterios" required placeholder="Defina os critérios de avaliação..."></textarea>
-                    <small>Critérios para avaliação das propostas</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="tr-anexos">11. Anexos</label>
-                    <textarea id="tr-anexos" name="anexos" placeholder="Liste os anexos necessários..."></textarea>
-                    <small>Documentos e anexos que acompanham o TR</small>
+                <!-- Avaliação e Anexos -->
+                <div class="form-section">
+                    <h4><i class="fas fa-clipboard-check"></i> 📎 Avaliação e Anexos</h4>
+                    
+                    <div class="form-group">
+                        <label for="tr-criterios">Critérios de Avaliação de Propostas *</label>
+                        <textarea id="tr-criterios" name="criterios" required placeholder="Defina os critérios de avaliação..."></textarea>
+                        <small>Critérios para avaliação das propostas</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tr-anexos">Anexos (Links)</label>
+                        <textarea id="tr-anexos" name="anexos" placeholder="Liste os anexos e links necessários..."></textarea>
+                        <small>Documentos e anexos que acompanham o TR</small>
+                    </div>
                 </div>
 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-check-circle"></i> Concluir TR
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="btn-salvar-rascunho">
-                        <i class="fas fa-save"></i> Salvar Rascunho
+                        <i class="fas fa-save"></i> 💾 Salvar TR
                     </button>
                     <button type="button" class="btn btn-danger" id="btn-limpar-form">
-                        <i class="fas fa-trash"></i> Limpar Formulário
+                        <i class="fas fa-redo"></i> 🔄 Limpar Formulário
                     </button>
                 </div>
             </form>
@@ -837,6 +1133,111 @@
             }
         };
 
+        // Funções para tabelas dinâmicas
+        function adicionarServico() {
+            const tbody = document.querySelector('#tabela-servicos tbody');
+            const rowCount = tbody.rows.length;
+            const newRow = tbody.insertRow();
+            
+            newRow.innerHTML = `
+                <td>${rowCount + 1}</td>
+                <td><input type="text" name="servico_descricao[]" required></td>
+                <td>
+                    <select name="servico_unidade[]" required>
+                        <option value="UN">UN</option>
+                        <option value="M²">M²</option>
+                        <option value="M³">M³</option>
+                        <option value="ML">ML</option>
+                        <option value="KG">KG</option>
+                        <option value="VB">VB</option>
+                    </select>
+                </td>
+                <td><input type="number" name="servico_quantidade[]" required min="1"></td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removerServico(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+        }
+
+        function removerServico(button) {
+            const row = button.closest('tr');
+            const tbody = row.parentNode;
+            
+            if (tbody.rows.length > 1) {
+                row.remove();
+                // Reordenar numeração
+                Array.from(tbody.rows).forEach((row, index) => {
+                    row.cells[0].textContent = index + 1;
+                });
+            } else {
+                alert('Deve haver pelo menos um serviço na tabela.');
+            }
+        }
+
+        function adicionarResponsabilidade() {
+            const tbody = document.querySelector('#tabela-responsabilidades tbody');
+            const rowCount = tbody.rows.length;
+            const newRow = tbody.insertRow();
+            
+            newRow.innerHTML = `
+                <td><input type="text" name="resp_item[]" required></td>
+                <td style="text-align: center;"><input type="radio" name="resp_tipo_${rowCount}" value="contratada"></td>
+                <td style="text-align: center;"><input type="radio" name="resp_tipo_${rowCount}" value="contratante"></td>
+                <td style="text-align: center;"><input type="radio" name="resp_tipo_${rowCount}" value="na" checked></td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removerResponsabilidade(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+        }
+
+        function removerResponsabilidade(button) {
+            const row = button.closest('tr');
+            const tbody = row.parentNode;
+            
+            if (tbody.rows.length > 1) {
+                row.remove();
+            } else {
+                alert('Deve haver pelo menos um item na matriz de responsabilidade.');
+            }
+        }
+
+        function adicionarItensPadrao() {
+            const itensPadrao = [
+                'Projeto executivo',
+                'Licenças e autorizações',
+                'Fornecimento de materiais',
+                'Mão de obra especializada',
+                'Equipamentos e ferramentas',
+                'Transporte de materiais',
+                'Segurança do trabalho',
+                'Limpeza da obra',
+                'Gestão de resíduos',
+                'Controle de qualidade'
+            ];
+            
+            const tbody = document.querySelector('#tabela-responsabilidades tbody');
+            tbody.innerHTML = ''; // Limpar tabela
+            
+            itensPadrao.forEach((item, index) => {
+                const newRow = tbody.insertRow();
+                newRow.innerHTML = `
+                    <td><input type="text" name="resp_item[]" value="${item}" required></td>
+                    <td style="text-align: center;"><input type="radio" name="resp_tipo_${index}" value="contratada"></td>
+                    <td style="text-align: center;"><input type="radio" name="resp_tipo_${index}" value="contratante"></td>
+                    <td style="text-align: center;"><input type="radio" name="resp_tipo_${index}" value="na" checked></td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removerResponsabilidade(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
         // Funções de navegação
         function mostrarPagina(pagina) {
             // Remover classe active de todos os itens de navegação
@@ -873,7 +1274,7 @@
                     form.removeAttribute('data-editing-id');
                     form.reset();
                     const btnSubmit = form.querySelector('button[type="submit"]');
-                    if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
+                    if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-save"></i> 💾 Salvar TR';
                 }
             }
 
@@ -947,17 +1348,35 @@
                 modalidade: dados.modalidade,
                 objetivo: dados.objetivo,
                 conformidade: dados.conformidade,
+                visitaLocal: dados.visitaLocal,
                 local: dados.local,
                 escopo: dados.escopo,
                 situacaoAtual: dados.situacaoAtual,
                 situacaoProposta: dados.situacaoProposta,
                 especificacao: dados.especificacao,
-                prazo: dados.prazo,
-                prazoExecucao: dados.prazo,
-                responsabilidades: dados.responsabilidades,
+                premissas: dados.premissas,
+                planilhaQuantidade: dados.planilhaQuantidade,
+                servicos: dados.servicos,
+                escopoGeral: dados.escopoGeral,
+                prazo: dados.prazos,
+                prazoExecucao: dados.prazos,
+                matrizResponsabilidade: dados.matrizResponsabilidade,
+                mobilizacao: dados.mobilizacao,
+                canteiro: dados.canteiro,
+                credenciamento: dados.credenciamento,
+                meioAmbiente: dados.meioAmbiente,
+                engenharia: dados.engenharia,
+                aquisicoes: dados.aquisicoes,
+                planejamentoGestao: dados.planejamentoGestao,
+                planejamentoExecutivo: dados.planejamentoExecutivo,
+                testes: dados.testes,
+                encerramento: dados.encerramento,
+                cap: dados.cap,
+                caf: dados.caf,
+                garantia: dados.garantia,
                 criterios: dados.criterios,
                 anexos: dados.anexos,
-                valorEstimado: dados.valorEstimado || 0,
+                valorEstimado: 0, // Será calculado posteriormente
                 status: status,
                 dataCriacao: new Date().toISOString(),
                 dataAtualizacao: new Date().toISOString()
@@ -974,19 +1393,67 @@
 
         // Coletar dados do formulário
         function coletarDadosFormulario() {
+            // Coletar dados dos serviços
+            const servicos = [];
+            const servicosRows = document.querySelectorAll('#tabela-servicos tbody tr');
+            servicosRows.forEach((row, index) => {
+                const descricao = row.querySelector('input[name="servico_descricao[]"]').value;
+                const unidade = row.querySelector('select[name="servico_unidade[]"]').value;
+                const quantidade = row.querySelector('input[name="servico_quantidade[]"]').value;
+                
+                if (descricao && unidade && quantidade) {
+                    servicos.push({
+                        item: index + 1,
+                        descricao,
+                        unidade,
+                        quantidade: parseFloat(quantidade)
+                    });
+                }
+            });
+
+            // Coletar dados da matriz de responsabilidade
+            const matrizResponsabilidade = [];
+            const respRows = document.querySelectorAll('#tabela-responsabilidades tbody tr');
+            respRows.forEach((row, index) => {
+                const item = row.querySelector('input[name="resp_item[]"]').value;
+                const radioName = `resp_tipo_${index}`;
+                const responsavel = row.querySelector(`input[name="${radioName}"]:checked`)?.value || 'na';
+                
+                if (item) {
+                    matrizResponsabilidade.push({ item, responsavel });
+                }
+            });
+
             return {
                 titulo: document.getElementById('tr-titulo')?.value || '',
                 modalidade: document.getElementById('tr-modalidade')?.value || '',
-                valorEstimado: document.getElementById('tr-valor-estimado')?.value || 0,
                 objetivo: document.getElementById('tr-objetivo')?.value || '',
                 conformidade: document.getElementById('tr-conformidade')?.value || '',
+                visitaLocal: document.getElementById('tr-visita-local')?.value || '',
                 local: document.getElementById('tr-local')?.value || '',
                 escopo: document.getElementById('tr-escopo')?.value || '',
                 situacaoAtual: document.getElementById('tr-situacao-atual')?.value || '',
                 situacaoProposta: document.getElementById('tr-situacao-proposta')?.value || '',
                 especificacao: document.getElementById('tr-especificacao')?.value || '',
-                prazo: document.getElementById('tr-prazo')?.value || '',
-                responsabilidades: document.getElementById('tr-responsabilidades')?.value || '',
+                premissas: document.getElementById('tr-premissas')?.value || '',
+                planilhaQuantidade: document.getElementById('tr-planilha-quantidade')?.value || '',
+                servicos: servicos,
+                escopoGeral: document.getElementById('tr-escopo-geral')?.value || '',
+                prazos: document.getElementById('tr-prazos')?.value || '',
+                matrizResponsabilidade: matrizResponsabilidade,
+                mobilizacao: document.getElementById('tr-mobilizacao')?.value || '',
+                canteiro: document.getElementById('tr-canteiro')?.value || '',
+                credenciamento: document.getElementById('tr-credenciamento')?.value || '',
+                meioAmbiente: document.getElementById('tr-meio-ambiente')?.value || '',
+                engenharia: document.getElementById('tr-engenharia')?.value || '',
+                aquisicoes: document.getElementById('tr-aquisicoes')?.value || '',
+                planejamentoGestao: document.getElementById('tr-planejamento-gestao')?.value || '',
+                planejamentoExecutivo: document.getElementById('tr-planejamento-executivo')?.value || '',
+                testes: document.getElementById('tr-testes')?.value || '',
+                encerramento: document.getElementById('tr-encerramento')?.value || '',
+                cap: document.getElementById('tr-cap')?.value || '',
+                caf: document.getElementById('tr-caf')?.value || '',
+                garantia: document.getElementById('tr-garantia')?.value || '',
                 criterios: document.getElementById('tr-criterios')?.value || '',
                 anexos: document.getElementById('tr-anexos')?.value || ''
             };
@@ -1014,24 +1481,6 @@
                 setTimeout(() => {
                     alertError.style.display = 'none';
                 }, 5000);
-            }
-        }
-
-        // Salvar como rascunho
-        function salvarRascunho() {
-            const dados = coletarDadosFormulario();
-            if (dados.titulo) {
-                const resultado = salvarTR(dados, StatusTR.RASCUNHO);
-                
-                if (resultado.sucesso) {
-                    mostrarAlerta('success', 'Rascunho salvo com sucesso!');
-                    const form = document.getElementById('tr-form');
-                    if (form) form.reset();
-                } else {
-                    mostrarAlerta('error', 'Erro ao salvar rascunho: ' + resultado.erro);
-                }
-            } else {
-                mostrarAlerta('error', 'Preencha pelo menos o título para salvar como rascunho.');
             }
         }
 
@@ -1107,7 +1556,7 @@
                             <span><i class="fas fa-hashtag"></i> ${tr.numeroTR}</span>
                             <span><i class="fas fa-calendar"></i> ${dataFormatada}</span>
                             <span><i class="fas fa-tag"></i> ${tr.modalidade}</span>
-                            <span><i class="fas fa-money-bill"></i> R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                            <span><i class="fas fa-eye"></i> Visita: ${tr.visitaLocal || 'N/A'}</span>
                         </div>
                         <div class="tr-objective">${tr.objetivo}</div>
                         
@@ -1199,11 +1648,70 @@
             
             const config = StatusConfig[tr.status] || StatusConfig.elaborado;
             
+            // Renderizar tabela de serviços
+            let tabelaServicos = '';
+            if (tr.servicos && tr.servicos.length > 0) {
+                tabelaServicos = `
+                    <h5 style="color: #333; margin-bottom: 10px;">Tabela de Serviços</h5>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 10px; border: 1px solid #dee2e6;">Item</th>
+                                    <th style="padding: 10px; border: 1px solid #dee2e6;">Descrição</th>
+                                    <th style="padding: 10px; border: 1px solid #dee2e6;">Unidade</th>
+                                    <th style="padding: 10px; border: 1px solid #dee2e6;">Quantidade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tr.servicos.map(servico => `
+                                    <tr>
+                                        <td style="padding: 10px; border: 1px solid #dee2e6;">${servico.item}</td>
+                                        <td style="padding: 10px; border: 1px solid #dee2e6;">${servico.descricao}</td>
+                                        <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">${servico.unidade}</td>
+                                        <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">${servico.quantidade}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            // Renderizar matriz de responsabilidade
+            let matrizResp = '';
+            if (tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0) {
+                matrizResp = `
+                    <h5 style="color: #333; margin-bottom: 10px;">Matriz de Responsabilidade</h5>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 10px; border: 1px solid #dee2e6;">Item/Atividade</th>
+                                    <th style="padding: 10px; border: 1px solid #dee2e6;">Responsável</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tr.matrizResponsabilidade.map(item => `
+                                    <tr>
+                                        <td style="padding: 10px; border: 1px solid #dee2e6;">${item.item}</td>
+                                        <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
+                                            ${item.responsavel === 'contratada' ? 'Contratada' : 
+                                              item.responsavel === 'contratante' ? 'Contratante' : 'N/A'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
             
             modal.innerHTML = `
-                <div class="modal-content">
+                <div class="modal-content" style="max-width: 1000px;">
                     <div class="modal-header">
                         <div>
                             <h3 style="margin: 0; color: #333;">${tr.numeroTR}</h3>
@@ -1221,7 +1729,7 @@
                         </div>
                         <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                         <h4 style="color: #333; margin-bottom: 20px;">${tr.titulo}</h4>
                         
                         ${renderizarTimeline(tr.status)}
@@ -1232,16 +1740,12 @@
                                 ${tr.modalidade}
                             </div>
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <strong style="color: #666;">Valor Estimado:</strong><br>
-                                R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                <strong style="color: #666;">Visita ao Local:</strong><br>
+                                ${tr.visitaLocal || 'Não especificado'}
                             </div>
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
                                 <strong style="color: #666;">Data de Criação:</strong><br>
                                 ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}
-                            </div>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <strong style="color: #666;">Prazo de Execução:</strong><br>
-                                ${tr.prazo}
                             </div>
                         </div>
                         
@@ -1266,17 +1770,14 @@
                             </div>
                         </div>
                         
-                        <div style="margin-bottom: 20px;">
-                            <h5 style="color: #333; margin-bottom: 10px;">Situação Atual</h5>
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                ${tr.situacaoAtual}
-                            </div>
-                        </div>
+                        ${tabelaServicos}
+                        
+                        ${matrizResp}
                         
                         <div style="margin-bottom: 20px;">
-                            <h5 style="color: #333; margin-bottom: 10px;">Situação Proposta</h5>
+                            <h5 style="color: #333; margin-bottom: 10px;">Prazos</h5>
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                ${tr.situacaoProposta}
+                                ${tr.prazo || tr.prazos || 'Não especificado'}
                             </div>
                         </div>
                         
@@ -1357,6 +1858,63 @@
                 return;
             }
 
+            // Renderizar tabelas HTML
+            let tabelaServicosHTML = '';
+            if (tr.servicos && tr.servicos.length > 0) {
+                tabelaServicosHTML = `
+                    <div class="section">
+                        <div class="section-title">TABELA DE SERVIÇOS</div>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 8px;">Item</th>
+                                    <th style="border: 1px solid #333; padding: 8px;">Descrição</th>
+                                    <th style="border: 1px solid #333; padding: 8px;">Unidade</th>
+                                    <th style="border: 1px solid #333; padding: 8px;">Quantidade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tr.servicos.map(s => `
+                                    <tr>
+                                        <td style="border: 1px solid #333; padding: 8px;">${s.item}</td>
+                                        <td style="border: 1px solid #333; padding: 8px;">${s.descricao}</td>
+                                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">${s.unidade}</td>
+                                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">${s.quantidade}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            let matrizRespHTML = '';
+            if (tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0) {
+                matrizRespHTML = `
+                    <div class="section">
+                        <div class="section-title">MATRIZ DE RESPONSABILIDADE</div>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 8px;">Item/Atividade</th>
+                                    <th style="border: 1px solid #333; padding: 8px;">Contratada</th>
+                                    <th style="border: 1px solid #333; padding: 8px;">Contratante</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tr.matrizResponsabilidade.map(item => `
+                                    <tr>
+                                        <td style="border: 1px solid #333; padding: 8px;">${item.item}</td>
+                                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">${item.responsavel === 'contratada' ? '✓' : ''}</td>
+                                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">${item.responsavel === 'contratante' ? '✓' : ''}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
             const conteudoHTML = `
                 <!DOCTYPE html>
                 <html>
@@ -1367,7 +1925,7 @@
                         body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
                         h1, h2, h3 { color: #333; }
                         .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-                        .section { margin-bottom: 30px; }
+                        .section { margin-bottom: 30px; page-break-inside: avoid; }
                         .section-title { background: #f0f0f0; padding: 10px; margin-bottom: 15px; font-weight: bold; }
                         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
                         .info-item { padding: 10px; background: #f9f9f9; }
@@ -1386,7 +1944,7 @@
                             <strong>Modalidade Sugerida:</strong> ${tr.modalidade}
                         </div>
                         <div class="info-item">
-                            <strong>Valor Estimado:</strong> R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                            <strong>Visita ao Local:</strong> ${tr.visitaLocal || 'Não especificado'}
                         </div>
                         <div class="info-item">
                             <strong>Data de Criação:</strong> ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}
@@ -1432,23 +1990,104 @@
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">8. PRAZO DE EXECUÇÃO</div>
-                        <p>${tr.prazo}</p>
+                        <div class="section-title">8. PREMISSAS, REQUISITOS E RESTRIÇÕES</div>
+                        <p>${tr.premissas || 'Não especificado'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">9. RESPONSABILIDADES</div>
-                        <p>${tr.responsabilidades}</p>
+                        <div class="section-title">9. PLANILHA DE QUANTIDADE</div>
+                        <p>${tr.planilhaQuantidade || 'Conforme tabela de serviços'}</p>
+                    </div>
+                    
+                    ${tabelaServicosHTML}
+                    
+                    <div class="section">
+                        <div class="section-title">10. ESCOPO GERAL</div>
+                        <p>${tr.escopoGeral || 'Conforme detalhamento técnico'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">10. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
+                        <div class="section-title">11. PRAZOS</div>
+                        <p>${tr.prazo || tr.prazos || 'A definir'}</p>
+                    </div>
+                    
+                    ${matrizRespHTML}
+                    
+                    <div class="section">
+                        <div class="section-title">12. MOBILIZAÇÃO, SEGURANÇA E SAÚDE DO TRABALHO</div>
+                        <p>${tr.mobilizacao || 'Conforme normas aplicáveis'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">13. CANTEIRO DE OBRAS</div>
+                        <p>${tr.canteiro || 'Conforme projeto'}</p>
+                    </div>
+                    
+                    ${tr.credenciamento ? `
+                        <div class="section">
+                            <div class="section-title">14. CREDENCIAMENTO AEROPORTUÁRIO</div>
+                            <p>${tr.credenciamento}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="section">
+                        <div class="section-title">15. MEIO AMBIENTE</div>
+                        <p>${tr.meioAmbiente || 'Conforme legislação ambiental'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">16. ENGENHARIA</div>
+                        <p>${tr.engenharia || 'Conforme especificações técnicas'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">17. AQUISIÇÕES</div>
+                        <p>${tr.aquisicoes || 'Conforme necessidade do projeto'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">18. PLANEJAMENTO/GESTÃO DE CONTRATOS</div>
+                        <p>${tr.planejamentoGestao || 'Conforme contrato'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">19. PLANEJAMENTO EXECUTIVO</div>
+                        <p>${tr.planejamentoExecutivo || 'A ser apresentado pela contratada'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">20. TESTES, COMISSIONAMENTO E TREINAMENTO</div>
+                        <p>${tr.testes || 'Conforme normas técnicas'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">21. AO ENCERRAMENTO DA OBRA</div>
+                        <p>${tr.encerramento || 'Conforme procedimentos padrão'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">22. CERTIFICADO DE ACEITAÇÃO PROVISÓRIA (CAP)</div>
+                        <p>${tr.cap || 'Emitido após conclusão dos serviços'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">23. CERTIFICADO DE ACEITAÇÃO FINAL (CAF)</div>
+                        <p>${tr.caf || 'Emitido após período de garantia'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">24. GARANTIA</div>
+                        <p>${tr.garantia || 'Conforme código civil e normas técnicas'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">25. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
                         <p>${tr.criterios}</p>
                     </div>
                     
                     ${tr.anexos ? `
                         <div class="section">
-                            <div class="section-title">11. ANEXOS</div>
+                            <div class="section-title">26. ANEXOS</div>
                             <p>${tr.anexos}</p>
                         </div>
                     ` : ''}
@@ -1528,24 +2167,90 @@
             }
             
             // Preencher o formulário com os dados do TR
-            const campos = [
-                'tr-titulo', 'tr-modalidade', 'tr-valor-estimado', 'tr-objetivo',
-                'tr-conformidade', 'tr-local', 'tr-escopo', 'tr-situacao-atual',
-                'tr-situacao-proposta', 'tr-especificacao', 'tr-prazo',
-                'tr-responsabilidades', 'tr-criterios', 'tr-anexos'
-            ];
-
-            const valores = [
-                tr.titulo, tr.modalidade, tr.valorEstimado, tr.objetivo,
-                tr.conformidade, tr.local, tr.escopo, tr.situacaoAtual,
-                tr.situacaoProposta, tr.especificacao, tr.prazo,
-                tr.responsabilidades, tr.criterios, tr.anexos
-            ];
-
-            campos.forEach((campo, index) => {
-                const elemento = document.getElementById(campo);
-                if (elemento) elemento.value = valores[index] || '';
-            });
+            document.getElementById('tr-titulo').value = tr.titulo || '';
+            document.getElementById('tr-modalidade').value = tr.modalidade || '';
+            document.getElementById('tr-objetivo').value = tr.objetivo || '';
+            document.getElementById('tr-conformidade').value = tr.conformidade || '';
+            document.getElementById('tr-visita-local').value = tr.visitaLocal || '';
+            document.getElementById('tr-local').value = tr.local || '';
+            document.getElementById('tr-escopo').value = tr.escopo || '';
+            document.getElementById('tr-situacao-atual').value = tr.situacaoAtual || '';
+            document.getElementById('tr-situacao-proposta').value = tr.situacaoProposta || '';
+            document.getElementById('tr-especificacao').value = tr.especificacao || '';
+            document.getElementById('tr-premissas').value = tr.premissas || '';
+            document.getElementById('tr-planilha-quantidade').value = tr.planilhaQuantidade || '';
+            document.getElementById('tr-escopo-geral').value = tr.escopoGeral || '';
+            document.getElementById('tr-prazos').value = tr.prazos || tr.prazo || '';
+            document.getElementById('tr-mobilizacao').value = tr.mobilizacao || '';
+            document.getElementById('tr-canteiro').value = tr.canteiro || '';
+            document.getElementById('tr-credenciamento').value = tr.credenciamento || '';
+            document.getElementById('tr-meio-ambiente').value = tr.meioAmbiente || '';
+            document.getElementById('tr-engenharia').value = tr.engenharia || '';
+            document.getElementById('tr-aquisicoes').value = tr.aquisicoes || '';
+            document.getElementById('tr-planejamento-gestao').value = tr.planejamentoGestao || '';
+            document.getElementById('tr-planejamento-executivo').value = tr.planejamentoExecutivo || '';
+            document.getElementById('tr-testes').value = tr.testes || '';
+            document.getElementById('tr-encerramento').value = tr.encerramento || '';
+            document.getElementById('tr-cap').value = tr.cap || '';
+            document.getElementById('tr-caf').value = tr.caf || '';
+            document.getElementById('tr-garantia').value = tr.garantia || '';
+            document.getElementById('tr-criterios').value = tr.criterios || '';
+            document.getElementById('tr-anexos').value = tr.anexos || '';
+            
+            // Preencher tabela de serviços
+            const tbody = document.querySelector('#tabela-servicos tbody');
+            tbody.innerHTML = '';
+            if (tr.servicos && tr.servicos.length > 0) {
+                tr.servicos.forEach((servico, index) => {
+                    const newRow = tbody.insertRow();
+                    newRow.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td><input type="text" name="servico_descricao[]" value="${servico.descricao}" required></td>
+                        <td>
+                            <select name="servico_unidade[]" required>
+                                <option value="UN" ${servico.unidade === 'UN' ? 'selected' : ''}>UN</option>
+                                <option value="M²" ${servico.unidade === 'M²' ? 'selected' : ''}>M²</option>
+                                <option value="M³" ${servico.unidade === 'M³' ? 'selected' : ''}>M³</option>
+                                <option value="ML" ${servico.unidade === 'ML' ? 'selected' : ''}>ML</option>
+                                <option value="KG" ${servico.unidade === 'KG' ? 'selected' : ''}>KG</option>
+                                <option value="VB" ${servico.unidade === 'VB' ? 'selected' : ''}>VB</option>
+                            </select>
+                        </td>
+                        <td><input type="number" name="servico_quantidade[]" value="${servico.quantidade}" required min="1"></td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removerServico(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                });
+            } else {
+                // Adicionar linha vazia se não houver serviços
+                adicionarServico();
+            }
+            
+            // Preencher matriz de responsabilidade
+            const tbodyResp = document.querySelector('#tabela-responsabilidades tbody');
+            tbodyResp.innerHTML = '';
+            if (tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0) {
+                tr.matrizResponsabilidade.forEach((item, index) => {
+                    const newRow = tbodyResp.insertRow();
+                    newRow.innerHTML = `
+                        <td><input type="text" name="resp_item[]" value="${item.item}" required></td>
+                        <td style="text-align: center;"><input type="radio" name="resp_tipo_${index}" value="contratada" ${item.responsavel === 'contratada' ? 'checked' : ''}></td>
+                        <td style="text-align: center;"><input type="radio" name="resp_tipo_${index}" value="contratante" ${item.responsavel === 'contratante' ? 'checked' : ''}></td>
+                        <td style="text-align: center;"><input type="radio" name="resp_tipo_${index}" value="na" ${item.responsavel === 'na' ? 'checked' : ''}></td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removerResponsabilidade(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                });
+            } else {
+                // Adicionar linha vazia se não houver responsabilidades
+                adicionarResponsabilidade();
+            }
             
             // Adicionar ID do TR sendo editado
             const form = document.getElementById('tr-form');
@@ -1553,7 +2258,7 @@
             
             // Mudar texto do botão
             const btnSubmit = document.querySelector('#tr-form button[type="submit"]');
-            if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-save"></i> Atualizar TR';
+            if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-save"></i> 💾 Atualizar TR';
             
             // Ir para a página de criação/edição
             mostrarPagina('criar-tr');
@@ -1570,7 +2275,16 @@
                     form.reset();
                     form.removeAttribute('data-editing-id');
                     const btnSubmit = form.querySelector('button[type="submit"]');
-                    if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
+                    if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-save"></i> 💾 Salvar TR';
+                    
+                    // Resetar tabelas para estado inicial
+                    const tbody = document.querySelector('#tabela-servicos tbody');
+                    tbody.innerHTML = '';
+                    adicionarServico();
+                    
+                    const tbodyResp = document.querySelector('#tabela-responsabilidades tbody');
+                    tbodyResp.innerHTML = '';
+                    adicionarResponsabilidade();
                 }
             }
         }
@@ -1607,14 +2321,18 @@
                         const trIndex = trs.findIndex(t => t.id === editingId);
                         
                         if (trIndex !== -1) {
-                            trs[trIndex] = { ...trs[trIndex], ...dados, dataAtualizacao: new Date().toISOString() };
+                            trs[trIndex] = { 
+                                ...trs[trIndex], 
+                                ...dados, 
+                                dataAtualizacao: new Date().toISOString() 
+                            };
                             
                             if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
                                 mostrarAlerta('success', 'TR atualizado com sucesso!');
                                 this.reset();
                                 this.removeAttribute('data-editing-id');
                                 const btnSubmit = this.querySelector('button[type="submit"]');
-                                if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Concluir TR';
+                                if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-save"></i> 💾 Salvar TR';
                                 mostrarPagina('meus-trs');
                             } else {
                                 mostrarAlerta('error', 'Erro ao atualizar TR');
@@ -1627,6 +2345,15 @@
                         if (resultado.sucesso) {
                             mostrarAlerta('success', 'TR criado com sucesso!');
                             this.reset();
+                            // Resetar tabelas
+                            const tbody = document.querySelector('#tabela-servicos tbody');
+                            tbody.innerHTML = '';
+                            adicionarServico();
+                            
+                            const tbodyResp = document.querySelector('#tabela-responsabilidades tbody');
+                            tbodyResp.innerHTML = '';
+                            adicionarResponsabilidade();
+                            
                             setTimeout(() => mostrarPagina('meus-trs'), 2000);
                         } else {
                             mostrarAlerta('error', 'Erro ao criar TR: ' + resultado.erro);
@@ -1634,9 +2361,6 @@
                     }
                 });
             }
-
-            // Botão salvar rascunho
-            document.getElementById('btn-salvar-rascunho')?.addEventListener('click', salvarRascunho);
 
             // Botão limpar formulário
             document.getElementById('btn-limpar-form')?.addEventListener('click', limparFormulario);
