@@ -1739,6 +1739,51 @@
                 </html>
             `);
         }
+
+        // Função para confirmar envio
+        function confirmarEnvio() {
+            // Validar campos obrigatórios primeiro
+            const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia'];
+            let tudoPreenchido = true;
+            
+            for (const campo of camposObrigatorios) {
+                const elemento = document.getElementById(campo);
+                if (!elemento || !elemento.value.trim()) {
+                    tudoPreenchido = false;
+                    if (elemento) {
+                        elemento.style.borderColor = '#e74c3c';
+                    }
+                }
+            }
+            
+            if (!tudoPreenchido) {
+                mostrarMensagem('⚠️ Por favor, preencha todos os campos obrigatórios (*) antes de enviar', 'error');
+                return;
+            }
+            
+            // Mostrar confirmação detalhada
+            const valorTotal = document.getElementById('valorTotalCalculado').textContent;
+            const prazo = document.getElementById('prazoExecucao').value;
+            
+            const confirmacao = confirm(`
+        🚀 CONFIRMAR ENVIO DA PROPOSTA FINAL
+        
+        Valor Total: R$ ${valorTotal}
+        Prazo de Execução: ${prazo}
+        
+        ⚠️ ATENÇÃO:
+        - Após o envio, a proposta NÃO poderá ser alterada
+        - Você receberá um protocolo de confirmação
+        - A proposta será enviada ao setor de compras
+        
+        Deseja realmente enviar a proposta?
+            `);
+            
+            if (confirmacao) {
+                enviarProposta();
+            }
+        }
+        
         async function enviarProposta() {
             // Validações básicas
             const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia'];
