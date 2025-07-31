@@ -2513,7 +2513,7 @@
             }
 
             // Salvar rascunho da proposta
-            async salvarRascunhoProposta() {
+            salvarRascunhoProposta: async function() {
                 if (!this.validarFormularioProposta()) {
                     this.mostrarNotificacao('Preencha todos os campos obrigatórios antes de salvar o rascunho.', 'warning');
                     return;
