@@ -942,13 +942,26 @@
         </div>
 
         <div class="submit-section">
-            <button type="button" class="btn-voltar" onclick="voltarDashboard()">← Voltar</button>
-            <button type="button" class="preview-btn" onclick="visualizarProposta()">👁️ Visualizar</button>
-            <button type="button" class="submit-btn" onclick="enviarProposta()">🚀 Enviar Proposta</button>
-            
-            <div id="mensagem"></div>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="btn-voltar" onclick="voltarDashboard()">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                </button>
+                
+                <button type="button" id="btnSalvarRascunho" class="submit-btn" style="background: #6c757d;" onclick="salvarRascunho()">
+                    <i class="fas fa-save"></i> Salvar Rascunho
+                </button>
+                
+                <button type="button" class="preview-btn" onclick="visualizarProposta()">
+                    <i class="fas fa-eye"></i> Visualizar Proposta
+                </button>
+                
+                <button type="button" class="submit-btn" style="background: linear-gradient(45deg, #27ae60, #2ecc71);" onclick="confirmarEnvio()">
+                    <i class="fas fa-paper-plane"></i> Enviar Proposta Final
+                </button>
+            </div>
+        
+            <div id="mensagem" style="margin-top: 20px;"></div>
         </div>
-    </div>
 
     <script>
         let currentTab = 'dados';
