@@ -1260,7 +1260,7 @@
             sessionStorage.setItem('dados_processo_portal', JSON.stringify(dadosPortal));
             
             // Abrir portal em nova janela
-            const portalWindow = window.open('portal-propostas-novo.html', '_blank');
+            const portalWindow = window.open('portal-propostas-novo (10).html', '_blank');
             
             if (!portalWindow) {
                 alert('Por favor, permita pop-ups para acessar o Portal de Propostas.');
@@ -1280,7 +1280,7 @@
             // Se a proposta tem dados completos do portal, abrir em modo visualização
             if (proposta.dadosCompletos) {
                 sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
-                window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
+                window.open('portal-propostas-novo (10).html?modo=visualizacao', '_blank');
             } else {
                 // Mostrar resumo básico
                 alert(`
