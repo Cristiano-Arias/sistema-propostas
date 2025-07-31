@@ -867,6 +867,45 @@
             color: #856404;
         }
 
+        /* TR Info Box */
+        .tr-info-box {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .tr-info-box h4 {
+            color: #1976d2;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .tr-info-box p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        /* Proposta status */
+        .proposta-status-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .proposta-rascunho {
+            background: #f8f9fa;
+            border: 2px dashed #6c757d;
+        }
+
+        .proposta-enviada {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+        }
+
         /* ====================== INÍCIO DAS MUDANÇAS RESPONSIVIDADE ====================== */
         
         /* Responsividade Aprimorada */
@@ -1050,8 +1089,8 @@
                         <div class="stat-label">Propostas Enviadas</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" id="stat-vencidos">0</div>
-                        <div class="stat-label">Prazos Vencidos</div>
+                        <div class="stat-value" id="stat-rascunhos">0</div>
+                        <div class="stat-label">Rascunhos Salvos</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="stat-aceitas">0</div>
@@ -1209,6 +1248,9 @@
                     <button type="button" class="btn btn-secondary" onclick="Sistema.fecharModal('modal-enviar-proposta')">
                         <i class="fas fa-times"></i> Cancelar
                     </button>
+                    <button type="button" class="btn btn-warning" id="btn-salvar-rascunho-proposta">
+                        <i class="fas fa-save"></i> Salvar Rascunho
+                    </button>
                     <button type="submit" class="btn btn-primary" id="btn-enviar-proposta">
                         <i class="fas fa-paper-plane"></i> Enviar Proposta
                     </button>
@@ -1231,7 +1273,7 @@
         <div class="modal-content">
             <span class="close" onclick="Sistema.fecharModal('modal-editar-proposta')">&times;</span>
             <h2 style="font-size: 28px; color: #2d3748; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
-                <i class="fas fa-edit" style="color: #667eea;"></i> Editar Proposta
+                <i class="fas fa-edit" style="color: #667eea;"></i> Editar Rascunho da Proposta
             </h2>
             <form id="form-editar-proposta">
                 <div id="editar-processo-info"></div>
@@ -1289,7 +1331,8 @@
                 FORNECEDOR_LOGADO: 'fornecedor_logado',
                 PROCESSOS_LICITATORIOS: 'processos_licitatorios',
                 PROPOSTAS_FORNECEDORES: 'propostas_fornecedores',
-                PROCESSOS_POR_FORNECEDOR: 'processos_por_fornecedor'
+                PROCESSOS_POR_FORNECEDOR: 'processos_por_fornecedor',
+                TRS: 'sistema_trs'
             },
 
             // Carregar dados do localStorage
@@ -1364,6 +1407,11 @@
                 document.getElementById('form-proposta').addEventListener('submit', (e) => {
                     e.preventDefault();
                     this.enviarProposta();
+                });
+
+                // Botão salvar rascunho
+                document.getElementById('btn-salvar-rascunho-proposta').addEventListener('click', () => {
+                    this.salvarRascunhoProposta();
                 });
 
                 // Formulário de edição
@@ -1459,10 +1507,11 @@
                 const agora = new Date();
                 const processosVencidos = processos.filter(p => new Date(p.dataLimite) < agora).length;
                 const propostasAceitas = propostas.filter(p => p.status === 'ACEITA').length;
+                const rascunhos = propostas.filter(p => p.status === 'RASCUNHO').length;
                 
                 document.getElementById('stat-processos').textContent = processos.length;
-                document.getElementById('stat-propostas').textContent = propostas.length;
-                document.getElementById('stat-vencidos').textContent = processosVencidos;
+                document.getElementById('stat-propostas').textContent = propostas.filter(p => p.status === 'ENVIADA').length;
+                document.getElementById('stat-rascunhos').textContent = rascunhos;
                 document.getElementById('stat-aceitas').textContent = propostasAceitas;
             },
 
@@ -1482,6 +1531,20 @@
                     p.fornecedorEmail === this.fornecedorLogado.email || 
                     p.fornecedorCNPJ === this.fornecedorLogado.cnpj
                 );
+            },
+
+            // Obter TR completo do processo
+            obterTRDoProcesso(processoId) {
+                const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_LICITATORIOS, []);
+                const processo = processos.find(p => p.id === processoId);
+                
+                if (processo && processo.trVinculado) {
+                    return processo.trVinculado;
+                }
+                
+                // Se não encontrar no processo, tentar buscar pelo TR ID
+                const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+                return trs.find(tr => tr.processoVinculado === processoId);
             },
 
             // Carregar processos
@@ -1509,7 +1572,9 @@
                     
                     // Verificar se já existe proposta
                     const propostas = this.obterPropostasFornecedor();
-                    const jaEnviouProposta = propostas.some(p => p.processoId === processo.processoId);
+                    const propostaExistente = propostas.find(p => p.processoId === processo.processoId);
+                    const jaEnviouProposta = propostaExistente && propostaExistente.status === 'ENVIADA';
+                    const temRascunho = propostaExistente && propostaExistente.status === 'RASCUNHO';
                     
                     html += `
                         <div class="processo-item">
@@ -1525,6 +1590,10 @@
                                 <div class="alert-warning">
                                     <i class="fas fa-check-circle"></i> Você já enviou uma proposta para este processo
                                 </div>
+                            ` : temRascunho ? `
+                                <div class="alert-info" style="background: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb;">
+                                    <i class="fas fa-save"></i> Você tem um rascunho salvo para este processo
+                                </div>
                             ` : ''}
                             
                             <div style="margin-top: 25px; display: flex; gap: 10px; flex-wrap: wrap;">
@@ -1533,11 +1602,11 @@
                                 </button>
                                 ${status === 'ATIVO' && !jaEnviouProposta ? `
                                     <button class="btn btn-success" onclick="Sistema.abrirFormularioProposta('${processo.processoId}')">
-                                        <i class="fas fa-paper-plane"></i> Enviar Proposta
+                                        <i class="fas fa-paper-plane"></i> ${temRascunho ? 'Continuar Proposta' : 'Enviar Proposta'}
                                     </button>
                                 ` : ''}
-                                <button class="btn btn-warning" onclick="Sistema.baixarEdital('${processo.processoId}')">
-                                    <i class="fas fa-download"></i> Baixar Edital
+                                <button class="btn btn-warning" onclick="Sistema.baixarTRCompleto('${processo.processoId}')">
+                                    <i class="fas fa-download"></i> Baixar TR Completo
                                 </button>
                             </div>
                         </div>
@@ -1569,6 +1638,10 @@
                     let statusTexto = proposta.status || 'ENVIADA';
                     
                     switch(proposta.status) {
+                        case 'RASCUNHO':
+                            statusClass = 'processo-status';
+                            statusTexto = 'RASCUNHO';
+                            break;
                         case 'ACEITA':
                             statusClass = 'status-aceita';
                             break;
@@ -1587,7 +1660,7 @@
                             <p><strong>Valor da Proposta:</strong> R$ ${this.formatarMoeda(proposta.valor)}</p>
                             <p><strong>Prazo de Execução:</strong> ${proposta.prazoExecucao} dias</p>
                             <p><strong>Condições de Pagamento:</strong> ${proposta.condicoesPagamento}</p>
-                            <p><strong>Data de Envio:</strong> ${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}</p>
+                            <p><strong>Data de ${proposta.status === 'RASCUNHO' ? 'Criação' : 'Envio'}:</strong> ${new Date(proposta.dataEnvio || proposta.dataCriacao).toLocaleDateString('pt-BR')}</p>
                             <p><strong>Garantia:</strong> ${proposta.garantia || 'Não informada'}</p>
                             
                             ${proposta.feedbackComprador ? `
@@ -1606,9 +1679,15 @@
                                 <button class="btn btn-primary" onclick="Sistema.verDetalhesProposta('${proposta.id}')">
                                     <i class="fas fa-eye"></i> Ver Detalhes
                                 </button>
-                                ${proposta.status === 'ENVIADA' ? `
+                                ${proposta.status === 'RASCUNHO' ? `
                                     <button class="btn btn-warning" onclick="Sistema.editarProposta('${proposta.id}')">
-                                        <i class="fas fa-edit"></i> Editar
+                                        <i class="fas fa-edit"></i> Editar Rascunho
+                                    </button>
+                                    <button class="btn btn-success" onclick="Sistema.enviarRascunho('${proposta.id}')">
+                                        <i class="fas fa-paper-plane"></i> Enviar Proposta
+                                    </button>
+                                    <button class="btn btn-danger" onclick="Sistema.excluirRascunho('${proposta.id}')">
+                                        <i class="fas fa-trash"></i> Excluir Rascunho
                                     </button>
                                 ` : ''}
                             </div>
@@ -1636,7 +1715,7 @@
                         processo: processo,
                         proposta: proposta,
                         data: processo.dataAbertura,
-                        status: proposta ? 'PARTICIPOU' : 'NÃO PARTICIPOU'
+                        status: proposta ? (proposta.status === 'RASCUNHO' ? 'RASCUNHO SALVO' : 'PARTICIPOU') : 'NÃO PARTICIPOU'
                     });
                 });
                 
@@ -1656,7 +1735,7 @@
                 
                 let html = '';
                 historico.forEach(item => {
-                    const statusClass = item.status === 'PARTICIPOU' ? 'status-ativo' : 'status-vencido';
+                    const statusClass = item.status === 'PARTICIPOU' ? 'status-ativo' : item.status === 'RASCUNHO SALVO' ? 'processo-status' : 'status-vencido';
                     
                     html += `
                         <div class="processo-item">
@@ -1671,6 +1750,7 @@
                                 <p><strong>Status da Proposta:</strong> ${item.proposta.status || 'ENVIADA'}
                                     ${item.proposta.status === 'ACEITA' ? '<span class="feedback-badge feedback-aceito">Aceita</span>' : ''}
                                     ${item.proposta.status === 'REJEITADA' ? '<span class="feedback-badge feedback-rejeitado">Rejeitada</span>' : ''}
+                                    ${item.proposta.status === 'RASCUNHO' ? '<span class="feedback-badge feedback-pendente">Rascunho</span>' : ''}
                                 </p>
                             ` : ''}
                             
@@ -1696,6 +1776,8 @@
                 const container = document.getElementById('perfil-content');
                 const processos = this.obterProcessosFornecedor();
                 const propostas = this.obterPropostasFornecedor();
+                const propostasEnviadas = propostas.filter(p => p.status === 'ENVIADA');
+                const rascunhos = propostas.filter(p => p.status === 'RASCUNHO');
                 const propostasAceitas = propostas.filter(p => p.status === 'ACEITA').length;
                 const propostasRejeitadas = propostas.filter(p => p.status === 'REJEITADA').length;
                 const propostasEmAnalise = propostas.filter(p => p.status === 'EM_ANALISE').length;
@@ -1735,7 +1817,13 @@
                         </div>
                         <div class="info-item">
                             <span class="info-label">Propostas Enviadas:</span>
-                            <span class="info-value">${propostas.length}</span>
+                            <span class="info-value">${propostasEnviadas.length}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Rascunhos Salvos:</span>
+                            <span class="info-value">${rascunhos.length}
+                                ${rascunhos.length > 0 ? '<span class="feedback-badge feedback-pendente">Pendentes</span>' : ''}
+                            </span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">Propostas Aceitas:</span>
@@ -1756,7 +1844,7 @@
                         <div class="info-item">
                             <span class="info-label">Taxa de Sucesso:</span>
                             <span class="info-value">
-                                ${propostas.length > 0 ? ((propostasAceitas / propostas.length * 100).toFixed(1) + '%') : 'N/A'}
+                                ${propostasEnviadas.length > 0 ? ((propostasAceitas / propostasEnviadas.length * 100).toFixed(1) + '%') : 'N/A'}
                             </span>
                         </div>
                     </div>
@@ -1783,7 +1871,7 @@
                 `;
             },
 
-            // Ver detalhes do processo
+            // Ver detalhes do processo com TR completo
             verDetalhesProcesso(processoId) {
                 const processos = this.obterProcessosFornecedor();
                 const processo = processos.find(p => p.processoId === processoId);
@@ -1794,9 +1882,8 @@
                 const dataLimite = new Date(processo.dataLimite);
                 const status = dataLimite < agora ? 'VENCIDO' : 'ATIVO';
                 
-                // Buscar processo completo do módulo do comprador
-                const processosCompletos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_LICITATORIOS, []);
-                const processoCompleto = processosCompletos.find(p => p.id === processoId);
+                // Obter TR completo
+                const tr = this.obterTRDoProcesso(processoId);
                 
                 document.getElementById('detalhes-processo-content').innerHTML = `
                     <div class="empresa-info">
@@ -1826,25 +1913,51 @@
                             <span class="info-label">Local de Abertura:</span>
                             <span class="info-value">${processo.localAbertura || 'A definir'}</span>
                         </div>
-                    </div>
-                    
-                    <div class="empresa-info">
-                        <h3><i class="fas fa-file-alt"></i> Objeto da Licitação</h3>
-                        <p style="color: #4a5568; line-height: 1.6;">
-                            ${processo.objeto || processoCompleto?.objeto || processo.trTitulo || 'Não informado'}
-                        </p>
-                    </div>
-                    
-                    ${processoCompleto?.observacoes ? `
-                        <div class="empresa-info">
-                            <h3><i class="fas fa-info-circle"></i> Observações</h3>
-                            <p style="color: #4a5568; line-height: 1.6;">${processoCompleto.observacoes}</p>
+                        <div class="info-item">
+                            <span class="info-label">Valor Estimado:</span>
+                            <span class="info-value">R$ ${this.formatarMoeda(processo.valorEstimado || tr?.valorEstimado || 0)}</span>
                         </div>
-                    ` : ''}
+                    </div>
+                    
+                    ${tr ? `
+                        <div class="tr-info-box">
+                            <h4><i class="fas fa-file-alt"></i> Resumo do Termo de Referência</h4>
+                            <p><strong>TR Nº:</strong> ${tr.numeroTR || 'N/A'}</p>
+                            <p><strong>Título:</strong> ${tr.titulo}</p>
+                            <p><strong>Objeto:</strong> ${tr.objetivo}</p>
+                            <p><strong>Modalidade Sugerida:</strong> ${tr.modalidade}</p>
+                            <p><strong>Prazo de Execução:</strong> ${tr.prazo || tr.prazoExecucao || 'Conforme TR'}</p>
+                        </div>
+                        
+                        <div class="empresa-info">
+                            <h3><i class="fas fa-crosshairs"></i> Escopo Técnico</h3>
+                            <p style="color: #4a5568; line-height: 1.6;">${tr.escopo || 'Não informado'}</p>
+                        </div>
+                        
+                        <div class="empresa-info">
+                            <h3><i class="fas fa-clipboard-check"></i> Especificações Técnicas</h3>
+                            <p style="color: #4a5568; line-height: 1.6;">${tr.especificacao || 'Não informado'}</p>
+                        </div>
+                        
+                        <div class="empresa-info">
+                            <h3><i class="fas fa-tasks"></i> Critérios de Avaliação</h3>
+                            <p style="color: #4a5568; line-height: 1.6;">${tr.criterios || 'Conforme edital'}</p>
+                        </div>
+                    ` : `
+                        <div class="empresa-info">
+                            <h3><i class="fas fa-file-alt"></i> Objeto da Licitação</h3>
+                            <p style="color: #4a5568; line-height: 1.6;">
+                                ${processo.objeto || processo.trTitulo || 'Conforme especificações do edital'}
+                            </p>
+                        </div>
+                    `}
                     
                     <div style="text-align: right; margin-top: 40px; display: flex; gap: 15px; justify-content: flex-end;">
                         <button class="btn btn-secondary" onclick="Sistema.fecharModal('modal-detalhes-processo')">
                             <i class="fas fa-times"></i> Fechar
+                        </button>
+                        <button class="btn btn-warning" onclick="Sistema.baixarTRCompleto('${processoId}')">
+                            <i class="fas fa-download"></i> Baixar TR Completo
                         </button>
                         ${status === 'ATIVO' ? `
                             <button class="btn btn-primary" onclick="Sistema.fecharModal('modal-detalhes-processo'); Sistema.abrirFormularioProposta('${processoId}')">
@@ -1857,6 +1970,187 @@
                 this.abrirModal('modal-detalhes-processo');
             },
 
+            // Baixar TR completo
+            baixarTRCompleto(processoId) {
+                const processo = this.obterProcessosFornecedor().find(p => p.processoId === processoId);
+                const tr = this.obterTRDoProcesso(processoId);
+                
+                if (!processo) {
+                    this.mostrarNotificacao('Processo não encontrado.', 'error');
+                    return;
+                }
+                
+                if (!tr) {
+                    this.mostrarNotificacao('Termo de Referência não encontrado para este processo.', 'error');
+                    return;
+                }
+                
+                const nomeArquivo = `TR_${tr.numeroTR || processo.numeroProcesso}_Completo.html`;
+                
+                // Gerar conteúdo HTML completo do TR
+                const conteudoHTML = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Termo de Referência - ${tr.numeroTR || processo.numeroProcesso}</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            line-height: 1.6; 
+            color: #333;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 40px; 
+            border-bottom: 2px solid #333; 
+            padding-bottom: 20px; 
+        }
+        h1, h2, h3 { color: #2c3e50; }
+        .section { 
+            margin-bottom: 30px; 
+            page-break-inside: avoid;
+        }
+        .section-title { 
+            background: #f0f0f0; 
+            padding: 10px; 
+            margin-bottom: 15px; 
+            font-weight: bold; 
+            border-left: 4px solid #3498db;
+        }
+        .info-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+            margin-bottom: 30px; 
+        }
+        .info-item { 
+            padding: 10px; 
+            background: #f9f9f9; 
+            border-radius: 5px;
+        }
+        .info-label { 
+            font-weight: bold; 
+            color: #2c3e50;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        @media print { 
+            body { margin: 20px; }
+            .section { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>TERMO DE REFERÊNCIA</h1>
+        <h2>${tr.numeroTR || 'S/N'}</h2>
+        <h3>${tr.titulo}</h3>
+    </div>
+    
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="info-label">Processo Licitatório:</span><br>
+            ${processo.numeroProcesso}
+        </div>
+        <div class="info-item">
+            <span class="info-label">Modalidade:</span><br>
+            ${tr.modalidade || processo.modalidade}
+        </div>
+        <div class="info-item">
+            <span class="info-label">Valor Estimado:</span><br>
+            R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+        </div>
+        <div class="info-item">
+            <span class="info-label">Data de Criação:</span><br>
+            ${new Date(tr.dataCriacao || processo.dataCriacao).toLocaleDateString('pt-BR')}
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">1. OBJETIVO</div>
+        <p>${tr.objetivo || 'Não informado'}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">2. CONFORMIDADE AO TERMO DE REFERÊNCIA</div>
+        <p>${tr.conformidade || 'Conforme normas e regulamentos aplicáveis'}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">3. LOCAL/ACESSO</div>
+        <p>${tr.local || processo.localAbertura || 'A definir'}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">4. ESCOPO TÉCNICO</div>
+        <p>${tr.escopo || 'Conforme especificações técnicas'}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">5. SITUAÇÃO ATUAL</div>
+        <p>${tr.situacaoAtual || 'Conforme diagnóstico apresentado'}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">6. SITUAÇÃO PROPOSTA</div>
+        <p>${tr.situacaoProposta || 'Conforme objetivos do projeto'}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">7. ESPECIFICAÇÃO TÉCNICA</div>
+        <p>${tr.especificacao || 'Detalhamento técnico conforme projeto'}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">8. PRAZO DE EXECUÇÃO</div>
+        <p>${tr.prazo || tr.prazoExecucao || 'Conforme cronograma do projeto'}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">9. RESPONSABILIDADES</div>
+        <p>${tr.responsabilidades || 'Conforme contrato e legislação aplicável'}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">10. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
+        <p>${tr.criterios || 'Menor preço global, atendendo às especificações técnicas'}</p>
+    </div>
+    
+    ${tr.anexos ? `
+        <div class="section">
+            <div class="section-title">11. ANEXOS</div>
+            <p>${tr.anexos}</p>
+        </div>
+    ` : ''}
+    
+    <div class="footer">
+        <p>Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+        <p>Portal do Fornecedor - Sistema Integrado de Licitações</p>
+    </div>
+</body>
+</html>
+                `;
+                
+                // Criar e baixar arquivo
+                const blob = new Blob([conteudoHTML], { type: 'text/html;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = nomeArquivo;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                this.mostrarNotificacao(`Termo de Referência baixado com sucesso!`, 'success');
+            },
+
             // Abrir formulário de proposta
             abrirFormularioProposta(processoId) {
                 const processos = this.obterProcessosFornecedor();
@@ -1864,19 +2158,19 @@
                 
                 if (!processo) return;
                 
-                // Verificar se já existe proposta
+                // Verificar se já existe proposta ou rascunho
                 const propostas = this.obterPropostasFornecedor();
                 const propostaExistente = propostas.find(p => p.processoId === processoId);
                 
-                if (propostaExistente) {
-                    this.mostrarAlerta('proposta-existente-aviso', 
-                        'Você já enviou uma proposta para este processo. Cada fornecedor pode enviar apenas uma proposta por processo.', 
-                        'warning'
-                    );
+                if (propostaExistente && propostaExistente.status === 'ENVIADA') {
+                    this.mostrarNotificacao('Você já enviou uma proposta para este processo. Não é possível enviar outra.', 'warning');
                     return;
                 }
                 
                 this.processoAtual = processo;
+                
+                // Obter TR para mostrar mais informações
+                const tr = this.obterTRDoProcesso(processoId);
                 
                 document.getElementById('processo-info').innerHTML = `
                     <div class="empresa-info">
@@ -1884,21 +2178,102 @@
                         <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
                         <p><strong>Objeto:</strong> ${processo.objeto || processo.trTitulo || 'Não informado'}</p>
                         <p><strong>Data Limite:</strong> ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')}</p>
+                        ${tr ? `<p><strong>Prazo de Execução Sugerido:</strong> ${tr.prazo || 'Conforme proposta'}</p>` : ''}
                     </div>
                 `;
                 
-                // Limpar aviso
-                document.getElementById('proposta-existente-aviso').innerHTML = '';
-                
-                // Limpar formulário
-                document.getElementById('form-proposta').reset();
+                // Se existe rascunho, carregar dados
+                if (propostaExistente && propostaExistente.status === 'RASCUNHO') {
+                    document.getElementById('proposta-existente-aviso').innerHTML = `
+                        <div class="proposta-status-box proposta-rascunho">
+                            <i class="fas fa-info-circle"></i> Você está editando um rascunho salvo anteriormente
+                        </div>
+                    `;
+                    
+                    // Preencher formulário com dados do rascunho
+                    document.getElementById('valor-proposta').value = propostaExistente.valor || '';
+                    document.getElementById('prazo-execucao').value = propostaExistente.prazoExecucao || '';
+                    document.getElementById('condicoes-pagamento').value = propostaExistente.condicoesPagamento || '';
+                    document.getElementById('garantia').value = propostaExistente.garantia || '';
+                    document.getElementById('observacoes').value = propostaExistente.observacoes || '';
+                    
+                    // Guardar ID do rascunho
+                    document.getElementById('form-proposta').setAttribute('data-rascunho-id', propostaExistente.id);
+                } else {
+                    document.getElementById('proposta-existente-aviso').innerHTML = '';
+                    document.getElementById('form-proposta').reset();
+                    document.getElementById('form-proposta').removeAttribute('data-rascunho-id');
+                }
                 
                 this.abrirModal('modal-enviar-proposta');
+            },
+
+            // Salvar rascunho da proposta
+            async salvarRascunhoProposta() {
+                if (!this.validarFormularioProposta()) {
+                    this.mostrarNotificacao('Preencha todos os campos obrigatórios antes de salvar o rascunho.', 'warning');
+                    return;
+                }
+                
+                const btnSalvar = document.getElementById('btn-salvar-rascunho-proposta');
+                btnSalvar.innerHTML = '<span class="loading"></span> Salvando...';
+                btnSalvar.disabled = true;
+                
+                // Simular salvamento
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const rascunhoId = document.getElementById('form-proposta').getAttribute('data-rascunho-id');
+                const todasPropostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                
+                const proposta = {
+                    id: rascunhoId || SistemaLocal.gerarId(),
+                    processoId: this.processoAtual.processoId,
+                    numeroProcesso: this.processoAtual.numeroProcesso,
+                    fornecedorEmail: this.fornecedorLogado.email,
+                    fornecedorCNPJ: this.fornecedorLogado.cnpj,
+                    fornecedorRazaoSocial: this.fornecedorLogado.razaoSocial,
+                    valor: document.getElementById('valor-proposta').value,
+                    prazoExecucao: document.getElementById('prazo-execucao').value,
+                    condicoesPagamento: document.getElementById('condicoes-pagamento').value,
+                    observacoes: document.getElementById('observacoes').value,
+                    garantia: document.getElementById('garantia').value,
+                    dataCriacao: rascunhoId ? 
+                        (todasPropostas.find(p => p.id === rascunhoId)?.dataCriacao || new Date().toISOString()) : 
+                        new Date().toISOString(),
+                    dataAtualizacao: new Date().toISOString(),
+                    status: 'RASCUNHO'
+                };
+                
+                // Atualizar ou adicionar proposta
+                if (rascunhoId) {
+                    const index = todasPropostas.findIndex(p => p.id === rascunhoId);
+                    if (index !== -1) {
+                        todasPropostas[index] = proposta;
+                    }
+                } else {
+                    todasPropostas.push(proposta);
+                    document.getElementById('form-proposta').setAttribute('data-rascunho-id', proposta.id);
+                }
+                
+                SistemaLocal.salvar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, todasPropostas);
+                
+                this.mostrarNotificacao('Rascunho salvo com sucesso!', 'success');
+                
+                btnSalvar.innerHTML = '<i class="fas fa-save"></i> Salvar Rascunho';
+                btnSalvar.disabled = false;
+                
+                // Atualizar estatísticas
+                this.carregarEstatisticas();
             },
 
             // Enviar proposta
             async enviarProposta() {
                 if (!this.validarFormularioProposta()) return;
+                
+                // Confirmação antes de enviar
+                if (!confirm('Após enviar a proposta, você não poderá mais editá-la. Deseja continuar?')) {
+                    return;
+                }
                 
                 const btnEnviar = document.getElementById('btn-enviar-proposta');
                 btnEnviar.innerHTML = '<span class="loading"></span> Enviando...';
@@ -1907,8 +2282,11 @@
                 // Simular envio
                 await new Promise(resolve => setTimeout(resolve, 1500));
                 
+                const rascunhoId = document.getElementById('form-proposta').getAttribute('data-rascunho-id');
+                const todasPropostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                
                 const proposta = {
-                    id: SistemaLocal.gerarId(),
+                    id: rascunhoId || SistemaLocal.gerarId(),
                     processoId: this.processoAtual.processoId,
                     numeroProcesso: this.processoAtual.numeroProcesso,
                     fornecedorEmail: this.fornecedorLogado.email,
@@ -1923,21 +2301,74 @@
                     status: 'ENVIADA'
                 };
                 
-                // Salvar proposta
-                const todasPropostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-                todasPropostas.push(proposta);
+                // Atualizar ou adicionar proposta
+                if (rascunhoId) {
+                    const index = todasPropostas.findIndex(p => p.id === rascunhoId);
+                    if (index !== -1) {
+                        todasPropostas[index] = proposta;
+                    } else {
+                        todasPropostas.push(proposta);
+                    }
+                } else {
+                    todasPropostas.push(proposta);
+                }
+                
                 SistemaLocal.salvar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, todasPropostas);
                 
                 this.fecharModal('modal-enviar-proposta');
                 
                 // Mostrar sucesso
-                this.mostrarNotificacao('Proposta enviada com sucesso!', 'success');
+                this.mostrarNotificacao('Proposta enviada com sucesso! Você receberá o resultado por e-mail.', 'success');
                 
                 // Recarregar dados
                 this.carregarDados();
                 
                 btnEnviar.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Proposta';
                 btnEnviar.disabled = false;
+            },
+
+            // Enviar rascunho como proposta final
+            async enviarRascunho(rascunhoId) {
+                const propostas = this.obterPropostasFornecedor();
+                const rascunho = propostas.find(p => p.id === rascunhoId);
+                
+                if (!rascunho || rascunho.status !== 'RASCUNHO') {
+                    this.mostrarNotificacao('Rascunho não encontrado.', 'error');
+                    return;
+                }
+                
+                if (!confirm('Após enviar a proposta, você não poderá mais editá-la. Deseja continuar?')) {
+                    return;
+                }
+                
+                // Atualizar status do rascunho para enviado
+                const todasPropostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                const index = todasPropostas.findIndex(p => p.id === rascunhoId);
+                
+                if (index !== -1) {
+                    todasPropostas[index].status = 'ENVIADA';
+                    todasPropostas[index].dataEnvio = new Date().toISOString();
+                    
+                    SistemaLocal.salvar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, todasPropostas);
+                    
+                    this.mostrarNotificacao('Proposta enviada com sucesso!', 'success');
+                    this.carregarDados();
+                }
+            },
+
+            // Excluir rascunho
+            excluirRascunho(rascunhoId) {
+                if (!confirm('Deseja realmente excluir este rascunho?')) {
+                    return;
+                }
+                
+                const todasPropostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                const propostasAtualizadas = todasPropostas.filter(p => p.id !== rascunhoId);
+                
+                SistemaLocal.salvar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, propostasAtualizadas);
+                
+                this.mostrarNotificacao('Rascunho excluído com sucesso!', 'success');
+                this.carregarDados();
             },
 
             // Validar formulário de proposta
@@ -1983,6 +2414,9 @@
                 
                 let statusInfo = '';
                 switch(proposta.status) {
+                    case 'RASCUNHO':
+                        statusInfo = '<span style="color: #6c757d; font-weight: bold;"><i class="fas fa-save"></i> RASCUNHO</span>';
+                        break;
                     case 'ACEITA':
                         statusInfo = '<span style="color: #48bb78; font-weight: bold;"><i class="fas fa-check-circle"></i> ACEITA</span>';
                         break;
@@ -2018,8 +2452,8 @@
                             <span class="info-value">${proposta.condicoesPagamento}</span>
                         </div>
                         <div class="info-item">
-                            <span class="info-label">Data de Envio:</span>
-                            <span class="info-value">${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')} às ${new Date(proposta.dataEnvio).toLocaleTimeString('pt-BR')}</span>
+                            <span class="info-label">Data de ${proposta.status === 'RASCUNHO' ? 'Criação' : 'Envio'}:</span>
+                            <span class="info-value">${new Date(proposta.dataEnvio || proposta.dataCriacao).toLocaleDateString('pt-BR')} às ${new Date(proposta.dataEnvio || proposta.dataCriacao).toLocaleTimeString('pt-BR')}</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">Garantia Oferecida:</span>
@@ -2055,13 +2489,13 @@
                 this.abrirModal('modal-detalhes-proposta');
             },
 
-            // Editar proposta
+            // Editar proposta (apenas rascunhos)
             editarProposta(propostaId) {
                 const propostas = this.obterPropostasFornecedor();
                 const proposta = propostas.find(p => p.id === propostaId);
                 
-                if (!proposta || proposta.status !== 'ENVIADA') {
-                    this.mostrarNotificacao('Esta proposta não pode ser editada.', 'error');
+                if (!proposta || proposta.status !== 'RASCUNHO') {
+                    this.mostrarNotificacao('Apenas rascunhos podem ser editados.', 'error');
                     return;
                 }
                 
@@ -2071,7 +2505,7 @@
                 document.getElementById('editar-processo-info').innerHTML = `
                     <div class="empresa-info">
                         <h3><i class="fas fa-file-contract"></i> ${proposta.numeroProcesso}</h3>
-                        <p><strong>Status Atual:</strong> ${proposta.status}</p>
+                        <p><strong>Status Atual:</strong> RASCUNHO</p>
                     </div>
                 `;
                 
@@ -2097,63 +2531,13 @@
                 propostas[index].condicoesPagamento = document.getElementById('editar-condicoes-pagamento').value;
                 propostas[index].garantia = document.getElementById('editar-garantia').value;
                 propostas[index].observacoes = document.getElementById('editar-observacoes').value;
-                propostas[index].dataEdicao = new Date().toISOString();
+                propostas[index].dataAtualizacao = new Date().toISOString();
                 
                 SistemaLocal.salvar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, propostas);
                 
                 this.fecharModal('modal-editar-proposta');
-                this.mostrarNotificacao('Proposta atualizada com sucesso!', 'success');
+                this.mostrarNotificacao('Rascunho atualizado com sucesso!', 'success');
                 this.carregarPropostas();
-            },
-
-            // Baixar edital
-            baixarEdital(processoId) {
-                const processos = this.obterProcessosFornecedor();
-                const processo = processos.find(p => p.processoId === processoId);
-                
-                if (!processo) {
-                    this.mostrarNotificacao('Processo não encontrado.', 'error');
-                    return;
-                }
-                
-                // Simular download do edital
-                const nomeArquivo = `Edital_${processo.numeroProcesso.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-                
-                // Criar conteúdo do edital
-                const conteudoEdital = `
-EDITAL DE LICITAÇÃO
-${processo.numeroProcesso}
-
-MODALIDADE: ${processo.modalidade}
-DATA DE ABERTURA: ${new Date(processo.dataAbertura).toLocaleDateString('pt-BR')}
-DATA LIMITE: ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')}
-
-OBJETO:
-${processo.objeto || processo.trTitulo || 'Conforme especificações do Termo de Referência'}
-
-LOCAL DE ABERTURA:
-${processo.localAbertura || 'Sala de Licitações - Prefeitura Municipal'}
-
-OBSERVAÇÕES:
-- Este é um extrato do edital
-- O edital completo está disponível no setor de compras
-- Dúvidas: compras@prefeitura.gov.br
-
-Data de geração: ${new Date().toLocaleDateString('pt-BR')}
-                `;
-                
-                // Criar e baixar arquivo
-                const blob = new Blob([conteudoEdital], { type: 'text/plain;charset=utf-8' });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = nomeArquivo;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-                
-                this.mostrarNotificacao(`Edital baixado com sucesso!`, 'success');
             },
 
             // Mostrar seção
@@ -2282,7 +2666,7 @@ Data de geração: ${new Date().toLocaleDateString('pt-BR')}
         `;
         document.head.appendChild(style);
 
-        console.log('Portal do Fornecedor v2.0 - Sistema padronizado e integrado com flexbox corrigido');
+        console.log('Portal do Fornecedor v3.0 - Sistema integrado com TR completo e rascunhos');
     </script>
 </body>
 </html>
