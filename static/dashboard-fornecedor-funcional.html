@@ -906,6 +906,195 @@
             border: 1px solid #bee5eb;
         }
 
+        /* Estilos para visualização do TR - NOVO */
+        .tr-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .tr-modal-content {
+            background: white;
+            width: 100%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tr-modal-header {
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .tr-modal-header h2 {
+            font-size: 28px;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .tr-modal-header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .tr-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .tr-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .tr-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            background: #f7fafc;
+        }
+
+        .tr-modal-body::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .tr-modal-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .tr-modal-body::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 5px;
+        }
+
+        .tr-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #667eea;
+        }
+
+        .tr-section-title {
+            font-size: 20px;
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tr-section-title i {
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .tr-section-content {
+            color: #4a5568;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+
+        .tr-meta-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .tr-meta-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            border-left: 3px solid #667eea;
+        }
+
+        .tr-meta-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .tr-meta-value {
+            font-size: 18px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .tr-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .tr-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tr-table th,
+        .tr-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .tr-table tbody tr:hover {
+            background: #f7fafc;
+        }
+
+        .tr-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tr-modal-footer {
+            padding: 20px 30px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
         /* ====================== INÍCIO DAS MUDANÇAS RESPONSIVIDADE ====================== */
         
         /* Responsividade Aprimorada */
@@ -1605,8 +1794,11 @@
                                         <i class="fas fa-paper-plane"></i> ${temRascunho ? 'Continuar Proposta' : 'Enviar Proposta'}
                                     </button>
                                 ` : ''}
-                                <button class="btn btn-warning" onclick="Sistema.baixarTRCompleto('${processo.processoId}')">
-                                    <i class="fas fa-download"></i> Baixar TR Completo
+                                <button class="btn btn-warning" onclick="Sistema.visualizarTRCompleto('${processo.processoId}')">
+                                    <i class="fas fa-eye"></i> Ver TR Completo
+                                </button>
+                                <button class="btn btn-info" onclick="Sistema.baixarTRCompleto('${processo.processoId}')">
+                                    <i class="fas fa-download"></i> Baixar TR
                                 </button>
                             </div>
                         </div>
@@ -1614,6 +1806,358 @@
                 });
                 
                 container.innerHTML = html;
+            },
+
+            // Visualizar TR Completo - NOVA IMPLEMENTAÇÃO MELHORADA
+            visualizarTRCompleto(processoId) {
+                const tr = this.obterTRDoProcesso(processoId);
+                const processo = this.obterProcessosFornecedor().find(p => p.processoId === processoId);
+                
+                if (!tr || !processo) {
+                    this.mostrarNotificacao('TR não encontrado para este processo.', 'error');
+                    return;
+                }
+
+                // Criar modal de visualização
+                const modal = document.createElement('div');
+                modal.className = 'tr-modal-overlay';
+                
+                // Renderizar tabela de serviços
+                let tabelaServicos = '';
+                if (tr.servicos && tr.servicos.length > 0) {
+                    tabelaServicos = `
+                        <div class="tr-section">
+                            <h3 class="tr-section-title">
+                                <i class="fas fa-list"></i> Tabela de Serviços
+                            </h3>
+                            <table class="tr-table">
+                                <thead>
+                                    <tr>
+                                        <th width="80">Item</th>
+                                        <th>Descrição do Serviço</th>
+                                        <th width="100">Unidade</th>
+                                        <th width="120">Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.servicos.map(servico => `
+                                        <tr>
+                                            <td style="text-align: center; font-weight: 600;">${servico.item}</td>
+                                            <td>${servico.descricao}</td>
+                                            <td style="text-align: center;">${servico.unidade}</td>
+                                            <td style="text-align: center; font-weight: 600;">${servico.quantidade}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                // Renderizar matriz de responsabilidade
+                let matrizResp = '';
+                if (tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0) {
+                    matrizResp = `
+                        <div class="tr-section">
+                            <h3 class="tr-section-title">
+                                <i class="fas fa-tasks"></i> Matriz de Responsabilidade
+                            </h3>
+                            <table class="tr-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item/Atividade</th>
+                                        <th width="150" style="text-align: center;">Contratada</th>
+                                        <th width="150" style="text-align: center;">Contratante</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.matrizResponsabilidade.map(item => `
+                                        <tr>
+                                            <td>${item.item}</td>
+                                            <td style="text-align: center;">
+                                                ${item.responsavel === 'contratada' ? '<i class="fas fa-check-circle" style="color: #48bb78; font-size: 20px;"></i>' : '-'}
+                                            </td>
+                                            <td style="text-align: center;">
+                                                ${item.responsavel === 'contratante' ? '<i class="fas fa-check-circle" style="color: #48bb78; font-size: 20px;"></i>' : '-'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                modal.innerHTML = `
+                    <div class="tr-modal-content">
+                        <div class="tr-modal-header">
+                            <div>
+                                <h2>${tr.numeroTR || 'TR-' + processo.numeroProcesso}</h2>
+                                <p>${tr.titulo}</p>
+                            </div>
+                            <button class="tr-modal-close" onclick="this.closest('.tr-modal-overlay').remove()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="tr-modal-body">
+                            <!-- Informações Gerais -->
+                            <div class="tr-meta-info">
+                                <div class="tr-meta-card">
+                                    <div class="tr-meta-label">Modalidade</div>
+                                    <div class="tr-meta-value">${tr.modalidade}</div>
+                                </div>
+                                <div class="tr-meta-card">
+                                    <div class="tr-meta-label">Valor Estimado</div>
+                                    <div class="tr-meta-value">R$ ${this.formatarMoeda(tr.valorEstimado || 0)}</div>
+                                </div>
+                                <div class="tr-meta-card">
+                                    <div class="tr-meta-label">Prazo de Execução</div>
+                                    <div class="tr-meta-value">${tr.prazo || tr.prazoExecucao || 'A definir'}</div>
+                                </div>
+                                <div class="tr-meta-card">
+                                    <div class="tr-meta-label">Visita ao Local</div>
+                                    <div class="tr-meta-value">${tr.visitaLocal || 'Não especificado'}</div>
+                                </div>
+                            </div>
+
+                            <!-- Seções do TR -->
+                            <div class="tr-section">
+                                <h3 class="tr-section-title">
+                                    <i class="fas fa-bullseye"></i> 1. Objetivo
+                                </h3>
+                                <div class="tr-section-content">${tr.objetivo}</div>
+                            </div>
+
+                            <div class="tr-section">
+                                <h3 class="tr-section-title">
+                                    <i class="fas fa-certificate"></i> 2. Conformidade ao Termo de Referência
+                                </h3>
+                                <div class="tr-section-content">${tr.conformidade}</div>
+                            </div>
+
+                            <div class="tr-section">
+                                <h3 class="tr-section-title">
+                                    <i class="fas fa-map-marker-alt"></i> 3. Local/Acesso
+                                </h3>
+                                <div class="tr-section-content">${tr.local}</div>
+                            </div>
+
+                            <div class="tr-section">
+                                <h3 class="tr-section-title">
+                                    <i class="fas fa-cogs"></i> 4. Escopo Técnico
+                                </h3>
+                                <div class="tr-section-content">${tr.escopo}</div>
+                            </div>
+
+                            <div class="tr-section">
+                                <h3 class="tr-section-title">
+                                    <i class="fas fa-info-circle"></i> 5. Situação Atual
+                                </h3>
+                                <div class="tr-section-content">${tr.situacaoAtual}</div>
+                            </div>
+
+                            <div class="tr-section">
+                                <h3 class="tr-section-title">
+                                    <i class="fas fa-lightbulb"></i> 6. Situação Proposta
+                                </h3>
+                                <div class="tr-section-content">${tr.situacaoProposta}</div>
+                            </div>
+
+                            <div class="tr-section">
+                                <h3 class="tr-section-title">
+                                    <i class="fas fa-file-alt"></i> 7. Especificação Técnica
+                                </h3>
+                                <div class="tr-section-content">${tr.especificacao}</div>
+                            </div>
+
+                            ${tr.premissas ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-exclamation-triangle"></i> 8. Premissas, Requisitos e Restrições
+                                    </h3>
+                                    <div class="tr-section-content">${tr.premissas}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.planilhaQuantidade ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-calculator"></i> 9. Planilha de Quantidade
+                                    </h3>
+                                    <div class="tr-section-content">${tr.planilhaQuantidade}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tabelaServicos}
+
+                            ${tr.escopoGeral ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-globe"></i> 10. Escopo Geral
+                                    </h3>
+                                    <div class="tr-section-content">${tr.escopoGeral}</div>
+                                </div>
+                            ` : ''}
+
+                            <div class="tr-section">
+                                <h3 class="tr-section-title">
+                                    <i class="fas fa-clock"></i> 11. Prazos
+                                </h3>
+                                <div class="tr-section-content">${tr.prazos || tr.prazo || 'A definir'}</div>
+                            </div>
+
+                            ${matrizResp}
+
+                            ${tr.mobilizacao ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-hard-hat"></i> 12. Mobilização, Segurança e Saúde do Trabalho
+                                    </h3>
+                                    <div class="tr-section-content">${tr.mobilizacao}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.canteiro ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-home"></i> 13. Canteiro de Obras e Infraestrutura Temporárias
+                                    </h3>
+                                    <div class="tr-section-content">${tr.canteiro}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.credenciamento ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-plane"></i> 14. Credenciamento Aeroportuário
+                                    </h3>
+                                    <div class="tr-section-content">${tr.credenciamento}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.meioAmbiente ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-leaf"></i> 15. Meio Ambiente
+                                    </h3>
+                                    <div class="tr-section-content">${tr.meioAmbiente}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.engenharia ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-drafting-compass"></i> 16. Engenharia
+                                    </h3>
+                                    <div class="tr-section-content">${tr.engenharia}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.aquisicoes ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-shopping-cart"></i> 17. Aquisições
+                                    </h3>
+                                    <div class="tr-section-content">${tr.aquisicoes}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.planejamentoGestao ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-chart-line"></i> 18. Planejamento/Gestão de Contratos
+                                    </h3>
+                                    <div class="tr-section-content">${tr.planejamentoGestao}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.planejamentoExecutivo ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-project-diagram"></i> 19. Planejamento Executivo
+                                    </h3>
+                                    <div class="tr-section-content">${tr.planejamentoExecutivo}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.testes ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-vial"></i> 20. Testes, Comissionamento e Treinamento
+                                    </h3>
+                                    <div class="tr-section-content">${tr.testes}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.encerramento ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-flag-checkered"></i> 21. Ao Encerramento da Obra
+                                    </h3>
+                                    <div class="tr-section-content">${tr.encerramento}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.cap ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-file-contract"></i> 22. Certificado de Aceitação Provisória (CAP)
+                                    </h3>
+                                    <div class="tr-section-content">${tr.cap}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.caf ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-award"></i> 23. Certificado de Aceitação Final (CAF)
+                                    </h3>
+                                    <div class="tr-section-content">${tr.caf}</div>
+                                </div>
+                            ` : ''}
+
+                            ${tr.garantia ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-shield-alt"></i> 24. Garantia
+                                    </h3>
+                                    <div class="tr-section-content">${tr.garantia}</div>
+                                </div>
+                            ` : ''}
+
+                            <div class="tr-section">
+                                <h3 class="tr-section-title">
+                                    <i class="fas fa-balance-scale"></i> 25. Critérios de Avaliação de Propostas
+                                </h3>
+                                <div class="tr-section-content">${tr.criterios}</div>
+                            </div>
+
+                            ${tr.anexos ? `
+                                <div class="tr-section">
+                                    <h3 class="tr-section-title">
+                                        <i class="fas fa-paperclip"></i> 26. Anexos
+                                    </h3>
+                                    <div class="tr-section-content">${tr.anexos}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="tr-modal-footer">
+                            <button class="btn btn-secondary" onclick="this.closest('.tr-modal-overlay').remove()">
+                                <i class="fas fa-times"></i> Fechar
+                            </button>
+                            <button class="btn btn-warning" onclick="Sistema.baixarTRCompleto('${processoId}')">
+                                <i class="fas fa-download"></i> Baixar TR Completo
+                            </button>
+                            <button class="btn btn-primary" onclick="this.closest('.tr-modal-overlay').remove(); Sistema.abrirFormularioProposta('${processoId}')">
+                                <i class="fas fa-paper-plane"></i> Fazer Proposta
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
             },
 
             // Carregar propostas
@@ -1956,8 +2500,11 @@
                         <button class="btn btn-secondary" onclick="Sistema.fecharModal('modal-detalhes-processo')">
                             <i class="fas fa-times"></i> Fechar
                         </button>
+                        <button class="btn btn-info" onclick="Sistema.visualizarTRCompleto('${processoId}')">
+                            <i class="fas fa-eye"></i> Ver TR Completo
+                        </button>
                         <button class="btn btn-warning" onclick="Sistema.baixarTRCompleto('${processoId}')">
-                            <i class="fas fa-download"></i> Baixar TR Completo
+                            <i class="fas fa-download"></i> Baixar TR
                         </button>
                         ${status === 'ATIVO' ? `
                             <button class="btn btn-primary" onclick="Sistema.fecharModal('modal-detalhes-processo'); Sistema.abrirFormularioProposta('${processoId}')">
@@ -2034,6 +2581,24 @@
             font-weight: bold; 
             color: #2c3e50;
         }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .table th,
+        .table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .table th {
+            background: #3498db;
+            color: white;
+        }
+        .table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
         .footer {
             margin-top: 50px;
             text-align: center;
@@ -2107,24 +2672,181 @@
         <p>${tr.especificacao || 'Detalhamento técnico conforme projeto'}</p>
     </div>
     
-    <div class="section">
-        <div class="section-title">8. PRAZO DE EXECUÇÃO</div>
-        <p>${tr.prazo || tr.prazoExecucao || 'Conforme cronograma do projeto'}</p>
-    </div>
+    ${tr.premissas ? `
+        <div class="section">
+            <div class="section-title">8. PREMISSAS, REQUISITOS E RESTRIÇÕES</div>
+            <p>${tr.premissas}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.planilhaQuantidade ? `
+        <div class="section">
+            <div class="section-title">9. PLANILHA DE QUANTIDADE</div>
+            <p>${tr.planilhaQuantidade}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.servicos && tr.servicos.length > 0 ? `
+        <div class="section">
+            <div class="section-title">TABELA DE SERVIÇOS</div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="10%">Item</th>
+                        <th width="60%">Descrição</th>
+                        <th width="15%">Unidade</th>
+                        <th width="15%">Quantidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tr.servicos.map(s => `
+                        <tr>
+                            <td style="text-align: center;">${s.item}</td>
+                            <td>${s.descricao}</td>
+                            <td style="text-align: center;">${s.unidade}</td>
+                            <td style="text-align: center;">${s.quantidade}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    ` : ''}
+    
+    ${tr.escopoGeral ? `
+        <div class="section">
+            <div class="section-title">10. ESCOPO GERAL</div>
+            <p>${tr.escopoGeral}</p>
+        </div>
+    ` : ''}
     
     <div class="section">
-        <div class="section-title">9. RESPONSABILIDADES</div>
-        <p>${tr.responsabilidades || 'Conforme contrato e legislação aplicável'}</p>
+        <div class="section-title">11. PRAZOS</div>
+        <p>${tr.prazo || tr.prazoExecucao || tr.prazos || 'Conforme cronograma do projeto'}</p>
     </div>
     
+    ${tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0 ? `
+        <div class="section">
+            <div class="section-title">12. MATRIZ DE RESPONSABILIDADE</div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="60%">Item/Atividade</th>
+                        <th width="20%">Contratada</th>
+                        <th width="20%">Contratante</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tr.matrizResponsabilidade.map(item => `
+                        <tr>
+                            <td>${item.item}</td>
+                            <td style="text-align: center;">${item.responsavel === 'contratada' ? '✓' : '-'}</td>
+                            <td style="text-align: center;">${item.responsavel === 'contratante' ? '✓' : '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    ` : ''}
+    
+    ${tr.mobilizacao ? `
+        <div class="section">
+            <div class="section-title">13. MOBILIZAÇÃO, SEGURANÇA E SAÚDE DO TRABALHO</div>
+            <p>${tr.mobilizacao}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.canteiro ? `
+        <div class="section">
+            <div class="section-title">14. CANTEIRO DE OBRAS E INFRAESTRUTURA TEMPORÁRIAS</div>
+            <p>${tr.canteiro}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.credenciamento ? `
+        <div class="section">
+            <div class="section-title">15. CREDENCIAMENTO AEROPORTUÁRIO</div>
+            <p>${tr.credenciamento}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.meioAmbiente ? `
+        <div class="section">
+            <div class="section-title">16. MEIO AMBIENTE</div>
+            <p>${tr.meioAmbiente}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.engenharia ? `
+        <div class="section">
+            <div class="section-title">17. ENGENHARIA</div>
+            <p>${tr.engenharia}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.aquisicoes ? `
+        <div class="section">
+            <div class="section-title">18. AQUISIÇÕES</div>
+            <p>${tr.aquisicoes}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.planejamentoGestao ? `
+        <div class="section">
+            <div class="section-title">19. PLANEJAMENTO/GESTÃO DE CONTRATOS</div>
+            <p>${tr.planejamentoGestao}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.planejamentoExecutivo ? `
+        <div class="section">
+            <div class="section-title">20. PLANEJAMENTO EXECUTIVO</div>
+            <p>${tr.planejamentoExecutivo}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.testes ? `
+        <div class="section">
+            <div class="section-title">21. TESTES, COMISSIONAMENTO E TREINAMENTO</div>
+            <p>${tr.testes}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.encerramento ? `
+        <div class="section">
+            <div class="section-title">22. AO ENCERRAMENTO DA OBRA</div>
+            <p>${tr.encerramento}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.cap ? `
+        <div class="section">
+            <div class="section-title">23. CERTIFICADO DE ACEITAÇÃO PROVISÓRIA (CAP)</div>
+            <p>${tr.cap}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.caf ? `
+        <div class="section">
+            <div class="section-title">24. CERTIFICADO DE ACEITAÇÃO FINAL (CAF)</div>
+            <p>${tr.caf}</p>
+        </div>
+    ` : ''}
+    
+    ${tr.garantia ? `
+        <div class="section">
+            <div class="section-title">25. GARANTIA</div>
+            <p>${tr.garantia}</p>
+        </div>
+    ` : ''}
+    
     <div class="section">
-        <div class="section-title">10. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
+        <div class="section-title">26. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
         <p>${tr.criterios || 'Menor preço global, atendendo às especificações técnicas'}</p>
     </div>
     
     ${tr.anexos ? `
         <div class="section">
-            <div class="section-title">11. ANEXOS</div>
+            <div class="section-title">27. ANEXOS</div>
             <p>${tr.anexos}</p>
         </div>
     ` : ''}
@@ -2184,7 +2906,21 @@
                 
                 // Se existe rascunho, carregar dados
                 if (propostaExistente && propostaExistente.status === 'RASCUNHO') {
-                    document.getElementById('proposta-existente-aviso').innerHTML = `
+                    document.getElementById('prazo-execucao').value = propostaExistente.prazoExecucao || '';
+                    document.getElementById('condicoes-pagamento').value = propostaExistente.condicoesPagamento || '';
+                    document.getElementById('garantia').value = propostaExistente.garantia || '';
+                    document.getElementById('observacoes').value = propostaExistente.observacoes || '';
+                    
+                    // Guardar ID do rascunho
+                    document.getElementById('form-proposta').setAttribute('data-rascunho-id', propostaExistente.id);
+                } else {
+                    document.getElementById('proposta-existente-aviso').innerHTML = '';
+                    document.getElementById('form-proposta').reset();
+                    document.getElementById('form-proposta').removeAttribute('data-rascunho-id');
+                }
+                
+                this.abrirModal('modal-enviar-proposta');
+            },proposta-existente-aviso').innerHTML = `
                         <div class="proposta-status-box proposta-rascunho">
                             <i class="fas fa-info-circle"></i> Você está editando um rascunho salvo anteriormente
                         </div>
@@ -2666,7 +3402,7 @@
         `;
         document.head.appendChild(style);
 
-        console.log('Portal do Fornecedor v3.0 - Sistema integrado com TR completo e rascunhos');
+        console.log('Portal do Fornecedor v4.0 - Sistema integrado com visualização e download de TR completo melhorados');
     </script>
 </body>
 </html>
