@@ -1894,6 +1894,18 @@
             }, 10000);
         }
 
+        // Função para voltar ao dashboard
+        function voltarDashboard() {
+            if (window.fornecedorLogado) {
+                if (confirm('Deseja salvar o rascunho antes de sair?')) {
+                    salvarRascunho();
+                }
+                window.close();
+            } else {
+                history.back();
+            }
+        }
+        
         // ===== INICIALIZAÇÃO =====
         document.addEventListener('DOMContentLoaded', function() {
             calcularCronograma();
