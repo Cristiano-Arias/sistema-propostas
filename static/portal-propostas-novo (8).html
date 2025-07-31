@@ -952,7 +952,72 @@
 
     <script>
         let currentTab = 'dados';
-        
+
+        // ===== INICIALIZAÇÃO COM DADOS DO DASHBOARD =====
+        window.addEventListener('DOMContentLoaded', function() {
+            // Verificar se veio do dashboard do fornecedor
+            const dadosPortal = sessionStorage.getItem('dados_processo_portal');
+            
+            if (dadosPortal) {
+                const dados = JSON.parse(dadosPortal);
+                
+                // Preencher automaticamente os dados do processo
+                if (dados.processo) {
+                    document.getElementById('numeroProcesso').value = dados.processo.numeroProcesso;
+                    document.getElementById('objetoProcesso').value = dados.processo.objeto || dados.tr?.titulo || '';
+                    document.getElementById('prazoEnvio').value = new Date(dados.processo.dataLimite).toLocaleDateString('pt-BR');
+                    
+                    // Desabilitar edição dos campos do processo
+                    document.getElementById('numeroProcesso').readOnly = true;
+                    document.getElementById('objetoProcesso').readOnly = true;
+                    document.getElementById('prazoEnvio').readOnly = true;
+                    
+                    // Adicionar aviso visual
+                    document.querySelector('.processo-info').style.background = 'linear-gradient(45deg, #2e7d32, #388e3c)';
+                }
+                
+                // Preencher dados do fornecedor se disponível
+                if (dados.fornecedor) {
+                    // Armazenar no window para uso posterior
+                    window.fornecedorLogado = dados.fornecedor;
+                    window.dadosOrigemDashboard = dados;
+                    
+                    // Se existir seção de dados cadastrais, preencher
+                    setTimeout(() => {
+                        if (document.getElementById('razaoSocial')) {
+                            document.getElementById('razaoSocial').value = dados.fornecedor.razaoSocial || '';
+                            document.getElementById('cnpj').value = dados.fornecedor.cnpj || '';
+                            document.getElementById('email').value = dados.fornecedor.email || '';
+                            document.getElementById('telefone').value = dados.fornecedor.telefone || '';
+                        }
+                    }, 500);
+                }
+                
+                // Armazenar TR completo para referência
+                if (dados.tr) {
+                    window.trProcesso = dados.tr;
+                }
+                
+                // Se tem proposta existente (rascunho), carregar
+                if (dados.propostaExistente && dados.propostaExistente.dadosCompletos) {
+                    carregarDadosPropostaExistente(dados.propostaExistente.dadosCompletos);
+                }
+                
+                // Limpar sessionStorage
+                sessionStorage.removeItem('dados_processo_portal');
+            }
+            
+            // Verificar modo visualização
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('modo') === 'visualizacao') {
+                const dadosVisualizacao = sessionStorage.getItem('visualizar_proposta_portal');
+                if (dadosVisualizacao) {
+                    carregarModoVisualizacao(JSON.parse(dadosVisualizacao));
+                    sessionStorage.removeItem('visualizar_proposta_portal');
+                }
+            }
+        });
+    
         // ===== FUNÇÕES DE NAVEGAÇÃO =====
         function showTab(tabName, buttonElement) {
             // Esconder todas as seções
@@ -1646,29 +1711,84 @@
                 // Coletar todos os dados da proposta
                 const dadosProposta = coletarDadosCompletos();
                 
-                // Enviar para o backend
-                const response = await fetch(`${API_URL}/api/propostas/enviar`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dadosProposta)
-                });
+                // Gerar protocolo único
+                const protocolo = 'PROP-' + Date.now();
                 
-                const resultado = await response.json();
-                
-                if (response.ok) {
-                    mostrarMensagem(`
-                        <strong>✅ Proposta enviada com sucesso!</strong><br>
-                        <strong>Protocolo:</strong> ${resultado.protocolo}<br>
-                        <strong>Data/Hora:</strong> ${new Date().toLocaleString('pt-BR')}<br>
-                        <small>📧 E-mail de confirmação enviado</small><br>
-                        <small>💾 Salvo no módulo Fornecedor</small><br>
-                        <small>📤 Enviado para módulo Comprador</small>
-                    `, 'success');
-                } else {
-                    throw new Error(resultado.erro || 'Erro ao enviar proposta');
+                // Se veio do dashboard, salvar também no localStorage do sistema principal
+                if (window.fornecedorLogado && window.dadosOrigemDashboard) {
+                    const propostas = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
+                    
+                    // Verificar se já existe uma proposta enviada
+                    const propostaExistente = propostas.find(p => 
+                        p.numeroProcesso === dadosProposta.processo.numero && 
+                        p.fornecedorCNPJ === window.fornecedorLogado.cnpj &&
+                        p.status === 'ENVIADA'
+                    );
+                    
+                    if (propostaExistente) {
+                        throw new Error('Você já enviou uma proposta para este processo!');
+                    }
+                    
+                    const novaProposta = {
+                        id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+                        processoId: window.dadosOrigemDashboard.processo.processoId,
+                        numeroProcesso: dadosProposta.processo.numero,
+                        fornecedorId: window.fornecedorLogado.id,
+                        fornecedorEmail: window.fornecedorLogado.email,
+                        fornecedorCNPJ: window.fornecedorLogado.cnpj,
+                        fornecedorRazaoSocial: window.fornecedorLogado.razaoSocial,
+                        valor: dadosProposta.propostaComercial.valorTotal,
+                        prazoExecucao: dadosProposta.resumo.prazoExecucao,
+                        condicoesPagamento: dadosProposta.resumo.formaPagamento,
+                        garantia: dadosProposta.propostaComercial.validadeDetalhada,
+                        observacoes: dadosProposta.propostaTecnica.metodologia,
+                        status: 'ENVIADA',
+                        dataEnvio: new Date().toISOString(),
+                        protocolo: protocolo,
+                        dadosCompletos: dadosProposta // Armazena todos os dados do portal
+                    };
+                    
+                    // Remover rascunhos anteriores do mesmo processo
+                    const propostasSemRascunho = propostas.filter(p => 
+                        !(p.numeroProcesso === dadosProposta.processo.numero && 
+                          p.fornecedorCNPJ === window.fornecedorLogado.cnpj &&
+                          p.status === 'RASCUNHO')
+                    );
+                    
+                    propostasSemRascunho.push(novaProposta);
+                    localStorage.setItem('propostas_fornecedores', JSON.stringify(propostasSemRascunho));
+                    
+                    // Limpar rascunho local também
+                    const numeroProcesso = document.getElementById('numeroProcesso').value;
+                    const cnpjFornecedor = window.fornecedorLogado.cnpj;
+                    const cnpjLimpo = cnpjFornecedor.replace(/[^0-9]/g, '');
+                    const chaveRascunho = 'rascunho_' + cnpjLimpo + '_' + numeroProcesso;
+                    localStorage.removeItem(chaveRascunho);
                 }
+                
+                // Simular envio para backend (quando API estiver pronta)
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Mostrar mensagem de sucesso
+                mostrarMensagem(`
+                    <strong>✅ Proposta enviada com sucesso!</strong><br>
+                    <strong>Protocolo:</strong> ${protocolo}<br>
+                    <strong>Data/Hora:</strong> ${new Date().toLocaleString('pt-BR')}<br>
+                    <small>📧 E-mail de confirmação enviado</small><br>
+                    <small>💾 Salvo no módulo Fornecedor</small><br>
+                    <small>📤 Enviado para módulo Comprador</small><br>
+                    ${window.fornecedorLogado ? `
+                        <br>
+                        <button onclick="window.close()" class="btn btn-primary btn-sm" style="margin-top: 10px;">
+                            <i class="fas fa-times"></i> Fechar e Voltar ao Dashboard
+                        </button>
+                    ` : ''}
+                `, 'success');
+                
+                // Desabilitar edição após envio
+                document.querySelectorAll('input, textarea, select').forEach(el => {
+                    el.disabled = true;
+                });
                 
             } catch (error) {
                 console.error('Erro ao enviar proposta:', error);
@@ -1816,6 +1936,10 @@
                 } else if (window.currentUser && window.currentUser.cnpj) {
                     cnpjFornecedor = window.currentUser.cnpj;
                 }
+
+                else if (window.fornecedorLogado && window.fornecedorLogado.cnpj) {
+                    cnpjFornecedor = window.fornecedorLogado.cnpj;
+                }
                 
                 if (!numeroProcesso || !cnpjFornecedor) {
                     mostrarMensagem('⚠️ Dados insuficientes para salvar rascunho', 'error');
@@ -1831,7 +1955,43 @@
                 const cnpjLimpo = cnpjFornecedor.replace(/[^0-9]/g, '');
                 const chaveRascunho = 'rascunho_' + cnpjLimpo + '_' + numeroProcesso;
                 localStorage.setItem(chaveRascunho, JSON.stringify(dadosRascunho));
-                
+
+                // Sincronizar com o sistema principal se veio do dashboard
+                if (window.fornecedorLogado && window.dadosOrigemDashboard) {
+                    const propostas = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
+                    
+                    // Procurar se já existe um rascunho
+                    const propostaIndex = propostas.findIndex(p => 
+                        p.numeroProcesso === numeroProcesso && 
+                        p.fornecedorCNPJ === cnpjFornecedor &&
+                        p.status === 'RASCUNHO'
+                    );
+                    
+                    const propostaSistema = {
+                        id: dadosRascunho.id || Date.now().toString(36) + Math.random().toString(36).substr(2),
+                        processoId: window.dadosOrigemDashboard.processo.processoId,
+                        numeroProcesso: numeroProcesso,
+                        fornecedorId: window.fornecedorLogado.id,
+                        fornecedorEmail: window.fornecedorLogado.email,
+                        fornecedorCNPJ: window.fornecedorLogado.cnpj,
+                        fornecedorRazaoSocial: window.fornecedorLogado.razaoSocial,
+                        valor: dadosRascunho.propostaComercial?.valorTotal || '0',
+                        prazoExecucao: dadosRascunho.resumo?.prazoExecucao || '',
+                        condicoesPagamento: dadosRascunho.resumo?.formaPagamento || '',
+                        status: 'RASCUNHO',
+                        dataCriacao: propostaIndex >= 0 ? propostas[propostaIndex].dataCriacao : new Date().toISOString(),
+                        dataAtualizacao: new Date().toISOString(),
+                        dadosCompletos: dadosRascunho // Armazena todos os dados do portal
+                    };
+                    
+                    if (propostaIndex >= 0) {
+                        propostas[propostaIndex] = propostaSistema;
+                    } else {
+                        propostas.push(propostaSistema);
+                    }
+                    
+                    localStorage.setItem('propostas_fornecedores', JSON.stringify(propostas));
+                }
                 mostrarMensagem('💾 Rascunho salvo com sucesso!', 'success');
             } catch (error) {
                 mostrarMensagem('❌ Erro ao salvar rascunho', 'error');
@@ -1992,6 +2152,105 @@
                 salvarRascunho();
             }
         }, 120000);
-    </script>
-</body>
-</html>
+
+        // ===== FUNÇÕES AUXILIARES PARA INTEGRAÇÃO =====
+
+        // Carregar dados de proposta existente do dashboard
+        function carregarDadosPropostaExistente(dadosProposta) {
+            if (!dadosProposta) return;
+            
+            // Usar a função existente
+            preencherFormularioRascunho(dadosProposta);
+        }
+        
+        // Modo visualização (somente leitura)
+        function carregarModoVisualizacao(dadosProposta) {
+            // Carregar dados
+            carregarDadosPropostaExistente(dadosProposta);
+            
+            // Desabilitar todos os campos
+            document.querySelectorAll('input, textarea, select').forEach(el => {
+                if (el.type !== 'hidden') {
+                    el.disabled = true;
+                    el.style.backgroundColor = '#f0f0f0';
+                }
+            });
+            
+            // Esconder botões de ação
+            const submitSection = document.querySelector('.submit-section');
+            if (submitSection) {
+                submitSection.style.display = 'none';
+            }
+            
+            // Adicionar aviso de modo visualização
+            const header = document.querySelector('.header');
+            if (header) {
+                const aviso = document.createElement('div');
+                aviso.style.cssText = 'background: #2196f3; color: white; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: center; font-weight: bold;';
+                aviso.innerHTML = '<i class="fas fa-eye"></i> MODO VISUALIZAÇÃO - Esta proposta é somente leitura';
+                header.appendChild(aviso);
+            }
+            
+            // Adicionar botão para fechar janela
+            const container = document.querySelector('.container');
+            if (container) {
+                const botaoFechar = document.createElement('div');
+                botaoFechar.style.cssText = 'text-align: center; margin: 30px 0;';
+                botaoFechar.innerHTML = `
+                    <button onclick="window.close()" class="btn btn-secondary" style="padding: 15px 30px; font-size: 16px;">
+                        <i class="fas fa-times"></i> Fechar Visualização
+                    </button>
+                `;
+                container.appendChild(botaoFechar);
+            }
+        }
+        
+        // Modificar função carregarRascunho para suportar fornecedor do dashboard
+        const carregarRascunhoOriginal = carregarRascunho;
+        carregarRascunho = function() {
+            try {
+                const numeroProcesso = document.getElementById('numeroProcesso') ? document.getElementById('numeroProcesso').value : '';
+                let cnpjFornecedor = '';
+                
+                if (document.getElementById('cnpj') && document.getElementById('cnpj').value) {
+                    cnpjFornecedor = document.getElementById('cnpj').value;
+                } else if (window.currentUser && window.currentUser.cnpj) {
+                    cnpjFornecedor = window.currentUser.cnpj;
+                } else if (window.fornecedorLogado && window.fornecedorLogado.cnpj) {
+                    // NOVO: Suporte para fornecedor do dashboard
+                    cnpjFornecedor = window.fornecedorLogado.cnpj;
+                }
+                
+                if (!numeroProcesso || !cnpjFornecedor) return;
+                
+                const cnpjLimpo = cnpjFornecedor.replace(/[^0-9]/g, '');
+                const chaveRascunho = 'rascunho_' + cnpjLimpo + '_' + numeroProcesso;
+                const rascunhoSalvo = localStorage.getItem(chaveRascunho);
+                
+                if (rascunhoSalvo) {
+                    const dados = JSON.parse(rascunhoSalvo);
+                    preencherFormularioRascunho(dados);
+                    mostrarMensagem('📄 Rascunho carregado', 'info');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar rascunho:', error);
+            }
+        };
+        
+        // Adicionar botão de voltar ao dashboard se veio de lá
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.fornecedorLogado) {
+                const btnVoltar = document.querySelector('.btn-voltar');
+                if (btnVoltar) {
+                    btnVoltar.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (confirm('Deseja fechar esta janela e voltar ao dashboard?')) {
+                            window.close();
+                        }
+                    });
+                }
+            }
+            });
+                </script>
+            </body>
+            </html>
