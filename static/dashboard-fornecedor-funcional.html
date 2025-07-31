@@ -2258,8 +2258,11 @@ Data de geração: ${new Date().toLocaleDateString('pt-BR')}
 
             logout() {
                 if (confirm('Deseja realmente sair do sistema?')) {
+                    // Limpar dados do localStorage
                     localStorage.removeItem(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
-                    location.reload();
+                    
+                    // Redirecionar para a página de autenticação
+                    window.location.href = 'https://portal-proposta.onrender.com/static/sistema-autenticacao-fornecedores.html';
                 }
             }
         };
