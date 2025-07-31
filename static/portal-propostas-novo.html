@@ -943,7 +943,7 @@
 
         <div class="submit-section">
             <button type="button" class="btn-voltar" onclick="voltarDashboard()">← Voltar</button>
-            <button type="button" class="preview-btn" onclick="gerarPreview()">👁️ Visualizar</button>
+            <button type="button" class="preview-btn" onclick="visualizarProposta()">👁️ Visualizar</button>
             <button type="button" class="submit-btn" onclick="enviarProposta()">🚀 Enviar Proposta</button>
             
             <div id="mensagem"></div>
@@ -1631,8 +1631,11 @@
             document.getElementById('valorRevisaoFinal').textContent = valorTotal;
         }
 
-        function gerarPreview() {
+        function visualizarProposta() {
             const protocolo = 'PREV-' + Date.now();
+            
+            // Coletar todos os dados
+            const dados = coletarDadosCompletos();
             
             const preview = window.open('', '_blank');
             preview.document.write(`
@@ -1641,46 +1644,88 @@
                 <head>
                     <title>Preview - Proposta ${protocolo}</title>
                     <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 40px; 
+                            color: #333;
+                            line-height: 1.6;
+                        }
                         h1, h2, h3 { color: #2c3e50; }
-                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background: #3498db; color: white; }
-                        .section { margin: 30px 0; }
-                        .total { font-weight: bold; color: #27ae60; }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin: 20px 0; 
+                        }
+                        th, td { 
+                            border: 1px solid #ddd; 
+                            padding: 8px; 
+                            text-align: left; 
+                        }
+                        th { 
+                            background: #3498db; 
+                            color: white; 
+                        }
+                        .section { 
+                            margin: 30px 0; 
+                            padding: 20px;
+                            background: #f8f9fa;
+                            border-radius: 8px;
+                        }
+                        .total { 
+                            font-weight: bold; 
+                            color: #27ae60; 
+                            font-size: 24px;
+                        }
+                        .header {
+                            text-align: center;
+                            border-bottom: 2px solid #3498db;
+                            padding-bottom: 20px;
+                            margin-bottom: 30px;
+                        }
+                        @media print {
+                            .no-print { display: none; }
+                        }
                     </style>
                 </head>
                 <body>
-                    <h1>PROPOSTA TÉCNICA E COMERCIAL</h1>
-                    <p><strong>Protocolo:</strong> ${protocolo}</p>
-                    <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                    <div class="header">
+                        <h1>PROPOSTA TÉCNICA E COMERCIAL</h1>
+                        <p><strong>Protocolo:</strong> ${protocolo}</p>
+                        <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                        <p><strong>Processo:</strong> ${dados.processo.numero}</p>
+                    </div>
                     
                     <div class="section">
                         <h2>1. DADOS DA EMPRESA</h2>
-                        <p><strong>Razão Social:</strong> ${document.getElementById('razaoSocial').value}</p>
-                        <p><strong>CNPJ:</strong> ${document.getElementById('cnpj').value}</p>
-                        <p><strong>E-mail:</strong> ${document.getElementById('email').value}</p>
+                        <p><strong>Razão Social:</strong> ${dados.dadosCadastrais.razaoSocial}</p>
+                        <p><strong>CNPJ:</strong> ${dados.dadosCadastrais.cnpj}</p>
+                        <p><strong>E-mail:</strong> ${dados.dadosCadastrais.email}</p>
+                        <p><strong>Telefone:</strong> ${dados.dadosCadastrais.telefone}</p>
+                        <p><strong>Endereço:</strong> ${dados.dadosCadastrais.endereco}, ${dados.dadosCadastrais.cidade}</p>
+                        <p><strong>Responsável Técnico:</strong> ${dados.dadosCadastrais.respTecnico} - ${dados.dadosCadastrais.crea}</p>
                     </div>
                     
                     <div class="section">
                         <h2>2. OBJETO</h2>
-                        <p>${document.getElementById('objetoConcorrencia').value}</p>
+                        <p>${dados.propostaTecnica.objetoConcorrencia}</p>
                     </div>
                     
                     <div class="section">
-                        <h2>3. VALOR TOTAL</h2>
-                        <p class="total">R$ ${document.getElementById('valorTotalCalculado').textContent}</p>
+                        <h2>3. PROPOSTA COMERCIAL</h2>
+                        <p class="total">VALOR TOTAL: R$ ${dados.propostaComercial.valorTotal}</p>
+                        <p><strong>Validade da Proposta:</strong> ${dados.propostaComercial.validadeProposta}</p>
+                        <p><strong>Prazo de Execução:</strong> ${dados.propostaTecnica.prazoExecucao}</p>
+                        <p><strong>Condições de Pagamento:</strong> ${dados.resumo.formaPagamento}</p>
                     </div>
                     
-                    <p style="text-align: center; margin-top: 50px;">
-                        <button onclick="window.print()">🖨️ Imprimir</button>
-                        <button onclick="window.close()">❌ Fechar</button>
+                    <p class="no-print" style="text-align: center; margin-top: 50px;">
+                        <button onclick="window.print()" style="padding: 10px 20px; margin: 5px;">🖨️ Imprimir</button>
+                        <button onclick="window.close()" style="padding: 10px 20px; margin: 5px;">❌ Fechar</button>
                     </p>
                 </body>
                 </html>
             `);
         }
-
         async function enviarProposta() {
             // Validações básicas
             const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia'];
