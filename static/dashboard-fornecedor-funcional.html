@@ -2478,7 +2478,7 @@
                 
                 if (!processo) return;
                 
-                // Verificar se já existe proposta ou rascunho
+                // Verificar se já existe proposta
                 const propostas = this.obterPropostasFornecedor();
                 const propostaExistente = propostas.find(p => p.processoId === processoId);
                 
@@ -2487,46 +2487,23 @@
                     return;
                 }
                 
-                this.processoAtual = processo;
-                
                 // Obter TR para mostrar mais informações
                 const tr = this.obterTRDoProcesso(processoId);
                 
-                document.getElementById('processo-info').innerHTML = `
-                    <div class="empresa-info">
-                        <h3><i class="fas fa-file-contract"></i> ${processo.numeroProcesso}</h3>
-                        <p><strong>Modalidade:</strong> ${processo.modalidade}</p>
-                        <p><strong>Objeto:</strong> ${processo.objeto || processo.trTitulo || 'Não informado'}</p>
-                        <p><strong>Data Limite:</strong> ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')}</p>
-                        ${tr ? `<p><strong>Prazo de Execução Sugerido:</strong> ${tr.prazo || 'Conforme proposta'}</p>` : ''}
-                    </div>
-                `;
+                // Salvar dados do processo no sessionStorage para o portal
+                const dadosParaPortal = {
+                    processo: processo,
+                    tr: tr,
+                    fornecedor: this.fornecedorLogado,
+                    origem: 'dashboard-fornecedor',
+                    propostaExistente: propostaExistente || null
+                };
                 
-                // Se existe rascunho, carregar dados
-                if (propostaExistente && propostaExistente.status === 'RASCUNHO') {
-                    document.getElementById('proposta-existente-aviso').innerHTML = `
-                        <div class="proposta-status-box proposta-rascunho">
-                            <i class="fas fa-info-circle"></i> Você está editando um rascunho salvo anteriormente
-                        </div>
-                    `;
-                    
-                    // Preencher formulário com dados do rascunho
-                    document.getElementById('valor-proposta').value = propostaExistente.valor || '';
-                    document.getElementById('prazo-execucao').value = propostaExistente.prazoExecucao || '';
-                    document.getElementById('condicoes-pagamento').value = propostaExistente.condicoesPagamento || '';
-                    document.getElementById('garantia').value = propostaExistente.garantia || '';
-                    document.getElementById('observacoes').value = propostaExistente.observacoes || '';
-                    
-                    // Guardar ID do rascunho
-                    document.getElementById('form-proposta').setAttribute('data-rascunho-id', propostaExistente.id);
-                } else {
-                    document.getElementById('proposta-existente-aviso').innerHTML = '';
-                    document.getElementById('form-proposta').reset();
-                    document.getElementById('form-proposta').removeAttribute('data-rascunho-id');
-                }
+                sessionStorage.setItem('dados_processo_portal', JSON.stringify(dadosParaPortal));
                 
-                this.abrirModal('modal-enviar-proposta');
-            },
+                // Redirecionar para o portal de propostas
+                window.open('portal-propostas-novo.html', '_blank');
+            }
 
             // Salvar rascunho da proposta
             async salvarRascunhoProposta() {
