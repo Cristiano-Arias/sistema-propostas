@@ -1348,12 +1348,6 @@
                     });
                 });
 
-                // Formulário de edição
-                document.getElementById('form-editar-proposta').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.salvarEdicaoProposta();
-                });
-
                 // Fechar modais ao clicar fora
                 window.addEventListener('click', (event) => {
                     if (event.target.classList.contains('modal')) {
