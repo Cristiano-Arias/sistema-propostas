@@ -1927,6 +1927,7 @@
                             <p><strong>Objeto:</strong> ${tr.objetivo}</p>
                             <p><strong>Modalidade Sugerida:</strong> ${tr.modalidade}</p>
                             <p><strong>Prazo de Execução:</strong> ${tr.prazo || tr.prazoExecucao || 'Conforme TR'}</p>
+                            <p><strong>Valor Estimado:</strong> R$ ${this.formatarMoeda(tr.valorEstimado || 0)}</p>
                         </div>
                         
                         <div class="empresa-info">
@@ -1939,9 +1940,75 @@
                             <p style="color: #4a5568; line-height: 1.6;">${tr.especificacao || 'Não informado'}</p>
                         </div>
                         
+                        ${tr.servicos && tr.servicos.length > 0 ? `
+                            <div class="empresa-info">
+                                <h3><i class="fas fa-list"></i> Tabela de Serviços</h3>
+                                <div style="overflow-x: auto; margin-top: 15px;">
+                                    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                                        <thead>
+                                            <tr style="background: #f0f0f0;">
+                                                <th style="padding: 10px; border: 1px solid #e0e0e0; text-align: center;">Item</th>
+                                                <th style="padding: 10px; border: 1px solid #e0e0e0;">Descrição</th>
+                                                <th style="padding: 10px; border: 1px solid #e0e0e0; text-align: center;">Unidade</th>
+                                                <th style="padding: 10px; border: 1px solid #e0e0e0; text-align: center;">Qtd</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${tr.servicos.map((s, idx) => `
+                                                <tr style="${idx % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+                                                    <td style="padding: 8px; border: 1px solid #e0e0e0; text-align: center;">${s.item}</td>
+                                                    <td style="padding: 8px; border: 1px solid #e0e0e0;">${s.descricao}</td>
+                                                    <td style="padding: 8px; border: 1px solid #e0e0e0; text-align: center;">${s.unidade}</td>
+                                                    <td style="padding: 8px; border: 1px solid #e0e0e0; text-align: center;">${s.quantidade}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0 ? `
+                            <div class="empresa-info">
+                                <h3><i class="fas fa-tasks"></i> Matriz de Responsabilidade</h3>
+                                <div style="overflow-x: auto; margin-top: 15px;">
+                                    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                                        <thead>
+                                            <tr style="background: #f0f0f0;">
+                                                <th style="padding: 10px; border: 1px solid #e0e0e0;">Item/Atividade</th>
+                                                <th style="padding: 10px; border: 1px solid #e0e0e0; text-align: center; width: 100px;">Contratada</th>
+                                                <th style="padding: 10px; border: 1px solid #e0e0e0; text-align: center; width: 100px;">Contratante</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${tr.matrizResponsabilidade.map((item, idx) => `
+                                                <tr style="${idx % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+                                                    <td style="padding: 8px; border: 1px solid #e0e0e0;">${item.item}</td>
+                                                    <td style="padding: 8px; border: 1px solid #e0e0e0; text-align: center;">
+                                                        ${item.responsavel === 'contratada' ? '<i class="fas fa-check" style="color: #48bb78;"></i>' : ''}
+                                                    </td>
+                                                    <td style="padding: 8px; border: 1px solid #e0e0e0; text-align: center;">
+                                                        ${item.responsavel === 'contratante' ? '<i class="fas fa-check" style="color: #48bb78;"></i>' : ''}
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
                         <div class="empresa-info">
                             <h3><i class="fas fa-tasks"></i> Critérios de Avaliação</h3>
                             <p style="color: #4a5568; line-height: 1.6;">${tr.criterios || 'Conforme edital'}</p>
+                        </div>
+                        
+                        <div class="empresa-info" style="background: #e3f2fd; border-left: 4px solid #2196f3;">
+                            <h3 style="color: #1976d2;"><i class="fas fa-info-circle"></i> Informações Importantes</h3>
+                            <p style="color: #1565c0; margin-bottom: 10px;"><strong>Prazo de Execução:</strong> ${tr.prazo || tr.prazoExecucao || 'Conforme TR'}</p>
+                            <p style="color: #1565c0; margin-bottom: 10px;"><strong>Local de Execução:</strong> ${tr.local || 'Conforme TR'}</p>
+                            <p style="color: #1565c0; margin-bottom: 10px;"><strong>Garantia Exigida:</strong> ${tr.garantia || 'Conforme especificações'}</p>
+                            <p style="color: #1565c0;"><strong>Visita Técnica:</strong> ${tr.visitaLocal || 'Não especificado'}</p>
                         </div>
                     ` : `
                         <div class="empresa-info">
@@ -1987,156 +2054,409 @@
                 
                 const nomeArquivo = `TR_${tr.numeroTR || processo.numeroProcesso}_Completo.html`;
                 
+                // Renderizar tabelas para o download
+                let tabelaServicosHTML = '';
+                if (tr.servicos && tr.servicos.length > 0) {
+                    tabelaServicosHTML = `
+                        <div class="section">
+                            <div class="section-title">TABELA DE SERVIÇOS</div>
+                            <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                <thead>
+                                    <tr style="background: #e8f5e8;">
+                                        <th style="padding: 10px; text-align: center; width: 60px;">Item</th>
+                                        <th style="padding: 10px;">Descrição do Serviço</th>
+                                        <th style="padding: 10px; text-align: center; width: 80px;">Unidade</th>
+                                        <th style="padding: 10px; text-align: center; width: 100px;">Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.servicos.map((s, idx) => `
+                                        <tr style="${idx % 2 === 0 ? 'background: #f9f9f9;' : ''}">
+                                            <td style="padding: 8px; text-align: center; font-weight: bold;">${s.item}</td>
+                                            <td style="padding: 8px;">${s.descricao}</td>
+                                            <td style="padding: 8px; text-align: center;">${s.unidade}</td>
+                                            <td style="padding: 8px; text-align: center; font-weight: bold;">${s.quantidade}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            
+                let matrizRespHTML = '';
+                if (tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0) {
+                    matrizRespHTML = `
+                        <div class="section">
+                            <div class="section-title">MATRIZ DE RESPONSABILIDADE</div>
+                            <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                <thead>
+                                    <tr style="background: #e8f5e8;">
+                                        <th style="padding: 10px;">Item/Atividade</th>
+                                        <th style="padding: 10px; text-align: center; width: 120px;">Contratada</th>
+                                        <th style="padding: 10px; text-align: center; width: 120px;">Contratante</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.matrizResponsabilidade.map((item, idx) => `
+                                        <tr style="${idx % 2 === 0 ? 'background: #f9f9f9;' : ''}">
+                                            <td style="padding: 8px;">${item.item}</td>
+                                            <td style="padding: 8px; text-align: center; color: #2e7d32; font-size: 18px;">
+                                                ${item.responsavel === 'contratada' ? '✓' : ''}
+                                            </td>
+                                            <td style="padding: 8px; text-align: center; color: #2e7d32; font-size: 18px;">
+                                                ${item.responsavel === 'contratante' ? '✓' : ''}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                
                 // Gerar conteúdo HTML completo do TR
                 const conteudoHTML = `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Termo de Referência - ${tr.numeroTR || processo.numeroProcesso}</title>
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 40px; 
-            line-height: 1.6; 
-            color: #333;
-        }
-        .header { 
-            text-align: center; 
-            margin-bottom: 40px; 
-            border-bottom: 2px solid #333; 
-            padding-bottom: 20px; 
-        }
-        h1, h2, h3 { color: #2c3e50; }
-        .section { 
-            margin-bottom: 30px; 
-            page-break-inside: avoid;
-        }
-        .section-title { 
-            background: #f0f0f0; 
-            padding: 10px; 
-            margin-bottom: 15px; 
-            font-weight: bold; 
-            border-left: 4px solid #3498db;
-        }
-        .info-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 20px; 
-            margin-bottom: 30px; 
-        }
-        .info-item { 
-            padding: 10px; 
-            background: #f9f9f9; 
-            border-radius: 5px;
-        }
-        .info-label { 
-            font-weight: bold; 
-            color: #2c3e50;
-        }
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-        }
-        @media print { 
-            body { margin: 20px; }
-            .section { page-break-inside: avoid; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>TERMO DE REFERÊNCIA</h1>
-        <h2>${tr.numeroTR || 'S/N'}</h2>
-        <h3>${tr.titulo}</h3>
-    </div>
-    
-    <div class="info-grid">
-        <div class="info-item">
-            <span class="info-label">Processo Licitatório:</span><br>
-            ${processo.numeroProcesso}
-        </div>
-        <div class="info-item">
-            <span class="info-label">Modalidade:</span><br>
-            ${tr.modalidade || processo.modalidade}
-        </div>
-        <div class="info-item">
-            <span class="info-label">Valor Estimado:</span><br>
-            R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-        </div>
-        <div class="info-item">
-            <span class="info-label">Data de Criação:</span><br>
-            ${new Date(tr.dataCriacao || processo.dataCriacao).toLocaleDateString('pt-BR')}
-        </div>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">1. OBJETIVO</div>
-        <p>${tr.objetivo || 'Não informado'}</p>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">2. CONFORMIDADE AO TERMO DE REFERÊNCIA</div>
-        <p>${tr.conformidade || 'Conforme normas e regulamentos aplicáveis'}</p>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">3. LOCAL/ACESSO</div>
-        <p>${tr.local || processo.localAbertura || 'A definir'}</p>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">4. ESCOPO TÉCNICO</div>
-        <p>${tr.escopo || 'Conforme especificações técnicas'}</p>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">5. SITUAÇÃO ATUAL</div>
-        <p>${tr.situacaoAtual || 'Conforme diagnóstico apresentado'}</p>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">6. SITUAÇÃO PROPOSTA</div>
-        <p>${tr.situacaoProposta || 'Conforme objetivos do projeto'}</p>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">7. ESPECIFICAÇÃO TÉCNICA</div>
-        <p>${tr.especificacao || 'Detalhamento técnico conforme projeto'}</p>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">8. PRAZO DE EXECUÇÃO</div>
-        <p>${tr.prazo || tr.prazoExecucao || 'Conforme cronograma do projeto'}</p>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">9. RESPONSABILIDADES</div>
-        <p>${tr.responsabilidades || 'Conforme contrato e legislação aplicável'}</p>
-    </div>
-    
-    <div class="section">
-        <div class="section-title">10. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
-        <p>${tr.criterios || 'Menor preço global, atendendo às especificações técnicas'}</p>
-    </div>
-    
-    ${tr.anexos ? `
-        <div class="section">
-            <div class="section-title">11. ANEXOS</div>
-            <p>${tr.anexos}</p>
-        </div>
-    ` : ''}
-    
-    <div class="footer">
-        <p>Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
-        <p>Portal do Fornecedor - Sistema Integrado de Licitações</p>
-    </div>
-</body>
-</html>
-                `;
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <title>Termo de Referência - ${tr.numeroTR || processo.numeroProcesso}</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 40px; 
+                        line-height: 1.8; 
+                        color: #333;
+                    }
+                    .header { 
+                        text-align: center; 
+                        margin-bottom: 40px; 
+                        padding-bottom: 20px; 
+                        border-bottom: 3px solid #667eea;
+                    }
+                    .header h1 {
+                        color: #667eea;
+                        margin-bottom: 10px;
+                    }
+                    .header h2 {
+                        color: #764ba2;
+                        margin-bottom: 5px;
+                    }
+                    h1, h2, h3 { color: #2c3e50; }
+                    .section { 
+                        margin-bottom: 30px; 
+                        page-break-inside: avoid;
+                    }
+                    .section-title { 
+                        background: linear-gradient(to right, #667eea, #764ba2);
+                        color: white;
+                        padding: 12px 20px; 
+                        margin-bottom: 15px; 
+                        font-weight: bold; 
+                        border-radius: 5px;
+                        font-size: 16px;
+                    }
+                    .info-grid { 
+                        display: grid; 
+                        grid-template-columns: 1fr 1fr; 
+                        gap: 20px; 
+                        margin-bottom: 30px; 
+                    }
+                    .info-item { 
+                        padding: 15px; 
+                        background: #f0f4f8; 
+                        border-radius: 8px;
+                        border-left: 4px solid #667eea;
+                    }
+                    .info-label { 
+                        font-weight: bold; 
+                        color: #667eea;
+                        display: block;
+                        margin-bottom: 5px;
+                    }
+                    .info-value {
+                        color: #2c3e50;
+                        font-size: 15px;
+                    }
+                    .content-box {
+                        background: #f8f9fa;
+                        padding: 20px;
+                        border-radius: 8px;
+                        border: 1px solid #e0e0e0;
+                        margin-bottom: 15px;
+                    }
+                    .important-box {
+                        background: #e3f2fd;
+                        padding: 20px;
+                        border-radius: 8px;
+                        border-left: 4px solid #2196f3;
+                        margin: 30px 0;
+                    }
+                    .important-box h3 {
+                        color: #1976d2;
+                        margin-bottom: 15px;
+                    }
+                    table {
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                        border-radius: 5px;
+                        overflow: hidden;
+                    }
+                    .footer {
+                        margin-top: 50px;
+                        padding-top: 20px;
+                        border-top: 2px solid #e0e0e0;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                    }
+                    @media print { 
+                        body { margin: 20px; }
+                        .section { page-break-inside: avoid; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>TERMO DE REFERÊNCIA</h1>
+                    <h2>${tr.numeroTR || 'S/N'}</h2>
+                    <h3 style="color: #4a5568; font-weight: normal; font-size: 20px;">${tr.titulo}</h3>
+                </div>
                 
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Processo Licitatório:</span>
+                        <span class="info-value">${processo.numeroProcesso}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Modalidade:</span>
+                        <span class="info-value">${tr.modalidade || processo.modalidade}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Valor Estimado:</span>
+                        <span class="info-value">R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Data de Criação:</span>
+                        <span class="info-value">${new Date(tr.dataCriacao || processo.dataCriacao).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Visita Técnica:</span>
+                        <span class="info-value">${tr.visitaLocal || 'Não especificado'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Responsável pelo TR:</span>
+                        <span class="info-value">${tr.usuarioNome || 'Não informado'}</span>
+                    </div>
+                </div>
+                
+                <div class="important-box">
+                    <h3>📌 INFORMAÇÕES IMPORTANTES PARA ELABORAÇÃO DA PROPOSTA</h3>
+                    <p><strong>Data Limite para Propostas:</strong> ${new Date(processo.dataLimite).toLocaleDateString('pt-BR')} às ${new Date(processo.dataLimite).toLocaleTimeString('pt-BR')}</p>
+                    <p><strong>Local de Abertura:</strong> ${processo.localAbertura}</p>
+                    <p><strong>Prazo de Execução:</strong> ${tr.prazo || tr.prazoExecucao || 'Conforme especificações'}</p>
+                    <p><strong>Garantia Exigida:</strong> ${tr.garantia || 'Conforme normas aplicáveis'}</p>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">1. OBJETIVO</div>
+                    <div class="content-box">
+                        <p>${tr.objetivo || 'Não informado'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">2. CONFORMIDADE AO TERMO DE REFERÊNCIA</div>
+                    <div class="content-box">
+                        <p>${tr.conformidade || 'Conforme normas e regulamentos aplicáveis'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">3. LOCAL/ACESSO</div>
+                    <div class="content-box">
+                        <p>${tr.local || processo.localAbertura || 'A definir'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">4. ESCOPO TÉCNICO</div>
+                    <div class="content-box">
+                        <p>${tr.escopo || 'Conforme especificações técnicas'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">5. SITUAÇÃO ATUAL</div>
+                    <div class="content-box">
+                        <p>${tr.situacaoAtual || 'Conforme diagnóstico apresentado'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">6. SITUAÇÃO PROPOSTA</div>
+                    <div class="content-box">
+                        <p>${tr.situacaoProposta || 'Conforme objetivos do projeto'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">7. ESPECIFICAÇÃO TÉCNICA</div>
+                    <div class="content-box">
+                        <p>${tr.especificacao || 'Detalhamento técnico conforme projeto'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">8. PREMISSAS, REQUISITOS E RESTRIÇÕES</div>
+                    <div class="content-box">
+                        <p>${tr.premissas || 'Conforme condições do projeto'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">9. PLANILHA DE QUANTIDADE</div>
+                    <div class="content-box">
+                        <p>${tr.planilhaQuantidade || 'Conforme tabela de serviços abaixo'}</p>
+                    </div>
+                </div>
+                
+                ${tabelaServicosHTML}
+                
+                <div class="section">
+                    <div class="section-title">10. ESCOPO GERAL</div>
+                    <div class="content-box">
+                        <p>${tr.escopoGeral || 'Conforme detalhamento técnico'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">11. PRAZOS</div>
+                    <div class="content-box">
+                        <p>${tr.prazo || tr.prazoExecucao || tr.prazos || 'A definir conforme cronograma'}</p>
+                    </div>
+                </div>
+                
+                ${matrizRespHTML}
+                
+                <div class="section">
+                    <div class="section-title">12. MOBILIZAÇÃO, SEGURANÇA E SAÚDE DO TRABALHO</div>
+                    <div class="content-box">
+                        <p>${tr.mobilizacao || 'Conforme normas de segurança aplicáveis'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">13. CANTEIRO DE OBRAS E INFRAESTRUTURA TEMPORÁRIAS</div>
+                    <div class="content-box">
+                        <p>${tr.canteiro || 'Conforme projeto e especificações'}</p>
+                    </div>
+                </div>
+                
+                ${tr.credenciamento ? `
+                    <div class="section">
+                        <div class="section-title">14. CREDENCIAMENTO AEROPORTUÁRIO</div>
+                        <div class="content-box">
+                            <p>${tr.credenciamento}</p>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="section">
+                    <div class="section-title">15. MEIO AMBIENTE</div>
+                    <div class="content-box">
+                        <p>${tr.meioAmbiente || 'Conforme legislação ambiental vigente'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">16. ENGENHARIA</div>
+                    <div class="content-box">
+                        <p>${tr.engenharia || 'Conforme especificações técnicas de engenharia'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">17. AQUISIÇÕES</div>
+                    <div class="content-box">
+                        <p>${tr.aquisicoes || 'Conforme necessidade do projeto'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">18. PLANEJAMENTO/GESTÃO DE CONTRATOS</div>
+                    <div class="content-box">
+                        <p>${tr.planejamentoGestao || 'Conforme modelo de gestão contratual'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">19. PLANEJAMENTO EXECUTIVO</div>
+                    <div class="content-box">
+                        <p>${tr.planejamentoExecutivo || 'A ser apresentado pela contratada'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">20. TESTES, COMISSIONAMENTO E TREINAMENTO</div>
+                    <div class="content-box">
+                        <p>${tr.testes || 'Conforme normas técnicas aplicáveis'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">21. AO ENCERRAMENTO DA OBRA</div>
+                    <div class="content-box">
+                        <p>${tr.encerramento || 'Conforme procedimentos padrão de encerramento'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">22. CERTIFICADO DE ACEITAÇÃO PROVISÓRIA (CAP)</div>
+                    <div class="content-box">
+                        <p>${tr.cap || 'Emitido após conclusão e vistoria dos serviços'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">23. CERTIFICADO DE ACEITAÇÃO FINAL (CAF)</div>
+                    <div class="content-box">
+                        <p>${tr.caf || 'Emitido após período de garantia e correções'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">24. GARANTIA</div>
+                    <div class="content-box">
+                        <p>${tr.garantia || 'Conforme código civil e normas técnicas aplicáveis'}</p>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">25. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
+                    <div class="content-box">
+                        <p>${tr.criterios || 'Menor preço global, atendendo às especificações técnicas'}</p>
+                    </div>
+                </div>
+                
+                ${tr.anexos ? `
+                    <div class="section">
+                        <div class="section-title">26. ANEXOS</div>
+                        <div class="content-box">
+                            <p>${tr.anexos}</p>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="footer">
+                    <p>Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                    <p><strong>Portal do Fornecedor - Sistema Integrado de Licitações</strong></p>
+                    <p style="margin-top: 10px; font-style: italic;">Este documento contém todas as informações necessárias para elaboração da proposta.</p>
+                </div>
+            </body>
+            </html>
+                `;
+                                
                 // Criar e baixar arquivo
                 const blob = new Blob([conteudoHTML], { type: 'text/html;charset=utf-8' });
                 const url = window.URL.createObjectURL(blob);
