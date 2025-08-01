@@ -965,6 +965,7 @@
 
     <script>
         let currentTab = 'dados';
+        let enviandoProposta = false; // NOVA VARIÁVEL PARA CONTROLAR ENVIO
 
         // ===== INICIALIZAÇÃO COM DADOS DO DASHBOARD =====
         window.addEventListener('DOMContentLoaded', function() {
@@ -1675,8 +1676,7 @@
                             text-align: left; 
                         }
                         th { 
-                            background: #3498db; 
-                            color: white; 
+                            background: #f0f0f0; 
                         }
                         .section { 
                             margin: 30px 0; 
@@ -1740,8 +1740,14 @@
             `);
         }
 
-        // Função para confirmar envio
+        // Função para confirmar envio - CORRIGIDA
         function confirmarEnvio() {
+            // Verificar se já está enviando
+            if (enviandoProposta) {
+                mostrarMensagem('⏳ Aguarde, proposta sendo enviada...', 'warning');
+                return;
+            }
+            
             // Validar campos obrigatórios primeiro
             const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia'];
             let tudoPreenchido = true;
@@ -1766,17 +1772,17 @@
             const prazo = document.getElementById('prazoExecucao').value;
             
             const confirmacao = confirm(`
-        🚀 CONFIRMAR ENVIO DA PROPOSTA FINAL
-        
-        Valor Total: R$ ${valorTotal}
-        Prazo de Execução: ${prazo}
-        
-        ⚠️ ATENÇÃO:
-        - Após o envio, a proposta NÃO poderá ser alterada
-        - Você receberá um protocolo de confirmação
-        - A proposta será enviada ao setor de compras
-        
-        Deseja realmente enviar a proposta?
+🚀 CONFIRMAR ENVIO DA PROPOSTA FINAL
+
+Valor Total: R$ ${valorTotal}
+Prazo de Execução: ${prazo}
+
+⚠️ ATENÇÃO:
+- Após o envio, a proposta NÃO poderá ser alterada
+- Você receberá um protocolo de confirmação
+- A proposta será enviada ao setor de compras
+
+Deseja realmente enviar a proposta?
             `);
             
             if (confirmacao) {
@@ -1784,7 +1790,15 @@
             }
         }
         
+        // Função enviarProposta - CORRIGIDA
         async function enviarProposta() {
+            // Verificar se já está enviando
+            if (enviandoProposta) {
+                return;
+            }
+            
+            enviandoProposta = true;
+            
             // Validações básicas
             const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia'];
             let tudoPreenchido = true;
@@ -1801,11 +1815,12 @@
             
             if (!tudoPreenchido) {
                 mostrarMensagem('Por favor, preencha todos os campos obrigatórios (*)', 'error');
+                enviandoProposta = false;
                 return;
             }
             
             // Mostrar loading
-            const submitBtn = document.querySelector('.submit-btn');
+            const submitBtn = document.querySelector('.submit-btn[onclick="confirmarEnvio()"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<span class="loading"></span> Enviando...';
             submitBtn.disabled = true;
@@ -1821,44 +1836,48 @@
                 if (window.fornecedorLogado && window.dadosOrigemDashboard) {
                     const propostas = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
                     
-                    // Verificar se já existe uma proposta enviada
+                    // Verificar se já existe uma proposta enviada para este processo
                     const propostaExistente = propostas.find(p => 
-                        p.numeroProcesso === dadosProposta.processo.numero && 
-                        p.fornecedorCNPJ === window.fornecedorLogado.cnpj &&
+                        p.processoId === window.dadosOrigemDashboard.processo.processoId && 
+                        p.fornecedorId === window.fornecedorLogado.id &&
                         p.status === 'ENVIADA'
                     );
                     
                     if (propostaExistente) {
-                        throw new Error('Você já enviou uma proposta para este processo!');
+                        throw new Error('Você já enviou uma proposta para este processo! Protocolo: ' + propostaExistente.protocolo);
                     }
                     
+                    // Criar nova proposta com dados completos
                     const novaProposta = {
                         id: Date.now().toString(36) + Math.random().toString(36).substr(2),
                         processoId: window.dadosOrigemDashboard.processo.processoId,
                         numeroProcesso: dadosProposta.processo.numero,
                         fornecedorId: window.fornecedorLogado.id,
-                        fornecedorEmail: window.fornecedorLogado.email,
-                        fornecedorCNPJ: window.fornecedorLogado.cnpj,
-                        fornecedorRazaoSocial: window.fornecedorLogado.razaoSocial,
-                        valor: dadosProposta.propostaComercial.valorTotal,
-                        prazoExecucao: dadosProposta.resumo.prazoExecucao,
-                        condicoesPagamento: dadosProposta.resumo.formaPagamento,
-                        garantia: dadosProposta.propostaComercial.validadeDetalhada,
-                        observacoes: dadosProposta.propostaTecnica.metodologia,
+                        fornecedorEmail: window.fornecedorLogado.email || dadosProposta.dadosCadastrais.email,
+                        fornecedorCNPJ: window.fornecedorLogado.cnpj || dadosProposta.dadosCadastrais.cnpj,
+                        fornecedorRazaoSocial: window.fornecedorLogado.razaoSocial || dadosProposta.dadosCadastrais.razaoSocial,
+                        valor: dadosProposta.propostaComercial.valorTotal || '0,00',
+                        prazoExecucao: dadosProposta.propostaTecnica.prazoExecucao || dadosProposta.resumo.prazoExecucao || '',
+                        condicoesPagamento: dadosProposta.resumo.formaPagamento || '',
+                        garantia: dadosProposta.propostaTecnica.garantias || '',
+                        observacoes: dadosProposta.propostaTecnica.metodologia || '',
                         status: 'ENVIADA',
                         dataEnvio: new Date().toISOString(),
                         protocolo: protocolo,
-                        dadosCompletos: dadosProposta // Armazena todos os dados do portal
+                        dadosCompletos: dadosProposta // IMPORTANTE: Armazena todos os dados do portal
                     };
                     
-                    // Remover rascunhos anteriores do mesmo processo
+                    // Remover TODOS os rascunhos anteriores do mesmo processo e fornecedor
                     const propostasSemRascunho = propostas.filter(p => 
-                        !(p.numeroProcesso === dadosProposta.processo.numero && 
-                          p.fornecedorCNPJ === window.fornecedorLogado.cnpj &&
+                        !(p.processoId === window.dadosOrigemDashboard.processo.processoId && 
+                          p.fornecedorId === window.fornecedorLogado.id &&
                           p.status === 'RASCUNHO')
                     );
                     
+                    // Adicionar nova proposta
                     propostasSemRascunho.push(novaProposta);
+                    
+                    // Salvar no localStorage
                     localStorage.setItem('propostas_fornecedores', JSON.stringify(propostasSemRascunho));
                     
                     // Limpar rascunho local também
@@ -1904,6 +1923,7 @@
                 // Restaurar botão
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                enviandoProposta = false;
             }
         }
 
@@ -2050,9 +2070,7 @@
                     cnpjFornecedor = document.getElementById('cnpj').value;
                 } else if (window.currentUser && window.currentUser.cnpj) {
                     cnpjFornecedor = window.currentUser.cnpj;
-                }
-
-                else if (window.fornecedorLogado && window.fornecedorLogado.cnpj) {
+                } else if (window.fornecedorLogado && window.fornecedorLogado.cnpj) {
                     cnpjFornecedor = window.fornecedorLogado.cnpj;
                 }
                 
@@ -2365,7 +2383,7 @@
                     });
                 }
             }
-            });
-                </script>
-            </body>
-            </html>
+        });
+    </script>
+</body>
+</html>
