@@ -1619,6 +1619,9 @@
                                 <button class="btn btn-success" onclick="analisarPropostas('${processo.id}')">
                                     <i class="fas fa-chart-bar"></i> Analisar Propostas
                                 </button>
+                                <button class="btn btn-primary" onclick="visualizarPropostasDetalhadas('${processo.id}')">
+                                    <i class="fas fa-file-invoice"></i> Ver Propostas Detalhadas
+                                </button>
                             ` : ''}
                             ${processo.status === 'ATIVO' ? `
                                 <button class="btn btn-secondary" onclick="finalizarProcessoLicitatorio('${processo.id}')">
@@ -1740,13 +1743,7 @@
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) modal.remove();
             });
-        }
-        
-        // MODIFICAR a função carregarProcessos para incluir análise de propostas
-        // Adicionar após o botão "Analisar Propostas" (aproximadamente linha 1850)
-        <button class="btn btn-primary" onclick="visualizarPropostaDetalhada('${proposta.id}')">
-            <i class="fas fa-file-invoice"></i> Ver Detalhes
-        </button>
+            }
         
         // Analisar propostas
         function analisarPropostas(processoId) {
