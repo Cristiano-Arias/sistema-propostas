@@ -1135,13 +1135,19 @@
             
             const tr = processo.trVinculado;
             
-            // Gerar HTML do TR completo com TODOS os 25 itens
+            // Verificar se todos os dados do TR estão disponíveis
+            if (!tr || typeof tr !== 'object') {
+                alert('Dados do TR incompletos. Entre em contato com o suporte.');
+                return;
+            }
+            
+            // Gerar HTML do TR completo com TODAS as informações
             const conteudoHTML = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <meta charset="UTF-8">
-                    <title>${tr.numeroTR} - ${tr.titulo}</title>
+                    <title>${tr.numeroTR || 'TR'} - ${tr.titulo || 'Termo de Referência'}</title>
                     <style>
                         body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
                         h1, h2, h3 { color: #333; }
@@ -1152,233 +1158,122 @@
                         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                         th { background: #f0f0f0; }
                         .subsection { margin-left: 20px; margin-top: 15px; }
+                        .campo-valor { margin: 10px 0; }
+                        .campo-valor strong { color: #2c3e50; }
                     </style>
                 </head>
                 <body>
                     <div class="header">
                         <h1>TERMO DE REFERÊNCIA</h1>
-                        <h2>${tr.numeroTR}</h2>
-                        <p><strong>${tr.titulo}</strong></p>
-                        <p>Modalidade: ${tr.modalidade}</p>
-                        <p>Data: ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">1. DADOS DO REQUISITANTE</div>
-                        <p><strong>Unidade:</strong> ${tr.unidade || 'Não informado'}</p>
+                        <h2>${tr.numeroTR || 'Número não informado'}</h2>
+                        <h3>${tr.titulo || 'Título não informado'}</h3>
+                        <p><strong>Data de Elaboração:</strong> ${tr.dataElaboracao || 'Não informada'}</p>
                         <p><strong>Responsável:</strong> ${tr.responsavel || 'Não informado'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">2. OBJETO</div>
-                        <p>${tr.objeto || tr.objetivo}</p>
+                        <div class="section-title">1. OBJETO</div>
+                        <div class="campo-valor">
+                            <strong>Descrição do Objeto:</strong><br>
+                            ${tr.objeto || 'Não informado'}
+                        </div>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">3. JUSTIFICATIVA</div>
-                        <p>${tr.justificativa || 'Conforme necessidade institucional'}</p>
+                        <div class="section-title">2. JUSTIFICATIVA</div>
+                        <div class="campo-valor">
+                            ${tr.justificativa || 'Não informada'}
+                        </div>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">4. ESCOPO TÉCNICO</div>
-                        <p>${tr.escopo}</p>
+                        <div class="section-title">3. ESPECIFICAÇÕES TÉCNICAS</div>
+                        <div class="campo-valor">
+                            <strong>Especificações:</strong><br>
+                            ${tr.especificacoesTecnicas || 'Não informadas'}
+                        </div>
+                        ${tr.especificacoesDetalhadas ? `
+                        <div class="subsection">
+                            <strong>Detalhamento Técnico:</strong><br>
+                            ${tr.especificacoesDetalhadas}
+                        </div>
+                        ` : ''}
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">5. LOCAL DE EXECUÇÃO</div>
-                        <p>${tr.local}</p>
+                        <div class="section-title">4. VALOR ESTIMADO</div>
+                        <div class="campo-valor">
+                            <strong>Valor Total Estimado:</strong> R$ ${tr.valorEstimado || '0,00'}<br>
+                            <strong>Fonte da Estimativa:</strong> ${tr.fonteEstimativa || 'Não informada'}<br>
+                            ${tr.detalhamentoValor ? `<strong>Detalhamento:</strong><br>${tr.detalhamentoValor}` : ''}
+                        </div>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">6. ESPECIFICAÇÃO TÉCNICA</div>
-                        <p>${tr.especificacao || 'Conforme detalhamento técnico anexo'}</p>
+                        <div class="section-title">5. PRAZO DE EXECUÇÃO</div>
+                        <div class="campo-valor">
+                            <strong>Prazo:</strong> ${tr.prazoExecucao || 'Não informado'}<br>
+                            ${tr.cronogramaDetalhado ? `<strong>Cronograma:</strong><br>${tr.cronogramaDetalhado}` : ''}
+                        </div>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">7. TABELA DE SERVIÇOS</div>
-                        ${tr.servicos && tr.servicos.length > 0 ? `
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Descrição</th>
-                                        <th>Unidade</th>
-                                        <th>Quantidade</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tr.servicos.map((s, i) => `
-                                        <tr>
-                                            <td>${i + 1}</td>
-                                            <td>${s.descricao || ''}</td>
-                                            <td>${s.unidade || ''}</td>
-                                            <td>${s.quantidade || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : '<p>Não há serviços especificados</p>'}
+                        <div class="section-title">6. LOCAL DE EXECUÇÃO</div>
+                        <div class="campo-valor">
+                            ${tr.localExecucao || 'Não informado'}
+                        </div>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">8. TABELA DE MATERIAIS</div>
-                        ${tr.materiais && tr.materiais.length > 0 ? `
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Material</th>
-                                        <th>Especificação</th>
-                                        <th>Unidade</th>
-                                        <th>Quantidade</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tr.materiais.map((m, i) => `
-                                        <tr>
-                                            <td>${i + 1}</td>
-                                            <td>${m.material || ''}</td>
-                                            <td>${m.especificacao || ''}</td>
-                                            <td>${m.unidade || ''}</td>
-                                            <td>${m.quantidade || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : '<p>Não há materiais especificados</p>'}
+                        <div class="section-title">7. QUALIFICAÇÃO TÉCNICA</div>
+                        <div class="campo-valor">
+                            ${tr.qualificacaoTecnica || 'Não informada'}
+                        </div>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">9. TABELA DE EQUIPAMENTOS</div>
-                        ${tr.equipamentos && tr.equipamentos.length > 0 ? `
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Equipamento</th>
-                                        <th>Especificação</th>
-                                        <th>Unidade</th>
-                                        <th>Quantidade</th>
-                                        <th>Tempo</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tr.equipamentos.map((e, i) => `
-                                        <tr>
-                                            <td>${i + 1}</td>
-                                            <td>${e.equipamento || ''}</td>
-                                            <td>${e.especificacao || ''}</td>
-                                            <td>${e.unidade || ''}</td>
-                                            <td>${e.quantidade || ''}</td>
-                                            <td>${e.tempo || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : '<p>Não há equipamentos especificados</p>'}
+                        <div class="section-title">8. OBRIGAÇÕES DA CONTRATADA</div>
+                        <div class="campo-valor">
+                            ${tr.obrigacoesContratada || 'Não informadas'}
+                        </div>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">10. PRAZO DE EXECUÇÃO</div>
-                        <p>${tr.prazo || tr.prazos || 'A definir pelo fornecedor'}</p>
+                        <div class="section-title">9. OBRIGAÇÕES DA CONTRATANTE</div>
+                        <div class="campo-valor">
+                            ${tr.obrigacoesContratante || 'Não informadas'}
+                        </div>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">11. CRONOGRAMA</div>
-                        ${tr.cronograma && tr.cronograma.length > 0 ? `
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Atividade</th>
-                                        <th>Duração</th>
-                                        <th>Início</th>
-                                        <th>Fim</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tr.cronograma.map(c => `
-                                        <tr>
-                                            <td>${c.atividade || ''}</td>
-                                            <td>${c.duracao || ''}</td>
-                                            <td>${c.inicio || ''}</td>
-                                            <td>${c.fim || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : '<p>Cronograma a ser definido pelo fornecedor</p>'}
+                        <div class="section-title">10. CRITÉRIOS DE ACEITAÇÃO</div>
+                        <div class="campo-valor">
+                            ${tr.criteriosAceitacao || 'Não informados'}
+                        </div>
                     </div>
                     
+                    ${tr.outrasInformacoes ? `
                     <div class="section">
-                        <div class="section-title">12. CONDIÇÕES DE PAGAMENTO</div>
-                        <p>${tr.condicoesPagamento || 'Conforme contrato'}</p>
+                        <div class="section-title">11. OUTRAS INFORMAÇÕES</div>
+                        <div class="campo-valor">
+                            ${tr.outrasInformacoes}
+                        </div>
                     </div>
+                    ` : ''}
                     
                     <div class="section">
-                        <div class="section-title">13. GARANTIA</div>
-                        <p>${tr.garantia || 'Conforme código civil e normas técnicas aplicáveis'}</p>
+                        <div class="section-title">ANEXOS E DOCUMENTOS</div>
+                        <div class="campo-valor">
+                            ${tr.anexos && tr.anexos.length > 0 ? 
+                                tr.anexos.map(anexo => `<p>• ${anexo}</p>`).join('') : 
+                                'Nenhum anexo informado'
+                            }
+                        </div>
                     </div>
                     
-                    <div class="section">
-                        <div class="section-title">14. OBRIGAÇÕES DA CONTRATADA</div>
-                        <p>${tr.obrigacoesContratada || 'Conforme especificações técnicas e contratuais'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">15. OBRIGAÇÕES DA CONTRATANTE</div>
-                        <p>${tr.obrigacoesContratante || 'Fornecer acesso e condições para execução dos serviços'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">16. REQUISITOS DE QUALIFICAÇÃO TÉCNICA</div>
-                        <p>${tr.qualificacaoTecnica || 'Conforme edital'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">17. CRITÉRIOS DE AVALIAÇÃO</div>
-                        <p>${tr.criterios || 'Menor preço global'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">18. FISCALIZAÇÃO</div>
-                        <p>${tr.fiscalizacao || 'Será designado fiscal do contrato'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">19. PENALIDADES</div>
-                        <p>${tr.penalidades || 'Conforme legislação vigente'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">20. SUBCONTRATAÇÃO</div>
-                        <p>${tr.subcontratacao || 'Não será permitida subcontratação'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">21. OBSERVAÇÕES GERAIS</div>
-                        <p>${tr.observacoes || 'Demais condições conforme edital e contrato'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">22. ANEXOS</div>
-                        <p>${tr.anexos || 'Não há anexos'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">23. APROVAÇÕES</div>
-                        <p><strong>Elaborado por:</strong> ${tr.elaboradoPor || 'Requisitante'}</p>
-                        <p><strong>Aprovado por:</strong> ${tr.aprovadoPor || 'Aguardando aprovação'}</p>
-                        <p><strong>Data de Aprovação:</strong> ${tr.dataAprovacao ? new Date(tr.dataAprovacao).toLocaleDateString('pt-BR') : 'Pendente'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">24. VIGÊNCIA</div>
-                        <p>${tr.vigencia || 'Conforme contrato'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">25. DISPOSIÇÕES FINAIS</div>
-                        <p>${tr.disposicoesFinais || 'Os casos omissos serão resolvidos pela administração'}</p>
+                    <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
+                        <p>Documento gerado automaticamente em ${new Date().toLocaleString('pt-BR')}</p>
+                        <p>Sistema de Gestão de Propostas - Módulo Fornecedor</p>
                     </div>
                 </body>
                 </html>
