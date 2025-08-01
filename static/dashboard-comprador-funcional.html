@@ -1561,7 +1561,7 @@
                 const dataCriacao = new Date(processo.dataCriacao).toLocaleDateString('pt-BR');
                 
                 // Buscar propostas recebidas para este processo
-                const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS, []);
+                const propostas = SistemaLocal.carregar('propostas_fornecedores', []);
                 const propostasProcesso = propostas.filter(p => p.processoId == processo.id);
                 
                 const statusColor = processo.status === 'ATIVO' ? '#28a745' : '#6c757d';
@@ -1634,6 +1634,121 @@
             container.innerHTML = html;
         }
 
+        // ADICIONAR nova função para visualizar propostas detalhadas
+        function visualizarPropostaDetalhada(propostaId) {
+            const propostas = SistemaLocal.carregar('propostas_comprador', []);
+            const proposta = propostas.find(p => p.id === propostaId);
+            
+            if (!proposta || !proposta.dadosCompletos) {
+                alert('Proposta não encontrada ou sem detalhes disponíveis!');
+                return;
+            }
+            
+            const dados = proposta.dadosCompletos;
+            
+            // Criar modal detalhado
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 1200px;">
+                    <div class="modal-header">
+                        <div>
+                            <h3 style="margin: 0; color: #333;">Análise Detalhada da Proposta - ${proposta.protocolo}</h3>
+                            <p style="margin: 5px 0 0 0; color: #666;">
+                                Fornecedor: ${proposta.fornecedorRazaoSocial} - CNPJ: ${proposta.fornecedorCNPJ}
+                            </p>
+                        </div>
+                        <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body" style="max-height: 600px; overflow-y: auto;">
+                        <!-- Resumo Financeiro -->
+                        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4 style="color: #333; margin-bottom: 15px;">Resumo Financeiro</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div>
+                                    <strong>Valor Total:</strong><br>
+                                    <span style="font-size: 24px; color: #11998e;">R$ ${proposta.valor}</span>
+                                </div>
+                                <div>
+                                    <strong>BDI:</strong><br>
+                                    ${proposta.bdiPercentual || '0'}% = R$ ${proposta.bdiValor || '0,00'}
+                                </div>
+                                <div>
+                                    <strong>Prazo:</strong><br>
+                                    ${proposta.prazoExecucao}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Composição de Custos -->
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4 style="color: #333; margin-bottom: 15px;">Composição de Custos</h4>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">Serviços:</td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6; text-align: right;">
+                                        R$ ${proposta.totalServicos || '0,00'}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">Mão de Obra:</td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6; text-align: right;">
+                                        R$ ${proposta.totalMaoObra || '0,00'}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">Materiais:</td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6; text-align: right;">
+                                        R$ ${proposta.totalMateriais || '0,00'}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">Equipamentos:</td>
+                                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6; text-align: right;">
+                                        R$ ${proposta.totalEquipamentos || '0,00'}
+                                    </td>
+                                </tr>
+                                <tr style="font-weight: bold;">
+                                    <td style="padding: 10px;">TOTAL:</td>
+                                    <td style="padding: 10px; text-align: right;">R$ ${proposta.valor}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Ações -->
+                        <div style="margin-top: 20px;">
+                            <button class="btn btn-success" onclick="aprovarProposta('${proposta.id}')">
+                                <i class="fas fa-check"></i> Aprovar Proposta
+                            </button>
+                            <button class="btn btn-info" onclick="gerarRelatorioComparativo('${proposta.processoId}')">
+                                <i class="fas fa-chart-bar"></i> Análise Comparativa
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary btn-fechar-modal">Fechar</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Event listeners
+            modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
+                btn.addEventListener('click', () => modal.remove());
+            });
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
+        
+        // MODIFICAR a função carregarProcessos para incluir análise de propostas
+        // Adicionar após o botão "Analisar Propostas" (aproximadamente linha 1850)
+        <button class="btn btn-primary" onclick="visualizarPropostaDetalhada('${proposta.id}')">
+            <i class="fas fa-file-invoice"></i> Ver Detalhes
+        </button>
+        
         // Analisar propostas
         function analisarPropostas(processoId) {
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS, []);
