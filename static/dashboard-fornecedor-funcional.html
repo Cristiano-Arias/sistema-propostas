@@ -1504,6 +1504,60 @@
                                 <p><strong>Condições de Pagamento:</strong> ${dados.resumo?.formaPagamento || proposta.condicoesPagamento || 'A definir'}</p>
                                 <p><strong>Validade da Proposta:</strong> ${dados.propostaComercial?.validadeProposta || '60 dias'}</p>
                             </div>
+
+                            ${dados.propostaComercial?.servicos?.length > 0 ? `
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 15px;">Detalhamento de Serviços</h4>
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr style="background: #e9ecef;">
+                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Item</th>
+                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Descrição</th>
+                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Qtd</th>
+                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Valor Unit.</th>
+                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${dados.propostaComercial.servicos.map(servico => `
+                                                <tr>
+                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${servico[0]}</td>
+                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${servico[1]}</td>
+                                                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">${servico[3]}</td>
+                                                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">R$ ${servico[4]}</td>
+                                                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">R$ ${servico[5]}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : ''}
+                            
+                            ${dados.propostaTecnica?.cronograma?.length > 0 ? `
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 15px;">Cronograma de Execução</h4>
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr style="background: #e9ecef;">
+                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Atividade</th>
+                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Duração</th>
+                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Início</th>
+                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Fim</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${dados.propostaTecnica.cronograma.map(item => `
+                                                <tr>
+                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${item[0]}</td>
+                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${item[1]} dias</td>
+                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${item[2]}</td>
+                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${item[3]}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : ''}
                             
                             ${dados.propostaTecnica ? `
                                 <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
