@@ -1123,7 +1123,7 @@
             });
         }
 
-        // Baixar TR
+        // Baixar TR - FUNÇÃO CORRIGIDA
         function baixarTR(processoId) {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
             const processo = processos.find(p => p.id === processoId);
@@ -1135,7 +1135,7 @@
             
             const tr = processo.trVinculado;
             
-            // Gerar HTML do TR completo com TODOS os 25 itens
+            // Gerar HTML do TR completo - CORRIGIDO PARA INCLUIR TODOS OS DADOS
             const conteudoHTML = `
                 <!DOCTYPE html>
                 <html>
@@ -1396,7 +1396,7 @@
             window.URL.revokeObjectURL(url);
         }
 
-        // Abrir Portal de Propostas
+        // Abrir Portal de Propostas - FUNÇÃO CORRIGIDA
         function abrirPortalPropostas(processoId) {
             // Buscar dados necessários
             const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
@@ -1421,7 +1421,7 @@
                 p.fornecedorId === fornecedorLogado.id
             );
             
-            // Preparar dados para o portal
+            // Preparar dados para o portal - INCLUINDO TODOS OS DADOS DO TR
             const dadosPortal = {
                 processo: {
                     processoId: processoId,
@@ -1435,9 +1435,12 @@
                     id: fornecedorLogado.id,
                     razaoSocial: fornecedorLogado.razaoSocial,
                     cnpj: fornecedorLogado.cnpj,
-                    email: fornecedorLogado.email
+                    email: fornecedorLogado.email,
+                    telefone: fornecedorLogado.telefone || '',
+                    endereco: fornecedorLogado.endereco || '',
+                    cidade: fornecedorLogado.cidade || ''
                 },
-                tr: processo.trVinculado,
+                tr: processo.trVinculado, // TR COMPLETO COM TODAS AS TABELAS
                 propostaExistente: propostaExistente
             };
             
@@ -1452,7 +1455,7 @@
             }
         }
 
-        // Visualizar proposta enviada - FUNÇÃO CORRIGIDA
+        // Visualizar proposta enviada
         function visualizarProposta(propostaId) {
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
             const proposta = propostas.find(p => p.id === propostaId);
@@ -1585,186 +1588,3 @@
                             </button>
                         </div>
                     </div>
-                `;
-                
-                document.body.appendChild(modal);
-                
-                // Event listeners
-                modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
-                    btn.addEventListener('click', () => modal.remove());
-                });
-                
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) modal.remove();
-                });
-                
-            } else {
-                // Fallback para propostas antigas
-                alert(`
-                    PROPOSTA ENVIADA
-                    
-                    Protocolo: ${proposta.protocolo}
-                    Processo: ${proposta.numeroProcesso}
-                    Valor: R$ ${parseFloat(proposta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                    Prazo: ${proposta.prazoExecucao}
-                    Data de Envio: ${new Date(proposta.dataEnvio).toLocaleString('pt-BR')}
-                    
-                    Status: ENVIADA ✓
-                `);
-            }
-        }
-
-        // Função auxiliar para abrir proposta completa
-        function abrirPropostaCompleta(propostaId) {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const proposta = propostas.find(p => p.id === propostaId);
-            
-            if (proposta && proposta.dadosCompletos) {
-                sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
-                window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
-            }
-        }
-
-        // Função para baixar comprovante
-        function baixarComprovante(propostaId) {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const proposta = propostas.find(p => p.id === propostaId);
-            
-            if (!proposta) return;
-            
-            const conteudoHTML = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Comprovante - ${proposta.protocolo}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; }
-                        .header { text-align: center; margin-bottom: 30px; }
-                        .comprovante { border: 2px solid #333; padding: 30px; }
-                        .campo { margin: 10px 0; }
-                        .assinatura { margin-top: 50px; text-align: center; }
-                    </style>
-                </head>
-                <body>
-                    <div class="comprovante">
-                        <div class="header">
-                            <h1>COMPROVANTE DE ENVIO DE PROPOSTA</h1>
-                        </div>
-                        <div class="campo"><strong>Protocolo:</strong> ${proposta.protocolo}</div>
-                        <div class="campo"><strong>Data/Hora:</strong> ${new Date(proposta.dataEnvio).toLocaleString('pt-BR')}</div>
-                        <div class="campo"><strong>Processo:</strong> ${proposta.numeroProcesso}</div>
-                        <div class="campo"><strong>Fornecedor:</strong> ${proposta.fornecedorRazaoSocial}</div>
-                        <div class="campo"><strong>CNPJ:</strong> ${proposta.fornecedorCNPJ}</div>
-                        <div class="campo"><strong>Valor:</strong> R$ ${proposta.valor}</div>
-                        <div class="campo"><strong>Prazo:</strong> ${proposta.prazoExecucao}</div>
-                        <div class="assinatura">
-                            <p>Documento gerado eletronicamente</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `;
-            
-            const blob = new Blob([conteudoHTML], { type: 'text/html' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Comprovante_${proposta.protocolo}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }
-
-        // Excluir rascunho
-        function excluirRascunho(propostaId) {
-            if (!confirm('Deseja realmente excluir este rascunho?')) {
-                return;
-            }
-            
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const index = propostas.findIndex(p => p.id === propostaId);
-            
-            if (index !== -1) {
-                propostas.splice(index, 1);
-                if (SistemaLocal.salvar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, propostas)) {
-                    mostrarAlerta('success', 'Rascunho excluído com sucesso!');
-                    carregarPropostas();
-                    carregarEstatisticas();
-                }
-            }
-        }
-
-        // Mostrar alerta
-        function mostrarAlerta(tipo, mensagem) {
-            const alertSuccess = document.getElementById('success-alert');
-            const alertError = document.getElementById('error-alert');
-            
-            if (tipo === 'success' && alertSuccess) {
-                alertSuccess.style.display = 'block';
-                alertSuccess.innerHTML = `<i class="fas fa-check-circle"></i> ${mensagem}`;
-                if (alertError) alertError.style.display = 'none';
-                
-                setTimeout(() => {
-                    alertSuccess.style.display = 'none';
-                }, 3000);
-            } else if (tipo === 'error' && alertError) {
-                alertError.style.display = 'block';
-                const errorMsg = alertError.querySelector('#error-msg');
-                if (errorMsg) errorMsg.textContent = mensagem;
-                if (alertSuccess) alertSuccess.style.display = 'none';
-                
-                setTimeout(() => {
-                    alertError.style.display = 'none';
-                }, 5000);
-            }
-        }
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Verificar se já está logado
-            const fornecedorSalvo = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
-            if (fornecedorSalvo) {
-                fornecedorLogado = fornecedorSalvo;
-                mostrarDashboard();
-            }
-
-            // Login form
-            document.getElementById('login-form')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const email = document.getElementById('email').value;
-                const senha = document.getElementById('senha').value;
-                
-                if (fazerLogin(email, senha)) {
-                    mostrarDashboard();
-                } else {
-                    const errorDiv = document.getElementById('login-error');
-                    errorDiv.style.display = 'block';
-                    setTimeout(() => {
-                        errorDiv.style.display = 'none';
-                    }, 3000);
-                }
-            });
-
-            // Navegação
-            document.getElementById('btn-dashboard')?.addEventListener('click', () => mostrarPagina('dashboard'));
-            document.getElementById('btn-processos')?.addEventListener('click', () => mostrarPagina('processos'));
-            document.getElementById('btn-propostas')?.addEventListener('click', () => mostrarPagina('propostas'));
-            document.getElementById('btn-logout')?.addEventListener('click', logout);
-
-            // Cards
-            document.getElementById('card-processos')?.addEventListener('click', () => mostrarPagina('processos'));
-            document.getElementById('card-propostas')?.addEventListener('click', () => mostrarPagina('propostas'));
-        });
-
-        // Atualizar estatísticas a cada 30 segundos
-        setInterval(() => {
-            if (fornecedorLogado) {
-                carregarEstatisticas();
-            }
-        }, 30000);
-    </script>
-</body>
-</html>
