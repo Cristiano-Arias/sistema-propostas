@@ -1839,6 +1839,52 @@ Deseja realmente enviar a proposta?
             try {
                 // Coletar todos os dados da proposta
                 const dadosProposta = coletarDadosCompletos();
+
+                // Validar se os dados foram coletados corretamente
+                if (!dadosProposta) {
+                    throw new Error('Erro ao coletar dados da proposta. Verifique se todos os campos estão preenchidos.');
+                }
+                
+                // Garantir que as estruturas de dados existam
+                if (!dadosProposta.propostaComercial) {
+                    dadosProposta.propostaComercial = {
+                        servicos: [],
+                        maoObra: [],
+                        materiaisComercial: [],
+                        equipamentosComercial: [],
+                        bdi: [],
+                        totais: {
+                            servicos: '0,00',
+                            maoObra: '0,00',
+                            materiais: '0,00',
+                            equipamentos: '0,00',
+                            custoDirecto: '0,00',
+                            bdiPercentual: '0,00',
+                            bdiValor: '0,00'
+                        }
+                    };
+                }
+                
+                if (!dadosProposta.propostaTecnica) {
+                    dadosProposta.propostaTecnica = {
+                        cronograma: [],
+                        experiencia: [],
+                        certificacoes: []
+                    };
+                }
+                
+                // Garantir que totais existam
+                if (!dadosProposta.propostaComercial.totais) {
+                    dadosProposta.propostaComercial.totais = {
+                        servicos: '0,00',
+                        maoObra: '0,00',
+                        materiais: '0,00',
+                        equipamentos: '0,00',
+                        custoDirecto: '0,00',
+                        bdiPercentual: '0,00',
+                        bdiValor: '0,00'
+                    };
+                }
                 
                 // Gerar protocolo único
                 const protocolo = 'PROP-' + Date.now();
@@ -1883,22 +1929,22 @@ Deseja realmente enviar a proposta?
                     const propostaComprador = {
                         ...novaProposta,
                         // Adicionar dados detalhados para análise do comprador
-                        servicosDetalhados: dados.propostaComercial.servicos,
-                        maoObraDetalhada: dados.propostaComercial.maoObra,
-                        materiaisDetalhados: dados.propostaComercial.materiaisComercial,
-                        equipamentosDetalhados: dados.propostaComercial.equipamentosComercial,
-                        bdiDetalhado: dados.propostaComercial.bdi,
-                        cronogramaDetalhado: dados.propostaTecnica.cronograma,
-                        experienciaDetalhada: dados.propostaTecnica.experiencia,
-                        certificacoesDetalhadas: dados.propostaTecnica.certificacoes,
+                        servicosDetalhados: dadosProposta.propostaComercial.servicos || [],
+                        maoObraDetalhada: dadosProposta.propostaComercial.maoObra || [],
+                        materiaisDetalhados: dadosProposta.propostaComercial.materiaisComercial || [],
+                        equipamentosDetalhados: dadosProposta.propostaComercial.equipamentosComercial || [],
+                        bdiDetalhado: dadosProposta.propostaComercial.bdi || [],
+                        cronogramaDetalhado: dadosProposta.propostaTecnica.cronograma || [],
+                        experienciaDetalhada: dadosProposta.propostaTecnica.experiencia || [],
+                        certificacoesDetalhadas: dadosProposta.propostaTecnica.certificacoes || [],
                         // Totais calculados
-                        totalServicos: dados.propostaComercial.totais.servicos,
-                        totalMaoObra: dados.propostaComercial.totais.maoObra,
-                        totalMateriais: dados.propostaComercial.totais.materiais,
-                        totalEquipamentos: dados.propostaComercial.totais.equipamentos,
-                        custoDirecto: dados.propostaComercial.totais.custoDirecto,
-                        bdiPercentual: dados.propostaComercial.totais.bdiPercentual,
-                        bdiValor: dados.propostaComercial.totais.bdiValor
+                        totalServicos: dadosProposta.propostaComercial.totais.servicos || '0,00',
+                        totalMaoObra: dadosProposta.propostaComercial.totais.maoObra || '0,00',
+                        totalMateriais: dadosProposta.propostaComercial.totais.materiais || '0,00',
+                        totalEquipamentos: dadosProposta.propostaComercial.totais.equipamentos || '0,00',
+                        custoDirecto: dadosProposta.propostaComercial.totais.custoDirecto || '0,00',
+                        bdiPercentual: dadosProposta.propostaComercial.totais.bdiPercentual || '0,00',
+                        bdiValor: dadosProposta.propostaComercial.totais.bdiValor || '0,00'
                     };
                     
                     propostasComprador.push(propostaComprador);
