@@ -1867,6 +1867,32 @@ Deseja realmente enviar a proposta?
                         dadosCompletos: dadosProposta // IMPORTANTE: Armazena todos os dados do portal
                     };
                     
+                    // Garantir que TODOS os dados sejam salvos para o comprador
+                    const propostasComprador = JSON.parse(localStorage.getItem('propostas_comprador') || '[]');
+                    const propostaComprador = {
+                        ...novaProposta,
+                        // Adicionar dados detalhados para análise do comprador
+                        servicosDetalhados: dados.propostaComercial.servicos,
+                        maoObraDetalhada: dados.propostaComercial.maoObra,
+                        materiaisDetalhados: dados.propostaComercial.materiaisComercial,
+                        equipamentosDetalhados: dados.propostaComercial.equipamentosComercial,
+                        bdiDetalhado: dados.propostaComercial.bdi,
+                        cronogramaDetalhado: dados.propostaTecnica.cronograma,
+                        experienciaDetalhada: dados.propostaTecnica.experiencia,
+                        certificacoesDetalhadas: dados.propostaTecnica.certificacoes,
+                        // Totais calculados
+                        totalServicos: dados.propostaComercial.totais.servicos,
+                        totalMaoObra: dados.propostaComercial.totais.maoObra,
+                        totalMateriais: dados.propostaComercial.totais.materiais,
+                        totalEquipamentos: dados.propostaComercial.totais.equipamentos,
+                        custoDirecto: dados.propostaComercial.totais.custoDirecto,
+                        bdiPercentual: dados.propostaComercial.totais.bdiPercentual,
+                        bdiValor: dados.propostaComercial.totais.bdiValor
+                    };
+                    
+                    propostasComprador.push(propostaComprador);
+                    localStorage.setItem('propostas_comprador', JSON.stringify(propostasComprador));
+                    
                     // Remover TODOS os rascunhos anteriores do mesmo processo e fornecedor
                     const propostasSemRascunho = propostas.filter(p => 
                         !(p.processoId === window.dadosOrigemDashboard.processo.processoId && 
