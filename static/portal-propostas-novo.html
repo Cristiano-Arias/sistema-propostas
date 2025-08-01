@@ -2421,6 +2421,100 @@ Deseja realmente enviar a proposta?
                 }
             }
         });
+
+        function carregarDadosTabelas(dadosTabelas) {
+            // Carregar tabelas da proposta técnica
+            if (dadosTabelas.propostaTecnica) {
+                if (dadosTabelas.propostaTecnica.servicosTecnica) {
+                    carregarDadosNaTabela('servicosTecnicaTable', dadosTabelas.propostaTecnica.servicosTecnica);
+                }
+                if (dadosTabelas.propostaTecnica.equipe) {
+                    carregarDadosNaTabela('equipeTable', dadosTabelas.propostaTecnica.equipe);
+                }
+                if (dadosTabelas.propostaTecnica.materiais) {
+                    carregarDadosNaTabela('materiaisTable', dadosTabelas.propostaTecnica.materiais);
+                }
+                if (dadosTabelas.propostaTecnica.equipamentos) {
+                    carregarDadosNaTabela('equipamentosTable', dadosTabelas.propostaTecnica.equipamentos);
+                }
+                if (dadosTabelas.propostaTecnica.cronograma) {
+                    carregarDadosNaTabela('cronogramaTable', dadosTabelas.propostaTecnica.cronograma);
+                }
+                if (dadosTabelas.propostaTecnica.experiencia) {
+                    carregarDadosNaTabela('experienciaTable', dadosTabelas.propostaTecnica.experiencia);
+                }
+                if (dadosTabelas.propostaTecnica.certificacoes) {
+                    carregarDadosNaTabela('certificacoesTable', dadosTabelas.propostaTecnica.certificacoes);
+                }
+            }
+            
+            // Carregar tabelas da proposta comercial
+            if (dadosTabelas.propostaComercial) {
+                if (dadosTabelas.propostaComercial.servicos) {
+                    carregarDadosNaTabela('servicosTable', dadosTabelas.propostaComercial.servicos);
+                }
+                if (dadosTabelas.propostaComercial.maoObra) {
+                    carregarDadosNaTabela('maoObraTable', dadosTabelas.propostaComercial.maoObra);
+                }
+                if (dadosTabelas.propostaComercial.materiaisComercial) {
+                    carregarDadosNaTabela('materiaisComercialTable', dadosTabelas.propostaComercial.materiaisComercial);
+                }
+                if (dadosTabelas.propostaComercial.equipamentosComercial) {
+                    carregarDadosNaTabela('equipamentosComercialTable', dadosTabelas.propostaComercial.equipamentosComercial);
+                }
+                if (dadosTabelas.propostaComercial.bdi) {
+                    carregarDadosNaTabela('bdiTable', dadosTabelas.propostaComercial.bdi);
+                }
+            }
+            
+            // Recalcular totais após carregar os dados
+            setTimeout(() => {
+                calcularTotais();
+            }, 500);
+        }
+        
+        function carregarDadosNaTabela(tabelaId, dados) {
+            if (!dados || !Array.isArray(dados) || dados.length === 0) {
+                return;
+            }
+            
+            const tabela = document.getElementById(tabelaId);
+            if (!tabela) {
+                console.warn(`Tabela ${tabelaId} não encontrada`);
+                return;
+            }
+            
+            const tbody = tabela.querySelector('tbody');
+            if (!tbody) {
+                console.warn(`Tbody da tabela ${tabelaId} não encontrado`);
+                return;
+            }
+            
+            // Limpar tabela existente (exceto primeira linha se for template)
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((row, index) => {
+                if (index > 0) { // Manter primeira linha como template
+                    row.remove();
+                }
+            });
+            
+            // Adicionar dados
+            dados.forEach((item, index) => {
+                if (index === 0 && rows.length > 0) {
+                    // Preencher primeira linha existente
+                    const primeiraLinha = rows[0];
+                    const inputs = primeiraLinha.querySelectorAll('input, select, textarea');
+                    Object.keys(item).forEach((key, keyIndex) => {
+                        if (inputs[keyIndex]) {
+                            inputs[keyIndex].value = item[key] || '';
+                        }
+                    });
+                } else {
+                    // Adicionar nova linha
+                    adicionarLinhaTabela(tabelaId, item);
+                }
+            });
+        }
     </script>
 </body>
 </html>
