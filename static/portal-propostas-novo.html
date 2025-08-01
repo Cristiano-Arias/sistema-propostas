@@ -1012,9 +1012,20 @@
                     window.trProcesso = dados.tr;
                 }
                 
-                // Se tem proposta existente (rascunho), carregar
+                // Carregar dados da proposta existente
                 if (dados.propostaExistente && dados.propostaExistente.dadosCompletos) {
                     carregarDadosPropostaExistente(dados.propostaExistente.dadosCompletos);
+                }
+                
+                // NOVO: Carregar dados específicos das tabelas
+                const dadosTabelas = sessionStorage.getItem('dados_tabelas_proposta');
+                if (dadosTabelas) {
+                    try {
+                        const tabelas = JSON.parse(dadosTabelas);
+                        carregarDadosTabelas(tabelas);
+                    } catch (error) {
+                        console.error('Erro ao carregar dados das tabelas:', error);
+                    }
                 }
                 
                 // Limpar sessionStorage
