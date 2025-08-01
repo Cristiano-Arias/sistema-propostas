@@ -1452,7 +1452,7 @@
             }
         }
 
-        // Visualizar proposta enviada
+        // Visualizar proposta enviada - FUNÇÃO CORRIGIDA
         function visualizarProposta(propostaId) {
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
             const proposta = propostas.find(p => p.id === propostaId);
@@ -1464,10 +1464,88 @@
             
             // Se a proposta tem dados completos do portal, abrir em modo visualização
             if (proposta.dadosCompletos) {
-                sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
-                window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
+                // Criar modal com todos os dados
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                
+                const dados = proposta.dadosCompletos;
+                const valorTotal = dados.propostaComercial?.valorTotal || proposta.valor || '0,00';
+                
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 900px;">
+                        <div class="modal-header">
+                            <div>
+                                <h3 style="margin: 0; color: #333;">Proposta Enviada - ${proposta.protocolo}</h3>
+                                <p style="margin: 5px 0 0 0; color: #666;">Processo: ${proposta.numeroProcesso}</p>
+                            </div>
+                            <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="background: #d4edda; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <h4 style="color: #155724; margin-bottom: 10px;"><i class="fas fa-check-circle"></i> Status: ENVIADA</h4>
+                                <p style="margin: 5px 0;"><strong>Data de Envio:</strong> ${new Date(proposta.dataEnvio).toLocaleString('pt-BR')}</p>
+                                <p style="margin: 5px 0;"><strong>Protocolo:</strong> ${proposta.protocolo}</p>
+                            </div>
+                            
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                <h4 style="color: #333; margin-bottom: 15px;">Dados da Empresa</h4>
+                                <p><strong>Razão Social:</strong> ${dados.dadosCadastrais?.razaoSocial || proposta.fornecedorRazaoSocial}</p>
+                                <p><strong>CNPJ:</strong> ${dados.dadosCadastrais?.cnpj || proposta.fornecedorCNPJ}</p>
+                                <p><strong>E-mail:</strong> ${dados.dadosCadastrais?.email || proposta.fornecedorEmail}</p>
+                                <p><strong>Telefone:</strong> ${dados.dadosCadastrais?.telefone || 'Não informado'}</p>
+                            </div>
+                            
+                            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                <h4 style="color: #333; margin-bottom: 15px;">Proposta Comercial</h4>
+                                <p style="font-size: 24px; color: #27ae60; font-weight: bold;">
+                                    Valor Total: R$ ${valorTotal}
+                                </p>
+                                <p><strong>Prazo de Execução:</strong> ${dados.propostaTecnica?.prazoExecucao || proposta.prazoExecucao}</p>
+                                <p><strong>Condições de Pagamento:</strong> ${dados.resumo?.formaPagamento || proposta.condicoesPagamento || 'A definir'}</p>
+                                <p><strong>Validade da Proposta:</strong> ${dados.propostaComercial?.validadeProposta || '60 dias'}</p>
+                            </div>
+                            
+                            ${dados.propostaTecnica ? `
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 15px;">Metodologia de Execução</h4>
+                                    <p style="white-space: pre-wrap;">${dados.propostaTecnica.metodologia || 'Não informado'}</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeaa7;">
+                                <p style="margin: 0; color: #856404;">
+                                    <i class="fas fa-info-circle"></i> Esta proposta foi enviada e não pode mais ser alterada.
+                                    Para visualizar todos os detalhes técnicos e comerciais, clique em "Abrir Proposta Completa".
+                                </p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="baixarComprovante('${proposta.id}')">
+                                <i class="fas fa-download"></i> Baixar Comprovante
+                            </button>
+                            <button class="btn btn-primary" onclick="abrirPropostaCompleta('${proposta.id}')">
+                                <i class="fas fa-external-link-alt"></i> Abrir Proposta Completa
+                            </button>
+                            <button class="btn btn-secondary btn-fechar-modal">
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Event listeners
+                modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
+                    btn.addEventListener('click', () => modal.remove());
+                });
+                
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.remove();
+                });
+                
             } else {
-                // Mostrar resumo básico
+                // Fallback para propostas antigas
                 alert(`
                     PROPOSTA ENVIADA
                     
@@ -1480,6 +1558,69 @@
                     Status: ENVIADA ✓
                 `);
             }
+        }
+
+        // Função auxiliar para abrir proposta completa
+        function abrirPropostaCompleta(propostaId) {
+            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+            const proposta = propostas.find(p => p.id === propostaId);
+            
+            if (proposta && proposta.dadosCompletos) {
+                sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
+                window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
+            }
+        }
+
+        // Função para baixar comprovante
+        function baixarComprovante(propostaId) {
+            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+            const proposta = propostas.find(p => p.id === propostaId);
+            
+            if (!proposta) return;
+            
+            const conteudoHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Comprovante - ${proposta.protocolo}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .comprovante { border: 2px solid #333; padding: 30px; }
+                        .campo { margin: 10px 0; }
+                        .assinatura { margin-top: 50px; text-align: center; }
+                    </style>
+                </head>
+                <body>
+                    <div class="comprovante">
+                        <div class="header">
+                            <h1>COMPROVANTE DE ENVIO DE PROPOSTA</h1>
+                        </div>
+                        <div class="campo"><strong>Protocolo:</strong> ${proposta.protocolo}</div>
+                        <div class="campo"><strong>Data/Hora:</strong> ${new Date(proposta.dataEnvio).toLocaleString('pt-BR')}</div>
+                        <div class="campo"><strong>Processo:</strong> ${proposta.numeroProcesso}</div>
+                        <div class="campo"><strong>Fornecedor:</strong> ${proposta.fornecedorRazaoSocial}</div>
+                        <div class="campo"><strong>CNPJ:</strong> ${proposta.fornecedorCNPJ}</div>
+                        <div class="campo"><strong>Valor:</strong> R$ ${proposta.valor}</div>
+                        <div class="campo"><strong>Prazo:</strong> ${proposta.prazoExecucao}</div>
+                        <div class="assinatura">
+                            <p>Documento gerado eletronicamente</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([conteudoHTML], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Comprovante_${proposta.protocolo}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         }
 
         // Excluir rascunho
