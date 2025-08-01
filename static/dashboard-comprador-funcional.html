@@ -584,6 +584,163 @@
             background: #f8f9fa;
         }
 
+        /* Modal de Visualização de TR */
+        .modal-tr-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal-tr-content {
+            background: white;
+            width: 95%;
+            max-width: 1200px;
+            max-height: 90vh;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .modal-tr-header {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-tr-header h2 {
+            margin: 0;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-tr-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+        
+        .tr-tab-navigation {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            overflow-x: auto;
+        }
+        
+        .tr-tab-btn {
+            background: none;
+            border: none;
+            padding: 15px 25px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tr-tab-btn:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .tr-tab-btn.active {
+            background: #11998e;
+            color: white;
+        }
+        
+        .tr-tab-content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .tr-tab-content.active {
+            display: block;
+        }
+        
+        .tr-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid #11998e;
+        }
+        
+        .tr-section-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tr-field-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .tr-field {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .tr-field-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .tr-field-value {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .tr-items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .tr-items-table th {
+            background: #11998e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .tr-items-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
         .best-value {
             background: #d4edda;
             color: #155724;
@@ -623,6 +780,177 @@
                 margin-top: -50px;
                 margin-bottom: 10px;
                 display: inline-flex;
+            }
+            /* Modal de Visualização de TR */
+            .modal-tr-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+    
+            .modal-tr-content {
+                background: white;
+                width: 95%;
+                max-width: 1200px;
+                max-height: 90vh;
+                border-radius: 15px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+    
+            .modal-tr-header {
+                background: linear-gradient(135deg, #11998e, #38ef7d);
+                color: white;
+                padding: 25px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+    
+            .modal-tr-header h2 {
+                margin: 0;
+                font-size: 24px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+    
+            .modal-tr-body {
+                flex: 1;
+                overflow-y: auto;
+                padding: 0;
+            }
+    
+            .tr-tab-navigation {
+                background: #f8f9fa;
+                border-bottom: 2px solid #e9ecef;
+                display: flex;
+                overflow-x: auto;
+            }
+    
+            .tr-tab-btn {
+                background: none;
+                border: none;
+                padding: 15px 25px;
+                font-weight: 600;
+                color: #666;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                white-space: nowrap;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+    
+            .tr-tab-btn:hover {
+                background: #e9ecef;
+                color: #333;
+            }
+    
+            .tr-tab-btn.active {
+                background: #11998e;
+                color: white;
+            }
+    
+            .tr-tab-content {
+                display: none;
+                padding: 30px;
+            }
+    
+            .tr-tab-content.active {
+                display: block;
+            }
+    
+            .tr-section {
+                background: #f8f9fa;
+                border-radius: 10px;
+                padding: 25px;
+                margin-bottom: 20px;
+                border-left: 4px solid #11998e;
+            }
+    
+            .tr-section-title {
+                font-size: 18px;
+                color: #333;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+    
+            .tr-field-group {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 15px;
+                margin-bottom: 15px;
+            }
+    
+            .tr-field {
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                border: 1px solid #e9ecef;
+            }
+    
+            .tr-field-label {
+                font-weight: 600;
+                color: #495057;
+                font-size: 14px;
+                margin-bottom: 8px;
+                display: block;
+            }
+    
+            .tr-field-value {
+                color: #333;
+                font-size: 16px;
+                line-height: 1.5;
+            }
+    
+            .tr-items-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                background: white;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+    
+            .tr-items-table th {
+                background: #11998e;
+                color: white;
+                padding: 12px;
+                text-align: left;
+                font-weight: 600;
+            }
+    
+            .tr-items-table td {
+                padding: 12px;
+                border-bottom: 1px solid #e9ecef;
+            }
+    
+            .status-badge.enviado {
+                background: #fff3cd;
+                color: #856404;
+            }
+    
+            .status-badge.aprovado {
+                background: #d4edda;
+                color: #155724;
+            }
+    
+            .status-badge.reprovado {
+                background: #f8d7da;
+                color: #721c24;
             }
         }
     </style>
@@ -2266,7 +2594,7 @@
             }
         }
 
-        // Visualizar TR
+        // Visualizar TR completo
         function visualizarTR(id) {
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             const tr = trs.find(t => t.id === id);
@@ -2276,7 +2604,287 @@
                 return;
             }
             
-            alert(`Detalhes do TR:\n\nNúmero: ${tr.numeroTR}\nTítulo: ${tr.titulo}\nModalidade: ${tr.modalidade}\nStatus: ${tr.status}\nObjetivo: ${tr.objetivo}`);
+            // Criar modal de visualização
+            const modal = document.createElement('div');
+            modal.className = 'modal-tr-overlay';
+            modal.innerHTML = `
+                <div class="modal-tr-content">
+                    <div class="modal-tr-header">
+                        <h2><i class="fas fa-file-alt"></i> Visualização do TR - ${tr.numeroTR}</h2>
+                        <button class="btn-close" onclick="fecharModalTR()">&times;</button>
+                    </div>
+                    <div class="modal-tr-body">
+                        <div class="tr-tab-navigation">
+                            <button class="tr-tab-btn active" onclick="mostrarAbaTR('dados-gerais', this)">
+                                <i class="fas fa-info-circle"></i> Dados Gerais
+                            </button>
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('especificacoes', this)">
+                                <i class="fas fa-cogs"></i> Especificações
+                            </button>
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('itens', this)">
+                                <i class="fas fa-list"></i> Itens/Serviços
+                            </button>
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('cronograma', this)">
+                                <i class="fas fa-calendar"></i> Cronograma
+                            </button>
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('observacoes', this)">
+                                <i class="fas fa-comments"></i> Observações
+                            </button>
+                        </div>
+                        
+                        <!-- Dados Gerais -->
+                        <div id="tr-dados-gerais" class="tr-tab-content active">
+                            ${gerarDadosGeraisTR(tr)}
+                        </div>
+                        
+                        <!-- Especificações -->
+                        <div id="tr-especificacoes" class="tr-tab-content">
+                            ${gerarEspecificacoesTR(tr)}
+                        </div>
+                        
+                        <!-- Itens -->
+                        <div id="tr-itens" class="tr-tab-content">
+                            ${gerarItensTR(tr)}
+                        </div>
+                        
+                        <!-- Cronograma -->
+                        <div id="tr-cronograma" class="tr-tab-content">
+                            ${gerarCronogramaTR(tr)}
+                        </div>
+                        
+                        <!-- Observações -->
+                        <div id="tr-observacoes" class="tr-tab-content">
+                            ${gerarObservacoesTR(tr)}
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding: 20px; border-top: 1px solid #e9ecef; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-success" onclick="aprovarTR('${tr.id}'); fecharModalTR();">
+                            <i class="fas fa-check"></i> Aprovar TR
+                        </button>
+                        <button class="btn btn-danger" onclick="reprovarTRModal('${tr.id}');">
+                            <i class="fas fa-times"></i> Reprovar TR
+                        </button>
+                        <button class="btn btn-secondary" onclick="fecharModalTR()">
+                            <i class="fas fa-times"></i> Fechar
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Event listener para fechar ao clicar fora
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) fecharModalTR();
+            });
+        }
+        
+        // Função para fechar modal
+        function fecharModalTR() {
+            const modal = document.querySelector('.modal-tr-overlay');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Função para mostrar abas do TR
+        function mostrarAbaTR(aba, botao) {
+            // Esconder todas as abas
+            document.querySelectorAll('.tr-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tr-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Mostrar aba selecionada
+            document.getElementById(`tr-${aba}`).classList.add('active');
+            botao.classList.add('active');
+        }
+        
+        // Gerar seção de dados gerais
+        function gerarDadosGeraisTR(tr) {
+            return `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-info-circle"></i> Informações Básicas
+                    </div>
+                    <div class="tr-field-group">
+                        <div class="tr-field">
+                            <span class="tr-field-label">Número do TR</span>
+                            <div class="tr-field-value">${tr.numeroTR || 'Não informado'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Título</span>
+                            <div class="tr-field-value">${tr.titulo || 'Não informado'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Modalidade</span>
+                            <div class="tr-field-value">${tr.modalidade || 'Não informado'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Status</span>
+                            <div class="tr-field-value">
+                                <span class="status-badge ${tr.status}">
+                                    <i class="fas fa-circle"></i> ${tr.status?.toUpperCase() || 'NÃO DEFINIDO'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Valor Estimado</span>
+                            <div class="tr-field-value">R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Data de Criação</span>
+                            <div class="tr-field-value">${tr.dataCriacao ? new Date(tr.dataCriacao).toLocaleDateString('pt-BR') : 'Não informado'}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-target"></i> Objetivo e Justificativa
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Objetivo</span>
+                        <div class="tr-field-value">${tr.objetivo || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Justificativa</span>
+                        <div class="tr-field-value">${tr.justificativa || 'Não informado'}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Gerar seção de especificações
+        function gerarEspecificacoesTR(tr) {
+            return `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-cogs"></i> Especificações Técnicas
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Especificações Detalhadas</span>
+                        <div class="tr-field-value">${tr.especificacoes || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Requisitos Técnicos</span>
+                        <div class="tr-field-value">${tr.requisitosTecnicos || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Critérios de Avaliação</span>
+                        <div class="tr-field-value">${tr.criteriosAvaliacao || 'Não informado'}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Gerar seção de itens
+        function gerarItensTR(tr) {
+            let html = `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-list"></i> Itens e Serviços
+                    </div>
+            `;
+            
+            if (tr.itens && tr.itens.length > 0) {
+                html += `
+                    <table class="tr-items-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Descrição</th>
+                                <th>Quantidade</th>
+                                <th>Unidade</th>
+                                <th>Valor Unitário</th>
+                                <th>Valor Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                tr.itens.forEach((item, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.descricao || 'Não informado'}</td>
+                            <td>${item.quantidade || 0}</td>
+                            <td>${item.unidade || 'UN'}</td>
+                            <td>R$ ${parseFloat(item.valorUnitario || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                            <td>R$ ${parseFloat(item.valorTotal || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="color: #666; text-align: center; padding: 20px;">Nenhum item cadastrado</p>';
+            }
+            
+            html += '</div>';
+            return html;
+        }
+        
+        // Gerar seção de cronograma
+        function gerarCronogramaTR(tr) {
+            return `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-calendar"></i> Cronograma e Prazos
+                    </div>
+                    <div class="tr-field-group">
+                        <div class="tr-field">
+                            <span class="tr-field-label">Prazo de Execução</span>
+                            <div class="tr-field-value">${tr.prazoExecucao || 'Não informado'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Local de Execução</span>
+                            <div class="tr-field-value">${tr.localExecucao || 'Não informado'}</div>
+                        </div>
+                        <div class="tr-field">
+                            <span class="tr-field-label">Cronograma Detalhado</span>
+                            <div class="tr-field-value">${tr.cronograma || 'Não informado'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Gerar seção de observações
+        function gerarObservacoesTR(tr) {
+            return `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-comments"></i> Observações e Informações Adicionais
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Observações</span>
+                        <div class="tr-field-value">${tr.observacoes || 'Nenhuma observação adicional'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Elaborado por</span>
+                        <div class="tr-field-value">${tr.usuarioNome || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Data de Elaboração</span>
+                        <div class="tr-field-value">${tr.dataCriacao ? new Date(tr.dataCriacao).toLocaleString('pt-BR') : 'Não informado'}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Função para reprovar TR via modal
+        function reprovarTRModal(id) {
+            const motivo = prompt('Digite o motivo da reprovação:');
+            if (motivo) {
+                reprovarTR(id);
+                fecharModalTR();
+            }
         }
 
         // Aprovar TR
