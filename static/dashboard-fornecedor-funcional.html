@@ -1264,7 +1264,8 @@
                     <div class="section">
                         <div class="section-title">ANEXOS E DOCUMENTOS</div>
                         <div class="campo-valor">
-                            ${tr.anexos && tr.anexos.length > 0 ? 
+                            ${typeof tr.anexos === 'string' ? `<p>${tr.anexos}</p>` :
+                              Array.isArray(tr.anexos) && tr.anexos.length > 0 ? 
                                 tr.anexos.map(anexo => `<p>• ${anexo}</p>`).join('') : 
                                 'Nenhum anexo informado'
                             }
