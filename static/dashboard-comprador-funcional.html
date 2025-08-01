@@ -870,9 +870,8 @@
         // Carregar estatísticas do dashboard
         function carregarEstatisticas() {
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS, []);
-            
+            const propostas = SistemaLocal.carregar('propostas_fornecedores', []);
+                        
             // Calcular estatísticas
             const estatisticas = {
                 trsPendentes: trs.filter(tr => tr.status === StatusTR.ENVIADO).length,
@@ -1751,7 +1750,7 @@
         
         // Analisar propostas
         function analisarPropostas(processoId) {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS, []);
+            const propostas = SistemaLocal.carregar('propostas_fornecedores', []);
             const propostasProcesso = propostas.filter(p => p.processoId == processoId);
             
             if (propostasProcesso.length === 0) {
