@@ -1310,13 +1310,13 @@
                 return;
             }
             
-            // Verificar se já existe proposta
+            // Verificar se já existe proposta (incluindo rascunhos)
             const propostaExistente = propostas.find(p => 
                 p.processoId === processoId && 
                 p.fornecedorId === fornecedorLogado.id
             );
             
-            // Preparar dados para o portal
+            // Preparar dados completos para o portal
             const dadosPortal = {
                 processo: {
                     processoId: processoId,
@@ -1330,14 +1330,29 @@
                     id: fornecedorLogado.id,
                     razaoSocial: fornecedorLogado.razaoSocial,
                     cnpj: fornecedorLogado.cnpj,
-                    email: fornecedorLogado.email
+                    email: fornecedorLogado.email,
+                    telefone: fornecedorLogado.telefone || '',
+                    endereco: fornecedorLogado.endereco || '',
+                    cidade: fornecedorLogado.cidade || ''
                 },
                 tr: processo.trVinculado,
-                propostaExistente: propostaExistente
+                propostaExistente: propostaExistente,
+                // NOVO: Incluir dados completos da proposta se existir
+                dadosCompletos: propostaExistente && propostaExistente.dadosCompletos ? propostaExistente.dadosCompletos : null
             };
             
             // Salvar dados no sessionStorage para o portal
             sessionStorage.setItem('dados_processo_portal', JSON.stringify(dadosPortal));
+            
+            // NOVO: Salvar também dados específicos para carregamento de tabelas
+            if (propostaExistente && propostaExistente.dadosCompletos) {
+                sessionStorage.setItem('dados_tabelas_proposta', JSON.stringify({
+                    propostaTecnica: propostaExistente.dadosCompletos.propostaTecnica || {},
+                    propostaComercial: propostaExistente.dadosCompletos.propostaComercial || {},
+                    dadosCadastrais: propostaExistente.dadosCompletos.dadosCadastrais || {},
+                    resumo: propostaExistente.dadosCompletos.resumo || {}
+                }));
+            }
             
             // Abrir portal em nova janela
             const portalWindow = window.open('portal-propostas-novo.html', '_blank');
