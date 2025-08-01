@@ -2011,7 +2011,7 @@ Deseja realmente enviar a proposta?
         }
 
         function coletarDadosCompletos() {
-            return {
+            const dadosColetados = {
                 // Dados cadastrais
                 dadosCadastrais: {
                     razaoSocial: document.getElementById('razaoSocial').value,
@@ -2085,24 +2085,18 @@ Deseja realmente enviar a proposta?
                     dataEnvio: new Date().toISOString(),
                     versaoSistema: '2.0',
                     navegador: navigator.userAgent
-
-                // Validação final antes de retornar
-                const resultado = {
-                    // ... todo o código existente da função ...
-                };
-                
-                // Garantir que propriedades essenciais existam
-                if (!resultado.propostaComercial) {
-                    resultado.propostaComercial = { servicos: [], totais: {} };
-                }
-                if (!resultado.propostaTecnica) {
-                    resultado.propostaTecnica = { cronograma: [], experiencia: [], certificacoes: [] };
-                }
-                
-                return resultado;    
-                
                 }
             };
+            
+            // Garantir que propriedades essenciais existam
+            if (!dadosColetados.propostaComercial) {
+                dadosColetados.propostaComercial = { servicos: [], totais: {} };
+            }
+            if (!dadosColetados.propostaTecnica) {
+                dadosColetados.propostaTecnica = { cronograma: [], experiencia: [], certificacoes: [] };
+            }
+            
+            return dadosColetados;
         }
 
         function mostrarMensagem(texto, tipo) {
