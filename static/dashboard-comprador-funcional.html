@@ -3671,7 +3671,291 @@
                     carregarProcessos();
                 }
             }, 1000);
-        });
+        });// Função para abrir análise detalhada lado a lado
+        function abrirAnaliseDetalhada(processoId) {
+            // Buscar dados existentes
+            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
+            const processo = processos.find(p => p.id === processoId);
+            
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+            
+            // Buscar propostas usando a mesma lógica do sistema
+            const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+            const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+            
+            // Combinar propostas
+            const todasPropostas = [];
+            
+            // Adicionar propostas completas
+            propostasCompletas.filter(p => p.processoId === processoId).forEach(p => {
+                todasPropostas.push(p);
+            });
+            
+            // Adicionar propostas do fornecedor formatadas
+            propostasFornecedores.filter(p => p.processoId === processoId).forEach(pf => {
+                if (!todasPropostas.some(p => p.id === pf.id)) {
+                    const propostaFormatada = {
+                        id: pf.id,
+                        processoId: pf.processoId,
+                        fornecedor: {
+                            id: pf.fornecedorId,
+                            razaoSocial: pf.fornecedorRazaoSocial,
+                            cnpj: pf.fornecedorCNPJ
+                        },
+                        propostaComercial: {
+                            valorTotal: pf.valor,
+                            condicoesPagamento: pf.condicoesPagamento || '30 dias'
+                        },
+                        propostaTecnica: {
+                            prazoExecucao: pf.prazoExecucao,
+                            experiencia: pf.experiencia || 'Conforme documentação',
+                            metodologia: pf.descricao_tecnica || 'Conforme especificações'
+                        },
+                        dataEnvio: pf.dataEnvio,
+                        dadosCompletos: pf.dadosCompletos
+                    };
+                    todasPropostas.push(propostaFormatada);
+                }
+            });
+            
+            if (todasPropostas.length === 0) {
+                alert('Nenhuma proposta encontrada para análise!');
+                return;
+            }
+            
+            // Criar modal com layout lado a lado
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 1400px;">
+                    <div class="modal-header">
+                        <h3 style="margin: 0;">
+                            <i class="fas fa-columns"></i> Análise Comparativa Lado a Lado - ${processo.numeroProcesso}
+                        </h3>
+                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <!-- Análise Comercial -->
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px solid #11998e;">
+                                <h4 style="color: #11998e; margin-bottom: 15px;">
+                                    <i class="fas fa-dollar-sign"></i> Análise Comercial
+                                </h4>
+                                <table class="comparison-table" style="width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>Fornecedor</th>
+                                            <th>Valor Total</th>
+                                            <th>Condições</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${todasPropostas.map(p => {
+                                            const valor = parseFloat(p.propostaComercial?.valorTotal || p.valor || 0);
+                                            const valores = todasPropostas.map(prop => parseFloat(prop.propostaComercial?.valorTotal || prop.valor || 0));
+                                            const menorValor = Math.min(...valores);
+                                            const isMenor = valor === menorValor;
+                                            
+                                            return `
+                                                <tr>
+                                                    <td>${p.fornecedor.razaoSocial}</td>
+                                                    <td class="${isMenor ? 'best-value' : ''}">
+                                                        R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                                        ${isMenor ? '<br><small style="color: #28a745;">(Menor valor)</small>' : ''}
+                                                    </td>
+                                                    <td>${p.propostaComercial?.condicoesPagamento || p.condicoesPagamento || '30 dias'}</td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                                
+                                <div style="margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+                                    <strong>Resumo Comercial:</strong><br>
+                                    ${(() => {
+                                        const valores = todasPropostas.map(p => parseFloat(p.propostaComercial?.valorTotal || p.valor || 0));
+                                        const menorValor = Math.min(...valores);
+                                        const maiorValor = Math.max(...valores);
+                                        const economia = maiorValor - menorValor;
+                                        const percentual = ((economia / maiorValor) * 100).toFixed(2);
+                                        
+                                        return `
+                                            • Menor valor: R$ ${menorValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+                                            • Maior valor: R$ ${maiorValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+                                            • Economia potencial: R$ ${economia.toLocaleString('pt-BR', {minimumFractionDigits: 2})} (${percentual}%)<br>
+                                            • Valor estimado TR: R$ ${parseFloat(processo.trVinculado?.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                        `;
+                                    })()}
+                                </div>
+                            </div>
+                            
+                            <!-- Análise Técnica -->
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px solid #11998e;">
+                                <h4 style="color: #11998e; margin-bottom: 15px;">
+                                    <i class="fas fa-cogs"></i> Análise Técnica
+                                </h4>
+                                <table class="comparison-table" style="width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>Fornecedor</th>
+                                            <th>Prazo</th>
+                                            <th>Experiência</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${todasPropostas.map(p => {
+                                            const prazo = parseInt(p.propostaTecnica?.prazoExecucao || p.prazoExecucao || 999);
+                                            const prazos = todasPropostas.map(prop => parseInt(prop.propostaTecnica?.prazoExecucao || prop.prazoExecucao || 999));
+                                            const menorPrazo = Math.min(...prazos.filter(p => p !== 999));
+                                            const isMenorPrazo = prazo === menorPrazo;
+                                            
+                                            return `
+                                                <tr>
+                                                    <td>${p.fornecedor.razaoSocial}</td>
+                                                    <td class="${isMenorPrazo ? 'best-value' : ''}">
+                                                        ${prazo !== 999 ? prazo + ' dias' : 'N/A'}
+                                                        ${isMenorPrazo ? '<br><small style="color: #28a745;">(Menor prazo)</small>' : ''}
+                                                    </td>
+                                                    <td>${p.propostaTecnica?.experiencia || p.experiencia || 'Não informado'}</td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                                
+                                <div style="margin-top: 15px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                                    <strong>Resumo Técnico:</strong><br>
+                                    ${(() => {
+                                        const prazos = todasPropostas.map(p => parseInt(p.propostaTecnica?.prazoExecucao || p.prazoExecucao || 999)).filter(p => p !== 999);
+                                        const menorPrazo = prazos.length > 0 ? Math.min(...prazos) : 'N/A';
+                                        const maiorPrazo = prazos.length > 0 ? Math.max(...prazos) : 'N/A';
+                                        
+                                        return `
+                                            • Menor prazo: ${menorPrazo !== 'N/A' ? menorPrazo + ' dias' : menorPrazo}<br>
+                                            • Maior prazo: ${maiorPrazo !== 'N/A' ? maiorPrazo + ' dias' : maiorPrazo}<br>
+                                            • Propostas com experiência comprovada: ${todasPropostas.filter(p => p.propostaTecnica?.experiencia || p.experiencia).length}<br>
+                                            • Propostas com metodologia detalhada: ${todasPropostas.filter(p => p.propostaTecnica?.metodologia || p.descricao_tecnica).length}
+                                        `;
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Ranking Geral -->
+                        <div style="margin-top: 20px; background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                            <h4 style="color: #11998e; margin-bottom: 15px;">
+                                <i class="fas fa-trophy"></i> Ranking Geral
+                            </h4>
+                            ${gerarRankingGeral(todasPropostas)}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
+                        <button class="btn btn-primary" onclick="exportarAnaliseDetalhada('${processoId}')">
+                            <i class="fas fa-download"></i> Exportar Análise
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Função para gerar ranking geral
+        function gerarRankingGeral(propostas) {
+            // Calcular pontuações
+            const propostasComPontuacao = propostas.map(proposta => {
+                let pontuacao = 0;
+                
+                // Pontuação comercial (50%)
+                const valores = propostas.map(p => parseFloat(p.propostaComercial?.valorTotal || p.valor || 0));
+                const menorValor = Math.min(...valores);
+                const valor = parseFloat(proposta.propostaComercial?.valorTotal || proposta.valor || 0);
+                if (valor > 0 && menorValor > 0) {
+                    pontuacao += (menorValor / valor) * 50;
+                }
+                
+                // Pontuação técnica (50%)
+                // Prazo (25%)
+                const prazos = propostas.map(p => parseInt(p.propostaTecnica?.prazoExecucao || p.prazoExecucao || 999)).filter(p => p !== 999);
+                const menorPrazo = prazos.length > 0 ? Math.min(...prazos) : 999;
+                const prazo = parseInt(proposta.propostaTecnica?.prazoExecucao || proposta.prazoExecucao || 999);
+                if (prazo !== 999 && menorPrazo !== 999) {
+                    pontuacao += (menorPrazo / prazo) * 25;
+                }
+                
+                // Outros critérios técnicos (25%)
+                if (proposta.propostaTecnica?.experiencia || proposta.experiencia) pontuacao += 12.5;
+                if (proposta.propostaTecnica?.metodologia || proposta.descricao_tecnica) pontuacao += 12.5;
+                
+                return {
+                    ...proposta,
+                    pontuacaoTotal: pontuacao
+                };
+            });
+            
+            // Ordenar por pontuação
+            propostasComPontuacao.sort((a, b) => b.pontuacaoTotal - a.pontuacaoTotal);
+            
+            return `
+                <table class="comparison-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Posição</th>
+                            <th>Fornecedor</th>
+                            <th>Pontuação</th>
+                            <th>Valor</th>
+                            <th>Prazo</th>
+                            <th>Recomendação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${propostasComPontuacao.map((proposta, index) => `
+                            <tr>
+                                <td><strong>${index + 1}º</strong></td>
+                                <td>${proposta.fornecedor.razaoSocial}</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="flex: 1; background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
+                                            <div style="width: ${proposta.pontuacaoTotal}%; height: 100%; background: linear-gradient(135deg, #11998e, #38ef7d);"></div>
+                                        </div>
+                                        <span style="font-weight: bold;">${proposta.pontuacaoTotal.toFixed(1)}%</span>
+                                    </div>
+                                </td>
+                                <td>R$ ${parseFloat(proposta.propostaComercial?.valorTotal || proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                <td>${proposta.propostaTecnica?.prazoExecucao || proposta.prazoExecucao || 'N/A'}</td>
+                                <td>${index === 0 ? '<strong style="color: #28a745;">✓ Recomendado</strong>' : ''}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        // Função para gerar relatório do processo
+        function gerarRelatorioProcesso(processoId) {
+            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
+            const processo = processos.find(p => p.id === processoId);
+            
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+            
+            // Por enquanto, apenas mostrar um alerta
+            // Em produção, isso geraria um PDF
+            alert(`Relatório do processo ${processo.numeroProcesso} será gerado em breve.\n\nEsta funcionalidade exportará um relatório completo em PDF com:\n- Dados do processo\n- Análise comparativa\n- Recomendações\n- Justificativas`);
+        }
+        
+        // Função para exportar análise detalhada
+        function exportarAnaliseDetalhada(processoId) {
+            // Por enquanto, apenas mostrar um alerta
+            alert('A exportação da análise detalhada será implementada em breve.');
+        }
     </script>
 </body>
 </html>
