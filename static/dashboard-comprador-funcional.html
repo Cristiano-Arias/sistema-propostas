@@ -842,14 +842,7 @@
             <button class="nav-item" id="btn-criar-processo">
                 <i class="fas fa-plus-circle"></i> Criar Processo
             </button>
-            <button class="nav-item" id="btn-analise">
-                <i class="fas fa-chart-bar"></i> Análise Comparativa
-            </button>
-            <button class="nav-item" id="btn-relatorios">
-                <i class="fas fa-file-alt"></i> Relatórios
-            </button>
-        </div>
-
+          
         <div class="nav-section">
             <div class="nav-title">SISTEMA</div>
             <button class="nav-item" id="btn-voltar">
@@ -2023,6 +2016,12 @@
                             ${todasPropostas.length > 0 || propostasAntigasProcesso.length > 0 ? `
                                 <button class="btn btn-success" onclick="analisarPropostas('${processo.id}')">
                                     <i class="fas fa-chart-bar"></i> Análise Comparativa
+                                </button>
+                                <button class="btn btn-primary" onclick="abrirAnaliseDetalhada('${processo.id}')">
+                                    <i class="fas fa-columns"></i> Análise Lado a Lado
+                                </button>
+                                <button class="btn btn-info" onclick="gerarRelatorioProcesso('${processo.id}')">
+                                    <i class="fas fa-file-pdf"></i> Gerar Relatório
                                 </button>
                                 <button class="btn btn-primary" onclick="visualizarPropostasDetalhadas('${processo.id}')">
                                     <i class="fas fa-file-invoice"></i> Ver Propostas Detalhadas
