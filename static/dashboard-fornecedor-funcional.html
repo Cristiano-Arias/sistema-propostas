@@ -1361,7 +1361,7 @@
             });
         }
 
-        // Baixar TR
+        // Baixar TR completo com todos os campos
         function baixarTR(processoId) {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
             const processo = processos.find(p => p.id === processoId);
@@ -1373,13 +1373,7 @@
             
             const tr = processo.trVinculado;
             
-            // Verificar se todos os dados do TR estão disponíveis
-            if (!tr || typeof tr !== 'object') {
-                alert('Dados do TR incompletos. Entre em contato com o suporte.');
-                return;
-            }
-            
-            // Gerar HTML do TR completo com TODAS as informações
+            // Gerar HTML do TR completo com TODOS os 26+ campos
             const conteudoHTML = `
                 <!DOCTYPE html>
                 <html>
@@ -1387,17 +1381,62 @@
                     <meta charset="UTF-8">
                     <title>${tr.numeroTR || 'TR'} - ${tr.titulo || 'Termo de Referência'}</title>
                     <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 40px; 
+                            line-height: 1.6;
+                            color: #333;
+                        }
                         h1, h2, h3 { color: #333; }
-                        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-                        .section { margin-bottom: 30px; page-break-inside: avoid; }
-                        .section-title { background: #f0f0f0; padding: 10px; margin-bottom: 15px; font-weight: bold; }
-                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background: #f0f0f0; }
-                        .subsection { margin-left: 20px; margin-top: 15px; }
-                        .campo-valor { margin: 10px 0; }
-                        .campo-valor strong { color: #2c3e50; }
+                        .header { 
+                            text-align: center; 
+                            margin-bottom: 40px; 
+                            border-bottom: 2px solid #333; 
+                            padding-bottom: 20px; 
+                        }
+                        .section { 
+                            margin-bottom: 30px; 
+                            page-break-inside: avoid; 
+                        }
+                        .section-title { 
+                            background: #f0f0f0; 
+                            padding: 10px; 
+                            margin-bottom: 15px; 
+                            font-weight: bold;
+                            font-size: 16px;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin: 20px 0; 
+                        }
+                        th, td { 
+                            border: 1px solid #ddd; 
+                            padding: 8px; 
+                            text-align: left; 
+                        }
+                        th { 
+                            background: #f0f0f0; 
+                            font-weight: bold;
+                        }
+                        .info-grid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 20px;
+                            margin-bottom: 30px;
+                        }
+                        .info-item {
+                            padding: 10px;
+                            background: #f9f9f9;
+                            border-radius: 5px;
+                        }
+                        .info-item strong {
+                            color: #555;
+                        }
+                        @media print {
+                            body { margin: 20px; }
+                            .section { page-break-inside: avoid; }
+                        }
                     </style>
                 </head>
                 <body>
@@ -1405,110 +1444,212 @@
                         <h1>TERMO DE REFERÊNCIA</h1>
                         <h2>${tr.numeroTR || 'Número não informado'}</h2>
                         <h3>${tr.titulo || 'Título não informado'}</h3>
-                        <p><strong>Data de Elaboração:</strong> ${tr.dataElaboracao || 'Não informada'}</p>
-                        <p><strong>Responsável:</strong> ${tr.responsavel || 'Não informado'}</p>
                     </div>
                     
-                    <div class="section">
-                        <div class="section-title">1. OBJETO</div>
-                        <div class="campo-valor">
-                            <strong>Descrição do Objeto:</strong><br>
-                            ${tr.objeto || 'Não informado'}
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <strong>Modalidade Sugerida:</strong> ${tr.modalidade || 'Não informada'}
                         </div>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">2. JUSTIFICATIVA</div>
-                        <div class="campo-valor">
-                            ${tr.justificativa || 'Não informada'}
+                        <div class="info-item">
+                            <strong>Valor Estimado:</strong> R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                         </div>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">3. ESPECIFICAÇÕES TÉCNICAS</div>
-                        <div class="campo-valor">
-                            <strong>Especificações:</strong><br>
-                            ${tr.especificacoesTecnicas || 'Não informadas'}
+                        <div class="info-item">
+                            <strong>Data de Criação:</strong> ${tr.dataCriacao ? new Date(tr.dataCriacao).toLocaleDateString('pt-BR') : 'Não informada'}
                         </div>
-                        ${tr.especificacoesDetalhadas ? `
-                        <div class="subsection">
-                            <strong>Detalhamento Técnico:</strong><br>
-                            ${tr.especificacoesDetalhadas}
-                        </div>
-                        ` : ''}
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">4. VALOR ESTIMADO</div>
-                        <div class="campo-valor">
-                            <strong>Valor Total Estimado:</strong> R$ ${tr.valorEstimado || '0,00'}<br>
-                            <strong>Fonte da Estimativa:</strong> ${tr.fonteEstimativa || 'Não informada'}<br>
-                            ${tr.detalhamentoValor ? `<strong>Detalhamento:</strong><br>${tr.detalhamentoValor}` : ''}
+                        <div class="info-item">
+                            <strong>Responsável:</strong> ${tr.usuarioNome || 'Não informado'}
                         </div>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">5. PRAZO DE EXECUÇÃO</div>
-                        <div class="campo-valor">
-                            <strong>Prazo:</strong> ${tr.prazoExecucao || 'Não informado'}<br>
-                            ${tr.cronogramaDetalhado ? `<strong>Cronograma:</strong><br>${tr.cronogramaDetalhado}` : ''}
-                        </div>
+                        <div class="section-title">1. OBJETIVO</div>
+                        <p>${tr.objetivo || 'Não informado'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">6. LOCAL DE EXECUÇÃO</div>
-                        <div class="campo-valor">
-                            ${tr.localExecucao || 'Não informado'}
-                        </div>
+                        <div class="section-title">2. CONFORMIDADE AO TERMO DE REFERÊNCIA</div>
+                        <p>${tr.conformidade || 'Não informado'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">7. QUALIFICAÇÃO TÉCNICA</div>
-                        <div class="campo-valor">
-                            ${tr.qualificacaoTecnica || 'Não informada'}
-                        </div>
+                        <div class="section-title">3. VISITA AO LOCAL</div>
+                        <p><strong>Tipo de Visita:</strong> ${tr.visitaLocal || 'Não especificado'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">8. OBRIGAÇÕES DA CONTRATADA</div>
-                        <div class="campo-valor">
-                            ${tr.obrigacoesContratada || 'Não informadas'}
-                        </div>
+                        <div class="section-title">4. LOCAL/ACESSO</div>
+                        <p>${tr.local || 'Não informado'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">9. OBRIGAÇÕES DA CONTRATANTE</div>
-                        <div class="campo-valor">
-                            ${tr.obrigacoesContratante || 'Não informadas'}
-                        </div>
+                        <div class="section-title">5. ESCOPO TÉCNICO</div>
+                        <p>${tr.escopo || 'Não informado'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">10. CRITÉRIOS DE ACEITAÇÃO</div>
-                        <div class="campo-valor">
-                            ${tr.criteriosAceitacao || 'Não informados'}
-                        </div>
+                        <div class="section-title">6. SITUAÇÃO ATUAL</div>
+                        <p>${tr.situacaoAtual || 'Não informado'}</p>
                     </div>
                     
-                    ${tr.outrasInformacoes ? `
                     <div class="section">
-                        <div class="section-title">11. OUTRAS INFORMAÇÕES</div>
-                        <div class="campo-valor">
-                            ${tr.outrasInformacoes}
-                        </div>
+                        <div class="section-title">7. SITUAÇÃO PROPOSTA</div>
+                        <p>${tr.situacaoProposta || 'Não informado'}</p>
                     </div>
+                    
+                    <div class="section">
+                        <div class="section-title">8. ESPECIFICAÇÃO TÉCNICA</div>
+                        <p>${tr.especificacao || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">9. PREMISSAS, REQUISITOS E RESTRIÇÕES</div>
+                        <p>${tr.premissas || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">10. PLANILHA DE QUANTIDADE</div>
+                        <p>${tr.planilhaQuantidade || 'Não informado'}</p>
+                    </div>
+                    
+                    ${tr.servicos && tr.servicos.length > 0 ? `
+                        <div class="section">
+                            <div class="section-title">11. TABELA DE SERVIÇOS</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="10%">Item</th>
+                                        <th width="50%">Descrição</th>
+                                        <th width="20%">Unidade</th>
+                                        <th width="20%">Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.servicos.map(s => `
+                                        <tr>
+                                            <td align="center">${s.item}</td>
+                                            <td>${s.descricao}</td>
+                                            <td align="center">${s.unidade}</td>
+                                            <td align="center">${s.quantidade}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     ` : ''}
                     
                     <div class="section">
-                        <div class="section-title">ANEXOS E DOCUMENTOS</div>
-                        <div class="campo-valor">
-                            ${typeof tr.anexos === 'string' ? `<p>${tr.anexos}</p>` :
-                              Array.isArray(tr.anexos) && tr.anexos.length > 0 ? 
-                                tr.anexos.map(anexo => `<p>• ${anexo}</p>`).join('') : 
-                                'Nenhum anexo informado'
-                            }
-                        </div>
+                        <div class="section-title">12. ESCOPO GERAL</div>
+                        <p>${tr.escopoGeral || 'Não informado'}</p>
                     </div>
+                    
+                    <div class="section">
+                        <div class="section-title">13. PRAZOS</div>
+                        <p>${tr.prazos || tr.prazo || 'Não informado'}</p>
+                    </div>
+                    
+                    ${tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0 ? `
+                        <div class="section">
+                            <div class="section-title">14. MATRIZ DE RESPONSABILIDADE</div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="70%">Item/Atividade</th>
+                                        <th width="30%">Responsável</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.matrizResponsabilidade.map(item => `
+                                        <tr>
+                                            <td>${item.item}</td>
+                                            <td align="center">
+                                                ${item.responsavel === 'contratada' ? 'Contratada' : 
+                                                  item.responsavel === 'contratante' ? 'Contratante' : 'N/A'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="section">
+                        <div class="section-title">15. MOBILIZAÇÃO, SEGURANÇA E SAÚDE DO TRABALHO</div>
+                        <p>${tr.mobilizacao || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">16. CANTEIRO DE OBRAS E INFRAESTRUTURA TEMPORÁRIAS</div>
+                        <p>${tr.canteiro || 'Não informado'}</p>
+                    </div>
+                    
+                    ${tr.credenciamento ? `
+                        <div class="section">
+                            <div class="section-title">17. CREDENCIAMENTO AEROPORTUÁRIO</div>
+                            <p>${tr.credenciamento}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '18' : '17'}. MEIO AMBIENTE</div>
+                        <p>${tr.meioAmbiente || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '19' : '18'}. ENGENHARIA</div>
+                        <p>${tr.engenharia || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '20' : '19'}. AQUISIÇÕES</div>
+                        <p>${tr.aquisicoes || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '21' : '20'}. PLANEJAMENTO/GESTÃO DE CONTRATOS</div>
+                        <p>${tr.planejamentoGestao || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '22' : '21'}. PLANEJAMENTO EXECUTIVO</div>
+                        <p>${tr.planejamentoExecutivo || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '23' : '22'}. TESTES, COMISSIONAMENTO E TREINAMENTO</div>
+                        <p>${tr.testes || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '24' : '23'}. AO ENCERRAMENTO DA OBRA</div>
+                        <p>${tr.encerramento || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '25' : '24'}. CERTIFICADO DE ACEITAÇÃO PROVISÓRIA (CAP)</div>
+                        <p>${tr.cap || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '26' : '25'}. CERTIFICADO DE ACEITAÇÃO FINAL (CAF)</div>
+                        <p>${tr.caf || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '27' : '26'}. GARANTIA</div>
+                        <p>${tr.garantia || 'Não informado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">${tr.credenciamento ? '28' : '27'}. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
+                        <p>${tr.criterios || 'Não informado'}</p>
+                    </div>
+                    
+                    ${tr.anexos ? `
+                        <div class="section">
+                            <div class="section-title">${tr.credenciamento ? '29' : '28'}. ANEXOS</div>
+                            <p>${tr.anexos}</p>
+                        </div>
+                    ` : ''}
                     
                     <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
                         <p>Documento gerado automaticamente em ${new Date().toLocaleString('pt-BR')}</p>
@@ -1523,13 +1664,13 @@
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${tr.numeroTR}_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}.html`;
+            a.download = `${tr.numeroTR}_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}_COMPLETO.html`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
         }
-
+        
         // Abrir Portal de Propostas
         function abrirPortalPropostas(processoId) {
             // Buscar dados necessários
