@@ -1585,6 +1585,44 @@
             atualizarListaFornecedores();
         }
 
+        // Nova função para adicionar fornecedor já cadastrado
+        function adicionarFornecedorExistente(fornecedorId) {
+            const fornecedoresCadastrados = SistemaLocal.carregar('fornecedores_cadastrados', []);
+            const fornecedor = fornecedoresCadastrados.find(f => f.id === fornecedorId);
+            
+            if (!fornecedor) {
+                alert('Fornecedor não encontrado!');
+                return;
+            }
+            
+            // Verificar se já foi adicionado
+            if (processoAtual.fornecedores.some(f => f.cnpj === fornecedor.cnpj)) {
+                alert('Este fornecedor já foi adicionado ao processo!');
+                return;
+            }
+            
+            // Adicionar ao processo atual
+            const fornecedorProcesso = {
+                id: fornecedor.id,
+                razaoSocial: fornecedor.razaoSocial,
+                cnpj: fornecedor.cnpj,
+                email: fornecedor.email,
+                usuario: fornecedor.usuario,
+                senha: fornecedor.senha,
+                dataConvite: new Date().toISOString(),
+                dataCadastro: fornecedor.dataCadastro,
+                status: 'ativo'
+            };
+            
+            processoAtual.fornecedores.push(fornecedorProcesso);
+            
+            // Feedback visual
+            alert(`Fornecedor ${fornecedor.razaoSocial} adicionado ao processo!`);
+            
+            // Recarregar a tela para atualizar a lista
+            mostrarFormularioFornecedores();
+        }
+        
         // Adicionar fornecedor
         function adicionarFornecedor() {
             const razaoSocial = document.getElementById('razao-social').value;
