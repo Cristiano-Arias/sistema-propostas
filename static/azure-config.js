@@ -2,8 +2,8 @@
 const AzureAI = {
     // Configurações
     config: {
-        endpoint: '', // Será preenchido pelo usuário
-        apiKey: '',   // Será preenchido pelo usuário
+        endpoint: https://portalcompras.openai.azure.com/
+        apiKey: 6Z0VYdgofYJMu32yWoaJfQtuocrVPKFi0sZhnBge7hluMgJXDVvuJQQJ99BHACYeBjFXJ3w3AAABACOGvaka
         deployment: 'gpt-4',
         apiVersion: '2023-05-15'
     },
@@ -255,4 +255,5 @@ Formato da resposta: JSON estruturado.`;
 
         return analise;
     }
+
 };
