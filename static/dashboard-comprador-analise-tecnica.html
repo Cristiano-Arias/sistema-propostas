@@ -1087,7 +1087,7 @@
     <!-- Script de Correção para Visualização de Propostas -->
     <script>
         // Script de correção para integração das propostas no módulo Comprador
-        
+    
         // Função para corrigir a busca de propostas no módulo Comprador
         function corrigirBuscaPropostas() {
             // Sobrescrever a função carregarProcessos no dashboard-comprador-funcional
@@ -1097,7 +1097,7 @@
                 window.carregarProcessos = function() {
                     const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
                     const container = document.getElementById('processos-list');
-
+    
                     if (processos.length === 0) {
                         container.innerHTML = `
                             <div style="text-align: center; padding: 40px; color: #666;">
@@ -1111,7 +1111,7 @@
                         `;
                         return;
                     }
-
+    
                     let html = '';
                     processos.forEach(processo => {
                         const dataAbertura = new Date(processo.dataAbertura).toLocaleDateString('pt-BR');
@@ -1224,12 +1224,12 @@
                             </div>
                         `;
                     });
-
+    
                     container.innerHTML = html;
                 };
             }
         }
-
+    
         // Função para corrigir a visualização detalhada de propostas
         function corrigirVisualizacaoDetalhada() {
             if (typeof visualizarPropostasDetalhadas !== 'undefined') {
@@ -1257,7 +1257,7 @@
                         alert('Nenhuma proposta encontrada para este processo!');
                         return;
                     }
-
+    
                     // Criar modal com detalhes
                     const modal = document.createElement('div');
                     modal.className = 'modal-overlay';
@@ -1339,8 +1339,8 @@
                 };
             }
         }
-
-        // Função para corrigir o envio ao requisitante
+    
+            // Função para corrigir o envio ao requisitante
         function corrigirEnvioRequisitante() {
             if (typeof enviarPropostaTecnicaRequisitante !== 'undefined') {
                 window.enviarPropostaTecnicaRequisitante = function(propostaId) {
@@ -1361,7 +1361,7 @@
                         alert('Proposta não encontrada!');
                         return;
                     }
-
+    
                     // Preparar dados técnicos SEM valores comerciais
                     const dadosTecnicos = {
                         id: SistemaLocal.gerarId(),
@@ -1383,17 +1383,17 @@
                         status: 'AGUARDANDO_ANALISE',
                         parecerRequisitante: null
                     };
-
+    
                     // Salvar para análise do requisitante
                     const analisesRequisitante = SistemaLocal.carregar('analise_tecnica_requisitante', []);
                     analisesRequisitante.push(dadosTecnicos);
                     SistemaLocal.salvar('analise_tecnica_requisitante', analisesRequisitante);
-
+    
                     alert(`Proposta técnica de ${dadosTecnicos.fornecedor.razaoSocial} enviada para análise do requisitante!\n\nATENÇÃO: Apenas os dados técnicos foram enviados, sem valores comerciais.`);
                 };
             }
         }
-
+    
         // Função para corrigir análise comparativa
         function corrigirAnaliseComparativa() {
             if (typeof carregarAnaliseComparativa !== 'undefined') {
@@ -1472,19 +1472,19 @@
                         html += '<button class="proposta-tab" onclick="mostrarAba(\'comercial\')">Análise Comercial</button>';
                         html += '<button class="proposta-tab" onclick="mostrarAba(\'geral\')">Análise Geral</button>';
                         html += '</div>';
-
+    
                         html += '<div id="tecnica" class="proposta-section active">';
                         html += renderizarAnaliseTecnica([processoEspecifico], propostasDoProcesso);
                         html += '</div>';
-
+    
                         html += '<div id="comercial" class="proposta-section">';
                         html += renderizarAnaliseComercial([processoEspecifico], propostasDoProcesso);
                         html += '</div>';
-
+    
                         html += '<div id="geral" class="proposta-section">';
                         html += renderizarAnaliseGeral([processoEspecifico], propostasDoProcesso);
                         html += '</div>';
-
+    
                         container.innerHTML = html;
                         
                         // Limpar seleção
@@ -1502,31 +1502,31 @@
                             `;
                             return;
                         }
-
+    
                         let html = '<div class="proposta-tabs">';
                         html += '<button class="proposta-tab active" onclick="mostrarAba(\'tecnica\')">Análise Técnica</button>';
                         html += '<button class="proposta-tab" onclick="mostrarAba(\'comercial\')">Análise Comercial</button>';
                         html += '<button class="proposta-tab" onclick="mostrarAba(\'geral\')">Análise Geral</button>';
                         html += '</div>';
-
+    
                         html += '<div id="tecnica" class="proposta-section active">';
                         html += renderizarAnaliseTecnica(processos, todasPropostas);
                         html += '</div>';
-
+    
                         html += '<div id="comercial" class="proposta-section">';
                         html += renderizarAnaliseComercial(processos, todasPropostas);
                         html += '</div>';
-
+    
                         html += '<div id="geral" class="proposta-section">';
                         html += renderizarAnaliseGeral(processos, todasPropostas);
                         html += '</div>';
-
+    
                         container.innerHTML = html;
                     }
                 };
             }
         }
-
+    
         // Aplicar correções quando o documento carregar
         document.addEventListener('DOMContentLoaded', function() {
             // Aguardar um momento para garantir que o código original carregou
@@ -1543,6 +1543,236 @@
                     carregarProcessos();
                 }
             }, 1000);
+        });
+    
+        // Função auxiliar para mostrar detalhe da proposta
+        window.mostrarDetalheProposta = function(propostaId, tipo, elemento) {
+            document.querySelectorAll(`[id^="detalhe-${propostaId}-"]`).forEach(el => {
+                el.style.display = 'none';
+            });
+            document.getElementById(`detalhe-${propostaId}-${tipo}`).style.display = 'block';
+            
+            // Atualizar tabs
+            if (elemento) {
+                elemento.parentElement.querySelectorAll('.proposta-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                elemento.classList.add('active');
+            }
+        };
+            <!-- Integração com Azure AI para Análise Inteligente -->
+    <script>
+        // Configuração do Azure AI
+        const AzureAI = {
+            // Substitua com suas credenciais reais do Azure
+            endpoint: 'https://seu-recurso.cognitiveservices.azure.com/',
+            apiKey: 'SUA_CHAVE_API_AQUI',
+            
+            // Função para análise inteligente de propostas
+            analisarPropostasIA: async function(propostas) {
+                try {
+                    // Simulação de análise AI (substitua com chamada real à API do Azure)
+                    const analise = {
+                        melhorValor: this.encontrarMelhorValor(propostas),
+                        melhorPrazo: this.encontrarMelhorPrazo(propostas),
+                        melhorTecnica: this.analisarQualidadeTecnica(propostas),
+                        riscos: this.identificarRiscos(propostas),
+                        recomendacao: this.gerarRecomendacao(propostas)
+                    };
+                    
+                    return analise;
+                } catch (error) {
+                    console.error('Erro na análise AI:', error);
+                    return null;
+                }
+            },
+            
+            encontrarMelhorValor: function(propostas) {
+                return propostas.reduce((melhor, atual) => {
+                    const valorAtual = parseFloat(atual.propostaComercial?.valorTotal || atual.valor || 0);
+                    const valorMelhor = parseFloat(melhor.propostaComercial?.valorTotal || melhor.valor || 0);
+                    return valorAtual < valorMelhor ? atual : melhor;
+                });
+            },
+            
+            encontrarMelhorPrazo: function(propostas) {
+                return propostas.reduce((melhor, atual) => {
+                    const prazoAtual = parseInt(atual.propostaTecnica?.prazoExecucao || atual.prazoExecucao || '999');
+                    const prazoMelhor = parseInt(melhor.propostaTecnica?.prazoExecucao || melhor.prazoExecucao || '999');
+                    return prazoAtual < prazoMelhor ? atual : melhor;
+                });
+            },
+            
+            analisarQualidadeTecnica: function(propostas) {
+                // Análise simplificada - implementar lógica mais complexa com Azure AI
+                return propostas.map(p => ({
+                    fornecedor: p.fornecedor?.razaoSocial || p.fornecedorRazaoSocial,
+                    pontuacao: Math.random() * 100, // Substituir com análise real
+                    criterios: {
+                        experiencia: Math.random() * 100,
+                        metodologia: Math.random() * 100,
+                        equipe: Math.random() * 100
+                    }
+                }));
+            },
+            
+            identificarRiscos: function(propostas) {
+                // Análise de riscos simplificada
+                const riscos = [];
+                
+                propostas.forEach(p => {
+                    const valor = parseFloat(p.propostaComercial?.valorTotal || p.valor || 0);
+                    const prazo = parseInt(p.propostaTecnica?.prazoExecucao || p.prazoExecucao || '0');
+                    
+                    // Identificar propostas suspeitas
+                    if (valor < 1000) {
+                        riscos.push({
+                            fornecedor: p.fornecedor?.razaoSocial || p.fornecedorRazaoSocial,
+                            tipo: 'VALOR_MUITO_BAIXO',
+                            descricao: 'Valor proposto pode indicar inexequibilidade'
+                        });
+                    }
+                    
+                    if (prazo < 10) {
+                        riscos.push({
+                            fornecedor: p.fornecedor?.razaoSocial || p.fornecedorRazaoSocial,
+                            tipo: 'PRAZO_MUITO_CURTO',
+                            descricao: 'Prazo pode ser insuficiente para execução adequada'
+                        });
+                    }
+                });
+                
+                return riscos;
+            },
+            
+            gerarRecomendacao: function(propostas) {
+                const melhorValor = this.encontrarMelhorValor(propostas);
+                const melhorPrazo = this.encontrarMelhorPrazo(propostas);
+                const qualidadeTecnica = this.analisarQualidadeTecnica(propostas);
+                
+                // Encontrar melhor pontuação técnica
+                const melhorTecnica = qualidadeTecnica.reduce((melhor, atual) => 
+                    atual.pontuacao > melhor.pontuacao ? atual : melhor
+                );
+                
+                return {
+                    fornecedorRecomendado: melhorTecnica.fornecedor,
+                    justificativa: `Baseado na análise integrada de critérios técnicos e comerciais, 
+                                   considerando qualidade técnica, valor e prazo de execução.`,
+                    pontuacaoFinal: melhorTecnica.pontuacao
+                };
+            }
+        };
+    
+        // Adicionar botão de análise AI nos processos
+        function adicionarBotaoAnaliseIA() {
+            const processosComPropostas = document.querySelectorAll('.tr-item');
+            
+            processosComPropostas.forEach(processo => {
+                const botoesContainer = processo.querySelector('div[style*="margin-top: 15px"]');
+                if (botoesContainer && !botoesContainer.querySelector('.btn-ai-analysis')) {
+                    const btnAI = document.createElement('button');
+                    btnAI.className = 'btn btn-warning btn-ai-analysis';
+                    btnAI.innerHTML = '<i class="fas fa-brain"></i> Análise IA';
+                    btnAI.onclick = function() {
+                        const processoId = processo.querySelector('[onclick*="visualizarProcesso"]')
+                            ?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+                        if (processoId) executarAnaliseIA(processoId);
+                    };
+                    botoesContainer.appendChild(btnAI);
+                }
+            });
+        }
+    
+        // Executar análise AI
+        async function executarAnaliseIA(processoId) {
+            // Buscar propostas
+            const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+            const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+            
+            const todasPropostas = [
+                ...propostasCompletas.filter(p => p.processoId === processoId),
+                ...propostasFornecedores.filter(p => p.processoId === processoId)
+            ];
+            
+            if (todasPropostas.length === 0) {
+                alert('Nenhuma proposta encontrada para análise.');
+                return;
+            }
+            
+            // Mostrar loading
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 800px;">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-brain"></i> Análise Inteligente com Azure AI</h3>
+                        <button class="btn-fechar-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body" style="text-align: center; padding: 40px;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #007bff; margin-bottom: 20px;"></i>
+                        <p>Analisando propostas com inteligência artificial...</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Executar análise
+            const resultado = await AzureAI.analisarPropostasIA(todasPropostas);
+            
+            // Mostrar resultados
+            if (resultado) {
+                modal.querySelector('.modal-body').innerHTML = `
+                    <div style="text-align: left;">
+                        <h4>Resultado da Análise AI</h4>
+                        
+                        <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <h5><i class="fas fa-trophy"></i> Recomendação</h5>
+                            <p><strong>Fornecedor Recomendado:</strong> ${resultado.recomendacao.fornecedorRecomendado}</p>
+                            <p><strong>Pontuação:</strong> ${resultado.recomendacao.pontuacaoFinal.toFixed(2)}/100</p>
+                            <p><strong>Justificativa:</strong> ${resultado.recomendacao.justificativa}</p>
+                        </div>
+                        
+                        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <h5><i class="fas fa-chart-line"></i> Análise Comparativa</h5>
+                            <p><strong>Melhor Valor:</strong> ${resultado.melhorValor.fornecedor?.razaoSocial || resultado.melhorValor.fornecedorRazaoSocial}</p>
+                            <p><strong>Melhor Prazo:</strong> ${resultado.melhorPrazo.fornecedor?.razaoSocial || resultado.melhorPrazo.fornecedorRazaoSocial}</p>
+                        </div>
+                        
+                        ${resultado.riscos.length > 0 ? `
+                            <div style="background: #ffebee; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Riscos Identificados</h5>
+                                ${resultado.riscos.map(r => `
+                                    <p><strong>${r.fornecedor}:</strong> ${r.descricao}</p>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        <div style="text-align: center; margin-top: 30px;">
+                            <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">
+                                Fechar Análise
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    
+        // Adicionar botões AI quando carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                adicionarBotaoAnaliseIA();
+                
+                // Observar mudanças no DOM para adicionar botões em novos elementos
+                const observer = new MutationObserver(() => {
+                    adicionarBotaoAnaliseIA();
+                });
+                
+                const targetNode = document.getElementById('processos-list');
+                if (targetNode) {
+                    observer.observe(targetNode, { childList: true, subtree: true });
+                }
+            }, 2000);
         });
     </script>
 </body>
