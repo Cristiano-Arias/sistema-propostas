@@ -2391,8 +2391,8 @@ Deseja realmente enviar a proposta?
         
         // Modo visualização (somente leitura)
         function carregarModoVisualizacao(dadosProposta) {
-            // Carregar dados
-            carregarDadosPropostaExistente(dadosProposta);
+            // Carregar dados completos usando a nova função
+            carregarDadosCompletosVisualizacao(dadosProposta);
             
             // Desabilitar todos os campos
             document.querySelectorAll('input, textarea, select').forEach(el => {
