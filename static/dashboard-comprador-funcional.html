@@ -3965,6 +3965,74 @@
             // Por enquanto, apenas mostrar um alerta
             alert('A exportação da análise detalhada será implementada em breve.');
         }
+
+        // Função para abrir configuração Azure
+        function abrirConfigAzure() {
+            const config = AzureAI.config;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3 style="margin: 0;">
+                            <i class="fas fa-cloud"></i> Configuração Azure AI
+                        </h3>
+                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <i class="fas fa-info-circle"></i> Configure suas credenciais do Azure OpenAI Service
+                        </div>
+                        
+                        <form id="form-azure-config">
+                            <div class="form-group">
+                                <label>Endpoint do Azure OpenAI</label>
+                                <input type="text" id="azure-endpoint" placeholder="https://seu-recurso.openai.azure.com/" 
+                                       value="${config.endpoint}" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            </div>
+                            
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label>API Key</label>
+                                <input type="password" id="azure-apikey" placeholder="Sua chave de API" 
+                                       value="${config.apiKey}" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            </div>
+                            
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label>Deployment Name</label>
+                                <input type="text" id="azure-deployment" placeholder="gpt-4" 
+                                       value="${config.deployment || 'gpt-4'}" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+                        <button class="btn btn-info" onclick="testarConexaoAzure()">
+                            <i class="fas fa-plug"></i> Testar Conexão
+                        </button>
+                        <button class="btn btn-primary" onclick="salvarConfigAzure()">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // [RESTO DAS FUNÇÕES AZURE AI AQUI...]
+        
+        // Inicializar Azure AI ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tentar carregar configuração existente
+            if (typeof AzureAI !== 'undefined') {
+                AzureAI.init();
+            }
+        });
+        
+        // ========== FIM FUNÇÕES AZURE AI ==========
+        
     </script>
     <script src="azure-config.js"></script>
 </body>
