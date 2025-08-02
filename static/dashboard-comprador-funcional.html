@@ -1184,16 +1184,15 @@
         function carregarEstatisticas() {
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            // Buscar propostas tanto da chave antiga quanto da nova
-            const propostasAntigas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS, []);
-            const propostasCompletas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_COMPLETAS, []);
+            // Buscar propostas do fornecedor
+            const propostasFornecedor = SistemaLocal.carregar('propostas_fornecedores', []);
             
             // Calcular estatísticas corretas
             const estatisticas = {
                 trsPendentes: trs.filter(tr => tr.status === StatusTR.ENVIADO).length,
                 trsAprovados: trs.filter(tr => tr.status === StatusTR.APROVADO).length,
                 processosAtivos: processos.filter(p => p.status === 'ATIVO').length,
-                propostasRecebidas: propostasAntigas.length + propostasCompletas.length
+                propostasRecebidas: propostasFornecedor.length
             };
 
             // Atualizar interface
@@ -1946,16 +1945,9 @@
                 const dataLimite = new Date(processo.dataLimite).toLocaleDateString('pt-BR');
                 const dataCriacao = new Date(processo.dataCriacao).toLocaleDateString('pt-BR');
                 
-                // Buscar propostas completas para este processo
-                const propostasCompletas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_COMPLETAS, []);
-                const propostasProcesso = propostasCompletas.filter(p => p.processoId === processo.id);
-                
-                // Também buscar propostas antigas para compatibilidade
-                const propostasAntigas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS, []);
-                const propostasAntigasProcesso = propostasAntigas.filter(p => p.processoId == processo.id);
-                
-                // Combinar propostas
-                const todasPropostas = [...propostasProcesso];
+                // Buscar propostas dos fornecedores
+                const propostasFornecedor = SistemaLocal.carregar('propostas_fornecedores', []);
+                const propostasProcesso = propostasFornecedor.filter(p => p.processoId === processo.id);
                 
                 const statusColor = processo.status === 'ATIVO' ? '#28a745' : '#6c757d';
                 const statusIcon = processo.status === 'ATIVO' ? 'fa-check-circle' : 'fa-pause-circle';
@@ -1979,22 +1971,22 @@
                             <strong>Local:</strong> ${processo.localAbertura}<br>
                             <strong>Valor Estimado:</strong> R$ ${parseFloat(processo.trVinculado?.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                         </div>
-                        
-                        ${todasPropostas.length > 0 || propostasAntigasProcesso.length > 0 ? `
+                        ${propostasProcesso.length > 0 ? `
                             <div style="margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
                                 <h5 style="color: #333; margin-bottom: 10px;">
-                                    <i class="fas fa-envelope"></i> Propostas Recebidas (${todasPropostas.length + propostasAntigasProcesso.length})
+                                    <i class="fas fa-envelope"></i> Propostas Recebidas (${propostasProcesso.length})
                                 </h5>
-                                ${todasPropostas.map(proposta => `
+                                ${propostasProcesso.map(proposta => `
                                     <div style="background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; border-left: 3px solid #11998e;">
-                                        <strong>${proposta.fornecedor.razaoSocial}</strong><br>
+                                        <strong>${proposta.fornecedorRazaoSocial}</strong><br>
                                         <small>
-                                            <i class="fas fa-money-bill"></i> Valor Total: R$ ${parseFloat(proposta.propostaComercial?.valorTotal || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} | 
-                                            <i class="fas fa-clock"></i> ${proposta.propostaTecnica?.prazoExecucao || 'N/A'} | 
+                                            <i class="fas fa-money-bill"></i> Valor Total: R$ ${parseFloat(proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} | 
+                                            <i class="fas fa-clock"></i> ${proposta.prazoExecucao || 'N/A'} | 
                                             <i class="fas fa-calendar"></i> ${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}
                                         </small>
                                     </div>
                                 `).join('')}
+                        
                                 ${propostasAntigasProcesso.map(proposta => `
                                     <div style="background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; border-left: 3px solid #ffc107;">
                                         <strong>${proposta.razaoSocialFornecedor}</strong><br>
@@ -2020,7 +2012,7 @@
                             <button class="btn btn-primary" onclick="gerenciarFornecedores('${processo.id}')">
                                 <i class="fas fa-users"></i> Fornecedores
                             </button>
-                            ${todasPropostas.length > 0 || propostasAntigasProcesso.length > 0 ? `
+                            ${propostasProcesso.length > 0 ? `
                                 <button class="btn btn-success" onclick="analisarPropostas('${processo.id}')">
                                     <i class="fas fa-chart-bar"></i> Análise Comparativa
                                 </button>
@@ -2044,7 +2036,7 @@
         // Nova função para carregar análise comparativa
         function carregarAnaliseComparativa() {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            const propostasCompletas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_COMPLETAS, []);
+            const propostasFornecedor = SistemaLocal.carregar('propostas_fornecedores', []);
             
             const container = document.getElementById('analise-content');
             
