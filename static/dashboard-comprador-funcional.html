@@ -3791,17 +3791,26 @@
         const processosComPropostas = document.querySelectorAll('.tr-item');
         
         processosComPropostas.forEach(processo => {
-            const botoesContainer = processo.querySelector('div[style*="margin-top: 15px"]');
+            // Procurar o container de botões de forma mais específica
+            const botoesContainers = processo.querySelectorAll('div[style*="margin-top: 15px"]');
+            // Pegar o último container (onde ficam os botões de ação)
+            const botoesContainer = botoesContainers[botoesContainers.length - 1];
+            
             if (botoesContainer && !botoesContainer.querySelector('.btn-ai-analysis')) {
-                const btnAI = document.createElement('button');
-                btnAI.className = 'btn btn-warning btn-ai-analysis';
-                btnAI.innerHTML = '<i class="fas fa-brain"></i> Análise IA';
-                btnAI.onclick = function() {
-                    const processoId = processo.querySelector('[onclick*="visualizarProcesso"]')
-                        ?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-                    if (processoId) executarAnaliseIA(processoId);
-                };
-                botoesContainer.appendChild(btnAI);
+                // Verificar se tem propostas antes de adicionar o botão
+                const temPropostas = processo.innerHTML.includes('Propostas Recebidas');
+                
+                if (temPropostas) {
+                    const btnAI = document.createElement('button');
+                    btnAI.className = 'btn btn-warning btn-ai-analysis';
+                    btnAI.innerHTML = '<i class="fas fa-brain"></i> Análise IA';
+                    btnAI.onclick = function() {
+                        const processoId = processo.querySelector('[onclick*="visualizarProcesso"]')
+                            ?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+                        if (processoId) executarAnaliseIA(processoId);
+                    };
+                    botoesContainer.appendChild(btnAI);
+                }
             }
         });
     }
