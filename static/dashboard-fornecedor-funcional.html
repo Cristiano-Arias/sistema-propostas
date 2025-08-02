@@ -1043,6 +1043,27 @@
             container.innerHTML = html;
         }
 
+        // Função para mostrar aba no modal do fornecedor
+        function mostrarAbaFornecedor(aba, botao) {
+            // Esconder todas as abas
+            document.querySelectorAll('.tr-tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+                
+            // Remover classe active de todos os botões
+            document.querySelectorAll('.tr-tab-btn').forEach(btn => {
+                btn.style.background = 'none';
+                btn.style.color = '#666';
+            });
+                
+            // Mostrar aba selecionada
+            document.getElementById(`tr-${aba}`).style.display = 'block';
+                
+            // Destacar botão ativo
+            botao.style.background = '#667eea';
+            botao.style.color = 'white';
+        }       
+        
         // Visualizar TR completo
         function visualizarTR(processoId) {
             // Buscar o processo
@@ -1659,27 +1680,6 @@
                 </html>
             `;
 
-            // Função para mostrar aba no modal do fornecedor
-            function mostrarAbaFornecedor(aba, botao) {
-                // Esconder todas as abas
-                document.querySelectorAll('.tr-tab-content').forEach(content => {
-                    content.style.display = 'none';
-                });
-                
-                // Remover classe active de todos os botões
-                document.querySelectorAll('.tr-tab-btn').forEach(btn => {
-                    btn.style.background = 'none';
-                    btn.style.color = '#666';
-                });
-                
-                // Mostrar aba selecionada
-                document.getElementById(`tr-${aba}`).style.display = 'block';
-                
-                // Destacar botão ativo
-                botao.style.background = '#667eea';
-                botao.style.color = 'white';
-            }
-            
             // Criar blob e download
             const blob = new Blob([conteudoHTML], { type: 'text/html' });
             const url = window.URL.createObjectURL(blob);
