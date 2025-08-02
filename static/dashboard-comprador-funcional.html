@@ -3212,5 +3212,467 @@
             verificarNotificacoes();
         });
     </script>
+    
+    <!-- Script de Correção para Visualização de Propostas -->
+    <script>
+        // Script de correção para integração das propostas no módulo Comprador
+        
+        // Função para corrigir a busca de propostas no módulo Comprador
+        function corrigirBuscaPropostas() {
+            // Sobrescrever a função carregarProcessos no dashboard-comprador-funcional
+            if (typeof carregarProcessos !== 'undefined') {
+                const carregarProcessosOriginal = carregarProcessos;
+                
+                window.carregarProcessos = function() {
+                    const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
+                    const container = document.getElementById('processos-list');
+
+                    if (processos.length === 0) {
+                        container.innerHTML = `
+                            <div style="text-align: center; padding: 40px; color: #666;">
+                                <i class="fas fa-info-circle" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
+                                <h3>Nenhum processo criado</h3>
+                                <p>Os processos licitatórios criados aparecerão aqui.</p>
+                                <button class="btn btn-primary" onclick="mostrarPagina('criar-processo')">
+                                    <i class="fas fa-plus-circle"></i> Criar Primeiro Processo
+                                </button>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    let html = '';
+                    processos.forEach(processo => {
+                        const dataAbertura = new Date(processo.dataAbertura).toLocaleDateString('pt-BR');
+                        const dataLimite = new Date(processo.dataLimite).toLocaleDateString('pt-BR');
+                        const dataCriacao = new Date(processo.dataCriacao).toLocaleDateString('pt-BR');
+                        
+                        // CORREÇÃO: Buscar propostas de TODAS as fontes
+                        const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+                        const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+                        
+                        // Filtrar propostas deste processo
+                        const propostasProcesso = propostasCompletas.filter(p => p.processoId === processo.id);
+                        const propostasFormatadas = propostasFornecedores.filter(p => p.processoId === processo.id);
+                        
+                        // Combinar todas as propostas
+                        const todasPropostas = [...propostasProcesso];
+                        
+                        // Adicionar propostas do fornecedor que não estão duplicadas
+                        propostasFormatadas.forEach(pf => {
+                            if (!todasPropostas.some(p => p.id === pf.id)) {
+                                // Formatar proposta do fornecedor para o formato esperado
+                                const propostaFormatada = {
+                                    id: pf.id,
+                                    processoId: pf.processoId,
+                                    fornecedor: {
+                                        id: pf.fornecedorId,
+                                        razaoSocial: pf.fornecedorRazaoSocial,
+                                        cnpj: pf.fornecedorCNPJ
+                                    },
+                                    propostaComercial: {
+                                        valorTotal: pf.valor
+                                    },
+                                    propostaTecnica: {
+                                        prazoExecucao: pf.prazoExecucao
+                                    },
+                                    dataEnvio: pf.dataEnvio,
+                                    dadosCompletos: pf.dadosCompletos
+                                };
+                                todasPropostas.push(propostaFormatada);
+                            }
+                        });
+                        
+                        const statusColor = processo.status === 'ATIVO' ? '#28a745' : '#6c757d';
+                        const statusIcon = processo.status === 'ATIVO' ? 'fa-check-circle' : 'fa-pause-circle';
+                        
+                        html += `
+                            <div class="tr-item" style="border-left: 5px solid ${statusColor};">
+                                <div class="tr-status-badge" style="background: ${statusColor};">
+                                    <i class="fas ${statusIcon}"></i> ${processo.status}
+                                </div>
+                                
+                                <div class="tr-title">${processo.numeroProcesso}</div>
+                                <div class="tr-meta">
+                                    <span><i class="fas fa-tag"></i> ${processo.modalidade}</span>
+                                    <span><i class="fas fa-calendar"></i> Criado: ${dataCriacao}</span>
+                                    <span><i class="fas fa-calendar-alt"></i> Abertura: ${dataAbertura}</span>
+                                    <span><i class="fas fa-clock"></i> Limite: ${dataLimite}</span>
+                                    <span><i class="fas fa-users"></i> ${processo.fornecedores?.length || 0} fornecedor(es)</span>
+                                </div>
+                                <div class="tr-objective">
+                                    <strong>TR Vinculado:</strong> ${processo.trVinculado?.titulo || 'Não informado'}<br>
+                                    <strong>Local:</strong> ${processo.localAbertura}<br>
+                                    <strong>Valor Estimado:</strong> R$ ${parseFloat(processo.trVinculado?.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                </div>
+                                
+                                ${todasPropostas.length > 0 ? `
+                                    <div style="margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                        <h5 style="color: #333; margin-bottom: 10px;">
+                                            <i class="fas fa-envelope"></i> Propostas Recebidas (${todasPropostas.length})
+                                        </h5>
+                                        ${todasPropostas.map(proposta => `
+                                            <div style="background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; border-left: 3px solid #11998e;">
+                                                <strong>${proposta.fornecedor.razaoSocial}</strong><br>
+                                                <small>
+                                                    <i class="fas fa-money-bill"></i> Valor Total: R$ ${parseFloat(proposta.propostaComercial?.valorTotal || proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} | 
+                                                    <i class="fas fa-clock"></i> ${proposta.propostaTecnica?.prazoExecucao || proposta.prazoExecucao || 'N/A'} | 
+                                                    <i class="fas fa-calendar"></i> ${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}
+                                                </small>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : `
+                                    <div style="margin-top: 15px; background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeaa7;">
+                                        <i class="fas fa-info-circle" style="color: #856404;"></i>
+                                        <span style="color: #856404; margin-left: 8px;">Nenhuma proposta recebida ainda</span>
+                                    </div>
+                                `}
+                                
+                                <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <button class="btn btn-info" onclick="visualizarProcesso('${processo.id}')">
+                                        <i class="fas fa-eye"></i> Visualizar
+                                    </button>
+                                    <button class="btn btn-primary" onclick="gerenciarFornecedores('${processo.id}')">
+                                        <i class="fas fa-users"></i> Fornecedores
+                                    </button>
+                                    ${todasPropostas.length > 0 ? `
+                                        <button class="btn btn-success" onclick="analisarPropostas('${processo.id}')">
+                                            <i class="fas fa-chart-bar"></i> Análise Comparativa
+                                        </button>
+                                        <button class="btn btn-primary" onclick="visualizarPropostasDetalhadas('${processo.id}')">
+                                            <i class="fas fa-file-invoice"></i> Ver Propostas Detalhadas
+                                        </button>
+                                    ` : ''}
+                                    ${processo.status === 'ATIVO' ? `
+                                        <button class="btn btn-secondary" onclick="finalizarProcessoLicitatorio('${processo.id}')">
+                                            <i class="fas fa-stop"></i> Finalizar
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    container.innerHTML = html;
+                };
+            }
+        }
+
+        // Função para corrigir a visualização detalhada de propostas
+        function corrigirVisualizacaoDetalhada() {
+            if (typeof visualizarPropostasDetalhadas !== 'undefined') {
+                window.visualizarPropostasDetalhadas = function(processoId) {
+                    // Buscar propostas de todas as fontes
+                    const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+                    const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+                    
+                    // Combinar propostas
+                    const todasPropostas = [];
+                    
+                    // Adicionar propostas completas
+                    propostasCompletas.filter(p => p.processoId === processoId).forEach(p => {
+                        todasPropostas.push(p);
+                    });
+                    
+                    // Adicionar propostas do fornecedor formatadas
+                    propostasFornecedores.filter(p => p.processoId === processoId).forEach(pf => {
+                        if (!todasPropostas.some(p => p.id === pf.id)) {
+                            todasPropostas.push(pf);
+                        }
+                    });
+                    
+                    if (todasPropostas.length === 0) {
+                        alert('Nenhuma proposta encontrada para este processo!');
+                        return;
+                    }
+
+                    // Criar modal com detalhes
+                    const modal = document.createElement('div');
+                    modal.className = 'modal-overlay';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width: 1200px;">
+                            <div class="modal-header">
+                                <h3 style="margin: 0;">Propostas Detalhadas - Processo ${processoId}</h3>
+                                <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                ${todasPropostas.map(proposta => {
+                                    const dadosCompletos = proposta.dadosCompletos;
+                                    const fornecedor = proposta.fornecedor || {
+                                        razaoSocial: proposta.fornecedorRazaoSocial,
+                                        cnpj: proposta.fornecedorCNPJ
+                                    };
+                                    
+                                    return `
+                                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                                            <h4>${fornecedor.razaoSocial}</h4>
+                                            
+                                            <div class="proposta-tabs" style="margin-top: 15px;">
+                                                <button class="proposta-tab active" onclick="mostrarDetalheProposta('${proposta.id}', 'tecnica', this)">Proposta Técnica</button>
+                                                <button class="proposta-tab" onclick="mostrarDetalheProposta('${proposta.id}', 'comercial', this)">Proposta Comercial</button>
+                                            </div>
+                                            
+                                            <div id="detalhe-${proposta.id}-tecnica" class="proposta-section active">
+                                                <h5>Dados Técnicos</h5>
+                                                ${dadosCompletos && dadosCompletos.propostaTecnica ? `
+                                                    <p><strong>Experiência:</strong> ${dadosCompletos.propostaTecnica.experiencia || 'N/A'}</p>
+                                                    <p><strong>Equipe Técnica:</strong> ${dadosCompletos.propostaTecnica.equipeTecnica || 'N/A'}</p>
+                                                    <p><strong>Metodologia:</strong> ${dadosCompletos.propostaTecnica.metodologia || 'N/A'}</p>
+                                                    <p><strong>Prazo:</strong> ${dadosCompletos.propostaTecnica.prazoExecucao || proposta.prazoExecucao || 'N/A'}</p>
+                                                ` : `
+                                                    <p><strong>Prazo:</strong> ${proposta.prazoExecucao || 'N/A'}</p>
+                                                    <p><strong>Descrição Técnica:</strong> ${proposta.descricao_tecnica || 'N/A'}</p>
+                                                `}
+                                            </div>
+                                            
+                                            <div id="detalhe-${proposta.id}-comercial" class="proposta-section" style="display: none;">
+                                                <h5>Dados Comerciais</h5>
+                                                ${dadosCompletos && dadosCompletos.propostaComercial ? `
+                                                    <p><strong>Valor Serviços:</strong> R$ ${parseFloat(dadosCompletos.propostaComercial.valorServicos || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                                    <p><strong>Valor Materiais:</strong> R$ ${parseFloat(dadosCompletos.propostaComercial.valorMateriais || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                                    <p><strong>BDI:</strong> ${dadosCompletos.propostaComercial.bdi || 0}%</p>
+                                                    <p><strong>Valor Total:</strong> R$ ${parseFloat(dadosCompletos.propostaComercial.valorTotal || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                                    <p><strong>Condições de Pagamento:</strong> ${dadosCompletos.propostaComercial.condicoesPagamento || 'N/A'}</p>
+                                                ` : `
+                                                    <p><strong>Valor Total:</strong> R$ ${parseFloat(proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                                    <p><strong>Condições de Pagamento:</strong> ${proposta.condicoesPagamento || 'N/A'}</p>
+                                                `}
+                                            </div>
+                                            
+                                            <div style="margin-top: 15px;">
+                                                <button class="btn btn-info" onclick="enviarPropostaTecnicaRequisitante('${proposta.id}')">
+                                                    <i class="fas fa-share"></i> Enviar ao Requisitante (Técnica)
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary btn-fechar-modal">Fechar</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(modal);
+                    
+                    // Event listeners
+                    modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
+                        btn.addEventListener('click', () => modal.remove());
+                    });
+                    
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) modal.remove();
+                    });
+                };
+            }
+        }
+
+        // Função para corrigir o envio ao requisitante
+        function corrigirEnvioRequisitante() {
+            if (typeof enviarPropostaTecnicaRequisitante !== 'undefined') {
+                window.enviarPropostaTecnicaRequisitante = function(propostaId) {
+                    // Buscar proposta de todas as fontes
+                    let proposta = null;
+                    const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+                    const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+                    
+                    // Procurar primeiro nas propostas completas
+                    proposta = propostasCompletas.find(p => p.id === propostaId);
+                    
+                    // Se não encontrar, procurar nas propostas dos fornecedores
+                    if (!proposta) {
+                        proposta = propostasFornecedores.find(p => p.id === propostaId);
+                    }
+                    
+                    if (!proposta) {
+                        alert('Proposta não encontrada!');
+                        return;
+                    }
+
+                    // Preparar dados técnicos SEM valores comerciais
+                    const dadosTecnicos = {
+                        id: SistemaLocal.gerarId(),
+                        propostaId: proposta.id,
+                        processoId: proposta.processoId,
+                        fornecedor: proposta.fornecedor || {
+                            razaoSocial: proposta.fornecedorRazaoSocial,
+                            cnpj: proposta.fornecedorCNPJ,
+                            id: proposta.fornecedorId
+                        },
+                        propostaTecnica: proposta.dadosCompletos?.propostaTecnica || {
+                            prazoExecucao: proposta.prazoExecucao,
+                            metodologia: proposta.descricao_tecnica || 'Não informado',
+                            experiencia: 'Conforme proposta técnica',
+                            equipeTecnica: 'Conforme proposta técnica'
+                        },
+                        dataEnvio: new Date().toISOString(),
+                        enviadoPor: SistemaLocal.obterUsuario().nome,
+                        status: 'AGUARDANDO_ANALISE',
+                        parecerRequisitante: null
+                    };
+
+                    // Salvar para análise do requisitante
+                    const analisesRequisitante = SistemaLocal.carregar('analise_tecnica_requisitante', []);
+                    analisesRequisitante.push(dadosTecnicos);
+                    SistemaLocal.salvar('analise_tecnica_requisitante', analisesRequisitante);
+
+                    alert(`Proposta técnica de ${dadosTecnicos.fornecedor.razaoSocial} enviada para análise do requisitante!\n\nATENÇÃO: Apenas os dados técnicos foram enviados, sem valores comerciais.`);
+                };
+            }
+        }
+
+        // Função para corrigir análise comparativa
+        function corrigirAnaliseComparativa() {
+            if (typeof carregarAnaliseComparativa !== 'undefined') {
+                const carregarAnaliseComparativaOriginal = carregarAnaliseComparativa;
+                
+                window.carregarAnaliseComparativa = function() {
+                    const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
+                    const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+                    const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+                    
+                    // Combinar todas as propostas
+                    const todasPropostas = [];
+                    
+                    // Adicionar propostas completas
+                    propostasCompletas.forEach(p => {
+                        todasPropostas.push(p);
+                    });
+                    
+                    // Adicionar propostas dos fornecedores formatadas
+                    propostasFornecedores.forEach(pf => {
+                        if (!todasPropostas.some(p => p.id === pf.id)) {
+                            const propostaFormatada = {
+                                id: pf.id,
+                                processoId: pf.processoId,
+                                fornecedor: {
+                                    id: pf.fornecedorId,
+                                    razaoSocial: pf.fornecedorRazaoSocial,
+                                    cnpj: pf.fornecedorCNPJ
+                                },
+                                propostaComercial: {
+                                    valorTotal: pf.valor,
+                                    valorServicos: pf.valor * 0.7,
+                                    valorMateriais: pf.valor * 0.3,
+                                    bdi: 25,
+                                    condicoesPagamento: pf.condicoesPagamento || '30 dias'
+                                },
+                                propostaTecnica: {
+                                    prazoExecucao: pf.prazoExecucao,
+                                    experiencia: pf.experiencia || 'Conforme documentação',
+                                    equipeTecnica: pf.equipeTecnica || 'Equipe qualificada',
+                                    metodologia: pf.descricao_tecnica || 'Conforme especificações'
+                                },
+                                dataEnvio: pf.dataEnvio,
+                                dadosCompletos: pf.dadosCompletos
+                            };
+                            todasPropostas.push(propostaFormatada);
+                        }
+                    });
+                    
+                    const container = document.getElementById('analise-content');
+                    
+                    // Se foi selecionado um processo específico
+                    const processoSelecionadoId = sessionStorage.getItem('processoAnalise');
+                    
+                    if (processoSelecionadoId) {
+                        const processoEspecifico = processos.find(p => p.id === processoSelecionadoId);
+                        const propostasDoProcesso = todasPropostas.filter(p => p.processoId === processoSelecionadoId);
+                        
+                        if (propostasDoProcesso.length === 0) {
+                            container.innerHTML = `
+                                <div style="text-align: center; padding: 40px; color: #666;">
+                                    <i class="fas fa-info-circle" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
+                                    <h3>Nenhuma proposta recebida para este processo</h3>
+                                    <p>Aguarde os fornecedores enviarem suas propostas.</p>
+                                    <button class="btn btn-primary" onclick="mostrarPagina('processos')">
+                                        <i class="fas fa-arrow-left"></i> Voltar aos Processos
+                                    </button>
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        let html = `<h3 style="margin-bottom: 20px;">Análise do Processo: ${processoEspecifico.numeroProcesso}</h3>`;
+                        html += '<div class="proposta-tabs">';
+                        html += '<button class="proposta-tab active" onclick="mostrarAba(\'tecnica\')">Análise Técnica</button>';
+                        html += '<button class="proposta-tab" onclick="mostrarAba(\'comercial\')">Análise Comercial</button>';
+                        html += '<button class="proposta-tab" onclick="mostrarAba(\'geral\')">Análise Geral</button>';
+                        html += '</div>';
+
+                        html += '<div id="tecnica" class="proposta-section active">';
+                        html += renderizarAnaliseTecnica([processoEspecifico], propostasDoProcesso);
+                        html += '</div>';
+
+                        html += '<div id="comercial" class="proposta-section">';
+                        html += renderizarAnaliseComercial([processoEspecifico], propostasDoProcesso);
+                        html += '</div>';
+
+                        html += '<div id="geral" class="proposta-section">';
+                        html += renderizarAnaliseGeral([processoEspecifico], propostasDoProcesso);
+                        html += '</div>';
+
+                        container.innerHTML = html;
+                        
+                        // Limpar seleção
+                        sessionStorage.removeItem('processoAnalise');
+                        
+                    } else {
+                        // Análise geral de todos os processos
+                        if (processos.length === 0) {
+                            container.innerHTML = `
+                                <div style="text-align: center; padding: 40px; color: #666;">
+                                    <i class="fas fa-info-circle" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
+                                    <h3>Nenhum processo disponível</h3>
+                                    <p>Crie um processo para realizar análises comparativas.</p>
+                                </div>
+                            `;
+                            return;
+                        }
+
+                        let html = '<div class="proposta-tabs">';
+                        html += '<button class="proposta-tab active" onclick="mostrarAba(\'tecnica\')">Análise Técnica</button>';
+                        html += '<button class="proposta-tab" onclick="mostrarAba(\'comercial\')">Análise Comercial</button>';
+                        html += '<button class="proposta-tab" onclick="mostrarAba(\'geral\')">Análise Geral</button>';
+                        html += '</div>';
+
+                        html += '<div id="tecnica" class="proposta-section active">';
+                        html += renderizarAnaliseTecnica(processos, todasPropostas);
+                        html += '</div>';
+
+                        html += '<div id="comercial" class="proposta-section">';
+                        html += renderizarAnaliseComercial(processos, todasPropostas);
+                        html += '</div>';
+
+                        html += '<div id="geral" class="proposta-section">';
+                        html += renderizarAnaliseGeral(processos, todasPropostas);
+                        html += '</div>';
+
+                        container.innerHTML = html;
+                    }
+                };
+            }
+        }
+
+        // Aplicar correções quando o documento carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Aguardar um momento para garantir que o código original carregou
+            setTimeout(() => {
+                console.log('Aplicando correções no módulo Comprador...');
+                corrigirBuscaPropostas();
+                corrigirVisualizacaoDetalhada();
+                corrigirEnvioRequisitante();
+                corrigirAnaliseComparativa();
+                console.log('Correções aplicadas com sucesso!');
+                
+                // Recarregar dados se estivermos na página correta
+                if (typeof mostrarPagina !== 'undefined' && document.getElementById('processos-list')) {
+                    carregarProcessos();
+                }
+            }, 1000);
+        });
+    </script>
 </body>
 </html>
