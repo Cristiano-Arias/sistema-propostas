@@ -1925,10 +1925,12 @@
             }
         }
 
-        // Carregar processos - ATUALIZADO PARA PROPOSTAS COMPLETAS
+         // Carregar processos - VERSÃO INTEGRADA COM IA
         function carregarProcessos() {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
             const container = document.getElementById('processos-list');
+
+            if (!container) return;
 
             if (processos.length === 0) {
                 container.innerHTML = `
@@ -1950,16 +1952,45 @@
                 const dataLimite = new Date(processo.dataLimite).toLocaleDateString('pt-BR');
                 const dataCriacao = new Date(processo.dataCriacao).toLocaleDateString('pt-BR');
                 
-                // Buscar propostas completas para este processo
-                const propostasCompletas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_COMPLETAS, []);
+                // INTEGRAÇÃO: Buscar propostas de TODAS as fontes (correção integrada)
+                const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+                const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+                
+                // Filtrar propostas deste processo
                 const propostasProcesso = propostasCompletas.filter(p => p.processoId === processo.id);
+                const propostasFormatadas = propostasFornecedores.filter(p => p.processoId === processo.id);
+                
+                // Combinar todas as propostas (lógica da correção integrada)
+                const todasPropostas = [...propostasProcesso];
+                
+                // Adicionar propostas do fornecedor que não estão duplicadas
+                propostasFormatadas.forEach(pf => {
+                    if (!todasPropostas.some(p => p.id === pf.id)) {
+                        // Formatar proposta do fornecedor para o formato esperado
+                        const propostaFormatada = {
+                            id: pf.id,
+                            processoId: pf.processoId,
+                            fornecedor: {
+                                id: pf.fornecedorId,
+                                razaoSocial: pf.fornecedorRazaoSocial,
+                                cnpj: pf.fornecedorCNPJ
+                            },
+                            propostaComercial: {
+                                valorTotal: pf.valor
+                            },
+                            propostaTecnica: {
+                                prazoExecucao: pf.prazoExecucao
+                            },
+                            dataEnvio: pf.dataEnvio,
+                            dadosCompletos: pf.dadosCompletos
+                        };
+                        todasPropostas.push(propostaFormatada);
+                    }
+                });
                 
                 // Também buscar propostas antigas para compatibilidade
                 const propostasAntigas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS, []);
                 const propostasAntigasProcesso = propostasAntigas.filter(p => p.processoId == processo.id);
-                
-                // Combinar propostas
-                const todasPropostas = [...propostasProcesso];
                 
                 const statusColor = processo.status === 'ATIVO' ? '#28a745' : '#6c757d';
                 const statusIcon = processo.status === 'ATIVO' ? 'fa-check-circle' : 'fa-pause-circle';
