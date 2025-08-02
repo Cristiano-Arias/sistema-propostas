@@ -2638,9 +2638,275 @@
                         <div class="tr-field-value">${tr.objetivo || 'Não informado'}</div>
                     </div>
                     <div class="tr-field">
-                        <span class="tr-field-label">Justificativa</span>
-                        <div class="tr-field-value">${tr.justificativa || 'Não informado'}</div>
+                        <span class="tr-field-label">Conformidade ao Termo de Referência</span>
+                        <div class="tr-field-value">${tr.conformidade || 'Não informado'}</div>
                     </div>
+                </div>
+            `;
+        }
+        
+        // Gerar seção de local e acesso
+        function gerarLocalAcessoTR(tr) {
+            return `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-map-marker-alt"></i> Local e Acesso
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Visita ao Local</span>
+                        <div class="tr-field-value">${tr.visitaLocal || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Local/Acesso</span>
+                        <div class="tr-field-value">${tr.local || 'Não informado'}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Gerar seção de escopo técnico
+        function gerarEscopoTecnicoTR(tr) {
+            return `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-cogs"></i> Escopo Técnico
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Escopo Técnico</span>
+                        <div class="tr-field-value">${tr.escopo || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Situação Atual</span>
+                        <div class="tr-field-value">${tr.situacaoAtual || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Situação Proposta</span>
+                        <div class="tr-field-value">${tr.situacaoProposta || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Especificação Técnica</span>
+                        <div class="tr-field-value">${tr.especificacao || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Premissas, Requisitos e Restrições</span>
+                        <div class="tr-field-value">${tr.premissas || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Planilha de Quantidade</span>
+                        <div class="tr-field-value">${tr.planilhaQuantidade || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Escopo Geral</span>
+                        <div class="tr-field-value">${tr.escopoGeral || 'Não informado'}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Gerar seção de serviços
+        function gerarServicosTR(tr) {
+            let html = `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-list"></i> Tabela de Serviços
+                    </div>
+            `;
+            
+            if (tr.servicos && tr.servicos.length > 0) {
+                html += `
+                    <table class="tr-items-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Descrição</th>
+                                <th>Unidade</th>
+                                <th>Quantidade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                tr.servicos.forEach((servico) => {
+                    html += `
+                        <tr>
+                            <td>${servico.item || ''}</td>
+                            <td>${servico.descricao || 'Não informado'}</td>
+                            <td>${servico.unidade || 'UN'}</td>
+                            <td>${servico.quantidade || 0}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="color: #666; text-align: center; padding: 20px;">Nenhum serviço cadastrado</p>';
+            }
+            
+            html += '</div>';
+            return html;
+        }
+        
+        // Gerar seção de prazos e responsabilidades
+        function gerarPrazosResponsabilidadesTR(tr) {
+            let html = `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-clock"></i> Prazos
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Prazos</span>
+                        <div class="tr-field-value">${tr.prazos || tr.prazo || 'Não informado'}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Matriz de Responsabilidade
+            html += `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-tasks"></i> Matriz de Responsabilidade
+                    </div>
+            `;
+            
+            if (tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0) {
+                html += `
+                    <table class="tr-items-table">
+                        <thead>
+                            <tr>
+                                <th>Item/Atividade</th>
+                                <th>Responsável</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                tr.matrizResponsabilidade.forEach(item => {
+                    let responsavel = 'N/A';
+                    if (item.responsavel === 'contratada') responsavel = 'Contratada';
+                    else if (item.responsavel === 'contratante') responsavel = 'Contratante';
+                    
+                    html += `
+                        <tr>
+                            <td>${item.item || 'Não informado'}</td>
+                            <td>${responsavel}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                html += '<p style="color: #666; text-align: center; padding: 20px;">Matriz de responsabilidade não definida</p>';
+            }
+            
+            html += '</div>';
+            return html;
+        }
+        
+        // Gerar seção de segurança
+        function gerarSegurancaTR(tr) {
+            return `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-hard-hat"></i> Mobilização e Segurança
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Mobilização Segurança e Saúde do Trabalho</span>
+                        <div class="tr-field-value">${tr.mobilizacao || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Canteiro de Obras e Infraestrutura Temporárias</span>
+                        <div class="tr-field-value">${tr.canteiro || 'Não informado'}</div>
+                    </div>
+                    ${tr.credenciamento ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Credenciamento Aeroportuário</span>
+                            <div class="tr-field-value">${tr.credenciamento}</div>
+                        </div>
+                    ` : ''}
+                    <div class="tr-field">
+                        <span class="tr-field-label">Meio Ambiente</span>
+                        <div class="tr-field-value">${tr.meioAmbiente || 'Não informado'}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Gerar seção de gestão
+        function gerarGestaoTR(tr) {
+            return `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-chart-bar"></i> Gestão e Planejamento
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Engenharia</span>
+                        <div class="tr-field-value">${tr.engenharia || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Aquisições</span>
+                        <div class="tr-field-value">${tr.aquisicoes || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Planejamento/Gestão de Contratos</span>
+                        <div class="tr-field-value">${tr.planejamentoGestao || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Planejamento Executivo</span>
+                        <div class="tr-field-value">${tr.planejamentoExecutivo || 'Não informado'}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Gerar seção de encerramento
+        function gerarEncerramentoTR(tr) {
+            return `
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-check-circle"></i> Testes e Encerramento
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Testes, Comissionamento, Treinamento</span>
+                        <div class="tr-field-value">${tr.testes || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Ao Encerramento da Obra</span>
+                        <div class="tr-field-value">${tr.encerramento || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Certificado de Aceitação Provisória (CAP)</span>
+                        <div class="tr-field-value">${tr.cap || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Certificado de Aceitação Final (CAF)</span>
+                        <div class="tr-field-value">${tr.caf || 'Não informado'}</div>
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Garantia</span>
+                        <div class="tr-field-value">${tr.garantia || 'Não informado'}</div>
+                    </div>
+                </div>
+                
+                <div class="tr-section">
+                    <div class="tr-section-title">
+                        <i class="fas fa-clipboard-check"></i> Avaliação e Anexos
+                    </div>
+                    <div class="tr-field">
+                        <span class="tr-field-label">Critérios de Avaliação de Propostas</span>
+                        <div class="tr-field-value">${tr.criterios || 'Não informado'}</div>
+                    </div>
+                    ${tr.anexos ? `
+                        <div class="tr-field">
+                            <span class="tr-field-label">Anexos</span>
+                            <div class="tr-field-value">${tr.anexos}</div>
+                        </div>
+                    ` : ''}
                 </div>
             `;
         }
