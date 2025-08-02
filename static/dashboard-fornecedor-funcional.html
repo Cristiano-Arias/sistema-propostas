@@ -1988,6 +1988,553 @@
             window.URL.revokeObjectURL(url);
         }
 
+        // Adicionar esta nova função após a função baixarComprovante existente
+        function baixarPropostaCompleta(propostaId) {
+            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+            const proposta = propostas.find(p => p.id === propostaId);
+            
+            if (!proposta || !proposta.dadosCompletos) {
+                alert('Proposta não encontrada ou dados incompletos!');
+                return;
+            }
+            
+            const dados = proposta.dadosCompletos;
+            
+            const conteudoHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Proposta Completa - ${proposta.protocolo}</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 40px; 
+                            line-height: 1.6;
+                            color: #333;
+                        }
+                        h1, h2, h3, h4 { 
+                            color: #333; 
+                            margin-bottom: 15px;
+                        }
+                        .header { 
+                            text-align: center; 
+                            margin-bottom: 40px; 
+                            border-bottom: 2px solid #333; 
+                            padding-bottom: 20px; 
+                        }
+                        .section { 
+                            margin-bottom: 30px; 
+                            page-break-inside: avoid; 
+                        }
+                        .section-title { 
+                            background: #f0f0f0; 
+                            padding: 10px; 
+                            margin-bottom: 15px; 
+                            font-weight: bold;
+                            font-size: 16px;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin: 20px 0; 
+                        }
+                        th, td { 
+                            border: 1px solid #ddd; 
+                            padding: 8px; 
+                            text-align: left; 
+                        }
+                        th { 
+                            background: #f0f0f0; 
+                            font-weight: bold;
+                        }
+                        .info-grid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 20px;
+                            margin-bottom: 30px;
+                        }
+                        .info-item {
+                            padding: 10px;
+                            background: #f9f9f9;
+                            border-radius: 5px;
+                        }
+                        .destaque {
+                            background: #e8f5e8;
+                            padding: 15px;
+                            border-radius: 8px;
+                            border-left: 5px solid #27ae60;
+                            margin: 20px 0;
+                        }
+                        @media print {
+                            body { margin: 20px; }
+                            .section { page-break-inside: avoid; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>PROPOSTA TÉCNICA E COMERCIAL</h1>
+                        <h2>Protocolo: ${proposta.protocolo}</h2>
+                        <p><strong>Data de Envio:</strong> ${new Date(proposta.dataEnvio).toLocaleString('pt-BR')}</p>
+                        <p><strong>Processo:</strong> ${proposta.numeroProcesso}</p>
+                    </div>
+                    
+                    <!-- SEÇÃO 1: DADOS CADASTRAIS -->
+                    <div class="section">
+                        <div class="section-title">1. DADOS CADASTRAIS</div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>Razão Social:</strong><br>
+                                ${dados.dadosCadastrais?.razaoSocial || 'Não informado'}
+                            </div>
+                            <div class="info-item">
+                                <strong>CNPJ:</strong><br>
+                                ${dados.dadosCadastrais?.cnpj || 'Não informado'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Endereço:</strong><br>
+                                ${dados.dadosCadastrais?.endereco || 'Não informado'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Cidade/UF:</strong><br>
+                                ${dados.dadosCadastrais?.cidade || 'Não informado'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Telefone:</strong><br>
+                                ${dados.dadosCadastrais?.telefone || 'Não informado'}
+                            </div>
+                            <div class="info-item">
+                                <strong>E-mail:</strong><br>
+                                ${dados.dadosCadastrais?.email || 'Não informado'}
+                            </div>
+                            <div class="info-item">
+                                <strong>Responsável Técnico:</strong><br>
+                                ${dados.dadosCadastrais?.respTecnico || 'Não informado'}
+                            </div>
+                            <div class="info-item">
+                                <strong>CREA/CAU:</strong><br>
+                                ${dados.dadosCadastrais?.crea || 'Não informado'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SEÇÃO 2: PROPOSTA TÉCNICA -->
+                    <div class="section">
+                        <div class="section-title">2. PROPOSTA TÉCNICA</div>
+                        
+                        <h4>2.1 Objeto da Concorrência</h4>
+                        <p>${dados.propostaTecnica?.objetoConcorrencia || 'Não informado'}</p>
+                        
+                        <h4>2.2 Descrição Detalhada do Escopo</h4>
+                        <p><strong>Serviços a Executar:</strong><br>
+                        ${dados.propostaTecnica?.escopoInclusos || 'Não informado'}</p>
+                        <p><strong>Serviços Ocultos:</strong><br>
+                        ${dados.propostaTecnica?.escopoExclusos || 'Não informado'}</p>
+                        
+                        <h4>2.3 Metodologia de Execução</h4>
+                        <p>${dados.propostaTecnica?.metodologia || 'Não informado'}</p>
+                        <p><strong>Plano de Execução:</strong><br>
+                        ${dados.propostaTecnica?.sequenciaExecucao || 'Não informado'}</p>
+                        
+                        ${dados.propostaTecnica?.servicosTecnica && dados.propostaTecnica.servicosTecnica.length > 0 ? `
+                            <h4>2.3.1 Tabela de Serviços (sem valores)</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Descrição</th>
+                                        <th>Unidade</th>
+                                        <th>Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaTecnica.servicosTecnica.map(s => `
+                                        <tr>
+                                            <td>${s[0] || ''}</td>
+                                            <td>${s[1] || ''}</td>
+                                            <td>${s[2] || ''}</td>
+                                            <td>${s[3] || ''}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : ''}
+                        
+                        ${dados.propostaTecnica?.equipe && dados.propostaTecnica.equipe.length > 0 ? `
+                            <h4>2.4 Mão de Obra Direta e Indireta</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Função</th>
+                                        <th>Quantidade</th>
+                                        <th>Tempo (meses)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaTecnica.equipe.map(e => `
+                                        <tr>
+                                            <td>${e[0] || ''}</td>
+                                            <td>${e[1] || ''}</td>
+                                            <td>${e[2] || ''}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : ''}
+                        
+                        ${dados.propostaTecnica?.materiais && dados.propostaTecnica.materiais.length > 0 ? `
+                            <h4>2.5 Lista de Materiais</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th>Especificação</th>
+                                        <th>Unidade</th>
+                                        <th>Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaTecnica.materiais.map(m => `
+                                        <tr>
+                                            <td>${m[0] || ''}</td>
+                                            <td>${m[1] || ''}</td>
+                                            <td>${m[2] || ''}</td>
+                                            <td>${m[3] || ''}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : ''}
+                        
+                        ${dados.propostaTecnica?.equipamentos && dados.propostaTecnica.equipamentos.length > 0 ? `
+                            <h4>2.6 Lista de Equipamentos</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Equipamento</th>
+                                        <th>Especificação</th>
+                                        <th>Unidade</th>
+                                        <th>Quantidade</th>
+                                        <th>Tempo (meses)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaTecnica.equipamentos.map(eq => `
+                                        <tr>
+                                            <td>${eq[0] || ''}</td>
+                                            <td>${eq[1] || ''}</td>
+                                            <td>${eq[2] || ''}</td>
+                                            <td>${eq[3] || ''}</td>
+                                            <td>${eq[4] || ''}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : ''}
+                        
+                        <h4>2.9 Prazo de Execução</h4>
+                        <p>${dados.propostaTecnica?.prazoExecucao || 'Não informado'}</p>
+                        
+                        <h4>2.10 Prazo de Mobilização</h4>
+                        <p>${dados.propostaTecnica?.prazoMobilizacao || 'Não informado'}</p>
+                        
+                        ${dados.propostaTecnica?.cronograma && dados.propostaTecnica.cronograma.length > 0 ? `
+                            <h4>2.11 Cronograma de Execução</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Atividade</th>
+                                        <th>Duração (dias)</th>
+                                        <th>Início</th>
+                                        <th>Fim</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaTecnica.cronograma.map(c => `
+                                        <tr>
+                                            <td>${c[0] || ''}</td>
+                                            <td>${c[1] || ''}</td>
+                                            <td>${c[2] || ''}</td>
+                                            <td>${c[3] || ''}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : ''}
+                        
+                        <h4>2.12 Garantias Oferecidas</h4>
+                        <p>${dados.propostaTecnica?.garantias || 'Não informado'}</p>
+                        
+                        <h4>2.13 Necessidade de Canteiro</h4>
+                        <p>${dados.propostaTecnica?.estruturaCanteiro || 'Não informado'}</p>
+                        
+                        <h4>2.14 Obrigações</h4>
+                        <p><strong>Responsabilidades da CONTRATADA:</strong><br>
+                        ${dados.propostaTecnica?.obrigacoesContratada || 'Não informado'}</p>
+                        <p><strong>Responsabilidades da CONTRATANTE:</strong><br>
+                        ${dados.propostaTecnica?.obrigacoesContratante || 'Não informado'}</p>
+                        
+                        ${dados.propostaTecnica?.experiencia && dados.propostaTecnica.experiencia.length > 0 ? `
+                            <h4>2.15 Experiência</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Obra</th>
+                                        <th>Cliente</th>
+                                        <th>Valor</th>
+                                        <th>Ano</th>
+                                        <th>Contato</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaTecnica.experiencia.map(exp => `
+                                        <tr>
+                                            <td>${exp[0] || ''}</td>
+                                            <td>${exp[1] || ''}</td>
+                                            <td>${exp[2] || ''}</td>
+                                            <td>${exp[3] || ''}</td>
+                                            <td>${exp[4] || ''}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : ''}
+                        
+                        ${dados.propostaTecnica?.certificacoes && dados.propostaTecnica.certificacoes.length > 0 ? `
+                            <h4>2.16 Certificações/Qualificações</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Certificação</th>
+                                        <th>Órgão</th>
+                                        <th>Validade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaTecnica.certificacoes.map(cert => `
+                                        <tr>
+                                            <td>${cert[0] || ''}</td>
+                                            <td>${cert[1] || ''}</td>
+                                            <td>${cert[2] || ''}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- SEÇÃO 3: PROPOSTA COMERCIAL -->
+                    <div class="section">
+                        <div class="section-title">3. PROPOSTA COMERCIAL</div>
+                        
+                        <div class="destaque">
+                            <h3>VALOR TOTAL DA PROPOSTA: R$ ${dados.propostaComercial?.valorTotal || '0,00'}</h3>
+                            <p><strong>Validade da Proposta:</strong> ${dados.propostaComercial?.validadeProposta || '60 dias'}</p>
+                        </div>
+                        
+                        ${dados.propostaComercial?.servicos && dados.propostaComercial.servicos.length > 0 ? `
+                            <h4>3.2 Tabela de Serviços por Item</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Descrição</th>
+                                        <th>Unid</th>
+                                        <th>Qtd</th>
+                                        <th>Preço Unit</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaComercial.servicos.map(s => `
+                                        <tr>
+                                            <td>${s[0] || ''}</td>
+                                            <td>${s[1] || ''}</td>
+                                            <td>${s[2] || ''}</td>
+                                            <td>${s[3] || ''}</td>
+                                            <td>R$ ${s[4] || '0,00'}</td>
+                                            <td>R$ ${s[5] || '0,00'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="5" style="text-align: right;">TOTAL SERVIÇOS:</th>
+                                        <th>R$ ${dados.propostaComercial.totais?.servicos || '0,00'}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        ` : ''}
+                        
+                        ${dados.propostaComercial?.maoObra && dados.propostaComercial.maoObra.length > 0 ? `
+                            <h4>3.4 Mão de Obra Direta e Indireta</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Função</th>
+                                        <th>Qtd</th>
+                                        <th>Tempo</th>
+                                        <th>Salário</th>
+                                        <th>Enc. Sociais</th>
+                                        <th>Total Mensal</th>
+                                        <th>Total Geral</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaComercial.maoObra.map(mo => `
+                                        <tr>
+                                            <td>${mo[0] || ''}</td>
+                                            <td>${mo[1] || ''}</td>
+                                            <td>${mo[2] || ''}</td>
+                                            <td>R$ ${mo[3] || '0,00'}</td>
+                                            <td>${mo[4] || '0'}%</td>
+                                            <td>R$ ${mo[5] || '0,00'}</td>
+                                            <td>R$ ${mo[6] || '0,00'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="6" style="text-align: right;">TOTAL MÃO DE OBRA:</th>
+                                        <th>R$ ${dados.propostaComercial.totais?.maoObra || '0,00'}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        ` : ''}
+                        
+                        ${dados.propostaComercial?.materiaisComercial && dados.propostaComercial.materiaisComercial.length > 0 ? `
+                            <h4>3.5 Lista de Materiais com Valores</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th>Especificação</th>
+                                        <th>Unidade</th>
+                                        <th>Quantidade</th>
+                                        <th>Preço Unit.</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaComercial.materiaisComercial.map(mat => `
+                                        <tr>
+                                            <td>${mat[0] || ''}</td>
+                                            <td>${mat[1] || ''}</td>
+                                            <td>${mat[2] || ''}</td>
+                                            <td>${mat[3] || ''}</td>
+                                            <td>R$ ${mat[4] || '0,00'}</td>
+                                            <td>R$ ${mat[5] || '0,00'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="5" style="text-align: right;">TOTAL MATERIAIS:</th>
+                                        <th>R$ ${dados.propostaComercial.totais?.materiais || '0,00'}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        ` : ''}
+                        
+                        ${dados.propostaComercial?.equipamentosComercial && dados.propostaComercial.equipamentosComercial.length > 0 ? `
+                            <h4>3.6 Equipamentos</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Equipamento</th>
+                                        <th>Especificação</th>
+                                        <th>Quantidade</th>
+                                        <th>Tempo</th>
+                                        <th>Preço/mês</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaComercial.equipamentosComercial.map(eq => `
+                                        <tr>
+                                            <td>${eq[0] || ''}</td>
+                                            <td>${eq[1] || ''}</td>
+                                            <td>${eq[2] || ''}</td>
+                                            <td>${eq[3] || ''}</td>
+                                            <td>R$ ${eq[4] || '0,00'}</td>
+                                            <td>R$ ${eq[5] || '0,00'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="5" style="text-align: right;">TOTAL EQUIPAMENTOS:</th>
+                                        <th>R$ ${dados.propostaComercial.totais?.equipamentos || '0,00'}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        ` : ''}
+                        
+                        ${dados.propostaComercial?.bdi && dados.propostaComercial.bdi.length > 0 ? `
+                            <h4>3.7 BDI Detalhado</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Item do BDI</th>
+                                        <th>Percentual (%)</th>
+                                        <th>Valor (R$)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${dados.propostaComercial.bdi.map(bdi => `
+                                        <tr>
+                                            <td>${bdi[0] || ''}</td>
+                                            <td>${bdi[1] || '0'}%</td>
+                                            <td>R$ ${bdi[2] || '0,00'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : ''}
+                        
+                        <div style="background: #f0f0f0; padding: 20px; margin-top: 30px; border-radius: 8px;">
+                            <h4>Resumo Financeiro</h4>
+                            <p><strong>CUSTO DIRETO (MO + Mat + Equip):</strong> R$ ${dados.propostaComercial.totais?.custoDirecto || '0,00'}</p>
+                            <p><strong>BDI TOTAL:</strong> ${dados.propostaComercial.totais?.bdiPercentual || '0'}% = R$ ${dados.propostaComercial.totais?.bdiValor || '0,00'}</p>
+                            <h3><strong>VALOR TOTAL DA PROPOSTA:</strong> R$ ${dados.propostaComercial?.valorTotal || '0,00'}</h3>
+                        </div>
+                        
+                        <h4>3.8 Condições</h4>
+                        <p>${dados.propostaComercial?.validadeDetalhada || 'Proposta válida por 60 dias.'}</p>
+                    </div>
+                    
+                    <!-- SEÇÃO 4: RESUMO DA PROPOSTA -->
+                    <div class="section">
+                        <div class="section-title">4. RESUMO DA PROPOSTA</div>
+                        <div class="destaque">
+                            <p><strong>Preço Total:</strong> R$ ${dados.propostaComercial?.valorTotal || '0,00'}</p>
+                            <p><strong>Prazo de Execução:</strong> ${dados.resumo?.prazoExecucao || dados.propostaTecnica?.prazoExecucao || 'Não informado'}</p>
+                            <p><strong>Condição de Pagamento:</strong> ${dados.resumo?.formaPagamento || 'A definir'}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
+                        <p>Documento gerado automaticamente em ${new Date().toLocaleString('pt-BR')}</p>
+                        <p>Sistema de Gestão de Propostas - Módulo Fornecedor</p>
+                        <p>Protocolo: ${proposta.protocolo}</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            // Criar blob e download
+            const blob = new Blob([conteudoHTML], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Proposta_Completa_${proposta.protocolo}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+        
         // Excluir rascunho
         function excluirRascunho(propostaId) {
             if (!confirm('Deseja realmente excluir este rascunho?')) {
