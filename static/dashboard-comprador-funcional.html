@@ -13,23 +13,19 @@
         }
 
         body {
-            margin: 0;
-            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             min-height: 100vh;
             display: flex;
         }
 
         .sidebar {
             width: 250px;
-            min-width: 250px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             padding: 20px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             overflow-y: auto;
-            flex-shrink: 0;
         }
 
         .logo {
@@ -103,12 +99,8 @@
 
         .main-content {
             flex: 1;
-            padding: 0;
+            padding: 30px;
             overflow-y: auto;
-            min-width: 0;
-            width: 100%;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            min-height: 100vh;
         }
 
         .header {
@@ -118,8 +110,6 @@
             border-radius: 15px;
             margin-bottom: 30px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            width: 100%;
-            box-sizing: border-box;
         }
 
         .header h1 {
@@ -138,7 +128,6 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
-            width: 100%;
         }
 
         .stat-card {
@@ -168,15 +157,12 @@
         }
 
         .content-section {
-            background: transparent;
-            backdrop-filter: none;
-            border-radius: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
             padding: 30px;
-            box-shadow: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             display: none;
-            width: 100%;
-            min-height: calc(100vh - 60px);
-            box-sizing: border-box;
         }
 
         .content-section.active {
@@ -790,12 +776,6 @@
             }
             
             .main-content {
-                padding: 0;
-                min-height: 100vh;
-            }
-            
-            .content-section {
-                min-height: calc(100vh - 60px);
                 padding: 20px;
             }
             
@@ -862,14 +842,14 @@
             <button class="nav-item" id="btn-criar-processo">
                 <i class="fas fa-plus-circle"></i> Criar Processo
             </button>
-
-        <div class="nav-section">
-            <div class="nav-title">CONFIGURAÇÕES</div>
-            <button class="nav-item" id="btn-config-azure" onclick="abrirConfigAzure()">
-                <i class="fas fa-cloud"></i> Configurar Azure AI
+            <button class="nav-item" id="btn-analise">
+                <i class="fas fa-chart-bar"></i> Análise Comparativa
+            </button>
+            <button class="nav-item" id="btn-relatorios">
+                <i class="fas fa-file-alt"></i> Relatórios
             </button>
         </div>
-        
+
         <div class="nav-section">
             <div class="nav-title">SISTEMA</div>
             <button class="nav-item" id="btn-voltar">
@@ -1941,12 +1921,10 @@
             }
         }
 
-         // Carregar processos - VERSÃO INTEGRADA COM IA
+        // Carregar processos - ATUALIZADO PARA PROPOSTAS COMPLETAS
         function carregarProcessos() {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
             const container = document.getElementById('processos-list');
-
-            if (!container) return;
 
             if (processos.length === 0) {
                 container.innerHTML = `
@@ -1968,45 +1946,16 @@
                 const dataLimite = new Date(processo.dataLimite).toLocaleDateString('pt-BR');
                 const dataCriacao = new Date(processo.dataCriacao).toLocaleDateString('pt-BR');
                 
-                // INTEGRAÇÃO: Buscar propostas de TODAS as fontes (correção integrada)
-                const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
-                const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
-                
-                // Filtrar propostas deste processo
+                // Buscar propostas completas para este processo
+                const propostasCompletas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_COMPLETAS, []);
                 const propostasProcesso = propostasCompletas.filter(p => p.processoId === processo.id);
-                const propostasFormatadas = propostasFornecedores.filter(p => p.processoId === processo.id);
-                
-                // Combinar todas as propostas (lógica da correção integrada)
-                const todasPropostas = [...propostasProcesso];
-                
-                // Adicionar propostas do fornecedor que não estão duplicadas
-                propostasFormatadas.forEach(pf => {
-                    if (!todasPropostas.some(p => p.id === pf.id)) {
-                        // Formatar proposta do fornecedor para o formato esperado
-                        const propostaFormatada = {
-                            id: pf.id,
-                            processoId: pf.processoId,
-                            fornecedor: {
-                                id: pf.fornecedorId,
-                                razaoSocial: pf.fornecedorRazaoSocial,
-                                cnpj: pf.fornecedorCNPJ
-                            },
-                            propostaComercial: {
-                                valorTotal: pf.valor
-                            },
-                            propostaTecnica: {
-                                prazoExecucao: pf.prazoExecucao
-                            },
-                            dataEnvio: pf.dataEnvio,
-                            dadosCompletos: pf.dadosCompletos
-                        };
-                        todasPropostas.push(propostaFormatada);
-                    }
-                });
                 
                 // Também buscar propostas antigas para compatibilidade
                 const propostasAntigas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS, []);
                 const propostasAntigasProcesso = propostasAntigas.filter(p => p.processoId == processo.id);
+                
+                // Combinar propostas
+                const todasPropostas = [...propostasProcesso];
                 
                 const statusColor = processo.status === 'ATIVO' ? '#28a745' : '#6c757d';
                 const statusIcon = processo.status === 'ATIVO' ? 'fa-check-circle' : 'fa-pause-circle';
@@ -2075,12 +2024,6 @@
                                 <button class="btn btn-success" onclick="analisarPropostas('${processo.id}')">
                                     <i class="fas fa-chart-bar"></i> Análise Comparativa
                                 </button>
-                                <button class="btn btn-primary" onclick="abrirAnaliseDetalhada('${processo.id}')">
-                                    <i class="fas fa-columns"></i> Análise Lado a Lado
-                                </button>
-                                <button class="btn btn-info" onclick="gerarRelatorioProcesso('${processo.id}')">
-                                    <i class="fas fa-file-pdf"></i> Gerar Relatório
-                                </button>
                                 <button class="btn btn-primary" onclick="visualizarPropostasDetalhadas('${processo.id}')">
                                     <i class="fas fa-file-invoice"></i> Ver Propostas Detalhadas
                                 </button>
@@ -2098,209 +2041,6 @@
             container.innerHTML = html;
         }
 
-        // FUNÇÕES DE IA INTEGRADAS (sem sobrescrita)
-        
-        // Função para visualizar propostas detalhadas (integrada)
-        function visualizarPropostasDetalhadas(processoId) {
-            // Buscar propostas de todas as fontes
-            const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
-            const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
-            
-            // Combinar propostas
-            const todasPropostas = [];
-            
-            // Adicionar propostas completas
-            propostasCompletas.filter(p => p.processoId === processoId).forEach(p => {
-                todasPropostas.push(p);
-            });
-            
-            // Adicionar propostas do fornecedor formatadas
-            propostasFornecedores.filter(p => p.processoId === processoId).forEach(pf => {
-                if (!todasPropostas.some(p => p.id === pf.id)) {
-                    todasPropostas.push(pf);
-                }
-            });
-            
-            if (todasPropostas.length === 0) {
-                alert('Nenhuma proposta encontrada para este processo!');
-                return;
-            }
-
-            // Criar modal com detalhes
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2><i class="fas fa-file-invoice"></i> Propostas Detalhadas</h2>
-                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        ${todasPropostas.map(proposta => `
-                            <div style="background: #f8f9fa; padding: 20px; margin-bottom: 15px; border-radius: 8px;">
-                                <h4>${proposta.fornecedor?.razaoSocial || proposta.fornecedorRazaoSocial}</h4>
-                                <p><strong>CNPJ:</strong> ${proposta.fornecedor?.cnpj || proposta.fornecedorCNPJ}</p>
-                                <p><strong>Valor Total:</strong> R$ ${parseFloat(proposta.propostaComercial?.valorTotal || proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                <p><strong>Prazo:</strong> ${proposta.propostaTecnica?.prazoExecucao || proposta.prazoExecucao || 'N/A'}</p>
-                                <p><strong>Data de Envio:</strong> ${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        // Função para enviar proposta técnica ao requisitante (integrada)
-        function enviarPropostaTecnicaRequisitante(propostaId) {
-            // Buscar proposta de todas as fontes
-            let proposta = null;
-            const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
-            const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
-            
-            // Procurar primeiro nas propostas completas
-            proposta = propostasCompletas.find(p => p.id === propostaId);
-            
-            // Se não encontrar, procurar nas propostas dos fornecedores
-            if (!proposta) {
-                proposta = propostasFornecedores.find(p => p.id === propostaId);
-            }
-            
-            if (!proposta) {
-                alert('Proposta não encontrada!');
-                return;
-            }
-
-            // Preparar dados técnicos SEM valores comerciais
-            const dadosTecnicos = {
-                id: SistemaLocal.gerarId(),
-                propostaId: proposta.id,
-                processoId: proposta.processoId,
-                fornecedor: proposta.fornecedor || {
-                    razaoSocial: proposta.fornecedorRazaoSocial,
-                    cnpj: proposta.fornecedorCNPJ,
-                    id: proposta.fornecedorId
-                },
-                propostaTecnica: proposta.propostaTecnica || {
-                    experiencia: proposta.experiencia,
-                    equipeTecnica: proposta.equipeTecnica,
-                    metodologia: proposta.metodologia,
-                    prazoExecucao: proposta.prazoExecucao
-                },
-                dataEnvio: new Date().toISOString(),
-                tipo: 'analise_tecnica'
-            };
-
-            // Salvar para o requisitante
-            const analisesTecnicas = SistemaLocal.carregar('analise_tecnica_requisitante', []);
-            analisesTecnicas.push(dadosTecnicos);
-            SistemaLocal.salvar('analise_tecnica_requisitante', analisesTecnicas);
-
-            alert('Análise técnica enviada ao requisitante com sucesso!\n\nApenas os dados técnicos foram enviados, mantendo sigilo dos valores comerciais.');
-        }
-
-        // Função para análise detalhada lado a lado (integrada)
-        function abrirAnaliseDetalhada(processoId) {
-            // Buscar dados existentes
-            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            const processo = processos.find(p => p.id === processoId);
-            
-            if (!processo) {
-                alert('Processo não encontrado!');
-                return;
-            }
-            
-            // Buscar propostas usando a mesma lógica do sistema
-            const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
-            const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
-            
-            // Combinar propostas
-            const todasPropostas = [];
-            
-            // Adicionar propostas completas
-            propostasCompletas.filter(p => p.processoId === processoId).forEach(p => {
-                todasPropostas.push(p);
-            });
-            
-            // Adicionar propostas dos fornecedores formatadas
-            propostasFornecedores.filter(p => p.processoId === processoId).forEach(pf => {
-                if (!todasPropostas.some(p => p.id === pf.id)) {
-                    const propostaFormatada = {
-                        id: pf.id,
-                        processoId: pf.processoId,
-                        fornecedor: {
-                            id: pf.fornecedorId,
-                            razaoSocial: pf.fornecedorRazaoSocial,
-                            cnpj: pf.fornecedorCNPJ
-                        },
-                        propostaComercial: {
-                            valorTotal: pf.valor,
-                            valorServicos: pf.valor * 0.7,
-                            valorMateriais: pf.valor * 0.3,
-                            bdi: 25
-                        },
-                        propostaTecnica: {
-                            prazoExecucao: pf.prazoExecucao,
-                            experiencia: pf.experiencia || 'Não informado',
-                            equipeTecnica: pf.equipeTecnica || 'Não informado',
-                            metodologia: pf.metodologia || 'Não informado'
-                        },
-                        dataEnvio: pf.dataEnvio
-                    };
-                    todasPropostas.push(propostaFormatada);
-                }
-            });
-            
-            if (todasPropostas.length < 2) {
-                alert('É necessário pelo menos 2 propostas para análise comparativa!');
-                return;
-            }
-
-            // Criar modal de análise lado a lado
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal-content" style="max-width: 95%; width: 1400px;">
-                    <div class="modal-header">
-                        <h2><i class="fas fa-columns"></i> Análise Comparativa Lado a Lado</h2>
-                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
-                            ${todasPropostas.map(proposta => `
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px solid #e9ecef;">
-                                    <h4 style="color: #11998e; margin-bottom: 15px;">${proposta.fornecedor.razaoSocial}</h4>
-                                    
-                                    <div style="background: white; padding: 15px; margin-bottom: 15px; border-radius: 6px;">
-                                        <h5 style="color: #333; margin-bottom: 10px;">💰 Proposta Comercial</h5>
-                                        <p><strong>Valor Total:</strong> R$ ${parseFloat(proposta.propostaComercial?.valorTotal || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                        <p><strong>Serviços:</strong> R$ ${parseFloat(proposta.propostaComercial?.valorServicos || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                        <p><strong>Materiais:</strong> R$ ${parseFloat(proposta.propostaComercial?.valorMateriais || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                        <p><strong>BDI:</strong> ${proposta.propostaComercial?.bdi || 0}%</p>
-                                    </div>
-                                    
-                                    <div style="background: white; padding: 15px; border-radius: 6px;">
-                                        <h5 style="color: #333; margin-bottom: 10px;">🔧 Proposta Técnica</h5>
-                                        <p><strong>Prazo:</strong> ${proposta.propostaTecnica?.prazoExecucao || 'N/A'}</p>
-                                        <p><strong>Experiência:</strong> ${proposta.propostaTecnica?.experiencia || 'N/A'}</p>
-                                        <p><strong>Equipe:</strong> ${proposta.propostaTecnica?.equipeTecnica || 'N/A'}</p>
-                                        <p><strong>Metodologia:</strong> ${proposta.propostaTecnica?.metodologia || 'N/A'}</p>
-                                    </div>
-                                    
-                                    <div style="margin-top: 15px; text-align: center;">
-                                        <button class="btn btn-primary" onclick="enviarPropostaTecnicaRequisitante('${proposta.id}')">
-                                            <i class="fas fa-share"></i> Enviar ao Requisitante
-                                        </button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-        
         // Nova função para carregar análise comparativa
         function carregarAnaliseComparativa() {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
@@ -3436,6 +3176,8 @@
             document.getElementById('btn-aprovacao-tr')?.addEventListener('click', () => mostrarPagina('aprovacao-tr'));
             document.getElementById('btn-processos')?.addEventListener('click', () => mostrarPagina('processos'));
             document.getElementById('btn-criar-processo')?.addEventListener('click', () => mostrarPagina('criar-processo'));
+            document.getElementById('btn-analise')?.addEventListener('click', () => mostrarPagina('analise'));
+            document.getElementById('btn-relatorios')?.addEventListener('click', () => mostrarPagina('relatorios'));
             document.getElementById('btn-voltar')?.addEventListener('click', voltarSistema);
             document.getElementById('btn-logout')?.addEventListener('click', logout);
 
@@ -3473,7 +3215,150 @@
     
     <!-- Script de Correção para Visualização de Propostas -->
     <script>
+        // Script de correção para integração das propostas no módulo Comprador
         
+        // Função para corrigir a busca de propostas no módulo Comprador
+        function corrigirBuscaPropostas() {
+            // Sobrescrever a função carregarProcessos no dashboard-comprador-funcional
+            if (typeof carregarProcessos !== 'undefined') {
+                const carregarProcessosOriginal = carregarProcessos;
+                
+                window.carregarProcessos = function() {
+                    const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
+                    const container = document.getElementById('processos-list');
+
+                    if (processos.length === 0) {
+                        container.innerHTML = `
+                            <div style="text-align: center; padding: 40px; color: #666;">
+                                <i class="fas fa-info-circle" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
+                                <h3>Nenhum processo criado</h3>
+                                <p>Os processos licitatórios criados aparecerão aqui.</p>
+                                <button class="btn btn-primary" onclick="mostrarPagina('criar-processo')">
+                                    <i class="fas fa-plus-circle"></i> Criar Primeiro Processo
+                                </button>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    let html = '';
+                    processos.forEach(processo => {
+                        const dataAbertura = new Date(processo.dataAbertura).toLocaleDateString('pt-BR');
+                        const dataLimite = new Date(processo.dataLimite).toLocaleDateString('pt-BR');
+                        const dataCriacao = new Date(processo.dataCriacao).toLocaleDateString('pt-BR');
+                        
+                        // CORREÇÃO: Buscar propostas de TODAS as fontes
+                        const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+                        const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+                        
+                        // Filtrar propostas deste processo
+                        const propostasProcesso = propostasCompletas.filter(p => p.processoId === processo.id);
+                        const propostasFormatadas = propostasFornecedores.filter(p => p.processoId === processo.id);
+                        
+                        // Combinar todas as propostas
+                        const todasPropostas = [...propostasProcesso];
+                        
+                        // Adicionar propostas do fornecedor que não estão duplicadas
+                        propostasFormatadas.forEach(pf => {
+                            if (!todasPropostas.some(p => p.id === pf.id)) {
+                                // Formatar proposta do fornecedor para o formato esperado
+                                const propostaFormatada = {
+                                    id: pf.id,
+                                    processoId: pf.processoId,
+                                    fornecedor: {
+                                        id: pf.fornecedorId,
+                                        razaoSocial: pf.fornecedorRazaoSocial,
+                                        cnpj: pf.fornecedorCNPJ
+                                    },
+                                    propostaComercial: {
+                                        valorTotal: pf.valor
+                                    },
+                                    propostaTecnica: {
+                                        prazoExecucao: pf.prazoExecucao
+                                    },
+                                    dataEnvio: pf.dataEnvio,
+                                    dadosCompletos: pf.dadosCompletos
+                                };
+                                todasPropostas.push(propostaFormatada);
+                            }
+                        });
+                        
+                        const statusColor = processo.status === 'ATIVO' ? '#28a745' : '#6c757d';
+                        const statusIcon = processo.status === 'ATIVO' ? 'fa-check-circle' : 'fa-pause-circle';
+                        
+                        html += `
+                            <div class="tr-item" style="border-left: 5px solid ${statusColor};">
+                                <div class="tr-status-badge" style="background: ${statusColor};">
+                                    <i class="fas ${statusIcon}"></i> ${processo.status}
+                                </div>
+                                
+                                <div class="tr-title">${processo.numeroProcesso}</div>
+                                <div class="tr-meta">
+                                    <span><i class="fas fa-tag"></i> ${processo.modalidade}</span>
+                                    <span><i class="fas fa-calendar"></i> Criado: ${dataCriacao}</span>
+                                    <span><i class="fas fa-calendar-alt"></i> Abertura: ${dataAbertura}</span>
+                                    <span><i class="fas fa-clock"></i> Limite: ${dataLimite}</span>
+                                    <span><i class="fas fa-users"></i> ${processo.fornecedores?.length || 0} fornecedor(es)</span>
+                                </div>
+                                <div class="tr-objective">
+                                    <strong>TR Vinculado:</strong> ${processo.trVinculado?.titulo || 'Não informado'}<br>
+                                    <strong>Local:</strong> ${processo.localAbertura}<br>
+                                    <strong>Valor Estimado:</strong> R$ ${parseFloat(processo.trVinculado?.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                </div>
+                                
+                                ${todasPropostas.length > 0 ? `
+                                    <div style="margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                        <h5 style="color: #333; margin-bottom: 10px;">
+                                            <i class="fas fa-envelope"></i> Propostas Recebidas (${todasPropostas.length})
+                                        </h5>
+                                        ${todasPropostas.map(proposta => `
+                                            <div style="background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; border-left: 3px solid #11998e;">
+                                                <strong>${proposta.fornecedor.razaoSocial}</strong><br>
+                                                <small>
+                                                    <i class="fas fa-money-bill"></i> Valor Total: R$ ${parseFloat(proposta.propostaComercial?.valorTotal || proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} | 
+                                                    <i class="fas fa-clock"></i> ${proposta.propostaTecnica?.prazoExecucao || proposta.prazoExecucao || 'N/A'} | 
+                                                    <i class="fas fa-calendar"></i> ${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}
+                                                </small>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : `
+                                    <div style="margin-top: 15px; background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeaa7;">
+                                        <i class="fas fa-info-circle" style="color: #856404;"></i>
+                                        <span style="color: #856404; margin-left: 8px;">Nenhuma proposta recebida ainda</span>
+                                    </div>
+                                `}
+                                
+                                <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <button class="btn btn-info" onclick="visualizarProcesso('${processo.id}')">
+                                        <i class="fas fa-eye"></i> Visualizar
+                                    </button>
+                                    <button class="btn btn-primary" onclick="gerenciarFornecedores('${processo.id}')">
+                                        <i class="fas fa-users"></i> Fornecedores
+                                    </button>
+                                    ${todasPropostas.length > 0 ? `
+                                        <button class="btn btn-success" onclick="analisarPropostas('${processo.id}')">
+                                            <i class="fas fa-chart-bar"></i> Análise Comparativa
+                                        </button>
+                                        <button class="btn btn-primary" onclick="visualizarPropostasDetalhadas('${processo.id}')">
+                                            <i class="fas fa-file-invoice"></i> Ver Propostas Detalhadas
+                                        </button>
+                                    ` : ''}
+                                    ${processo.status === 'ATIVO' ? `
+                                        <button class="btn btn-secondary" onclick="finalizarProcessoLicitatorio('${processo.id}')">
+                                            <i class="fas fa-stop"></i> Finalizar
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    container.innerHTML = html;
+                };
+            }
+        }
+
         // Função para corrigir a visualização detalhada de propostas
         function corrigirVisualizacaoDetalhada() {
             if (typeof visualizarPropostasDetalhadas !== 'undefined') {
@@ -3771,305 +3656,23 @@
             }
         }
 
-            // Criar modal com layout lado a lado
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            
-            modal.innerHTML = `
-                <div class="modal-content" style="max-width: 1400px;">
-                    <div class="modal-header">
-                        <h3 style="margin: 0;">
-                            <i class="fas fa-columns"></i> Análise Comparativa Lado a Lado - ${processo.numeroProcesso}
-                        </h3>
-                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <!-- Análise Comercial -->
-                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px solid #11998e;">
-                                <h4 style="color: #11998e; margin-bottom: 15px;">
-                                    <i class="fas fa-dollar-sign"></i> Análise Comercial
-                                </h4>
-                                <table class="comparison-table" style="width: 100%;">
-                                    <thead>
-                                        <tr>
-                                            <th>Fornecedor</th>
-                                            <th>Valor Total</th>
-                                            <th>Condições</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${todasPropostas.map(p => {
-                                            const valor = parseFloat(p.propostaComercial?.valorTotal || p.valor || 0);
-                                            const valores = todasPropostas.map(prop => parseFloat(prop.propostaComercial?.valorTotal || prop.valor || 0));
-                                            const menorValor = Math.min(...valores);
-                                            const isMenor = valor === menorValor;
-                                            
-                                            return `
-                                                <tr>
-                                                    <td>${p.fornecedor.razaoSocial}</td>
-                                                    <td class="${isMenor ? 'best-value' : ''}">
-                                                        R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                                                        ${isMenor ? '<br><small style="color: #28a745;">(Menor valor)</small>' : ''}
-                                                    </td>
-                                                    <td>${p.propostaComercial?.condicoesPagamento || p.condicoesPagamento || '30 dias'}</td>
-                                                </tr>
-                                            `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                                
-                                <div style="margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
-                                    <strong>Resumo Comercial:</strong><br>
-                                    ${(() => {
-                                        const valores = todasPropostas.map(p => parseFloat(p.propostaComercial?.valorTotal || p.valor || 0));
-                                        const menorValor = Math.min(...valores);
-                                        const maiorValor = Math.max(...valores);
-                                        const economia = maiorValor - menorValor;
-                                        const percentual = ((economia / maiorValor) * 100).toFixed(2);
-                                        
-                                        return `
-                                            • Menor valor: R$ ${menorValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
-                                            • Maior valor: R$ ${maiorValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
-                                            • Economia potencial: R$ ${economia.toLocaleString('pt-BR', {minimumFractionDigits: 2})} (${percentual}%)<br>
-                                            • Valor estimado TR: R$ ${parseFloat(processo.trVinculado?.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                                        `;
-                                    })()}
-                                </div>
-                            </div>
-                            
-                            <!-- Análise Técnica -->
-                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px solid #11998e;">
-                                <h4 style="color: #11998e; margin-bottom: 15px;">
-                                    <i class="fas fa-cogs"></i> Análise Técnica
-                                </h4>
-                                <table class="comparison-table" style="width: 100%;">
-                                    <thead>
-                                        <tr>
-                                            <th>Fornecedor</th>
-                                            <th>Prazo</th>
-                                            <th>Experiência</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${todasPropostas.map(p => {
-                                            const prazo = parseInt(p.propostaTecnica?.prazoExecucao || p.prazoExecucao || 999);
-                                            const prazos = todasPropostas.map(prop => parseInt(prop.propostaTecnica?.prazoExecucao || prop.prazoExecucao || 999));
-                                            const menorPrazo = Math.min(...prazos.filter(p => p !== 999));
-                                            const isMenorPrazo = prazo === menorPrazo;
-                                            
-                                            return `
-                                                <tr>
-                                                    <td>${p.fornecedor.razaoSocial}</td>
-                                                    <td class="${isMenorPrazo ? 'best-value' : ''}">
-                                                        ${prazo !== 999 ? prazo + ' dias' : 'N/A'}
-                                                        ${isMenorPrazo ? '<br><small style="color: #28a745;">(Menor prazo)</small>' : ''}
-                                                    </td>
-                                                    <td>${p.propostaTecnica?.experiencia || p.experiencia || 'Não informado'}</td>
-                                                </tr>
-                                            `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                                
-                                <div style="margin-top: 15px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
-                                    <strong>Resumo Técnico:</strong><br>
-                                    ${(() => {
-                                        const prazos = todasPropostas.map(p => parseInt(p.propostaTecnica?.prazoExecucao || p.prazoExecucao || 999)).filter(p => p !== 999);
-                                        const menorPrazo = prazos.length > 0 ? Math.min(...prazos) : 'N/A';
-                                        const maiorPrazo = prazos.length > 0 ? Math.max(...prazos) : 'N/A';
-                                        
-                                        return `
-                                            • Menor prazo: ${menorPrazo !== 'N/A' ? menorPrazo + ' dias' : menorPrazo}<br>
-                                            • Maior prazo: ${maiorPrazo !== 'N/A' ? maiorPrazo + ' dias' : maiorPrazo}<br>
-                                            • Propostas com experiência comprovada: ${todasPropostas.filter(p => p.propostaTecnica?.experiencia || p.experiencia).length}<br>
-                                            • Propostas com metodologia detalhada: ${todasPropostas.filter(p => p.propostaTecnica?.metodologia || p.descricao_tecnica).length}
-                                        `;
-                                    })()}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Ranking Geral -->
-                        <div style="margin-top: 20px; background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                            <h4 style="color: #11998e; margin-bottom: 15px;">
-                                <i class="fas fa-trophy"></i> Ranking Geral
-                            </h4>
-                            ${gerarRankingGeral(todasPropostas)}
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
-                        <button class="btn btn-primary" onclick="exportarAnaliseDetalhada('${processoId}')">
-                            <i class="fas fa-download"></i> Exportar Análise
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-        }
-        
-        // Função para gerar ranking geral
-        function gerarRankingGeral(propostas) {
-            // Calcular pontuações
-            const propostasComPontuacao = propostas.map(proposta => {
-                let pontuacao = 0;
-                
-                // Pontuação comercial (50%)
-                const valores = propostas.map(p => parseFloat(p.propostaComercial?.valorTotal || p.valor || 0));
-                const menorValor = Math.min(...valores);
-                const valor = parseFloat(proposta.propostaComercial?.valorTotal || proposta.valor || 0);
-                if (valor > 0 && menorValor > 0) {
-                    pontuacao += (menorValor / valor) * 50;
-                }
-                
-                // Pontuação técnica (50%)
-                // Prazo (25%)
-                const prazos = propostas.map(p => parseInt(p.propostaTecnica?.prazoExecucao || p.prazoExecucao || 999)).filter(p => p !== 999);
-                const menorPrazo = prazos.length > 0 ? Math.min(...prazos) : 999;
-                const prazo = parseInt(proposta.propostaTecnica?.prazoExecucao || proposta.prazoExecucao || 999);
-                if (prazo !== 999 && menorPrazo !== 999) {
-                    pontuacao += (menorPrazo / prazo) * 25;
-                }
-                
-                // Outros critérios técnicos (25%)
-                if (proposta.propostaTecnica?.experiencia || proposta.experiencia) pontuacao += 12.5;
-                if (proposta.propostaTecnica?.metodologia || proposta.descricao_tecnica) pontuacao += 12.5;
-                
-                return {
-                    ...proposta,
-                    pontuacaoTotal: pontuacao
-                };
-            });
-            
-            // Ordenar por pontuação
-            propostasComPontuacao.sort((a, b) => b.pontuacaoTotal - a.pontuacaoTotal);
-            
-            return `
-                <table class="comparison-table" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th>Posição</th>
-                            <th>Fornecedor</th>
-                            <th>Pontuação</th>
-                            <th>Valor</th>
-                            <th>Prazo</th>
-                            <th>Recomendação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${propostasComPontuacao.map((proposta, index) => `
-                            <tr>
-                                <td><strong>${index + 1}º</strong></td>
-                                <td>${proposta.fornecedor.razaoSocial}</td>
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div style="flex: 1; background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
-                                            <div style="width: ${proposta.pontuacaoTotal}%; height: 100%; background: linear-gradient(135deg, #11998e, #38ef7d);"></div>
-                                        </div>
-                                        <span style="font-weight: bold;">${proposta.pontuacaoTotal.toFixed(1)}%</span>
-                                    </div>
-                                </td>
-                                <td>R$ ${parseFloat(proposta.propostaComercial?.valorTotal || proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                <td>${proposta.propostaTecnica?.prazoExecucao || proposta.prazoExecucao || 'N/A'}</td>
-                                <td>${index === 0 ? '<strong style="color: #28a745;">✓ Recomendado</strong>' : ''}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
-        
-        // Função para gerar relatório do processo
-        function gerarRelatorioProcesso(processoId) {
-            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            const processo = processos.find(p => p.id === processoId);
-            
-            if (!processo) {
-                alert('Processo não encontrado!');
-                return;
-            }
-            
-            // Por enquanto, apenas mostrar um alerta
-            // Em produção, isso geraria um PDF
-            alert(`Relatório do processo ${processo.numeroProcesso} será gerado em breve.\n\nEsta funcionalidade exportará um relatório completo em PDF com:\n- Dados do processo\n- Análise comparativa\n- Recomendações\n- Justificativas`);
-        }
-        
-        // Função para exportar análise detalhada
-        function exportarAnaliseDetalhada(processoId) {
-            // Por enquanto, apenas mostrar um alerta
-            alert('A exportação da análise detalhada será implementada em breve.');
-        }
-
-        // Função para abrir configuração Azure
-        function abrirConfigAzure() {
-            const config = AzureAI.config;
-            
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            
-            modal.innerHTML = `
-                <div class="modal-content" style="max-width: 600px;">
-                    <div class="modal-header">
-                        <h3 style="margin: 0;">
-                            <i class="fas fa-cloud"></i> Configuração Azure AI
-                        </h3>
-                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <i class="fas fa-info-circle"></i> Configure suas credenciais do Azure OpenAI Service
-                        </div>
-                        
-                        <form id="form-azure-config">
-                            <div class="form-group">
-                                <label>Endpoint do Azure OpenAI</label>
-                                <input type="text" id="azure-endpoint" placeholder="https://seu-recurso.openai.azure.com/" 
-                                       value="${config.endpoint}" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                            </div>
-                            
-                            <div class="form-group" style="margin-top: 15px;">
-                                <label>API Key</label>
-                                <input type="password" id="azure-apikey" placeholder="Sua chave de API" 
-                                       value="${config.apiKey}" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                            </div>
-                            
-                            <div class="form-group" style="margin-top: 15px;">
-                                <label>Deployment Name</label>
-                                <input type="text" id="azure-deployment" placeholder="gpt-4" 
-                                       value="${config.deployment || 'gpt-4'}" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
-                        <button class="btn btn-info" onclick="testarConexaoAzure()">
-                            <i class="fas fa-plug"></i> Testar Conexão
-                        </button>
-                        <button class="btn btn-primary" onclick="salvarConfigAzure()">
-                            <i class="fas fa-save"></i> Salvar
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-        }
-
-        // [RESTO DAS FUNÇÕES AZURE AI AQUI...]
-        
-        // Inicializar Azure AI ao carregar
+        // Aplicar correções quando o documento carregar
         document.addEventListener('DOMContentLoaded', function() {
-            // Tentar carregar configuração existente
-            if (typeof AzureAI !== 'undefined') {
-                AzureAI.init();
-            }
+            // Aguardar um momento para garantir que o código original carregou
+            setTimeout(() => {
+                console.log('Aplicando correções no módulo Comprador...');
+                corrigirBuscaPropostas();
+                corrigirVisualizacaoDetalhada();
+                corrigirEnvioRequisitante();
+                corrigirAnaliseComparativa();
+                console.log('Correções aplicadas com sucesso!');
+                
+                // Recarregar dados se estivermos na página correta
+                if (typeof mostrarPagina !== 'undefined' && document.getElementById('processos-list')) {
+                    carregarProcessos();
+                }
+            }, 1000);
         });
-        
-        // ========== FIM FUNÇÕES AZURE AI ==========
-        
     </script>
-    <script src="azure-config.js"></script>
 </body>
 </html>
