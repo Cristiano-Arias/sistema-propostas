@@ -1043,7 +1043,7 @@
             container.innerHTML = html;
         }
 
-        // Visualizar TR
+        // Visualizar TR completo
         function visualizarTR(processoId) {
             // Buscar o processo
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
@@ -1056,51 +1056,289 @@
             
             const tr = processo.trVinculado;
             
-            // Criar modal com o TR
+            // Criar modal com o TR completo
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
             
             modal.innerHTML = `
-                <div class="modal-content" style="max-width: 1200px;">
-                    <div class="modal-header">
+                <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="modal-header" style="flex-shrink: 0;">
                         <div>
                             <h3 style="margin: 0; color: #333;">${tr.numeroTR} - ${tr.titulo}</h3>
                             <p style="margin: 5px 0 0 0; color: #666;">Modalidade: ${tr.modalidade}</p>
                         </div>
                         <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                     </div>
-                    <div class="modal-body">
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h4 style="color: #333; margin-bottom: 10px;">Objetivo</h4>
-                            <p style="color: #555; line-height: 1.6;">${tr.objetivo}</p>
+                    <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 0;">
+                        <!-- Navegação por abas -->
+                        <div style="background: #f8f9fa; border-bottom: 2px solid #e0e0e0; padding: 0; position: sticky; top: 0; z-index: 10;">
+                            <div style="display: flex; overflow-x: auto;">
+                                <button class="tr-tab-btn active" onclick="mostrarAbaFornecedor('dados-gerais', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
+                                    <i class="fas fa-info-circle"></i> Dados Gerais
+                                </button>
+                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('local-acesso', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
+                                    <i class="fas fa-map-marker-alt"></i> Local e Acesso
+                                </button>
+                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('escopo-tecnico', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
+                                    <i class="fas fa-cogs"></i> Escopo Técnico
+                                </button>
+                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('servicos', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
+                                    <i class="fas fa-list"></i> Serviços
+                                </button>
+                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('prazos-resp', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
+                                    <i class="fas fa-calendar"></i> Prazos
+                                </button>
+                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('seguranca', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
+                                    <i class="fas fa-hard-hat"></i> Segurança
+                                </button>
+                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('gestao', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
+                                    <i class="fas fa-chart-bar"></i> Gestão
+                                </button>
+                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('encerramento', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
+                                    <i class="fas fa-check"></i> Encerramento
+                                </button>
+                            </div>
                         </div>
                         
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h4 style="color: #333; margin-bottom: 10px;">Escopo Técnico</h4>
-                            <p style="color: #555; line-height: 1.6;">${tr.escopo}</p>
-                        </div>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h4 style="color: #333; margin-bottom: 10px;">Local de Execução</h4>
-                            <p style="color: #555; line-height: 1.6;">${tr.local}</p>
-                        </div>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h4 style="color: #333; margin-bottom: 10px;">Prazo de Execução</h4>
-                            <p style="color: #555; line-height: 1.6;">${tr.prazo || tr.prazos || 'A definir'}</p>
-                        </div>
-                        
-                        <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffeaa7;">
-                            <h4 style="color: #856404; margin-bottom: 10px;">
-                                <i class="fas fa-info-circle"></i> Importante
-                            </h4>
-                            <p style="color: #856404; margin: 0;">
-                                Este é um resumo do TR. Para acessar o documento completo com todas as especificações técnicas, 
-                                tabelas de serviços e requisitos, clique em "Baixar TR Completo".
-                            </p>
+                        <div style="padding: 25px;">
+                            <!-- Dados Gerais -->
+                            <div id="tr-dados-gerais" class="tr-tab-content" style="display: block;">
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 15px;"><i class="fas fa-info-circle"></i> Informações Básicas</h4>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                        <div>
+                                            <strong style="color: #666;">Número do TR:</strong><br>
+                                            <span style="font-size: 16px;">${tr.numeroTR || 'Não informado'}</span>
+                                        </div>
+                                        <div>
+                                            <strong style="color: #666;">Modalidade:</strong><br>
+                                            <span style="font-size: 16px;">${tr.modalidade || 'Não informado'}</span>
+                                        </div>
+                                        <div>
+                                            <strong style="color: #666;">Valor Estimado:</strong><br>
+                                            <span style="font-size: 16px;">R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Objetivo</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.objetivo || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Conformidade ao Termo de Referência</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.conformidade || 'Não informado'}</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Local e Acesso -->
+                            <div id="tr-local-acesso" class="tr-tab-content" style="display: none;">
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Visita ao Local</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.visitaLocal || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Local/Acesso</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.local || 'Não informado'}</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Escopo Técnico -->
+                            <div id="tr-escopo-tecnico" class="tr-tab-content" style="display: none;">
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Escopo Técnico</h4>
+                                    <p style="color: #555; line-height: 1.6; white-space: pre-wrap;">${tr.escopo || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Situação Atual</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.situacaoAtual || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Situação Proposta</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.situacaoProposta || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Especificação Técnica</h4>
+                                    <p style="color: #555; line-height: 1.6; white-space: pre-wrap;">${tr.especificacao || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Premissas, Requisitos e Restrições</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.premissas || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Planilha de Quantidade</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.planilhaQuantidade || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Escopo Geral</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.escopoGeral || 'Não informado'}</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Serviços -->
+                            <div id="tr-servicos" class="tr-tab-content" style="display: none;">
+                                ${tr.servicos && tr.servicos.length > 0 ? `
+                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                                        <h4 style="color: #333; margin-bottom: 15px;"><i class="fas fa-list"></i> Tabela de Serviços</h4>
+                                        <div style="overflow-x: auto;">
+                                            <table style="width: 100%; border-collapse: collapse;">
+                                                <thead>
+                                                    <tr style="background: #e9ecef;">
+                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Item</th>
+                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Descrição</th>
+                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">Unidade</th>
+                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">Quantidade</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${tr.servicos.map(servico => `
+                                                        <tr>
+                                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${servico.item}</td>
+                                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${servico.descricao}</td>
+                                                            <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">${servico.unidade}</td>
+                                                            <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">${servico.quantidade}</td>
+                                                        </tr>
+                                                    `).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                ` : '<p style="text-align: center; color: #666; padding: 40px;">Nenhum serviço cadastrado</p>'}
+                            </div>
+                            
+                            <!-- Prazos e Responsabilidades -->
+                            <div id="tr-prazos-resp" class="tr-tab-content" style="display: none;">
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Prazos</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.prazos || tr.prazo || 'Não informado'}</p>
+                                </div>
+                                
+                                ${tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0 ? `
+                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                                        <h4 style="color: #333; margin-bottom: 15px;"><i class="fas fa-tasks"></i> Matriz de Responsabilidade</h4>
+                                        <div style="overflow-x: auto;">
+                                            <table style="width: 100%; border-collapse: collapse;">
+                                                <thead>
+                                                    <tr style="background: #e9ecef;">
+                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Item/Atividade</th>
+                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">Responsável</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${tr.matrizResponsabilidade.map(item => `
+                                                        <tr>
+                                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${item.item}</td>
+                                                            <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">
+                                                                ${item.responsavel === 'contratada' ? 'Contratada' : 
+                                                                  item.responsavel === 'contratante' ? 'Contratante' : 'N/A'}
+                                                            </td>
+                                                        </tr>
+                                                    `).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <!-- Segurança -->
+                            <div id="tr-seguranca" class="tr-tab-content" style="display: none;">
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Mobilização Segurança e Saúde do Trabalho</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.mobilizacao || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Canteiro de Obras e Infraestrutura Temporárias</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.canteiro || 'Não informado'}</p>
+                                </div>
+                                
+                                ${tr.credenciamento ? `
+                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                        <h4 style="color: #333; margin-bottom: 10px;">Credenciamento Aeroportuário</h4>
+                                        <p style="color: #555; line-height: 1.6;">${tr.credenciamento}</p>
+                                    </div>
+                                ` : ''}
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Meio Ambiente</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.meioAmbiente || 'Não informado'}</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Gestão -->
+                            <div id="tr-gestao" class="tr-tab-content" style="display: none;">
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Engenharia</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.engenharia || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Aquisições</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.aquisicoes || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Planejamento/Gestão de Contratos</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.planejamentoGestao || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Planejamento Executivo</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.planejamentoExecutivo || 'Não informado'}</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Encerramento -->
+                            <div id="tr-encerramento" class="tr-tab-content" style="display: none;">
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Testes, Comissionamento, Treinamento</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.testes || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Ao Encerramento da Obra</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.encerramento || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Certificado de Aceitação Provisória (CAP)</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.cap || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Certificado de Aceitação Final (CAF)</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.caf || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Garantia</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.garantia || 'Não informado'}</p>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                    <h4 style="color: #333; margin-bottom: 10px;">Critérios de Avaliação de Propostas</h4>
+                                    <p style="color: #555; line-height: 1.6;">${tr.criterios || 'Não informado'}</p>
+                                </div>
+                                
+                                ${tr.anexos ? `
+                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                                        <h4 style="color: #333; margin-bottom: 10px;">Anexos</h4>
+                                        <p style="color: #555; line-height: 1.6;">${tr.anexos}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer" style="flex-shrink: 0;">
                         <button class="btn btn-secondary" onclick="baixarTR('${processoId}')">
                             <i class="fas fa-download"></i> Baixar TR Completo
                         </button>
