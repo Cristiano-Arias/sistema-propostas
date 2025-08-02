@@ -2430,6 +2430,274 @@ Deseja realmente enviar a proposta?
                 container.appendChild(botaoFechar);
             }
         }
+
+        // Função para carregar dados completos no modo visualização
+        function carregarDadosCompletosVisualizacao(dados) {
+            if (!dados) return;
+            
+            // 1. Carregar dados cadastrais
+            if (dados.dadosCadastrais) {
+                Object.keys(dados.dadosCadastrais).forEach(campo => {
+                    const elemento = document.getElementById(campo);
+                    if (elemento) {
+                        elemento.value = dados.dadosCadastrais[campo] || '';
+                    }
+                });
+            }
+            
+            // 2. Carregar dados da proposta técnica
+            if (dados.propostaTecnica) {
+                // Campos simples
+                Object.keys(dados.propostaTecnica).forEach(campo => {
+                    const elemento = document.getElementById(campo);
+                    if (elemento && typeof dados.propostaTecnica[campo] === 'string') {
+                        elemento.value = dados.propostaTecnica[campo];
+                    }
+                });
+                
+                // Tabela de serviços técnicos
+                if (dados.propostaTecnica.servicosTecnica && dados.propostaTecnica.servicosTecnica.length > 0) {
+                    const tbody = document.querySelector('#servicosTecnicaTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaTecnica.servicosTecnica.forEach((servico, index) => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${index + 1}" readonly></td>
+                            <td><input type="text" value="${servico[1] || ''}" placeholder="Descrição do serviço"></td>
+                            <td><input type="text" value="${servico[2] || ''}" placeholder="m²"></td>
+                            <td><input type="number" value="${servico[3] || ''}" placeholder="100"></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                        `;
+                    });
+                }
+                
+                // Tabela de equipe
+                if (dados.propostaTecnica.equipe && dados.propostaTecnica.equipe.length > 0) {
+                    const tbody = document.querySelector('#equipeTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaTecnica.equipe.forEach(item => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${item[0] || ''}" placeholder="Engenheiro Civil"></td>
+                            <td><input type="number" value="${item[1] || ''}" placeholder="1"></td>
+                            <td><input type="number" value="${item[2] || ''}" placeholder="4" step="0.1"></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                        `;
+                    });
+                }
+                
+                // Tabela de materiais
+                if (dados.propostaTecnica.materiais && dados.propostaTecnica.materiais.length > 0) {
+                    const tbody = document.querySelector('#materiaisTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaTecnica.materiais.forEach(item => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${item[0] || ''}" placeholder="Concreto"></td>
+                            <td><input type="text" value="${item[1] || ''}" placeholder="FCK 25 MPa"></td>
+                            <td><input type="text" value="${item[2] || ''}" placeholder="m³"></td>
+                            <td><input type="number" value="${item[3] || ''}" placeholder="450"></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                        `;
+                    });
+                }
+                
+                // Tabela de equipamentos
+                if (dados.propostaTecnica.equipamentos && dados.propostaTecnica.equipamentos.length > 0) {
+                    const tbody = document.querySelector('#equipamentosTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaTecnica.equipamentos.forEach(item => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${item[0] || ''}" placeholder="Betoneira"></td>
+                            <td><input type="text" value="${item[1] || ''}" placeholder="400L"></td>
+                            <td><input type="text" value="${item[2] || ''}" placeholder="und"></td>
+                            <td><input type="number" value="${item[3] || ''}" placeholder="2"></td>
+                            <td><input type="number" value="${item[4] || ''}" placeholder="4" step="0.1"></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                        `;
+                    });
+                }
+                
+                // Tabela de cronograma
+                if (dados.propostaTecnica.cronograma && dados.propostaTecnica.cronograma.length > 0) {
+                    const tbody = document.querySelector('#cronogramaTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaTecnica.cronograma.forEach(item => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${item[0] || ''}" placeholder="Nova Atividade"></td>
+                            <td><input type="number" value="${item[1] || ''}" placeholder="10" min="1" onchange="calcularCronograma()"></td>
+                            <td><input type="text" value="${item[2] || ''}" readonly style="background: #f8f9fa;"></td>
+                            <td><input type="text" value="${item[3] || ''}" readonly style="background: #f8f9fa;"></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRowAndRecalculate(this)">×</button></td>
+                        `;
+                    });
+                }
+                
+                // Tabela de experiência
+                if (dados.propostaTecnica.experiencia && dados.propostaTecnica.experiencia.length > 0) {
+                    const tbody = document.querySelector('#experienciaTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaTecnica.experiencia.forEach(item => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${item[0] || ''}" placeholder="Nome da obra"></td>
+                            <td><input type="text" value="${item[1] || ''}" placeholder="Cliente"></td>
+                            <td><input type="text" value="${item[2] || ''}" placeholder="R$ 2.500.000"></td>
+                            <td><input type="number" value="${item[3] || ''}" placeholder="2024"></td>
+                            <td><input type="text" value="${item[4] || ''}" placeholder="(00) 0000-0000"></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                        `;
+                    });
+                }
+                
+                // Tabela de certificações
+                if (dados.propostaTecnica.certificacoes && dados.propostaTecnica.certificacoes.length > 0) {
+                    const tbody = document.querySelector('#certificacoesTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaTecnica.certificacoes.forEach(item => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${item[0] || ''}" placeholder="ISO 9001"></td>
+                            <td><input type="text" value="${item[1] || ''}" placeholder="Órgão"></td>
+                            <td><input type="date" value="${item[2] || ''}"></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                        `;
+                    });
+                }
+            }
+            
+            // 3. Carregar dados da proposta comercial
+            if (dados.propostaComercial) {
+                // Campos simples
+                document.getElementById('objetoComercial').value = dados.propostaComercial.objetoComercial || dados.propostaTecnica?.objetoConcorrencia || '';
+                document.getElementById('valorTotal').value = dados.propostaComercial.valorTotal ? `R$ ${dados.propostaComercial.valorTotal}` : '';
+                document.getElementById('validadeProposta').value = dados.propostaComercial.validadeProposta || '';
+                document.getElementById('validadeDetalhada').value = dados.propostaComercial.validadeDetalhada || '';
+                
+                // Tabela de serviços comerciais
+                if (dados.propostaComercial.servicos && dados.propostaComercial.servicos.length > 0) {
+                    const tbody = document.querySelector('#servicosTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaComercial.servicos.forEach(servico => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${servico[0] || ''}" placeholder="1"></td>
+                            <td><input type="text" value="${servico[1] || ''}" placeholder="Descrição"></td>
+                            <td><input type="text" value="${servico[2] || ''}" placeholder="m³"></td>
+                            <td><input type="number" value="${servico[3] || ''}" placeholder="100" onchange="calcTotal(this)"></td>
+                            <td><input type="number" value="${servico[4] || ''}" placeholder="25.50" step="0.01" onchange="calcTotal(this)"></td>
+                            <td><input type="text" value="${servico[5] || ''}" readonly></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                        `;
+                    });
+                }
+                
+                // Tabela de mão de obra
+                if (dados.propostaComercial.maoObra && dados.propostaComercial.maoObra.length > 0) {
+                    const tbody = document.querySelector('#maoObraTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaComercial.maoObra.forEach(item => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${item[0] || ''}" placeholder="Engenheiro Civil"></td>
+                            <td><input type="number" value="${item[1] || ''}" placeholder="1" onchange="calcMaoObra(this)"></td>
+                            <td><input type="number" value="${item[2] || ''}" placeholder="4" onchange="calcMaoObra(this)" step="0.1"></td>
+                            <td><input type="number" value="${item[3] || ''}" placeholder="8500" onchange="calcMaoObra(this)" step="0.01"></td>
+                            <td><input type="number" value="${item[4] || ''}" placeholder="80" onchange="calcMaoObra(this)" step="0.1"></td>
+                            <td><input type="text" value="${item[5] || ''}" readonly></td>
+                            <td><input type="text" value="${item[6] || ''}" readonly></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                        `;
+                    });
+                }
+                
+                // Tabela de materiais comerciais
+                if (dados.propostaComercial.materiaisComercial && dados.propostaComercial.materiaisComercial.length > 0) {
+                    const tbody = document.querySelector('#materiaisComercialTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaComercial.materiaisComercial.forEach(item => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${item[0] || ''}" placeholder="Concreto"></td>
+                            <td><input type="text" value="${item[1] || ''}" placeholder="FCK 25 MPa"></td>
+                            <td><input type="text" value="${item[2] || ''}" placeholder="m³"></td>
+                            <td><input type="number" value="${item[3] || ''}" placeholder="450" onchange="calcMaterial(this)"></td>
+                            <td><input type="number" value="${item[4] || ''}" placeholder="320.50" step="0.01" onchange="calcMaterial(this)"></td>
+                            <td><input type="text" value="${item[5] || ''}" readonly></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                        `;
+                    });
+                }
+                
+                // Tabela de equipamentos comerciais
+                if (dados.propostaComercial.equipamentosComercial && dados.propostaComercial.equipamentosComercial.length > 0) {
+                    const tbody = document.querySelector('#equipamentosComercialTable tbody');
+                    tbody.innerHTML = '';
+                    dados.propostaComercial.equipamentosComercial.forEach(item => {
+                        const newRow = tbody.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" value="${item[0] || ''}" placeholder="Betoneira"></td>
+                            <td><input type="text" value="${item[1] || ''}" placeholder="400L"></td>
+                            <td><input type="number" value="${item[2] || ''}" placeholder="2" onchange="calcEquipamento(this)"></td>
+                            <td><input type="number" value="${item[3] || ''}" placeholder="4" step="0.1" onchange="calcEquipamento(this)"></td>
+                            <td><input type="number" value="${item[4] || ''}" placeholder="1200" step="0.01" onchange="calcEquipamento(this)"></td>
+                            <td><input type="text" value="${item[5] || ''}" readonly></td>
+                            <td><button type="button" class="remove-btn" onclick="removeRow(this)">×</button></td>
+                        `;
+                    });
+                }
+                
+                // Tabela de BDI
+                if (dados.propostaComercial.bdi && dados.propostaComercial.bdi.length > 0) {
+                    const tbody = document.querySelector('#bdiTable tbody');
+                    if (tbody) {
+                        const rows = tbody.querySelectorAll('tr');
+                        dados.propostaComercial.bdi.forEach((item, index) => {
+                            if (rows[index]) {
+                                const inputs = rows[index].querySelectorAll('input');
+                                if (inputs[1]) inputs[1].value = item[1] || '';
+                                if (inputs[2]) inputs[2].value = item[2] || '';
+                            }
+                        });
+                    }
+                }
+                
+                // Atualizar totais
+                if (dados.propostaComercial.totais) {
+                    document.getElementById('totalServicos').textContent = dados.propostaComercial.totais.servicos || '0,00';
+                    document.getElementById('totalMaoObra').textContent = dados.propostaComercial.totais.maoObra || '0,00';
+                    document.getElementById('totalMateriais').textContent = dados.propostaComercial.totais.materiais || '0,00';
+                    document.getElementById('totalEquipamentos').textContent = dados.propostaComercial.totais.equipamentos || '0,00';
+                    document.getElementById('custoDirecto').textContent = dados.propostaComercial.totais.custoDirecto || '0,00';
+                    document.getElementById('bdiPercentual').textContent = dados.propostaComercial.totais.bdiPercentual || '0,00';
+                    document.getElementById('bdiValor').textContent = dados.propostaComercial.totais.bdiValor || '0,00';
+                    document.getElementById('valorTotalCalculado').textContent = dados.propostaComercial.valorTotal || '0,00';
+                }
+            }
+            
+            // 4. Carregar dados do resumo
+            if (dados.resumo) {
+                document.getElementById('prazoExecucaoResumo').value = dados.resumo.prazoExecucao || '';
+                document.getElementById('formaPagamentoResumo').value = dados.resumo.formaPagamento || '';
+                document.getElementById('precoTotalResumo').textContent = dados.propostaComercial?.valorTotal || '0,00';
+                document.getElementById('prazoResumo').textContent = dados.resumo.prazoExecucao || '-- dias';
+                document.getElementById('pagamentoResumo').textContent = dados.resumo.formaPagamento || 'A definir';
+            }
+            
+            // 5. Atualizar informações do processo
+            if (dados.processo) {
+                document.getElementById('numeroProcesso').value = dados.processo.numero || '';
+                document.getElementById('objetoProcesso').value = dados.processo.objeto || '';
+                document.getElementById('prazoEnvio').value = dados.processo.prazoEnvio || '';
+            }
+            
+            // Recalcular totais
+            setTimeout(() => {
+                calcularTotais();
+            }, 500);
+        }
         
         // Modificar função carregarRascunho para suportar fornecedor do dashboard
         const carregarRascunhoOriginal = carregarRascunho;
