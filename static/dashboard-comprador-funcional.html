@@ -2082,6 +2082,209 @@
             container.innerHTML = html;
         }
 
+        // FUNÇÕES DE IA INTEGRADAS (sem sobrescrita)
+        
+        // Função para visualizar propostas detalhadas (integrada)
+        function visualizarPropostasDetalhadas(processoId) {
+            // Buscar propostas de todas as fontes
+            const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+            const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+            
+            // Combinar propostas
+            const todasPropostas = [];
+            
+            // Adicionar propostas completas
+            propostasCompletas.filter(p => p.processoId === processoId).forEach(p => {
+                todasPropostas.push(p);
+            });
+            
+            // Adicionar propostas do fornecedor formatadas
+            propostasFornecedores.filter(p => p.processoId === processoId).forEach(pf => {
+                if (!todasPropostas.some(p => p.id === pf.id)) {
+                    todasPropostas.push(pf);
+                }
+            });
+            
+            if (todasPropostas.length === 0) {
+                alert('Nenhuma proposta encontrada para este processo!');
+                return;
+            }
+
+            // Criar modal com detalhes
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-file-invoice"></i> Propostas Detalhadas</h2>
+                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        ${todasPropostas.map(proposta => `
+                            <div style="background: #f8f9fa; padding: 20px; margin-bottom: 15px; border-radius: 8px;">
+                                <h4>${proposta.fornecedor?.razaoSocial || proposta.fornecedorRazaoSocial}</h4>
+                                <p><strong>CNPJ:</strong> ${proposta.fornecedor?.cnpj || proposta.fornecedorCNPJ}</p>
+                                <p><strong>Valor Total:</strong> R$ ${parseFloat(proposta.propostaComercial?.valorTotal || proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                <p><strong>Prazo:</strong> ${proposta.propostaTecnica?.prazoExecucao || proposta.prazoExecucao || 'N/A'}</p>
+                                <p><strong>Data de Envio:</strong> ${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Função para enviar proposta técnica ao requisitante (integrada)
+        function enviarPropostaTecnicaRequisitante(propostaId) {
+            // Buscar proposta de todas as fontes
+            let proposta = null;
+            const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+            const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+            
+            // Procurar primeiro nas propostas completas
+            proposta = propostasCompletas.find(p => p.id === propostaId);
+            
+            // Se não encontrar, procurar nas propostas dos fornecedores
+            if (!proposta) {
+                proposta = propostasFornecedores.find(p => p.id === propostaId);
+            }
+            
+            if (!proposta) {
+                alert('Proposta não encontrada!');
+                return;
+            }
+
+            // Preparar dados técnicos SEM valores comerciais
+            const dadosTecnicos = {
+                id: SistemaLocal.gerarId(),
+                propostaId: proposta.id,
+                processoId: proposta.processoId,
+                fornecedor: proposta.fornecedor || {
+                    razaoSocial: proposta.fornecedorRazaoSocial,
+                    cnpj: proposta.fornecedorCNPJ,
+                    id: proposta.fornecedorId
+                },
+                propostaTecnica: proposta.propostaTecnica || {
+                    experiencia: proposta.experiencia,
+                    equipeTecnica: proposta.equipeTecnica,
+                    metodologia: proposta.metodologia,
+                    prazoExecucao: proposta.prazoExecucao
+                },
+                dataEnvio: new Date().toISOString(),
+                tipo: 'analise_tecnica'
+            };
+
+            // Salvar para o requisitante
+            const analisesTecnicas = SistemaLocal.carregar('analise_tecnica_requisitante', []);
+            analisesTecnicas.push(dadosTecnicos);
+            SistemaLocal.salvar('analise_tecnica_requisitante', analisesTecnicas);
+
+            alert('Análise técnica enviada ao requisitante com sucesso!\n\nApenas os dados técnicos foram enviados, mantendo sigilo dos valores comerciais.');
+        }
+
+        // Função para análise detalhada lado a lado (integrada)
+        function abrirAnaliseDetalhada(processoId) {
+            // Buscar dados existentes
+            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
+            const processo = processos.find(p => p.id === processoId);
+            
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+            
+            // Buscar propostas usando a mesma lógica do sistema
+            const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
+            const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
+            
+            // Combinar propostas
+            const todasPropostas = [];
+            
+            // Adicionar propostas completas
+            propostasCompletas.filter(p => p.processoId === processoId).forEach(p => {
+                todasPropostas.push(p);
+            });
+            
+            // Adicionar propostas dos fornecedores formatadas
+            propostasFornecedores.filter(p => p.processoId === processoId).forEach(pf => {
+                if (!todasPropostas.some(p => p.id === pf.id)) {
+                    const propostaFormatada = {
+                        id: pf.id,
+                        processoId: pf.processoId,
+                        fornecedor: {
+                            id: pf.fornecedorId,
+                            razaoSocial: pf.fornecedorRazaoSocial,
+                            cnpj: pf.fornecedorCNPJ
+                        },
+                        propostaComercial: {
+                            valorTotal: pf.valor,
+                            valorServicos: pf.valor * 0.7,
+                            valorMateriais: pf.valor * 0.3,
+                            bdi: 25
+                        },
+                        propostaTecnica: {
+                            prazoExecucao: pf.prazoExecucao,
+                            experiencia: pf.experiencia || 'Não informado',
+                            equipeTecnica: pf.equipeTecnica || 'Não informado',
+                            metodologia: pf.metodologia || 'Não informado'
+                        },
+                        dataEnvio: pf.dataEnvio
+                    };
+                    todasPropostas.push(propostaFormatada);
+                }
+            });
+            
+            if (todasPropostas.length < 2) {
+                alert('É necessário pelo menos 2 propostas para análise comparativa!');
+                return;
+            }
+
+            // Criar modal de análise lado a lado
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 95%; width: 1400px;">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-columns"></i> Análise Comparativa Lado a Lado</h2>
+                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                            ${todasPropostas.map(proposta => `
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px solid #e9ecef;">
+                                    <h4 style="color: #11998e; margin-bottom: 15px;">${proposta.fornecedor.razaoSocial}</h4>
+                                    
+                                    <div style="background: white; padding: 15px; margin-bottom: 15px; border-radius: 6px;">
+                                        <h5 style="color: #333; margin-bottom: 10px;">💰 Proposta Comercial</h5>
+                                        <p><strong>Valor Total:</strong> R$ ${parseFloat(proposta.propostaComercial?.valorTotal || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                        <p><strong>Serviços:</strong> R$ ${parseFloat(proposta.propostaComercial?.valorServicos || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                        <p><strong>Materiais:</strong> R$ ${parseFloat(proposta.propostaComercial?.valorMateriais || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                        <p><strong>BDI:</strong> ${proposta.propostaComercial?.bdi || 0}%</p>
+                                    </div>
+                                    
+                                    <div style="background: white; padding: 15px; border-radius: 6px;">
+                                        <h5 style="color: #333; margin-bottom: 10px;">🔧 Proposta Técnica</h5>
+                                        <p><strong>Prazo:</strong> ${proposta.propostaTecnica?.prazoExecucao || 'N/A'}</p>
+                                        <p><strong>Experiência:</strong> ${proposta.propostaTecnica?.experiencia || 'N/A'}</p>
+                                        <p><strong>Equipe:</strong> ${proposta.propostaTecnica?.equipeTecnica || 'N/A'}</p>
+                                        <p><strong>Metodologia:</strong> ${proposta.propostaTecnica?.metodologia || 'N/A'}</p>
+                                    </div>
+                                    
+                                    <div style="margin-top: 15px; text-align: center;">
+                                        <button class="btn btn-primary" onclick="enviarPropostaTecnicaRequisitante('${proposta.id}')">
+                                            <i class="fas fa-share"></i> Enviar ao Requisitante
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
         // Nova função para carregar análise comparativa
         function carregarAnaliseComparativa() {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
