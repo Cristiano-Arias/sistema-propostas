@@ -2,8 +2,8 @@
 const AzureAI = {
     // Configurações
     config: {
-        endpoint: https://portalcompras.openai.azure.com/
-        apiKey: 6Z0VYdgofYJMu32yWoaJfQtuocrVPKFi0sZhnBge7hluMgJXDVvuJQQJ99BHACYeBjFXJ3w3AAABACOGvaka
+        endpoint: 'https://portalcompras.openai.azure.com/',
+        apiKey: '6Z0VYdgofYJMu32yWoaJfQtuocrVPKFi0sZhnBge7hluMgJXDVvuJQQJ99BHACYeBjFXJ3w3AAABACOGvaka',
         deployment: 'gpt-4',
         apiVersion: '2023-05-15'
     },
@@ -209,7 +209,7 @@ Formato da resposta: JSON estruturado.`;
         // Análise automática local
         propostas.forEach(proposta => {
             const valor = parseFloat(proposta.propostaComercial?.valorTotal || proposta.valor || 0);
-            const valorEstimado = parseFloat(processo.trVinculado?.valorEstimado || 1);
+            const valorEstimado = parseFloat(processo?.trVinculado?.valorEstimado || 1);
             const percentual = (valor / valorEstimado) * 100;
 
             let pontuacao = 0;
@@ -255,5 +255,4 @@ Formato da resposta: JSON estruturado.`;
 
         return analise;
     }
-
 };
