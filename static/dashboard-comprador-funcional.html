@@ -2482,17 +2482,26 @@
                             <button class="tr-tab-btn active" onclick="mostrarAbaTR('dados-gerais', this)">
                                 <i class="fas fa-info-circle"></i> Dados Gerais
                             </button>
-                            <button class="tr-tab-btn" onclick="mostrarAbaTR('especificacoes', this)">
-                                <i class="fas fa-cogs"></i> Especificações
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('local-acesso', this)">
+                                <i class="fas fa-map-marker-alt"></i> Local e Acesso
                             </button>
-                            <button class="tr-tab-btn" onclick="mostrarAbaTR('itens', this)">
-                                <i class="fas fa-list"></i> Itens/Serviços
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('escopo-tecnico', this)">
+                                <i class="fas fa-cogs"></i> Escopo Técnico
                             </button>
-                            <button class="tr-tab-btn" onclick="mostrarAbaTR('cronograma', this)">
-                                <i class="fas fa-calendar"></i> Cronograma
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('servicos', this)">
+                                <i class="fas fa-list"></i> Serviços
                             </button>
-                            <button class="tr-tab-btn" onclick="mostrarAbaTR('observacoes', this)">
-                                <i class="fas fa-comments"></i> Observações
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('prazos-resp', this)">
+                                <i class="fas fa-calendar"></i> Prazos e Responsabilidades
+                            </button>
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('seguranca', this)">
+                                <i class="fas fa-hard-hat"></i> Segurança
+                            </button>
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('gestao', this)">
+                                <i class="fas fa-chart-bar"></i> Gestão
+                            </button>
+                            <button class="tr-tab-btn" onclick="mostrarAbaTR('encerramento', this)">
+                                <i class="fas fa-check"></i> Encerramento
                             </button>
                         </div>
                         
@@ -2501,24 +2510,39 @@
                             ${gerarDadosGeraisTR(tr)}
                         </div>
                         
-                        <!-- Especificações -->
-                        <div id="tr-especificacoes" class="tr-tab-content">
-                            ${gerarEspecificacoesTR(tr)}
+                        <!-- Local e Acesso -->
+                        <div id="tr-local-acesso" class="tr-tab-content">
+                            ${gerarLocalAcessoTR(tr)}
                         </div>
                         
-                        <!-- Itens -->
-                        <div id="tr-itens" class="tr-tab-content">
-                            ${gerarItensTR(tr)}
+                        <!-- Escopo Técnico -->
+                        <div id="tr-escopo-tecnico" class="tr-tab-content">
+                            ${gerarEscopoTecnicoTR(tr)}
                         </div>
                         
-                        <!-- Cronograma -->
-                        <div id="tr-cronograma" class="tr-tab-content">
-                            ${gerarCronogramaTR(tr)}
+                        <!-- Serviços -->
+                        <div id="tr-servicos" class="tr-tab-content">
+                            ${gerarServicosTR(tr)}
                         </div>
                         
-                        <!-- Observações -->
-                        <div id="tr-observacoes" class="tr-tab-content">
-                            ${gerarObservacoesTR(tr)}
+                        <!-- Prazos e Responsabilidades -->
+                        <div id="tr-prazos-resp" class="tr-tab-content">
+                            ${gerarPrazosResponsabilidadesTR(tr)}
+                        </div>
+                        
+                        <!-- Segurança -->
+                        <div id="tr-seguranca" class="tr-tab-content">
+                            ${gerarSegurancaTR(tr)}
+                        </div>
+                        
+                        <!-- Gestão -->
+                        <div id="tr-gestao" class="tr-tab-content">
+                            ${gerarGestaoTR(tr)}
+                        </div>
+                        
+                        <!-- Encerramento -->
+                        <div id="tr-encerramento" class="tr-tab-content">
+                            ${gerarEncerramentoTR(tr)}
                         </div>
                     </div>
                     <div class="modal-footer" style="padding: 20px; border-top: 1px solid #e9ecef; display: flex; gap: 10px; justify-content: flex-end;">
