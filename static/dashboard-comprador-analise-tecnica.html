@@ -658,6 +658,10 @@
                     <button class="btn btn-secondary" onclick="saveAsDraft()">
                         💾 Salvar Rascunho
                     </button>
+                    <button class="btn btn-info" onclick="abrirComparativoProcesso()">
+                        <i class="fas fa-balance-scale"></i>
+                        Comparar Propostas
+                    </button>
                     <button class="btn btn-primary" onclick="finalizeAnalysis()">
                         ✅ Finalizar Análise
                     </button>
@@ -1077,6 +1081,23 @@
                 window.location.href = 'index.html';
             }
         }
+
+        function abrirComparativoProcesso() {
+            const processoId = obterProcessoAtual();
+            if (processoId) {
+                window.open(`dashboard-comparativo-real.html?processo=${processoId}`, '_blank');
+            } else {
+                alert('Selecione um processo para comparação.');
+            }
+        }
+
+        function obterProcessoAtual() {
+            // Implementar lógica para obter ID do processo atual
+            // Pode ser de um campo hidden, URL parameter, etc.
+            return document.getElementById('processo-id')?.value || 
+                   new URLSearchParams(window.location.search).get('processo');
+        }
+                
     </script>
         <!-- Scripts de Integração - Adicionar APÓS os scripts existentes -->
         <script src="js/auth.js"></script>
