@@ -3,49 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Comprador Completo - Sistema de Gestão de Propostas</title>
+    <title>Dashboard Comprador - Sistema de Gestão de Propostas</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard-styles.css">
     <link rel="stylesheet" href="css/processos-styles.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* Estilos específicos para integração com backend existente */
+        .api-integration {
+            /* Configurações para APIs do backend Flask */
         }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        
+        .backend-compatible {
+            /* Compatibilidade com estrutura existente */
+        }
+        
+        /* Adaptações para o sistema atual */
+        .sistema-adaptado {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        .sidebar {
-            width: 250px;
+        
+        .container-principal {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar-adaptada {
+            width: 280px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             padding: 20px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             overflow-y: auto;
         }
-
-        .logo {
+        
+        .logo-sistema {
             text-align: center;
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 2px solid #e0e0e0;
         }
-
-        .logo h2 {
-            color: #11998e;
+        
+        .logo-sistema h2 {
+            color: #1199ee;
             font-size: 18px;
             margin-top: 10px;
         }
-
+        
         .nav-section {
             margin-bottom: 25px;
         }
-
+        
         .nav-title {
             font-size: 12px;
             font-weight: 600;
@@ -54,7 +63,7 @@
             margin-bottom: 10px;
             padding-left: 10px;
         }
-
+        
         .nav-item {
             display: block;
             width: 100%;
@@ -67,21 +76,20 @@
             cursor: pointer;
             transition: all 0.3s ease;
             color: #555;
-            font-size: 14px;
-            position: relative;
+            font-weight: bold;
         }
-
+        
         .nav-item:hover {
-            background: linear-gradient(135deg, #11998e, #38ef7d);
+            background: linear-gradient(135deg, #1199ee, #38ef7d);
             color: white;
             transform: translateX(5px);
         }
-
+        
         .nav-item.active {
-            background: linear-gradient(135deg, #11998e, #38ef7d);
+            background: linear-gradient(135deg, #1199ee, #38ef7d);
             color: white;
         }
-
+        
         .notification-badge {
             position: absolute;
             top: 8px;
@@ -97,907 +105,738 @@
             justify-content: center;
             font-weight: bold;
         }
-
+        
         .main-content {
             flex: 1;
             padding: 30px;
             overflow-y: auto;
         }
-
-        .header {
+        
+        .header-dashboard {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             padding: 20px 30px;
             border-radius: 15px;
             margin-bottom: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         }
-
-        .header h1 {
+        
+        .header-dashboard h1 {
             color: #333;
+            margin: 0;
             font-size: 28px;
-            margin-bottom: 5px;
         }
-
-        .header p {
+        
+        .header-dashboard p {
             color: #666;
-            font-size: 16px;
+            margin: 5px 0 0 0;
         }
-
+        
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-
+        
         .stat-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             padding: 25px;
             border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
         }
-
+        
         .stat-card:hover {
             transform: translateY(-5px);
         }
-
-        .stat-value {
+        
+        .stat-number {
             font-size: 36px;
             font-weight: bold;
-            color: #11998e;
+            color: #1199ee;
             margin-bottom: 10px;
         }
-
+        
         .stat-label {
             color: #666;
             font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-
+        
         .content-section {
+            display: none;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 15px;
             padding: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            display: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         }
-
+        
         .content-section.active {
             display: block;
         }
-
+        
         .section-title {
+            color: #333;
             font-size: 24px;
-            color: #333;
             margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tr-item {
-            background: #fff;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .tr-item:hover {
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-
-        .tr-item.pendente {
-            border-left: 5px solid #ffc107;
-        }
-
-        .tr-item.aprovado {
-            border-left: 5px solid #28a745;
-        }
-
-        .tr-item.reprovado {
-            border-left: 5px solid #dc3545;
-        }
-
-        .tr-status-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .tr-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
-            padding-right: 150px;
-        }
-
-        .tr-meta {
-            display: flex;
-            gap: 20px;
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-
-        .tr-objective {
-            color: #555;
-            line-height: 1.5;
-            margin-bottom: 15px;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #11998e, #38ef7d);
-            color: white;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-info {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1050;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: white;
-            width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
-            overflow-y: auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-
-        .modal-header {
-            padding: 25px;
-            border-bottom: 1px solid #dee2e6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-body {
-            padding: 25px;
-        }
-
-        .modal-footer {
-            padding: 20px 25px;
-            border-top: 1px solid #dee2e6;
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #11998e;
-        }
-
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-            gap: 20px;
-        }
-
-        .step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            min-width: 120px;
-        }
-
-        .step-number {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #e0e0e0;
-            color: #666;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .step.active .step-number {
-            background: #11998e;
-            color: white;
-        }
-
-        .step.completed .step-number {
-            background: #28a745;
-            color: white;
-        }
-
-        .step-title {
-            font-size: 12px;
-            color: #666;
-            font-weight: 600;
-        }
-
-        .step.active .step-title {
-            color: #11998e;
-        }
-
-        .proposta-card {
-            background: #fff;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .proposta-card:hover {
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-
-        .proposta-card.nova {
-            border-left: 5px solid #11998e;
-        }
-
-        .proposta-card.analisada {
-            border-left: 5px solid #28a745;
-        }
-
-        .proposta-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .proposta-titulo {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .proposta-status {
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            color: white;
-            background: #11998e;
-        }
-
-        .proposta-resumo {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-        }
-
-        .resumo-item {
-            text-align: center;
-        }
-
-        .resumo-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .resumo-value {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .resumo-value.destaque {
-            color: #11998e;
-        }
-
-        .proposta-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            padding-bottom: 10px;
             border-bottom: 2px solid #e0e0e0;
         }
-
-        .proposta-tab {
-            padding: 10px 20px;
-            background: none;
-            border: none;
-            font-weight: 600;
-            color: #666;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.3s ease;
+        
+        /* Estilos para tabelas */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
         }
-
-        .proposta-tab.active {
-            color: #11998e;
-        }
-
-        .proposta-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #11998e;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .comparison-table {
+        
+        .data-table {
             width: 100%;
             border-collapse: collapse;
             background: white;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-
-        .comparison-table th {
-            background: #11998e;
+        
+        .data-table th {
+            background: linear-gradient(135deg, #1199ee, #38ef7d);
             color: white;
             padding: 15px;
             text-align: left;
             font-weight: 600;
         }
-
-        .comparison-table td {
+        
+        .data-table td {
             padding: 15px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #eee;
         }
-
-        .comparison-table tr:hover {
+        
+        .data-table tr:hover {
             background: #f8f9fa;
         }
-
-        .best-value {
-            background: #e8f5e8 !important;
-            font-weight: bold;
-            color: #2e7d32;
+        
+        /* Botões */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin: 5px;
         }
-
-        .worst-value {
-            background: #ffebee !important;
-            color: #c62828;
-        }
-
-        .ai-analysis {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #1199ee, #38ef7d);
             color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
         }
-
-        .ai-analysis h4 {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 238, 0.4);
         }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
         }
-
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #11998e;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
         }
-
-        .criar-processo-modal {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
             padding: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-
-        .fornecedor-item {
-            background: white;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            border: 1px solid #e0e0e0;
+        
+        .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
         }
-
-        .fornecedor-info {
-            flex: 1;
-        }
-
-        .fornecedor-info strong {
+        
+        .modal-title {
             color: #333;
-            display: block;
-            margin-bottom: 5px;
+            font-size: 24px;
+            margin: 0;
         }
-
-        .fornecedor-info small {
-            color: #666;
-            font-size: 12px;
-        }
-
-        .fornecedor-credenciais {
-            color: #11998e;
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
             font-weight: bold;
-            font-size: 12px;
-            margin-top: 5px;
+            cursor: pointer;
+            transition: color 0.3s ease;
         }
-
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        /* Abas */
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-button.active {
+            color: #1199ee;
+            border-bottom-color: #1199ee;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Status badges */
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-nova {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-analisada {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .status-aprovada {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status-rejeitada {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        /* Responsividade */
         @media (max-width: 768px) {
-            body {
+            .container-principal {
                 flex-direction: column;
             }
             
-            .sidebar {
+            .sidebar-adaptada {
                 width: 100%;
-                padding: 15px;
+                order: 2;
             }
             
             .main-content {
-                padding: 20px;
+                order: 1;
             }
             
             .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                gap: 15px;
-            }
-
-            .tr-title {
-                padding-right: 0;
-                margin-bottom: 60px;
-            }
-
-            .tr-status-badge {
-                position: relative;
-                top: auto;
-                right: auto;
-                margin-top: -50px;
-                margin-bottom: 10px;
-                display: inline-flex;
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
-<body>
-    <div class="sidebar">
-        <div class="logo">
-            <i class="fas fa-shopping-cart" style="font-size: 24px; color: #11998e;"></i>
-            <h2>Portal do Comprador</h2>
-            <p style="font-size: 12px; color: #666; margin-top: 5px;">Sistema Completo de Gestão</p>
-        </div>
-
-        <div class="nav-section">
-            <div class="nav-title">PRINCIPAL</div>
-            <button class="nav-item active" onclick="mostrarSecao('dashboard')">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </button>
-            <button class="nav-item" onclick="mostrarSecao('aprovacao-trs')">
-                <i class="fas fa-file-check"></i> Aprovação de TRs
-                <span class="notification-badge" id="tr-notification" style="display: none;">0</span>
-            </button>
-            <button class="nav-item" onclick="mostrarSecao('criar-processo')">
-                <i class="fas fa-plus-circle"></i> Criar Processo
-            </button>
-        </div>
-
-        <div class="nav-section">
-            <div class="nav-title">GESTÃO</div>
-            <button class="nav-item" onclick="mostrarSecao('processos')">
-                <i class="fas fa-cogs"></i> Processos Licitatórios
-                <span class="notification-badge" id="processos-notification" style="display: none;">0</span>
-            </button>
-            <button class="nav-item" onclick="mostrarSecao('analise')">
-                <i class="fas fa-chart-line"></i> Análise Comparativa
-            </button>
-            <button class="nav-item" onclick="mostrarSecao('relatorios')">
-                <i class="fas fa-file-pdf"></i> Relatórios
-            </button>
-            <button class="nav-item" onclick="mostrarSecao('fornecedores')">
-                <i class="fas fa-building"></i> Fornecedores
-            </button>
-        </div>
-
-        <div class="nav-section">
-            <div class="nav-title">SISTEMA</div>
-            <button class="nav-item" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i> Sair
-            </button>
-        </div>
-    </div>
-
-    <div class="main-content">
-        <!-- Dashboard Principal -->
-        <div id="dashboard" class="content-section active">
-            <div class="header">
-                <h1><i class="fas fa-tachometer-alt"></i> Dashboard do Comprador</h1>
-                <p>Sistema completo de gestão de TRs, processos e propostas com IA</p>
-            </div>
-
-            <div id="notificacoes-container" style="margin-bottom: 20px;">
-                <!-- Notificações aparecerão aqui -->
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="trs-pendentes">0</div>
-                    <div class="stat-label">TRs Pendentes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="trs-aprovados">0</div>
-                    <div class="stat-label">TRs Aprovados</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="processos-ativos">0</div>
-                    <div class="stat-label">Processos Ativos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="propostas-recebidas">0</div>
-                    <div class="stat-label">Propostas Recebidas</div>
-                </div>
-            </div>
-
-            <div class="alert alert-info">
-                <strong><i class="fas fa-robot"></i> Sistema Integrado com IA</strong><br>
-                Análise inteligente de propostas, recomendações automáticas e gestão completa do fluxo licitatório.
-            </div>
-        </div>
-
-        <!-- Aprovação de TRs -->
-        <div id="aprovacao-trs" class="content-section">
-            <div class="section-title">
-                <i class="fas fa-file-check"></i> Aprovação de Termos de Referência
+<body class="sistema-adaptado">
+    <div class="container-principal">
+        <!-- Sidebar -->
+        <div class="sidebar-adaptada">
+            <div class="logo-sistema">
+                <i class="fas fa-building" style="font-size: 32px; color: #1199ee;"></i>
+                <h2>Sistema de Propostas</h2>
+                <p style="color: #666; font-size: 12px;">Módulo Comprador</p>
             </div>
             
-            <div class="alert alert-info">
-                <strong><i class="fas fa-info-circle"></i> Gestão de TRs</strong><br>
-                Analise e aprove os Termos de Referência enviados pelos requisitantes para criar processos licitatórios.
-            </div>
-
-            <div id="tr-list">
-                <!-- Lista de TRs será carregada aqui -->
-            </div>
-        </div>
-
-        <!-- Criar Processo -->
-        <div id="criar-processo" class="content-section">
-            <div class="section-title">
-                <i class="fas fa-plus-circle"></i> Criar Processo Licitatório
-            </div>
-            
-            <div class="step-indicator">
-                <div class="step completed" id="step-1">
-                    <div class="step-number">1</div>
-                    <div class="step-title">Selecionar TR</div>
-                </div>
-                <div class="step active" id="step-2">
-                    <div class="step-number">2</div>
-                    <div class="step-title">Dados do Processo</div>
-                </div>
-                <div class="step" id="step-3">
-                    <div class="step-number">3</div>
-                    <div class="step-title">Fornecedores</div>
-                </div>
-                <div class="step" id="step-4">
-                    <div class="step-number">4</div>
-                    <div class="step-title">Confirmação</div>
-                </div>
-            </div>
-
-            <div id="trs-aprovados-list">
-                <!-- Conteúdo do wizard será carregado aqui -->
-            </div>
-        </div>
-
-        <!-- Processos Licitatórios -->
-        <div id="processos" class="content-section">
-            <!-- Conteúdo será carregado dinamicamente pelo SistemaProcessosComPropostas -->
-        </div>
-
-        <!-- Análise Comparativa -->
-        <div id="analise" class="content-section">
-            <div class="section-title">
-                <i class="fas fa-chart-line"></i> Análise Comparativa com IA
-            </div>
-            
-            <div class="alert alert-success">
-                <strong><i class="fas fa-brain"></i> Análise Inteligente</strong><br>
-                Compare automaticamente propostas com análise de IA e recomendações baseadas em critérios técnicos e econômicos.
-            </div>
-
-            <div id="analise-ia-container">
-                <!-- Análise de IA será carregada aqui -->
-            </div>
-
-            <div id="tabela-comparacao">
-                <!-- Tabela comparativa será gerada aqui -->
-            </div>
-        </div>
-
-        <!-- Relatórios -->
-        <div id="relatorios" class="content-section">
-            <div class="section-title">
-                <i class="fas fa-file-pdf"></i> Relatórios e Documentos
-            </div>
-            
-            <div class="alert alert-warning">
-                <strong><i class="fas fa-shield-alt"></i> Envio Seguro</strong><br>
-                Envie propostas técnicas para o requisitante sem valores comerciais, mantendo a confidencialidade dos dados financeiros.
-            </div>
-
-            <div id="relatorio-container">
-                <!-- Relatórios serão gerados aqui -->
-            </div>
-
-            <div style="margin-top: 30px;">
-                <button class="btn btn-success" onclick="gerarRelatorioCompleto()">
-                    <i class="fas fa-file-pdf"></i> Gerar Relatório Completo
+            <div class="nav-section">
+                <div class="nav-title">Dashboard</div>
+                <button class="nav-item active" onclick="mostrarSecao('dashboard')">
+                    <i class="fas fa-home"></i> Visão Geral
                 </button>
-                <button class="btn btn-info" onclick="enviarPropostaTecnica()">
-                    <i class="fas fa-paper-plane"></i> Enviar Proposta Técnica (sem valores)
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Gestão</div>
+                <button class="nav-item" onclick="mostrarSecao('trs')" style="position: relative;">
+                    <i class="fas fa-file-alt"></i> Aprovação de TRs
+                    <span class="notification-badge" id="badge-trs">3</span>
                 </button>
-                <button class="btn btn-warning" onclick="exportarDados()">
-                    <i class="fas fa-download"></i> Exportar Dados
+                <button class="nav-item" onclick="mostrarSecao('processos')" style="position: relative;">
+                    <i class="fas fa-cogs"></i> Processos Licitatórios
+                    <span class="notification-badge" id="badge-processos">2</span>
+                </button>
+                <button class="nav-item" onclick="mostrarSecao('analise')">
+                    <i class="fas fa-chart-line"></i> Análise Comparativa
+                </button>
+                <button class="nav-item" onclick="mostrarSecao('relatorios')">
+                    <i class="fas fa-file-pdf"></i> Relatórios
+                </button>
+                <button class="nav-item" onclick="mostrarSecao('fornecedores')">
+                    <i class="fas fa-users"></i> Fornecedores
+                </button>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Sistema</div>
+                <button class="nav-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
             </div>
         </div>
-
-        <!-- Fornecedores -->
-        <div id="fornecedores" class="content-section">
-            <div class="section-title">
-                <i class="fas fa-building"></i> Gestão de Fornecedores
+        
+        <!-- Conteúdo Principal -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header-dashboard">
+                <h1>Dashboard do Comprador</h1>
+                <p>Bem-vindo ao sistema integrado de gestão de propostas</p>
             </div>
             
-            <div class="alert alert-info">
-                <strong><i class="fas fa-users"></i> Cadastro de Fornecedores</strong><br>
-                Gerencie o cadastro de fornecedores e suas credenciais de acesso ao sistema.
+            <!-- Dashboard Principal -->
+            <div id="dashboard" class="content-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="stat-trs">3</div>
+                        <div class="stat-label">TRs Pendentes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="stat-processos">2</div>
+                        <div class="stat-label">Processos Ativos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="stat-propostas">5</div>
+                        <div class="stat-label">Propostas Recebidas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="stat-analises">1</div>
+                        <div class="stat-label">Análises IA</div>
+                    </div>
+                </div>
+                
+                <div class="content-section active">
+                    <h3 class="section-title">Atividades Recentes</h3>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Atividade</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="atividades-recentes">
+                                <tr>
+                                    <td>03/08/2025</td>
+                                    <td>Nova proposta recebida - TechSolutions</td>
+                                    <td><span class="status-badge status-nova">Nova</span></td>
+                                    <td><button class="btn btn-primary btn-sm">Analisar</button></td>
+                                </tr>
+                                <tr>
+                                    <td>02/08/2025</td>
+                                    <td>TR aprovado - Aquisição de Equipamentos</td>
+                                    <td><span class="status-badge status-aprovada">Aprovado</span></td>
+                                    <td><button class="btn btn-secondary btn-sm">Visualizar</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-
-            <div style="margin-bottom: 20px;">
-                <button class="btn btn-primary" onclick="mostrarModalCadastroFornecedor()">
-                    <i class="fas fa-plus"></i> Cadastrar Novo Fornecedor
-                </button>
+            
+            <!-- Seção de TRs -->
+            <div id="trs" class="content-section">
+                <h2 class="section-title">Aprovação de Termos de Referência</h2>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Título</th>
+                                <th>Requisitante</th>
+                                <th>Data</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-trs">
+                            <!-- Dados carregados via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
-
-            <div id="lista-fornecedores">
-                <!-- Fornecedores serão carregados aqui -->
+            
+            <!-- Seção de Processos -->
+            <div id="processos" class="content-section">
+                <h2 class="section-title">Processos Licitatórios</h2>
+                <div class="tab-container">
+                    <div class="tab-buttons">
+                        <button class="tab-button active" onclick="mostrarAba('processos-ativos')">Processos Ativos</button>
+                        <button class="tab-button" onclick="mostrarAba('processos-finalizados')">Processos Finalizados</button>
+                    </div>
+                    
+                    <div id="processos-ativos" class="tab-content active">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Processo</th>
+                                        <th>Objeto</th>
+                                        <th>Modalidade</th>
+                                        <th>Propostas</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lista-processos-ativos">
+                                    <!-- Dados carregados via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div id="processos-finalizados" class="tab-content">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Processo</th>
+                                        <th>Objeto</th>
+                                        <th>Vencedor</th>
+                                        <th>Valor</th>
+                                        <th>Data Finalização</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lista-processos-finalizados">
+                                    <!-- Dados carregados via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Outras seções serão adicionadas aqui -->
+            <div id="analise" class="content-section">
+                <h2 class="section-title">Análise Comparativa</h2>
+                <p>Funcionalidade de análise comparativa será implementada aqui.</p>
+            </div>
+            
+            <div id="relatorios" class="content-section">
+                <h2 class="section-title">Relatórios</h2>
+                <p>Funcionalidade de relatórios será implementada aqui.</p>
+            </div>
+            
+            <div id="fornecedores" class="content-section">
+                <h2 class="section-title">Gestão de Fornecedores</h2>
+                <p>Funcionalidade de gestão de fornecedores será implementada aqui.</p>
             </div>
         </div>
     </div>
-
-    <!-- Modal para Visualização de TR -->
-    <div id="modal-tr" class="modal-overlay" style="display: none;">
+    
+    <!-- Modal para visualização de detalhes -->
+    <div id="modal-detalhes" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-file-alt"></i> Visualizar Termo de Referência</h2>
-                <button onclick="fecharModalTR()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                <h2 class="modal-title" id="modal-titulo">Detalhes</h2>
+                <span class="close" onclick="fecharModal()">&times;</span>
             </div>
-            <div class="modal-body" id="modal-tr-body">
-                <!-- Conteúdo do TR será carregado aqui -->
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="fecharModalTR()">Fechar</button>
-                <button class="btn btn-danger" onclick="reprovarTR()">
-                    <i class="fas fa-times"></i> Reprovar
-                </button>
-                <button class="btn btn-success" onclick="aprovarTR()">
-                    <i class="fas fa-check"></i> Aprovar
-                </button>
+            <div id="modal-body">
+                <!-- Conteúdo do modal será carregado aqui -->
             </div>
         </div>
     </div>
-
-    <!-- Modal para Cadastro de Fornecedor -->
-    <div id="modal-fornecedor" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-building"></i> Cadastrar Fornecedor</h2>
-                <button onclick="fecharModalFornecedor()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="form-cadastro-fornecedor">
-                    <div class="form-group">
-                        <label>Razão Social</label>
-                        <input type="text" id="fornecedor-razao-social" required>
-                    </div>
-                    <div class="form-group">
-                        <label>CNPJ</label>
-                        <input type="text" id="fornecedor-cnpj" required>
-                    </div>
-                    <div class="form-group">
-                        <label>E-mail</label>
-                        <input type="email" id="fornecedor-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Telefone</label>
-                        <input type="text" id="fornecedor-telefone">
-                    </div>
-                    <div class="form-group">
-                        <label>Endereço</label>
-                        <textarea id="fornecedor-endereco"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="fecharModalFornecedor()">Cancelar</button>
-                <button class="btn btn-primary" onclick="salvarFornecedor()">
-                    <i class="fas fa-save"></i> Salvar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts JavaScript -->
+    
+    <!-- Scripts -->
     <script src="js/sistema-dados.js"></script>
     <script src="js/gestao-trs.js"></script>
-    <script src="js/gestao-processos.js"></script>
-    <script src="js/gestao-propostas.js"></script>
+    <script src="js/gestao-processos-com-propostas.js"></script>
     <script src="js/gestao-fornecedores.js"></script>
     <script src="js/dashboard-principal.js"></script>
-    <script src="js/sistema-download-completo.js"></script>
     <script src="js/visualizacao-completa-propostas.js"></script>
-    <script src="js/gestao-processos-com-propostas.js"></script>
+    <script src="js/sistema-download-completo.js"></script>
+    <script src="js/azure-ia-real.js"></script>
+    
+    <script>
+        // Configuração da API para integração com backend Flask
+        const API_BASE_URL = window.location.origin; // Usa a mesma origem do frontend
+        
+        // Configuração de autenticação
+        let authToken = localStorage.getItem('auth_token');
+        
+        // Headers padrão para requisições
+        const defaultHeaders = {
+            'Content-Type': 'application/json',
+            'Authorization': authToken ? `Bearer ${authToken}` : ''
+        };
+        
+        // Função para fazer requisições à API
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const config = {
+                headers: defaultHeaders,
+                ...options
+            };
+            
+            try {
+                const response = await fetch(url, config);
+                
+                if (response.status === 401) {
+                    // Token expirado, redirecionar para login
+                    logout();
+                    return null;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                throw error;
+            }
+        }
+        
+        // Função para carregar dados do dashboard
+        async function carregarDashboard() {
+            try {
+                // Carregar estatísticas
+                const stats = await apiRequest('/api/comprador/dashboard/stats');
+                if (stats) {
+                    document.getElementById('stat-trs').textContent = stats.trs_pendentes || 0;
+                    document.getElementById('stat-processos').textContent = stats.processos_ativos || 0;
+                    document.getElementById('stat-propostas').textContent = stats.propostas_recebidas || 0;
+                    document.getElementById('stat-analises').textContent = stats.analises_ia || 0;
+                }
+                
+                // Carregar atividades recentes
+                const atividades = await apiRequest('/api/comprador/dashboard/atividades');
+                if (atividades) {
+                    carregarAtividadesRecentes(atividades);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+                // Usar dados de exemplo em caso de erro
+                carregarDadosExemplo();
+            }
+        }
+        
+        // Função para carregar dados de exemplo (fallback)
+        function carregarDadosExemplo() {
+            // Dados de exemplo para demonstração
+            const dadosExemplo = {
+                trs: [
+                    {
+                        id: 1,
+                        numero: 'TR-2024-001',
+                        titulo: 'Aquisição de Equipamentos de TI',
+                        requisitante: 'João Silva',
+                        data: '2024-08-01',
+                        status: 'pendente'
+                    }
+                ],
+                processos: [
+                    {
+                        id: 1,
+                        numero: 'PP-2024-001',
+                        objeto: 'Aquisição de Equipamentos',
+                        modalidade: 'Pregão Eletrônico',
+                        propostas: 3,
+                        status: 'ativo'
+                    }
+                ]
+            };
+            
+            // Carregar dados de exemplo
+            if (window.SistemaDados) {
+                window.SistemaDados.carregarDadosExemplo(dadosExemplo);
+            }
+        }
+        
+        // Função para mostrar seções
+        function mostrarSecao(secaoId) {
+            // Ocultar todas as seções
+            const secoes = document.querySelectorAll('.content-section');
+            secoes.forEach(secao => secao.classList.remove('active'));
+            
+            // Remover classe active de todos os nav-items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            
+            // Mostrar seção selecionada
+            const secaoSelecionada = document.getElementById(secaoId);
+            if (secaoSelecionada) {
+                secaoSelecionada.classList.add('active');
+            }
+            
+            // Adicionar classe active ao nav-item clicado
+            event.target.classList.add('active');
+            
+            // Carregar dados específicos da seção
+            carregarDadosSecao(secaoId);
+        }
+        
+        // Função para carregar dados específicos de cada seção
+        async function carregarDadosSecao(secaoId) {
+            switch (secaoId) {
+                case 'trs':
+                    await carregarTRs();
+                    break;
+                case 'processos':
+                    await carregarProcessos();
+                    break;
+                case 'analise':
+                    await carregarAnaliseComparativa();
+                    break;
+                case 'relatorios':
+                    await carregarRelatorios();
+                    break;
+                case 'fornecedores':
+                    await carregarFornecedores();
+                    break;
+            }
+        }
+        
+        // Função para carregar TRs
+        async function carregarTRs() {
+            try {
+                const trs = await apiRequest('/api/comprador/trs/pendentes');
+                if (trs && window.GestaoTRs) {
+                    window.GestaoTRs.renderizarTRs(trs);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar TRs:', error);
+            }
+        }
+        
+        // Função para carregar processos
+        async function carregarProcessos() {
+            try {
+                const processos = await apiRequest('/api/comprador/processos');
+                if (processos && window.GestaoProcessos) {
+                    window.GestaoProcessos.renderizarProcessos(processos);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar processos:', error);
+            }
+        }
+        
+        // Função para mostrar abas
+        function mostrarAba(abaId) {
+            // Remover classe active de todos os botões de aba
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => button.classList.remove('active'));
+            
+            // Ocultar todos os conteúdos de aba
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Mostrar aba selecionada
+            const abaSelecionada = document.getElementById(abaId);
+            if (abaSelecionada) {
+                abaSelecionada.classList.add('active');
+            }
+            
+            // Adicionar classe active ao botão clicado
+            event.target.classList.add('active');
+        }
+        
+        // Função para fechar modal
+        function fecharModal() {
+            const modal = document.getElementById('modal-detalhes');
+            modal.style.display = 'none';
+        }
+        
+        // Função para logout
+        function logout() {
+            localStorage.removeItem('auth_token');
+            window.location.href = '/login-comprador.html';
+        }
+        
+        // Inicialização quando a página carrega
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar autenticação
+            if (!authToken) {
+                logout();
+                return;
+            }
+            
+            // Carregar dashboard inicial
+            carregarDashboard();
+            
+            // Configurar fechamento de modal ao clicar fora
+            window.onclick = function(event) {
+                const modal = document.getElementById('modal-detalhes');
+                if (event.target === modal) {
+                    fecharModal();
+                }
+            };
+        });
+    </script>
 </body>
 </html>
