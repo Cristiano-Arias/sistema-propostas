@@ -1803,211 +1803,218 @@ Deseja realmente enviar a proposta?
         
         // Função enviarProposta - CORRIGIDA
         async function enviarProposta() {
-            // Verificar se já está enviando
-            if (enviandoProposta) {
-                return;
-            }
-            
-            enviandoProposta = true;
-            
-            // Validações básicas
-            const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia'];
-            let tudoPreenchido = true;
-            
-            for (const campo of camposObrigatorios) {
-                const elemento = document.getElementById(campo);
-                if (!elemento || !elemento.value.trim()) {
-                    tudoPreenchido = false;
-                    if (elemento) {
-                        elemento.style.borderColor = '#e74c3c';
-                    }
-                }
-            }
-            
-            if (!tudoPreenchido) {
-                mostrarMensagem('Por favor, preencha todos os campos obrigatórios (*)', 'error');
-                enviandoProposta = false;
-                return;
-            }
-            
-            // Mostrar loading
-            const submitBtn = document.querySelector('.submit-btn[onclick="confirmarEnvio()"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="loading"></span> Enviando...';
-            submitBtn.disabled = true;
-            
+            const formData = coletarDadosFormulario();
+    
             try {
-                // Coletar todos os dados da proposta
-                const dadosProposta = coletarDadosCompletos();
-
-                // Validar se os dados foram coletados corretamente
-                if (!dadosProposta) {
-                    throw new Error('Erro ao coletar dados da proposta. Verifique se todos os campos estão preenchidos.');
-                }
-                
-                // Garantir que as estruturas de dados existam
-                if (!dadosProposta.propostaComercial) {
-                    dadosProposta.propostaComercial = {
-                        servicos: [],
-                        maoObra: [],
-                        materiaisComercial: [],
-                        equipamentosComercial: [],
-                        bdi: [],
-                        totais: {
-                            servicos: '0,00',
-                            maoObra: '0,00',
-                            materiais: '0,00',
-                            equipamentos: '0,00',
-                            custoDirecto: '0,00',
-                            bdiPercentual: '0,00',
-                            bdiValor: '0,00'
-                        }
-                    };
-                }
-                
-                if (!dadosProposta.propostaTecnica) {
-                    dadosProposta.propostaTecnica = {
-                        cronograma: [],
-                        experiencia: [],
-                        certificacoes: []
-                    };
-                }
-                
-                // Garantir que totais existam
-                if (!dadosProposta.propostaComercial.totais) {
-                    dadosProposta.propostaComercial.totais = {
-                        servicos: '0,00',
-                        maoObra: '0,00',
-                        materiais: '0,00',
-                        equipamentos: '0,00',
-                        custoDirecto: '0,00',
-                        bdiPercentual: '0,00',
-                        bdiValor: '0,00'
-                    };
-                }
-                
-                // Gerar protocolo único
-                const protocolo = 'PROP-' + Date.now();
-                
-                // Se veio do dashboard, salvar também no localStorage do sistema principal
-                if (window.fornecedorLogado && window.dadosOrigemDashboard) {
-                    const propostas = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
-                    
-                    // Verificar se já existe uma proposta enviada para este processo
-                    const propostaExistente = propostas.find(p => 
-                        p.processoId === window.dadosOrigemDashboard.processo.processoId && 
-                        p.fornecedorId === window.fornecedorLogado.id &&
-                        p.status === 'ENVIADA'
-                    );
-                    
-                    if (propostaExistente) {
-                        throw new Error('Você já enviou uma proposta para este processo! Protocolo: ' + propostaExistente.protocolo);
-                    }
-                    
-                    // Criar nova proposta com dados completos
-                    const novaProposta = {
-                        id: Date.now().toString(36) + Math.random().toString(36).substr(2),
-                        processoId: window.dadosOrigemDashboard.processo.processoId,
-                        numeroProcesso: dadosProposta.processo.numero,
-                        fornecedorId: window.fornecedorLogado.id,
-                        fornecedorEmail: window.fornecedorLogado.email || dadosProposta.dadosCadastrais.email,
-                        fornecedorCNPJ: window.fornecedorLogado.cnpj || dadosProposta.dadosCadastrais.cnpj,
-                        fornecedorRazaoSocial: window.fornecedorLogado.razaoSocial || dadosProposta.dadosCadastrais.razaoSocial,
-                        valor: dadosProposta.propostaComercial.valorTotal || '0,00',
-                        prazoExecucao: dadosProposta.propostaTecnica.prazoExecucao || dadosProposta.resumo.prazoExecucao || '',
-                        condicoesPagamento: dadosProposta.resumo.formaPagamento || '',
-                        garantia: dadosProposta.propostaTecnica.garantias || '',
-                        observacoes: dadosProposta.propostaTecnica.metodologia || '',
-                        status: 'ENVIADA',
-                        dataEnvio: new Date().toISOString(),
-                        protocolo: protocolo,
-                        dadosCompletos: dadosProposta // IMPORTANTE: Armazena todos os dados do portal
-                    };
-                    
-                    // Garantir que TODOS os dados sejam salvos para o comprador
-                    const propostasComprador = JSON.parse(localStorage.getItem('propostas_comprador') || '[]');
-                    const propostaComprador = {
-                        ...novaProposta,
-                        // Adicionar dados detalhados para análise do comprador
-                        servicosDetalhados: dadosProposta.propostaComercial.servicos || [],
-                        maoObraDetalhada: dadosProposta.propostaComercial.maoObra || [],
-                        materiaisDetalhados: dadosProposta.propostaComercial.materiaisComercial || [],
-                        equipamentosDetalhados: dadosProposta.propostaComercial.equipamentosComercial || [],
-                        bdiDetalhado: dadosProposta.propostaComercial.bdi || [],
-                        cronogramaDetalhado: dadosProposta.propostaTecnica.cronograma || [],
-                        experienciaDetalhada: dadosProposta.propostaTecnica.experiencia || [],
-                        certificacoesDetalhadas: dadosProposta.propostaTecnica.certificacoes || [],
-                        // Totais calculados
-                        totalServicos: dadosProposta.propostaComercial.totais.servicos || '0,00',
-                        totalMaoObra: dadosProposta.propostaComercial.totais.maoObra || '0,00',
-                        totalMateriais: dadosProposta.propostaComercial.totais.materiais || '0,00',
-                        totalEquipamentos: dadosProposta.propostaComercial.totais.equipamentos || '0,00',
-                        custoDirecto: dadosProposta.propostaComercial.totais.custoDirecto || '0,00',
-                        bdiPercentual: dadosProposta.propostaComercial.totais.bdiPercentual || '0,00',
-                        bdiValor: dadosProposta.propostaComercial.totais.bdiValor || '0,00'
-                    };
-                    
-                    propostasComprador.push(propostaComprador);
-                    localStorage.setItem('propostas_comprador', JSON.stringify(propostasComprador));
-                    
-                    // Remover TODOS os rascunhos anteriores do mesmo processo e fornecedor
-                    const propostasSemRascunho = propostas.filter(p => 
-                        !(p.processoId === window.dadosOrigemDashboard.processo.processoId && 
-                          p.fornecedorId === window.fornecedorLogado.id &&
-                          p.status === 'RASCUNHO')
-                    );
-                    
-                    // Adicionar nova proposta
-                    propostasSemRascunho.push(novaProposta);
-                    
-                    // Salvar no localStorage
-                    localStorage.setItem('propostas_fornecedores', JSON.stringify(propostasSemRascunho));
-                    
-                    // Limpar rascunho local também
-                    const numeroProcesso = document.getElementById('numeroProcesso').value;
-                    const cnpjFornecedor = window.fornecedorLogado.cnpj;
-                    const cnpjLimpo = cnpjFornecedor.replace(/[^0-9]/g, '');
-                    const chaveRascunho = 'rascunho_' + cnpjLimpo + '_' + numeroProcesso;
-                    localStorage.removeItem(chaveRascunho);
-                }
-                
-                // Simular envio para backend (quando API estiver pronta)
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
-                // Mostrar mensagem de sucesso
-                mostrarMensagem(`
-                    <strong>✅ Proposta enviada com sucesso!</strong><br>
-                    <strong>Protocolo:</strong> ${protocolo}<br>
-                    <strong>Data/Hora:</strong> ${new Date().toLocaleString('pt-BR')}<br>
-                    <small>📧 E-mail de confirmação enviado</small><br>
-                    <small>💾 Salvo no módulo Fornecedor</small><br>
-                    <small>📤 Enviado para módulo Comprador</small><br>
-                    ${window.fornecedorLogado ? `
-                        <br>
-                        <button onclick="window.close()" class="btn btn-primary btn-sm" style="margin-top: 10px;">
-                            <i class="fas fa-times"></i> Fechar e Voltar ao Dashboard
-                        </button>
-                    ` : ''}
-                `, 'success');
-                
-                // Desabilitar edição após envio
-                document.querySelectorAll('input, textarea, select').forEach(el => {
-                    el.disabled = true;
+                // Enviar proposta principal
+                const response = await fetch('/api/propostas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(formData.dadosBasicos)
                 });
                 
+                if (!response.ok) throw new Error('Erro ao enviar proposta');
+                
+                const resultado = await response.json();
+                const propostaId = resultado.id;
+                
+                // Enviar dados detalhados para comparativo
+                await enviarDadosDetalhados(propostaId, formData);
+                
+                alert('Proposta enviada com sucesso!');
+                window.location.href = 'dashboard-fornecedor-funcional.html';
+                
             } catch (error) {
-                console.error('Erro ao enviar proposta:', error);
-                mostrarMensagem(`
-                    <strong>❌ Erro ao enviar proposta</strong><br>
-                    ${error.message}<br>
-                    <small>Tente novamente em alguns instantes</small>
-                `, 'error');
-            } finally {
-                // Restaurar botão
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                enviandoProposta = false;
+                console.error('Erro:', error);
+                alert('Erro ao enviar proposta: ' + error.message);
             }
+        }
+        
+        async function enviarDadosDetalhados(propostaId, formData) {
+            // Enviar proposta técnica
+            await fetch('/api/propostas/tecnica', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    proposta_id: propostaId,
+                    ...formData.propostaTecnica
+                })
+            });
+            
+            // Enviar tabelas (serviços, mão de obra, materiais, equipamentos)
+            for (const tabela of ['servicos', 'maoObra', 'materiais', 'equipamentos']) {
+                if (formData[tabela] && formData[tabela].length > 0) {
+                    await fetch(`/api/propostas/${tabela}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({
+                            proposta_id: propostaId,
+                            items: formData[tabela]
+                        })
+                    });
+                }
+            }
+            
+            // Enviar BDI
+            if (formData.bdi && formData.bdi.length > 0) {
+                await fetch('/api/propostas/bdi', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        proposta_id: propostaId,
+                        items: formData.bdi
+                    })
+                });
+            }
+        }
+        
+        function coletarDadosFormulario() {
+            return {
+                dadosBasicos: {
+                    processo_id: document.getElementById('processo-id').value,
+                    valor_total: calcularValorTotal(),
+                    prazo_entrega: document.getElementById('prazo-entrega').value,
+                    validade_proposta: document.getElementById('validade-proposta').value
+                },
+                propostaTecnica: {
+                    objetoConcorrencia: document.getElementById('objeto-concorrencia').value,
+                    escopoInclusos: document.getElementById('escopo-inclusos').value,
+                    escopoExclusos: document.getElementById('escopo-exclusos').value,
+                    metodologia: document.getElementById('metodologia').value,
+                    sequenciaExecucao: document.getElementById('sequencia-execucao').value,
+                    prazoExecucao: document.getElementById('prazo-execucao').value,
+                    prazoMobilizacao: document.getElementById('prazo-mobilizacao').value,
+                    garantias: document.getElementById('garantias').value,
+                    estruturaCanteiro: document.getElementById('estrutura-canteiro').value,
+                    obrigacoesContratada: document.getElementById('obrigacoes-contratada').value,
+                    obrigacoesContratante: document.getElementById('obrigacoes-contratante').value
+                },
+                servicos: coletarTabelaServicos(),
+                maoObra: coletarTabelaMaoObra(),
+                materiais: coletarTabelaMateriais(),
+                equipamentos: coletarTabelaEquipamentos(),
+                bdi: coletarTabelaBDI()
+            };
+        }
+        
+        // IMPLEMENTAR FUNÇÕES DE COLETA DE DADOS DAS TABELAS
+        function coletarTabelaServicos() {
+            const tabela = document.getElementById('tabela-servicos');
+            const linhas = tabela.querySelectorAll('tbody tr');
+            const servicos = [];
+            
+            linhas.forEach(linha => {
+                const cells = linha.querySelectorAll('td input');
+                if (cells.length >= 4) {
+                    servicos.push({
+                        descricao: cells[0].value,
+                        unidade: cells[1].value,
+                        quantidade: parseFloat(cells[2].value) || 0,
+                        preco_unitario: parseFloat(cells[3].value) || 0
+                    });
+                }
+            });
+            
+            return servicos;
+        }
+        
+        function coletarTabelaMaoObra() {
+            const tabela = document.getElementById('tabela-mao-obra');
+            const linhas = tabela.querySelectorAll('tbody tr');
+            const maoObra = [];
+            
+            linhas.forEach(linha => {
+                const cells = linha.querySelectorAll('td input');
+                if (cells.length >= 5) {
+                    maoObra.push({
+                        funcao: cells[0].value,
+                        quantidade: parseInt(cells[1].value) || 0,
+                        tempo: parseFloat(cells[2].value) || 0,
+                        salario: parseFloat(cells[3].value) || 0,
+                        encargos_sociais: parseFloat(cells[4].value) || 0
+                    });
+                }
+            });
+            
+            return maoObra;
+        }
+        
+        function coletarTabelaMateriais() {
+            const tabela = document.getElementById('tabela-materiais');
+            const linhas = tabela.querySelectorAll('tbody tr');
+            const materiais = [];
+            
+            linhas.forEach(linha => {
+                const cells = linha.querySelectorAll('td input');
+                if (cells.length >= 5) {
+                    materiais.push({
+                        material: cells[0].value,
+                        especificacao: cells[1].value,
+                        unidade: cells[2].value,
+                        quantidade: parseFloat(cells[3].value) || 0,
+                        preco_unitario: parseFloat(cells[4].value) || 0
+                    });
+                }
+            });
+            
+            return materiais;
+        }
+        
+        function coletarTabelaEquipamentos() {
+            const tabela = document.getElementById('tabela-equipamentos');
+            const linhas = tabela.querySelectorAll('tbody tr');
+            const equipamentos = [];
+            
+            linhas.forEach(linha => {
+                const cells = linha.querySelectorAll('td input');
+                if (cells.length >= 6) {
+                    equipamentos.push({
+                        equipamento: cells[0].value,
+                        especificacao: cells[1].value,
+                        unidade: cells[2].value,
+                        quantidade: parseFloat(cells[3].value) || 0,
+                        tempo: parseFloat(cells[4].value) || 0,
+                        preco_mensal: parseFloat(cells[5].value) || 0
+                    });
+                }
+            });
+            
+            return equipamentos;
+        }
+        
+        function coletarTabelaBDI() {
+            const tabela = document.getElementById('tabela-bdi');
+            const linhas = tabela.querySelectorAll('tbody tr');
+            const bdi = [];
+            
+            linhas.forEach(linha => {
+                const cells = linha.querySelectorAll('td');
+                if (cells.length >= 3) {
+                    const item = cells[0].textContent.trim();
+                    const percentual = parseFloat(cells[1].querySelector('input')?.value) || 0;
+                    const valor = parseFloat(cells[2].textContent.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+                    
+                    bdi.push({
+                        item: item,
+                        percentual: percentual,
+                        valor: valor
+                    });
+                }
+            });
+            
+            return bdi;
         }
 
         function coletarDadosCompletos() {
