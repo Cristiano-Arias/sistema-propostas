@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Comprador - Análise Comparativa</title>
+    <title>Comparativo de Propostas - Baseado no Portal Real</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -11,1680 +12,972 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
+            color: var(--text-primary);
+            line-height: 1.6;
         }
 
-        .sidebar {
-            width: 250px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
             padding: 20px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .logo h1 {
-            color: #2196F3;
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-
-        .logo p {
-            color: #666;
-            font-size: 12px;
-        }
-
-        .menu-section {
-            margin-bottom: 25px;
-        }
-
-        .menu-title {
-            color: #666;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-
-        .menu-item {
-            display: block;
-            width: 100%;
-            padding: 12px 15px;
-            margin-bottom: 5px;
-            background: none;
-            border: none;
-            border-radius: 8px;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #555;
-            font-size: 14px;
-        }
-
-        .menu-item:hover {
-            background: #f0f0f0;
-            transform: translateX(5px);
-        }
-
-        .menu-item.active {
-            background: #2196F3;
-            color: white;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
         }
 
         .header {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-
-        .header p {
-            color: #666;
-            font-size: 16px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-number {
-            font-size: 36px;
-            font-weight: bold;
-            color: #2196F3;
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .content-section {
-            display: none;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            border-radius: 20px;
             padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .page-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Process Selector */
+        .process-selector {
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
         }
 
-        .content-section.active {
-            display: block;
+        .process-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            background: white;
+            transition: all 0.3s ease;
         }
 
-        .section-title {
-            color: #333;
-            font-size: 24px;
+        .process-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        /* Analysis Tabs */
+        .analysis-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 8px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+            gap: 8px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-button.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .tab-button:not(.active):hover {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--primary-color);
+        }
+
+        /* Azure IA Insights */
+        .ai-insights {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-insights::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .ai-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .ai-content {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .ai-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .ai-card-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+        }
+
+        /* Comparison Container */
+        .comparison-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        .comparison-header {
+            padding: 20px 25px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+
+        .comparison-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--light-bg);
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
         }
 
         .comparison-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            font-size: 0.9rem;
             background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
 
         .comparison-table th {
-            background: #2196F3;
+            background: linear-gradient(135deg, var(--primary-color), #2980b9);
             color: white;
-            padding: 15px;
+            padding: 15px 12px;
             text-align: left;
-            font-weight: 600;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .comparison-table th:first-child {
+            width: 200px;
+            min-width: 200px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
         }
 
         .comparison-table td {
-            padding: 15px;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
             vertical-align: top;
         }
 
-        .comparison-table tr:hover {
-            background: #f8f9fa;
+        .comparison-table tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
         }
 
-        .best-value {
-            background: #e8f5e8 !important;
-            font-weight: bold;
-            color: #2e7d32;
-        }
-
-        .worst-value {
-            background: #ffebee !important;
-            color: #c62828;
-        }
-
-        .chart-container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        }
-
-        .chart-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 15px;
+        .item-label {
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
             text-align: center;
         }
 
-        .bar-chart {
-            display: flex;
-            align-items: end;
-            height: 200px;
-            gap: 20px;
-            padding: 20px 0;
-        }
-
-        .bar {
-            flex: 1;
-            background: linear-gradient(to top, #2196F3, #64B5F6);
-            border-radius: 5px 5px 0 0;
+        .proposal-cell {
+            min-width: 250px;
             position: relative;
-            min-height: 20px;
-            display: flex;
-            align-items: end;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            padding: 10px 5px;
         }
 
-        .bar-label {
-            position: absolute;
-            bottom: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            color: #666;
+        .company-header {
+            background: linear-gradient(135deg, var(--success-color), #2ecc71);
+            color: white;
             text-align: center;
-            width: 100%;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 18px 12px;
         }
 
-        .analysis-card {
-            background: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
+        /* Value Formatting */
+        .value-monetary {
+            font-weight: 700;
+            color: var(--success-color);
+            font-size: 1.1em;
         }
 
-        .analysis-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 10px;
+        .value-quantity {
+            font-weight: 600;
+            color: var(--primary-color);
         }
 
-        .analysis-content {
-            color: #666;
-            line-height: 1.6;
+        .value-percentage {
+            font-weight: 600;
+            color: var(--warning-color);
         }
 
-        .recommendation {
-            background: linear-gradient(135deg, #4CAF50, #66BB6A);
+        .value-text {
+            color: var(--text-primary);
+        }
+
+        .value-total {
+            font-weight: 700;
+            color: var(--danger-color);
+            font-size: 1.2em;
+            background: rgba(231, 76, 60, 0.1);
+            padding: 5px 8px;
+            border-radius: 5px;
+        }
+
+        /* Section Headers */
+        .section-header {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
             color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-
-        .recommendation h3 {
-            margin-bottom: 10px;
-        }
-
-        .btn {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-
-        .btn:hover {
-            background: #1976D2;
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: #4CAF50;
-        }
-
-        .btn-success:hover {
-            background: #388E3C;
-        }
-
-        .btn-warning {
-            background: #FF9800;
-        }
-
-        .btn-warning:hover {
-            background: #F57C00;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .alert-info {
-            background: #E3F2FD;
-            border: 1px solid #BBDEFB;
-            color: #1976D2;
-        }
-
-        .alert-success {
-            background: #E8F5E8;
-            border: 1px solid #C8E6C9;
-            color: #2E7D32;
-        }
-
-        .proposta-card {
-            background: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .proposta-card:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-
-        .proposta-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .proposta-titulo {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .proposta-status {
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            background: #2196F3;
-            color: white;
-        }
-
-        .proposta-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .info-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .info-value {
-            font-size: 14px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .loading {
+            padding: 15px 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
             text-align: center;
-            padding: 20px;
-            color: #666;
+            margin: 0;
         }
 
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .container {
                 padding: 15px;
             }
             
-            .main-content {
-                padding: 20px;
+            .comparison-table th:first-child {
+                width: 180px;
+                min-width: 180px;
             }
             
-            .stats-grid {
+            .proposal-cell {
+                min-width: 220px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .analysis-tabs {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .comparison-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .export-buttons {
+                justify-content: center;
+            }
+
+            .comparison-table th:first-child {
+                width: 150px;
+                min-width: 150px;
+            }
+
+            .proposal-cell {
+                min-width: 200px;
+            }
+
+            .ai-content {
                 grid-template-columns: 1fr;
             }
-            
-            .comparison-table {
-                font-size: 12px;
+        }
+
+        /* Loading States */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Print Styles */
+        @media print {
+            .export-buttons,
+            .analysis-tabs,
+            .ai-insights {
+                display: none !important;
             }
-            
-            .comparison-table th,
-            .comparison-table td {
-                padding: 8px;
+
+            .comparison-container {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+
+            body {
+                background: white !important;
             }
         }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="logo">
-            <h1>🛒 Portal do Comprador</h1>
-            <p>Sistema de Gestão de Propostas</p>
+    <div class="container">
+        <div class="header">
+            <h1 class="page-title">📊 Comparativo de Propostas</h1>
+            <p class="page-subtitle">Análise detalhada baseada nas tabelas reais do portal de propostas</p>
         </div>
 
-        <div class="menu-section">
-            <div class="menu-title">PRINCIPAL</div>
-            <button class="menu-item active" onclick="mostrarSecao('dashboard')">
-                📊 Dashboard
+        <!-- Process Selector -->
+        <div class="process-selector">
+            <select class="process-select" id="processSelect">
+                <option value="">Selecione um processo para análise...</option>
+                <option value="proc_001">PROC-2025-001 - Construção de Escola Municipal</option>
+                <option value="proc_002">PROC-2025-002 - Reforma do Centro de Saúde</option>
+                <option value="proc_003">PROC-2025-003 - Pavimentação de Vias Urbanas</option>
+            </select>
+        </div>
+
+        <!-- Analysis Type Tabs -->
+        <div class="analysis-tabs">
+            <button class="tab-button active" data-tab="tecnica">
+                <i class="fas fa-cogs"></i>
+                Análise Técnica
             </button>
-            <button class="menu-item" onclick="mostrarSecao('processos')">
-                📋 Processos
-            </button>
-            <button class="menu-item" onclick="mostrarSecao('propostas')">
-                📄 Propostas Recebidas
+            <button class="tab-button" data-tab="comercial">
+                <i class="fas fa-dollar-sign"></i>
+                Análise Comercial
             </button>
         </div>
 
-        <div class="menu-section">
-            <div class="menu-title">ANÁLISE</div>
-            <button class="menu-item" onclick="mostrarSecao('comparacao')">
-                🔍 Análise Comparativa
-            </button>
-            <button class="menu-item" onclick="mostrarSecao('relatorios')">
-                📈 Relatórios
-            </button>
-        </div>
-
-        <div class="menu-section">
-            <div class="menu-title">SISTEMA</div>
-            <button class="menu-item" onclick="logout()">
-                🚪 Sair
-            </button>
-        </div>
-    </div>
-
-    <div class="main-content">
-        <!-- Dashboard Principal -->
-        <div id="dashboard" class="content-section active">
-            <div class="header">
-                <h1>🛒 Bem-vindo ao Portal do Comprador</h1>
-                <p>Gerencie processos licitatórios e análise de propostas</p>
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="stat-processos">2</div>
-                    <div class="stat-label">Processos Ativos</div>
+        <!-- Azure IA Insights -->
+        <div class="ai-insights">
+            <div class="ai-header">
+                <div class="ai-icon">
+                    <i class="fas fa-robot"></i>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="stat-propostas">0</div>
-                    <div class="stat-label">Propostas Recebidas</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="stat-analisadas">0</div>
-                    <div class="stat-label">Propostas Analisadas</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="stat-economia">R$ 0</div>
-                    <div class="stat-label">Economia Estimada</div>
+                <div>
+                    <h3>Insights Azure IA</h3>
+                    <p>Análise automática das propostas baseada nos dados reais do portal</p>
                 </div>
             </div>
 
-            <div class="alert alert-info">
-                <strong>💡 Insights de Inteligência Artificial</strong><br>
-                Baseado nas propostas recebidas, identifique oportunidades de economia e melhores fornecedores.
-            </div>
-        </div>
-
-        <!-- Propostas Recebidas -->
-        <div id="propostas" class="content-section">
-            <h2 class="section-title">📄 Propostas Recebidas</h2>
-            <div id="lista-propostas">
-                <!-- Propostas serão carregadas aqui -->
-            </div>
-        </div>
-
-        <!-- Análise Comparativa -->
-        <div id="comparacao" class="content-section">
-            <h2 class="section-title">🔍 Análise Comparativa de Propostas</h2>
-            
-            <div class="alert alert-info">
-                <strong>📊 Análise Inteligente</strong><br>
-                Compare automaticamente valores, prazos e especificações técnicas das propostas recebidas.
-            </div>
-
-            <div id="tabela-comparacao">
-                <!-- Tabela comparativa será gerada aqui -->
-            </div>
-
-            <div class="chart-container">
-                <div class="chart-title">📊 Comparação de Valores Propostos</div>
-                <div id="chart-valores" class="bar-chart">
-                    <!-- Gráfico será gerado aqui -->
-                </div>
-            </div>
-
-            <div class="chart-container">
-                <div class="chart-title">⏱️ Comparação de Prazos de Execução</div>
-                <div id="chart-prazos" class="bar-chart">
-                    <!-- Gráfico será gerado aqui -->
-                </div>
-            </div>
-
-            <div id="analise-automatica">
-                <!-- Análise automática será gerada aqui -->
-            </div>
-        </div>
-
-        <!-- Relatórios -->
-        <div id="relatorios" class="content-section">
-            <h2 class="section-title">📈 Relatórios e Recomendações</h2>
-            
-            <div class="alert alert-success">
-                <strong>🎯 Relatório Executivo</strong><br>
-                Análise completa das propostas com recomendações baseadas em critérios técnicos e econômicos.
-            </div>
-
-            <div id="relatorio-executivo">
-                <!-- Relatório será gerado aqui -->
-            </div>
-
-            <div style="margin-top: 30px;">
-                <button class="btn btn-success" onclick="gerarRelatorioCompleto()">
-                    📄 Gerar Relatório Completo
-                </button>
-                <button class="btn btn-warning" onclick="exportarDados()">
-                    📊 Exportar Dados
-                </button>
-                <button class="btn" onclick="enviarParaRequisitante()">
-                    📤 Enviar para Requisitante
-                </button>
-            </div>
-        </div>
-
-        <!-- Processos -->
-        <div id="processos" class="content-section">
-            <h2 class="section-title">📋 Processos Licitatórios</h2>
-            <div class="alert alert-info">
-                <strong>Funcionalidade em desenvolvimento</strong><br>
-                Em breve você poderá gerenciar processos licitatórios completos.
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Dados do usuário logado
-        const usuarioLogado = {
-            id: 2,
-            nome: "João Silva",
-            email: "joao.silva@empresa.com",
-            tipo: "comprador"
-        };
-
-        // Função para mostrar seções
-        function mostrarSecao(secaoId) {
-            // Esconder todas as seções
-            document.querySelectorAll('.content-section').forEach(secao => {
-                secao.classList.remove('active');
-            });
-
-            // Remover classe active de todos os menu items
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.classList.remove('active');
-            });
-
-            // Mostrar seção selecionada
-            document.getElementById(secaoId).classList.add('active');
-
-            // Adicionar classe active ao menu item clicado
-            event.target.classList.add('active');
-
-            // Carregar dados específicos da seção
-            switch(secaoId) {
-                case 'propostas':
-                    carregarPropostas();
-                    break;
-                case 'comparacao':
-                    carregarAnaliseComparativa();
-                    break;
-                case 'relatorios':
-                    carregarRelatorios();
-                    break;
-                case 'dashboard':
-                    atualizarEstatisticas();
-                    break;
-            }
-        }
-
-        // Função para carregar propostas
-        function carregarPropostas() {
-            const container = document.getElementById('lista-propostas');
-            const propostas = buscarPropostasFornecedor();
-            
-            if (propostas.length === 0) {
-                container.innerHTML = '<div class="loading">Nenhuma proposta recebida ainda.</div>';
-                return;
-            }
-
-            container.innerHTML = propostas.map(proposta => `
-                <div class="proposta-card">
-                    <div class="proposta-header">
-                        <div class="proposta-titulo">${proposta.processo_titulo}</div>
-                        <div class="proposta-status">RECEBIDA</div>
+            <div class="ai-content">
+                <div class="ai-card">
+                    <div class="ai-card-title">
+                        <i class="fas fa-lightbulb"></i>
+                        Destaque Principal
                     </div>
-                    <div class="proposta-info">
-                        <div class="info-item">
-                            <div class="info-label">Fornecedor</div>
-                            <div class="info-value">${proposta.fornecedor_nome}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">CNPJ</div>
-                            <div class="info-value">${proposta.fornecedor_cnpj}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Valor Proposto</div>
-                            <div class="info-value">R$ ${proposta.valor.toLocaleString('pt-BR')}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Prazo</div>
-                            <div class="info-value">${proposta.prazo} dias</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Data de Envio</div>
-                            <div class="info-value">${proposta.data_envio}</div>
-                        </div>
+                    <div id="aiHighlight">
+                        Carregue um processo para ver os insights da Azure IA...
                     </div>
-                    <div style="margin: 15px 0;">
-                        <strong>Descrição Técnica:</strong>
-                        <p style="margin-top: 8px; color: #666; font-style: italic;">${proposta.descricao_tecnica}</p>
+                </div>
+
+                <div class="ai-card">
+                    <div class="ai-card-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Pontos de Atenção
                     </div>
-                    <div style="margin-top: 15px;">
-                        <button class="btn" onclick="analisarProposta(${proposta.id})">
-                            Analisar Proposta
+                    <div id="aiAttention">
+                        Aguardando análise das propostas...
+                    </div>
+                </div>
+
+                <div class="ai-card">
+                    <div class="ai-card-title">
+                        <i class="fas fa-chart-line"></i>
+                        Análise de Mercado
+                    </div>
+                    <div id="aiMarket">
+                        Dados de mercado serão exibidos após seleção do processo...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Analysis Tab -->
+        <div id="tecnica" class="tab-content active">
+            <!-- Dados Cadastrais -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-building"></i>
+                        1. Dados Cadastrais
+                    </div>
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
                         </button>
-                        <button class="btn btn-success" onclick="enviarParaRequisitante(${proposta.id})">
-                            Enviar para Requisitante
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
                         </button>
                     </div>
                 </div>
-            `).join('');
-        }
 
-        // Função para carregar análise comparativa
-        function carregarAnaliseComparativa() {
-            const propostas = buscarPropostasFornecedor();
-            
-            if (propostas.length < 2) {
-                document.getElementById('tabela-comparacao').innerHTML = 
-                    '<div class="loading">É necessário pelo menos 2 propostas para análise comparativa.</div>';
-                return;
-            }
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Dados Cadastrais</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dadosCadastraisTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-            // Gerar tabela comparativa
-            gerarTabelaComparativa(propostas);
-            
-            // Gerar gráficos
-            gerarGraficoValores(propostas);
-            gerarGraficoPrazos(propostas);
-            
-            // Gerar análise automática
-            gerarAnaliseAutomatica(propostas);
-        }
-
-        // Função para gerar tabela comparativa
-        function gerarTabelaComparativa(propostas) {
-            const container = document.getElementById('tabela-comparacao');
-            
-            // Encontrar melhor e pior valor
-            const valores = propostas.map(p => p.valor);
-            const menorValor = Math.min(...valores);
-            const maiorValor = Math.max(...valores);
-            
-            // Encontrar melhor e pior prazo
-            const prazos = propostas.map(p => p.prazo);
-            const menorPrazo = Math.min(...prazos);
-            const maiorPrazo = Math.max(...prazos);
-
-            const tabela = `
-                <table class="comparison-table">
-                    <thead>
-                        <tr>
-                            <th>Critério</th>
-                            ${propostas.map(p => `<th>${p.fornecedor_nome}</th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>CNPJ</strong></td>
-                            ${propostas.map(p => `<td>${p.fornecedor_cnpj}</td>`).join('')}
-                        </tr>
-                        <tr>
-                            <td><strong>Valor Proposto</strong></td>
-                            ${propostas.map(p => `
-                                <td class="${p.valor === menorValor ? 'best-value' : (p.valor === maiorValor ? 'worst-value' : '')}">
-                                    R$ ${p.valor.toLocaleString('pt-BR')}
-                                </td>
-                            `).join('')}
-                        </tr>
-                        <tr>
-                            <td><strong>Prazo de Execução</strong></td>
-                            ${propostas.map(p => `
-                                <td class="${p.prazo === menorPrazo ? 'best-value' : (p.prazo === maiorPrazo ? 'worst-value' : '')}">
-                                    ${p.prazo} dias
-                                </td>
-                            `).join('')}
-                        </tr>
-                        <tr>
-                            <td><strong>Data de Envio</strong></td>
-                            ${propostas.map(p => `<td>${p.data_envio}</td>`).join('')}
-                        </tr>
-                        <tr>
-                            <td><strong>Observações</strong></td>
-                            ${propostas.map(p => `<td>${p.observacoes || 'Nenhuma'}</td>`).join('')}
-                        </tr>
-                    </tbody>
-                </table>
-            `;
-            
-            container.innerHTML = tabela;
-        }
-
-        // Função para gerar gráfico de valores
-        function gerarGraficoValores(propostas) {
-            const container = document.getElementById('chart-valores');
-            const maxValor = Math.max(...propostas.map(p => p.valor));
-            
-            container.innerHTML = propostas.map(proposta => {
-                const altura = (proposta.valor / maxValor) * 100;
-                return `
-                    <div class="bar" style="height: ${altura}%">
-                        R$ ${(proposta.valor / 1000).toFixed(0)}k
-                        <div class="bar-label">${proposta.fornecedor_nome.split(' ')[0]}</div>
+            <!-- Proposta Técnica -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-clipboard-list"></i>
+                        2. Proposta Técnica
                     </div>
-                `;
-            }).join('');
-        }
-
-        // Função para gerar gráfico de prazos
-        function gerarGraficoPrazos(propostas) {
-            const container = document.getElementById('chart-prazos');
-            const maxPrazo = Math.max(...propostas.map(p => p.prazo));
-            
-            container.innerHTML = propostas.map(proposta => {
-                const altura = (proposta.prazo / maxPrazo) * 100;
-                return `
-                    <div class="bar" style="height: ${altura}%">
-                        ${proposta.prazo}d
-                        <div class="bar-label">${proposta.fornecedor_nome.split(' ')[0]}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Função para gerar análise automática
-        function gerarAnaliseAutomatica(propostas) {
-            const container = document.getElementById('analise-automatica');
-            
-            // Calcular estatísticas
-            const valores = propostas.map(p => p.valor);
-            const prazos = propostas.map(p => p.prazo);
-            
-            const menorValor = Math.min(...valores);
-            const maiorValor = Math.max(...valores);
-            const valorMedio = valores.reduce((a, b) => a + b, 0) / valores.length;
-            
-            const menorPrazo = Math.min(...prazos);
-            const maiorPrazo = Math.max(...prazos);
-            const prazoMedio = prazos.reduce((a, b) => a + b, 0) / prazos.length;
-            
-            const economia = maiorValor - menorValor;
-            const percentualEconomia = ((economia / maiorValor) * 100).toFixed(1);
-            
-            // Encontrar melhor proposta por critério
-            const melhorValor = propostas.find(p => p.valor === menorValor);
-            const melhorPrazo = propostas.find(p => p.prazo === menorPrazo);
-            
-            const analise = `
-                <div class="analysis-card">
-                    <div class="analysis-title">💰 Análise Financeira</div>
-                    <div class="analysis-content">
-                        <strong>Menor valor:</strong> R$ ${menorValor.toLocaleString('pt-BR')} (${melhorValor.fornecedor_nome})<br>
-                        <strong>Maior valor:</strong> R$ ${maiorValor.toLocaleString('pt-BR')}<br>
-                        <strong>Valor médio:</strong> R$ ${valorMedio.toLocaleString('pt-BR')}<br>
-                        <strong>Economia potencial:</strong> R$ ${economia.toLocaleString('pt-BR')} (${percentualEconomia}%)
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
                     </div>
                 </div>
-                
-                <div class="analysis-card">
-                    <div class="analysis-title">⏱️ Análise de Prazos</div>
-                    <div class="analysis-content">
-                        <strong>Menor prazo:</strong> ${menorPrazo} dias (${melhorPrazo.fornecedor_nome})<br>
-                        <strong>Maior prazo:</strong> ${maiorPrazo} dias<br>
-                        <strong>Prazo médio:</strong> ${prazoMedio.toFixed(0)} dias<br>
-                        <strong>Diferença:</strong> ${maiorPrazo - menorPrazo} dias entre o mais rápido e mais lento
+
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Aspectos Técnicos</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="propostaTecnicaTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabela de Serviços Técnica -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-tasks"></i>
+                        2.1 Tabela de Serviços (Quantidades)
+                    </div>
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
                     </div>
                 </div>
-                
-                <div class="recommendation">
-                    <h3>🎯 Recomendação Inteligente</h3>
-                    <p><strong>Melhor custo-benefício:</strong> ${melhorValor.fornecedor_nome}</p>
-                    <p><strong>Justificativa:</strong> Oferece o menor valor (R$ ${menorValor.toLocaleString('pt-BR')}) 
-                    ${melhorValor.id === melhorPrazo.id ? 'e também o menor prazo de execução' : 'com prazo competitivo'}.</p>
-                    <p><strong>Economia:</strong> R$ ${economia.toLocaleString('pt-BR')} em relação à proposta mais cara.</p>
+
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Serviço</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicosTecnicaTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
-            `;
-            
-            container.innerHTML = analise;
-        }
+            </div>
 
-        // Função para carregar relatórios
-        function carregarRelatorios() {
-            const container = document.getElementById('relatorio-executivo');
-            const propostas = buscarPropostasFornecedor();
-            
-            if (propostas.length === 0) {
-                container.innerHTML = '<div class="loading">Nenhuma proposta disponível para relatório.</div>';
-                return;
-            }
-
-            const relatorio = `
-                <div class="analysis-card">
-                    <div class="analysis-title">📊 Resumo Executivo</div>
-                    <div class="analysis-content">
-                        <strong>Total de propostas recebidas:</strong> ${propostas.length}<br>
-                        <strong>Processo:</strong> ${propostas[0].processo_titulo}<br>
-                        <strong>Data de análise:</strong> ${new Date().toLocaleDateString('pt-BR')}<br>
-                        <strong>Responsável:</strong> ${usuarioLogado.nome}
+            <!-- Mão de Obra -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-users"></i>
+                        2.2 Mão de Obra Direta e Indireta
                     </div>
-                </div>
-                
-                <div class="analysis-card">
-                    <div class="analysis-title">🏆 Ranking de Propostas</div>
-                    <div class="analysis-content">
-                        ${propostas
-                            .sort((a, b) => a.valor - b.valor)
-                            .map((proposta, index) => `
-                                <strong>${index + 1}º lugar:</strong> ${proposta.fornecedor_nome} - 
-                                R$ ${proposta.valor.toLocaleString('pt-BR')} em ${proposta.prazo} dias<br>
-                            `).join('')}
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
                     </div>
                 </div>
-                
-                <div class="analysis-card">
-                    <div class="analysis-title">📋 Próximos Passos</div>
-                    <div class="analysis-content">
-                        1. Validar documentação dos fornecedores<br>
-                        2. Verificar capacidade técnica e financeira<br>
-                        3. Enviar propostas selecionadas para análise técnica do requisitante<br>
-                        4. Aguardar parecer técnico para decisão final
+
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Função</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maoObraTecnicaTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Materiais -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-boxes"></i>
+                        2.3 Lista de Materiais (Quantidades)
+                    </div>
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
                     </div>
                 </div>
-            `;
-            
-            container.innerHTML = relatorio;
-        }
 
-        // Função para buscar propostas do fornecedor
-        function buscarPropostasFornecedor() {
-            const propostas = localStorage.getItem('propostas_fornecedor');
-            return propostas ? JSON.parse(propostas) : [];
-        }
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Material</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materiaisTecnicaTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-        // Função para atualizar estatísticas
-        function atualizarEstatisticas() {
-            const propostas = buscarPropostasFornecedor();
-            const valores = propostas.map(p => p.valor);
-            const economia = valores.length > 1 ? Math.max(...valores) - Math.min(...valores) : 0;
-            
-            document.getElementById('stat-propostas').textContent = propostas.length;
-            document.getElementById('stat-analisadas').textContent = '0'; // Implementar lógica de propostas analisadas
-            document.getElementById('stat-economia').textContent = `R$ ${economia.toLocaleString('pt-BR')}`;
-        }
-
-        // Função para analisar proposta
-        function analisarProposta(propostaId) {
-            alert(`Analisando proposta ID: ${propostaId}\nFuncionalidade em desenvolvimento.`);
-        }
-
-        // Função para enviar para requisitante
-        function enviarParaRequisitante(propostaId) {
-            const propostas = buscarPropostasFornecedor();
-            const proposta = propostas.find(p => p.id === propostaId);
-            
-            if (!proposta) return;
-
-            // Adicionar dados do comprador
-            const propostaParaRequisitante = {
-                ...proposta,
-                parecer_comprador: "Proposta enviada pelo comprador para análise técnica",
-                data_envio_requisitante: new Date().toLocaleDateString('pt-BR'),
-                comprador_responsavel: usuarioLogado.nome
-            };
-
-            // Salvar para requisitante
-            const propostasParaRequisitante = JSON.parse(localStorage.getItem('propostas_para_requisitante') || '[]');
-            propostasParaRequisitante.push(propostaParaRequisitante);
-            localStorage.setItem('propostas_para_requisitante', JSON.stringify(propostasParaRequisitante));
-
-            alert(`Proposta de ${proposta.fornecedor_nome} enviada para análise do requisitante com sucesso!`);
-        }
-
-        // Função para enviar múltiplas propostas para requisitante
-        function enviarParaRequisitante() {
-            const propostas = buscarPropostasFornecedor();
-            
-            if (propostas.length === 0) {
-                alert('Nenhuma proposta disponível para envio.');
-                return;
-            }
-
-            const propostasParaRequisitante = propostas.map(proposta => ({
-                ...proposta,
-                parecer_comprador: "Proposta enviada pelo comprador para análise técnica",
-                data_envio_requisitante: new Date().toLocaleDateString('pt-BR'),
-                comprador_responsavel: usuarioLogado.nome
-            }));
-
-            localStorage.setItem('propostas_para_requisitante', JSON.stringify(propostasParaRequisitante));
-            alert(`${propostas.length} propostas enviadas para análise do requisitante com sucesso!`);
-        }
-
-        // Função para gerar relatório completo
-        function gerarRelatorioCompleto() {
-            alert('Gerando relatório completo em PDF...\nFuncionalidade em desenvolvimento.');
-        }
-
-        // Função para exportar dados
-        function exportarDados() {
-            const propostas = buscarPropostasFornecedor();
-            const dados = JSON.stringify(propostas, null, 2);
-            
-            const blob = new Blob([dados], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'propostas_' + new Date().toISOString().split('T')[0] + '.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        // Função de logout
-        function logout() {
-            if (confirm('Deseja realmente sair do sistema?')) {
-                localStorage.removeItem('usuario_logado');
-                window.location.href = 'index.html';
-            }
-        }
-
-        // Inicializar sistema
-        document.addEventListener('DOMContentLoaded', function() {
-            atualizarEstatisticas();
-        });
-    </script>
-
-        <!-- Scripts de Integração - Adicionar APÓS os scripts existentes -->
-        <script src="js/auth.js"></script>
-        <script src="js/api-client.js"></script>
-        <script src="js/integration.js"></script>
-        <script src="js/integracao-modulos.js"></script>
-
-    <!-- Script de Correção para Visualização de Propostas -->
-    <script>
-        // Script de correção para integração das propostas no módulo Comprador
-    
-        // Função para corrigir a busca de propostas no módulo Comprador
-        function corrigirBuscaPropostas() {
-            // Sobrescrever a função carregarProcessos no dashboard-comprador-funcional
-            if (typeof carregarProcessos !== 'undefined') {
-                const carregarProcessosOriginal = carregarProcessos;
-                
-                window.carregarProcessos = function() {
-                    const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-                    const container = document.getElementById('processos-list');
-    
-                    if (processos.length === 0) {
-                        container.innerHTML = `
-                            <div style="text-align: center; padding: 40px; color: #666;">
-                                <i class="fas fa-info-circle" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                                <h3>Nenhum processo criado</h3>
-                                <p>Os processos licitatórios criados aparecerão aqui.</p>
-                                <button class="btn btn-primary" onclick="mostrarPagina('criar-processo')">
-                                    <i class="fas fa-plus-circle"></i> Criar Primeiro Processo
-                                </button>
-                            </div>
-                        `;
-                        return;
-                    }
-    
-                    let html = '';
-                    processos.forEach(processo => {
-                        const dataAbertura = new Date(processo.dataAbertura).toLocaleDateString('pt-BR');
-                        const dataLimite = new Date(processo.dataLimite).toLocaleDateString('pt-BR');
-                        const dataCriacao = new Date(processo.dataCriacao).toLocaleDateString('pt-BR');
-                        
-                        // CORREÇÃO: Buscar propostas de TODAS as fontes
-                        const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
-                        const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
-                        
-                        // Filtrar propostas deste processo
-                        const propostasProcesso = propostasCompletas.filter(p => p.processoId === processo.id);
-                        const propostasFormatadas = propostasFornecedores.filter(p => p.processoId === processo.id);
-                        
-                        // Combinar todas as propostas
-                        const todasPropostas = [...propostasProcesso];
-                        
-                        // Adicionar propostas do fornecedor que não estão duplicadas
-                        propostasFormatadas.forEach(pf => {
-                            if (!todasPropostas.some(p => p.id === pf.id)) {
-                                // Formatar proposta do fornecedor para o formato esperado
-                                const propostaFormatada = {
-                                    id: pf.id,
-                                    processoId: pf.processoId,
-                                    fornecedor: {
-                                        id: pf.fornecedorId,
-                                        razaoSocial: pf.fornecedorRazaoSocial,
-                                        cnpj: pf.fornecedorCNPJ
-                                    },
-                                    propostaComercial: {
-                                        valorTotal: pf.valor
-                                    },
-                                    propostaTecnica: {
-                                        prazoExecucao: pf.prazoExecucao
-                                    },
-                                    dataEnvio: pf.dataEnvio,
-                                    dadosCompletos: pf.dadosCompletos
-                                };
-                                todasPropostas.push(propostaFormatada);
-                            }
-                        });
-                        
-                        const statusColor = processo.status === 'ATIVO' ? '#28a745' : '#6c757d';
-                        const statusIcon = processo.status === 'ATIVO' ? 'fa-check-circle' : 'fa-pause-circle';
-                        
-                        html += `
-                            <div class="tr-item" style="border-left: 5px solid ${statusColor};">
-                                <div class="tr-status-badge" style="background: ${statusColor};">
-                                    <i class="fas ${statusIcon}"></i> ${processo.status}
-                                </div>
-                                
-                                <div class="tr-title">${processo.numeroProcesso}</div>
-                                <div class="tr-meta">
-                                    <span><i class="fas fa-tag"></i> ${processo.modalidade}</span>
-                                    <span><i class="fas fa-calendar"></i> Criado: ${dataCriacao}</span>
-                                    <span><i class="fas fa-calendar-alt"></i> Abertura: ${dataAbertura}</span>
-                                    <span><i class="fas fa-clock"></i> Limite: ${dataLimite}</span>
-                                    <span><i class="fas fa-users"></i> ${processo.fornecedores?.length || 0} fornecedor(es)</span>
-                                </div>
-                                <div class="tr-objective">
-                                    <strong>TR Vinculado:</strong> ${processo.trVinculado?.titulo || 'Não informado'}<br>
-                                    <strong>Local:</strong> ${processo.localAbertura}<br>
-                                    <strong>Valor Estimado:</strong> R$ ${parseFloat(processo.trVinculado?.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                                </div>
-                                
-                                ${todasPropostas.length > 0 ? `
-                                    <div style="margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                        <h5 style="color: #333; margin-bottom: 10px;">
-                                            <i class="fas fa-envelope"></i> Propostas Recebidas (${todasPropostas.length})
-                                        </h5>
-                                        ${todasPropostas.map(proposta => `
-                                            <div style="background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; border-left: 3px solid #11998e;">
-                                                <strong>${proposta.fornecedor.razaoSocial}</strong><br>
-                                                <small>
-                                                    <i class="fas fa-money-bill"></i> Valor Total: R$ ${parseFloat(proposta.propostaComercial?.valorTotal || proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})} | 
-                                                    <i class="fas fa-clock"></i> ${proposta.propostaTecnica?.prazoExecucao || proposta.prazoExecucao || 'N/A'} | 
-                                                    <i class="fas fa-calendar"></i> ${new Date(proposta.dataEnvio).toLocaleDateString('pt-BR')}
-                                                </small>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                ` : `
-                                    <div style="margin-top: 15px; background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeaa7;">
-                                        <i class="fas fa-info-circle" style="color: #856404;"></i>
-                                        <span style="color: #856404; margin-left: 8px;">Nenhuma proposta recebida ainda</span>
-                                    </div>
-                                `}
-                                
-                                <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                    <button class="btn btn-info" onclick="visualizarProcesso('${processo.id}')">
-                                        <i class="fas fa-eye"></i> Visualizar
-                                    </button>
-                                    <button class="btn btn-primary" onclick="gerenciarFornecedores('${processo.id}')">
-                                        <i class="fas fa-users"></i> Fornecedores
-                                    </button>
-                                    ${todasPropostas.length > 0 ? `
-                                        <button class="btn btn-success" onclick="analisarPropostas('${processo.id}')">
-                                            <i class="fas fa-chart-bar"></i> Análise Comparativa
-                                        </button>
-                                        <button class="btn btn-primary" onclick="visualizarPropostasDetalhadas('${processo.id}')">
-                                            <i class="fas fa-file-invoice"></i> Ver Propostas Detalhadas
-                                        </button>
-                                    ` : ''}
-                                    ${processo.status === 'ATIVO' ? `
-                                        <button class="btn btn-secondary" onclick="finalizarProcessoLicitatorio('${processo.id}')">
-                                            <i class="fas fa-stop"></i> Finalizar
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        `;
-                    });
-    
-                    container.innerHTML = html;
-                };
-            }
-        }
-    
-        // Função para corrigir a visualização detalhada de propostas
-        function corrigirVisualizacaoDetalhada() {
-            if (typeof visualizarPropostasDetalhadas !== 'undefined') {
-                window.visualizarPropostasDetalhadas = function(processoId) {
-                    // Buscar propostas de todas as fontes
-                    const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
-                    const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
-                    
-                    // Combinar propostas
-                    const todasPropostas = [];
-                    
-                    // Adicionar propostas completas
-                    propostasCompletas.filter(p => p.processoId === processoId).forEach(p => {
-                        todasPropostas.push(p);
-                    });
-                    
-                    // Adicionar propostas do fornecedor formatadas
-                    propostasFornecedores.filter(p => p.processoId === processoId).forEach(pf => {
-                        if (!todasPropostas.some(p => p.id === pf.id)) {
-                            todasPropostas.push(pf);
-                        }
-                    });
-                    
-                    if (todasPropostas.length === 0) {
-                        alert('Nenhuma proposta encontrada para este processo!');
-                        return;
-                    }
-    
-                    // Criar modal com detalhes
-                    const modal = document.createElement('div');
-                    modal.className = 'modal-overlay';
-                    modal.innerHTML = `
-                        <div class="modal-content" style="max-width: 1200px;">
-                            <div class="modal-header">
-                                <h3 style="margin: 0;">Propostas Detalhadas - Processo ${processoId}</h3>
-                                <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                            </div>
-                            <div class="modal-body">
-                                ${todasPropostas.map(proposta => {
-                                    const dadosCompletos = proposta.dadosCompletos;
-                                    const fornecedor = proposta.fornecedor || {
-                                        razaoSocial: proposta.fornecedorRazaoSocial,
-                                        cnpj: proposta.fornecedorCNPJ
-                                    };
-                                    
-                                    return `
-                                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                                            <h4>${fornecedor.razaoSocial}</h4>
-                                            
-                                            <div class="proposta-tabs" style="margin-top: 15px;">
-                                                <button class="proposta-tab active" onclick="mostrarDetalheProposta('${proposta.id}', 'tecnica', this)">Proposta Técnica</button>
-                                                <button class="proposta-tab" onclick="mostrarDetalheProposta('${proposta.id}', 'comercial', this)">Proposta Comercial</button>
-                                            </div>
-                                            
-                                            <div id="detalhe-${proposta.id}-tecnica" class="proposta-section active">
-                                                <h5>Dados Técnicos</h5>
-                                                ${dadosCompletos && dadosCompletos.propostaTecnica ? `
-                                                    <p><strong>Experiência:</strong> ${dadosCompletos.propostaTecnica.experiencia || 'N/A'}</p>
-                                                    <p><strong>Equipe Técnica:</strong> ${dadosCompletos.propostaTecnica.equipeTecnica || 'N/A'}</p>
-                                                    <p><strong>Metodologia:</strong> ${dadosCompletos.propostaTecnica.metodologia || 'N/A'}</p>
-                                                    <p><strong>Prazo:</strong> ${dadosCompletos.propostaTecnica.prazoExecucao || proposta.prazoExecucao || 'N/A'}</p>
-                                                ` : `
-                                                    <p><strong>Prazo:</strong> ${proposta.prazoExecucao || 'N/A'}</p>
-                                                    <p><strong>Descrição Técnica:</strong> ${proposta.descricao_tecnica || 'N/A'}</p>
-                                                `}
-                                            </div>
-                                            
-                                            <div id="detalhe-${proposta.id}-comercial" class="proposta-section" style="display: none;">
-                                                <h5>Dados Comerciais</h5>
-                                                ${dadosCompletos && dadosCompletos.propostaComercial ? `
-                                                    <p><strong>Valor Serviços:</strong> R$ ${parseFloat(dadosCompletos.propostaComercial.valorServicos || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                                    <p><strong>Valor Materiais:</strong> R$ ${parseFloat(dadosCompletos.propostaComercial.valorMateriais || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                                    <p><strong>BDI:</strong> ${dadosCompletos.propostaComercial.bdi || 0}%</p>
-                                                    <p><strong>Valor Total:</strong> R$ ${parseFloat(dadosCompletos.propostaComercial.valorTotal || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                                    <p><strong>Condições de Pagamento:</strong> ${dadosCompletos.propostaComercial.condicoesPagamento || 'N/A'}</p>
-                                                ` : `
-                                                    <p><strong>Valor Total:</strong> R$ ${parseFloat(proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                                    <p><strong>Condições de Pagamento:</strong> ${proposta.condicoesPagamento || 'N/A'}</p>
-                                                `}
-                                            </div>
-                                            
-                                            <div style="margin-top: 15px;">
-                                                <button class="btn btn-info" onclick="enviarPropostaTecnicaRequisitante('${proposta.id}')">
-                                                    <i class="fas fa-share"></i> Enviar ao Requisitante (Técnica)
-                                                </button>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                            <div class="modal-footer">
-                                <button class="btn btn-secondary btn-fechar-modal">Fechar</button>
-                            </div>
-                        </div>
-                    `;
-                    
-                    document.body.appendChild(modal);
-                    
-                    // Event listeners
-                    modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
-                        btn.addEventListener('click', () => modal.remove());
-                    });
-                    
-                    modal.addEventListener('click', (e) => {
-                        if (e.target === modal) modal.remove();
-                    });
-                };
-            }
-        }
-    
-            // Função para corrigir o envio ao requisitante
-        function corrigirEnvioRequisitante() {
-            if (typeof enviarPropostaTecnicaRequisitante !== 'undefined') {
-                window.enviarPropostaTecnicaRequisitante = function(propostaId) {
-                    // Buscar proposta de todas as fontes
-                    let proposta = null;
-                    const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
-                    const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
-                    
-                    // Procurar primeiro nas propostas completas
-                    proposta = propostasCompletas.find(p => p.id === propostaId);
-                    
-                    // Se não encontrar, procurar nas propostas dos fornecedores
-                    if (!proposta) {
-                        proposta = propostasFornecedores.find(p => p.id === propostaId);
-                    }
-                    
-                    if (!proposta) {
-                        alert('Proposta não encontrada!');
-                        return;
-                    }
-    
-                    // Preparar dados técnicos SEM valores comerciais
-                    const dadosTecnicos = {
-                        id: SistemaLocal.gerarId(),
-                        propostaId: proposta.id,
-                        processoId: proposta.processoId,
-                        fornecedor: proposta.fornecedor || {
-                            razaoSocial: proposta.fornecedorRazaoSocial,
-                            cnpj: proposta.fornecedorCNPJ,
-                            id: proposta.fornecedorId
-                        },
-                        propostaTecnica: proposta.dadosCompletos?.propostaTecnica || {
-                            prazoExecucao: proposta.prazoExecucao,
-                            metodologia: proposta.descricao_tecnica || 'Não informado',
-                            experiencia: 'Conforme proposta técnica',
-                            equipeTecnica: 'Conforme proposta técnica'
-                        },
-                        dataEnvio: new Date().toISOString(),
-                        enviadoPor: SistemaLocal.obterUsuario().nome,
-                        status: 'AGUARDANDO_ANALISE',
-                        parecerRequisitante: null
-                    };
-    
-                    // Salvar para análise do requisitante
-                    const analisesRequisitante = SistemaLocal.carregar('analise_tecnica_requisitante', []);
-                    analisesRequisitante.push(dadosTecnicos);
-                    SistemaLocal.salvar('analise_tecnica_requisitante', analisesRequisitante);
-    
-                    alert(`Proposta técnica de ${dadosTecnicos.fornecedor.razaoSocial} enviada para análise do requisitante!\n\nATENÇÃO: Apenas os dados técnicos foram enviados, sem valores comerciais.`);
-                };
-            }
-        }
-    
-        // Função para corrigir análise comparativa
-        function corrigirAnaliseComparativa() {
-            if (typeof carregarAnaliseComparativa !== 'undefined') {
-                const carregarAnaliseComparativaOriginal = carregarAnaliseComparativa;
-                
-                window.carregarAnaliseComparativa = function() {
-                    const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-                    const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
-                    const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
-                    
-                    // Combinar todas as propostas
-                    const todasPropostas = [];
-                    
-                    // Adicionar propostas completas
-                    propostasCompletas.forEach(p => {
-                        todasPropostas.push(p);
-                    });
-                    
-                    // Adicionar propostas dos fornecedores formatadas
-                    propostasFornecedores.forEach(pf => {
-                        if (!todasPropostas.some(p => p.id === pf.id)) {
-                            const propostaFormatada = {
-                                id: pf.id,
-                                processoId: pf.processoId,
-                                fornecedor: {
-                                    id: pf.fornecedorId,
-                                    razaoSocial: pf.fornecedorRazaoSocial,
-                                    cnpj: pf.fornecedorCNPJ
-                                },
-                                propostaComercial: {
-                                    valorTotal: pf.valor,
-                                    valorServicos: pf.valor * 0.7,
-                                    valorMateriais: pf.valor * 0.3,
-                                    bdi: 25,
-                                    condicoesPagamento: pf.condicoesPagamento || '30 dias'
-                                },
-                                propostaTecnica: {
-                                    prazoExecucao: pf.prazoExecucao,
-                                    experiencia: pf.experiencia || 'Conforme documentação',
-                                    equipeTecnica: pf.equipeTecnica || 'Equipe qualificada',
-                                    metodologia: pf.descricao_tecnica || 'Conforme especificações'
-                                },
-                                dataEnvio: pf.dataEnvio,
-                                dadosCompletos: pf.dadosCompletos
-                            };
-                            todasPropostas.push(propostaFormatada);
-                        }
-                    });
-                    
-                    const container = document.getElementById('analise-content');
-                    
-                    // Se foi selecionado um processo específico
-                    const processoSelecionadoId = sessionStorage.getItem('processoAnalise');
-                    
-                    if (processoSelecionadoId) {
-                        const processoEspecifico = processos.find(p => p.id === processoSelecionadoId);
-                        const propostasDoProcesso = todasPropostas.filter(p => p.processoId === processoSelecionadoId);
-                        
-                        if (propostasDoProcesso.length === 0) {
-                            container.innerHTML = `
-                                <div style="text-align: center; padding: 40px; color: #666;">
-                                    <i class="fas fa-info-circle" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                                    <h3>Nenhuma proposta recebida para este processo</h3>
-                                    <p>Aguarde os fornecedores enviarem suas propostas.</p>
-                                    <button class="btn btn-primary" onclick="mostrarPagina('processos')">
-                                        <i class="fas fa-arrow-left"></i> Voltar aos Processos
-                                    </button>
-                                </div>
-                            `;
-                            return;
-                        }
-                        
-                        let html = `<h3 style="margin-bottom: 20px;">Análise do Processo: ${processoEspecifico.numeroProcesso}</h3>`;
-                        html += '<div class="proposta-tabs">';
-                        html += '<button class="proposta-tab active" onclick="mostrarAba(\'tecnica\')">Análise Técnica</button>';
-                        html += '<button class="proposta-tab" onclick="mostrarAba(\'comercial\')">Análise Comercial</button>';
-                        html += '<button class="proposta-tab" onclick="mostrarAba(\'geral\')">Análise Geral</button>';
-                        html += '</div>';
-    
-                        html += '<div id="tecnica" class="proposta-section active">';
-                        html += renderizarAnaliseTecnica([processoEspecifico], propostasDoProcesso);
-                        html += '</div>';
-    
-                        html += '<div id="comercial" class="proposta-section">';
-                        html += renderizarAnaliseComercial([processoEspecifico], propostasDoProcesso);
-                        html += '</div>';
-    
-                        html += '<div id="geral" class="proposta-section">';
-                        html += renderizarAnaliseGeral([processoEspecifico], propostasDoProcesso);
-                        html += '</div>';
-    
-                        container.innerHTML = html;
-                        
-                        // Limpar seleção
-                        sessionStorage.removeItem('processoAnalise');
-                        
-                    } else {
-                        // Análise geral de todos os processos
-                        if (processos.length === 0) {
-                            container.innerHTML = `
-                                <div style="text-align: center; padding: 40px; color: #666;">
-                                    <i class="fas fa-info-circle" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                                    <h3>Nenhum processo disponível</h3>
-                                    <p>Crie um processo para realizar análises comparativas.</p>
-                                </div>
-                            `;
-                            return;
-                        }
-    
-                        let html = '<div class="proposta-tabs">';
-                        html += '<button class="proposta-tab active" onclick="mostrarAba(\'tecnica\')">Análise Técnica</button>';
-                        html += '<button class="proposta-tab" onclick="mostrarAba(\'comercial\')">Análise Comercial</button>';
-                        html += '<button class="proposta-tab" onclick="mostrarAba(\'geral\')">Análise Geral</button>';
-                        html += '</div>';
-    
-                        html += '<div id="tecnica" class="proposta-section active">';
-                        html += renderizarAnaliseTecnica(processos, todasPropostas);
-                        html += '</div>';
-    
-                        html += '<div id="comercial" class="proposta-section">';
-                        html += renderizarAnaliseComercial(processos, todasPropostas);
-                        html += '</div>';
-    
-                        html += '<div id="geral" class="proposta-section">';
-                        html += renderizarAnaliseGeral(processos, todasPropostas);
-                        html += '</div>';
-    
-                        container.innerHTML = html;
-                    }
-                };
-            }
-        }
-    
-        // Aplicar correções quando o documento carregar
-        document.addEventListener('DOMContentLoaded', function() {
-            // Aguardar um momento para garantir que o código original carregou
-            setTimeout(() => {
-                console.log('Aplicando correções no módulo Comprador...');
-                corrigirBuscaPropostas();
-                corrigirVisualizacaoDetalhada();
-                corrigirEnvioRequisitante();
-                corrigirAnaliseComparativa();
-                console.log('Correções aplicadas com sucesso!');
-                
-                // Recarregar dados se estivermos na página correta
-                if (typeof mostrarPagina !== 'undefined' && document.getElementById('processos-list')) {
-                    carregarProcessos();
-                }
-            }, 1000);
-        });
-    
-        // Função auxiliar para mostrar detalhe da proposta
-        window.mostrarDetalheProposta = function(propostaId, tipo, elemento) {
-            document.querySelectorAll(`[id^="detalhe-${propostaId}-"]`).forEach(el => {
-                el.style.display = 'none';
-            });
-            document.getElementById(`detalhe-${propostaId}-${tipo}`).style.display = 'block';
-            
-            // Atualizar tabs
-            if (elemento) {
-                elemento.parentElement.querySelectorAll('.proposta-tab').forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                elemento.classList.add('active');
-            }
-        };
-            <!-- Integração com Azure AI para Análise Inteligente -->
-    <script>
-        // Configuração do Azure AI
-        const AzureAI = {
-            // Substitua com suas credenciais reais do Azure
-            endpoint: 'https://seu-recurso.cognitiveservices.azure.com/',
-            apiKey: 'SUA_CHAVE_API_AQUI',
-            
-            // Função para análise inteligente de propostas
-            analisarPropostasIA: async function(propostas) {
-                try {
-                    // Simulação de análise AI (substitua com chamada real à API do Azure)
-                    const analise = {
-                        melhorValor: this.encontrarMelhorValor(propostas),
-                        melhorPrazo: this.encontrarMelhorPrazo(propostas),
-                        melhorTecnica: this.analisarQualidadeTecnica(propostas),
-                        riscos: this.identificarRiscos(propostas),
-                        recomendacao: this.gerarRecomendacao(propostas)
-                    };
-                    
-                    return analise;
-                } catch (error) {
-                    console.error('Erro na análise AI:', error);
-                    return null;
-                }
-            },
-            
-            encontrarMelhorValor: function(propostas) {
-                return propostas.reduce((melhor, atual) => {
-                    const valorAtual = parseFloat(atual.propostaComercial?.valorTotal || atual.valor || 0);
-                    const valorMelhor = parseFloat(melhor.propostaComercial?.valorTotal || melhor.valor || 0);
-                    return valorAtual < valorMelhor ? atual : melhor;
-                });
-            },
-            
-            encontrarMelhorPrazo: function(propostas) {
-                return propostas.reduce((melhor, atual) => {
-                    const prazoAtual = parseInt(atual.propostaTecnica?.prazoExecucao || atual.prazoExecucao || '999');
-                    const prazoMelhor = parseInt(melhor.propostaTecnica?.prazoExecucao || melhor.prazoExecucao || '999');
-                    return prazoAtual < prazoMelhor ? atual : melhor;
-                });
-            },
-            
-            analisarQualidadeTecnica: function(propostas) {
-                // Análise simplificada - implementar lógica mais complexa com Azure AI
-                return propostas.map(p => ({
-                    fornecedor: p.fornecedor?.razaoSocial || p.fornecedorRazaoSocial,
-                    pontuacao: Math.random() * 100, // Substituir com análise real
-                    criterios: {
-                        experiencia: Math.random() * 100,
-                        metodologia: Math.random() * 100,
-                        equipe: Math.random() * 100
-                    }
-                }));
-            },
-            
-            identificarRiscos: function(propostas) {
-                // Análise de riscos simplificada
-                const riscos = [];
-                
-                propostas.forEach(p => {
-                    const valor = parseFloat(p.propostaComercial?.valorTotal || p.valor || 0);
-                    const prazo = parseInt(p.propostaTecnica?.prazoExecucao || p.prazoExecucao || '0');
-                    
-                    // Identificar propostas suspeitas
-                    if (valor < 1000) {
-                        riscos.push({
-                            fornecedor: p.fornecedor?.razaoSocial || p.fornecedorRazaoSocial,
-                            tipo: 'VALOR_MUITO_BAIXO',
-                            descricao: 'Valor proposto pode indicar inexequibilidade'
-                        });
-                    }
-                    
-                    if (prazo < 10) {
-                        riscos.push({
-                            fornecedor: p.fornecedor?.razaoSocial || p.fornecedorRazaoSocial,
-                            tipo: 'PRAZO_MUITO_CURTO',
-                            descricao: 'Prazo pode ser insuficiente para execução adequada'
-                        });
-                    }
-                });
-                
-                return riscos;
-            },
-            
-            gerarRecomendacao: function(propostas) {
-                const melhorValor = this.encontrarMelhorValor(propostas);
-                const melhorPrazo = this.encontrarMelhorPrazo(propostas);
-                const qualidadeTecnica = this.analisarQualidadeTecnica(propostas);
-                
-                // Encontrar melhor pontuação técnica
-                const melhorTecnica = qualidadeTecnica.reduce((melhor, atual) => 
-                    atual.pontuacao > melhor.pontuacao ? atual : melhor
-                );
-                
-                return {
-                    fornecedorRecomendado: melhorTecnica.fornecedor,
-                    justificativa: `Baseado na análise integrada de critérios técnicos e comerciais, 
-                                   considerando qualidade técnica, valor e prazo de execução.`,
-                    pontuacaoFinal: melhorTecnica.pontuacao
-                };
-            }
-        };
-    
-        // Adicionar botão de análise AI nos processos
-        function adicionarBotaoAnaliseIA() {
-            const processosComPropostas = document.querySelectorAll('.tr-item');
-            
-            processosComPropostas.forEach(processo => {
-                const botoesContainer = processo.querySelector('div[style*="margin-top: 15px"]');
-                if (botoesContainer && !botoesContainer.querySelector('.btn-ai-analysis')) {
-                    const btnAI = document.createElement('button');
-                    btnAI.className = 'btn btn-warning btn-ai-analysis';
-                    btnAI.innerHTML = '<i class="fas fa-brain"></i> Análise IA';
-                    btnAI.onclick = function() {
-                        const processoId = processo.querySelector('[onclick*="visualizarProcesso"]')
-                            ?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-                        if (processoId) executarAnaliseIA(processoId);
-                    };
-                    botoesContainer.appendChild(btnAI);
-                }
-            });
-        }
-    
-        // Executar análise AI
-        async function executarAnaliseIA(processoId) {
-            // Buscar propostas
-            const propostasCompletas = SistemaLocal.carregar('propostas_completas', []);
-            const propostasFornecedores = SistemaLocal.carregar('propostas_fornecedores', []);
-            
-            const todasPropostas = [
-                ...propostasCompletas.filter(p => p.processoId === processoId),
-                ...propostasFornecedores.filter(p => p.processoId === processoId)
-            ];
-            
-            if (todasPropostas.length === 0) {
-                alert('Nenhuma proposta encontrada para análise.');
-                return;
-            }
-            
-            // Mostrar loading
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal-content" style="max-width: 800px;">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-brain"></i> Análise Inteligente com Azure AI</h3>
-                        <button class="btn-fechar-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+            <!-- Equipamentos -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-tools"></i>
+                        2.4 Lista de Equipamentos (Quantidades)
                     </div>
-                    <div class="modal-body" style="text-align: center; padding: 40px;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #007bff; margin-bottom: 20px;"></i>
-                        <p>Analisando propostas com inteligência artificial...</p>
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
                     </div>
                 </div>
-            `;
-            document.body.appendChild(modal);
-            
-            // Executar análise
-            const resultado = await AzureAI.analisarPropostasIA(todasPropostas);
-            
-            // Mostrar resultados
-            if (resultado) {
-                modal.querySelector('.modal-body').innerHTML = `
-                    <div style="text-align: left;">
-                        <h4>Resultado da Análise AI</h4>
-                        
-                        <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                            <h5><i class="fas fa-trophy"></i> Recomendação</h5>
-                            <p><strong>Fornecedor Recomendado:</strong> ${resultado.recomendacao.fornecedorRecomendado}</p>
-                            <p><strong>Pontuação:</strong> ${resultado.recomendacao.pontuacaoFinal.toFixed(2)}/100</p>
-                            <p><strong>Justificativa:</strong> ${resultado.recomendacao.justificativa}</p>
-                        </div>
-                        
-                        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                            <h5><i class="fas fa-chart-line"></i> Análise Comparativa</h5>
-                            <p><strong>Melhor Valor:</strong> ${resultado.melhorValor.fornecedor?.razaoSocial || resultado.melhorValor.fornecedorRazaoSocial}</p>
-                            <p><strong>Melhor Prazo:</strong> ${resultado.melhorPrazo.fornecedor?.razaoSocial || resultado.melhorPrazo.fornecedorRazaoSocial}</p>
-                        </div>
-                        
-                        ${resultado.riscos.length > 0 ? `
-                            <div style="background: #ffebee; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                                <h5><i class="fas fa-exclamation-triangle"></i> Riscos Identificados</h5>
-                                ${resultado.riscos.map(r => `
-                                    <p><strong>${r.fornecedor}:</strong> ${r.descricao}</p>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                        
-                        <div style="text-align: center; margin-top: 30px;">
-                            <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">
-                                Fechar Análise
-                            </button>
-                        </div>
+
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Equipamento</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipamentosTecnicaTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commercial Analysis Tab -->
+        <div id="comercial" class="tab-content">
+            <!-- Tabela de Serviços Comercial -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-calculator"></i>
+                        3.1 Tabela de Serviços (Valores)
                     </div>
-                `;
-            }
-        }
-    
-        // Adicionar botões AI quando carregar a página
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                adicionarBotaoAnaliseIA();
-                
-                // Observar mudanças no DOM para adicionar botões em novos elementos
-                const observer = new MutationObserver(() => {
-                    adicionarBotaoAnaliseIA();
-                });
-                
-                const targetNode = document.getElementById('processos-list');
-                if (targetNode) {
-                    observer.observe(targetNode, { childList: true, subtree: true });
-                }
-            }, 2000);
-        });
-    </script>
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Serviço</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicosComercialTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mão de Obra Comercial -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-money-bill-wave"></i>
+                        3.2 Mão de Obra (Custos)
+                    </div>
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Função</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maoObraComercialTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Materiais Comercial -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-shopping-cart"></i>
+                        3.3 Materiais (Custos)
+                    </div>
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Material</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materiaisComercialTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Equipamentos Comercial -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-wrench"></i>
+                        3.4 Equipamentos (Custos)
+                    </div>
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Equipamento</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipamentosComercialTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- BDI Detalhado -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-percentage"></i>
+                        3.5 BDI Detalhado
+                    </div>
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Item do BDI</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bdiTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Resumo Financeiro -->
+            <div class="comparison-container">
+                <div class="comparison-header">
+                    <div class="comparison-title">
+                        <i class="fas fa-chart-pie"></i>
+                        3.6 Resumo Financeiro
+                    </div>
+                    <div class="export-buttons">
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="item-label">Componente</th>
+                                <th class="company-header">Empresa A</th>
+                                <th class="company-header">Empresa B</th>
+                                <th class="company-header">Empresa C</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resumoFinanceiroTable">
+                            <!-- Dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="comparativo-real.js"></script>
 </body>
 </html>
-
