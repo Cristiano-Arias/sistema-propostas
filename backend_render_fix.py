@@ -167,7 +167,6 @@ def init_db():
         
         conn.commit()
         logger.info("Usuários de teste criados")
-    atualizar_schema_comparativo()
     conn.close()
     logger.info("Banco de dados inicializado com sucesso")
 
