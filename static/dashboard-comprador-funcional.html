@@ -845,6 +845,9 @@
             <button class="nav-item" id="btn-analise">
                 <i class="fas fa-chart-bar"></i> Análise Comparativa
             </button>
+            <button class="nav-item" onclick="abrirComparativo()">
+                <i class="fas fa-balance-scale"></i> Comparativo de Propostas
+            </button>
             <button class="nav-item" id="btn-relatorios">
                 <i class="fas fa-file-alt"></i> Relatórios
             </button>
@@ -3434,8 +3437,29 @@
 
        // Aplicar correções ao carregar
        aplicarCorrecoesModuloComprador();
-   </script>
 
+       function abrirComparativo() {
+            // Verificar se há processos com propostas
+            fetch('/api/processos/com-propostas', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.length > 0) {
+                    // Abrir modal de seleção de processo ou redirecionar
+                    window.open('dashboard-comparativo-real.html', '_blank');
+                } else {
+                    alert('Não há processos com propostas suficientes para comparação.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao verificar processos disponíveis.');
+            });
+        }
+   </script>
    <!-- Integração com Azure AI -->
    <script src="azure-config.js"></script>
 </body>
