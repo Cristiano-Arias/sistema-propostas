@@ -167,7 +167,7 @@ def init_db():
         
         conn.commit()
         logger.info("Usuários de teste criados")
-    
+    atualizar_schema_comparativo()
     conn.close()
     logger.info("Banco de dados inicializado com sucesso")
 
@@ -1027,6 +1027,457 @@ def marcar_notificacao_lida(notif_id):
     except Exception as e:
         logger.error(f"Erro ao marcar notificação: {str(e)}")
         return jsonify({'message': 'Erro ao marcar notificação'}), 500
+
+# ===== ROTAS PARA COMPARATIVO DE PROPOSTAS =====
+
+@app.route('/api/comparativo/<int:processo_id>', methods=['GET'])
+@require_auth
+def get_comparativo_propostas(processo_id):
+    """Busca todas as propostas de um processo para comparação"""
+    try:
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Acesso negado'}), 403
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Buscar informações do processo
+        cursor.execute('''
+            SELECT p.*, tr.numero as tr_numero, tr.objeto
+            FROM processos p
+            LEFT JOIN termos_referencia tr ON p.tr_id = tr.id
+            WHERE p.id = ?
+        ''', (processo_id,))
+        
+        processo = cursor.fetchone()
+        if not processo:
+            conn.close()
+            return jsonify({'message': 'Processo não encontrado'}), 404
+        
+        # Buscar todas as propostas do processo
+        cursor.execute('''
+            SELECT p.*, u.nome as razao_social, u.email, u.telefone, u.endereco,
+                   u.cnpj, u.responsavel_tecnico, u.crea
+            FROM propostas p
+            JOIN usuarios u ON p.fornecedor_id = u.id
+            WHERE p.processo_id = ?
+            ORDER BY p.criado_em ASC
+        ''', (processo_id,))
+        
+        propostas_raw = cursor.fetchall()
+        
+        # Buscar dados detalhados de cada proposta
+        propostas_formatadas = []
+        for proposta in propostas_raw:
+            proposta_dict = dict(proposta)
+            
+            # Buscar dados cadastrais
+            proposta_dict['dadosCadastrais'] = {
+                'razaoSocial': proposta['razao_social'],
+                'cnpj': proposta['cnpj'] or 'Não informado',
+                'endereco': proposta['endereco'] or 'Não informado',
+                'cidade': 'Não informado',  # Adicionar campo cidade se necessário
+                'telefone': proposta['telefone'] or 'Não informado',
+                'email': proposta['email'],
+                'respTecnico': proposta['responsavel_tecnico'] or 'Não informado',
+                'crea': proposta['crea'] or 'Não informado'
+            }
+            
+            # Buscar proposta técnica
+            proposta_dict['propostaTecnica'] = buscar_proposta_tecnica(cursor, proposta['id'])
+            
+            # Buscar tabelas técnicas
+            proposta_dict['servicosTecnica'] = buscar_servicos_tecnica(cursor, proposta['id'])
+            proposta_dict['maoObraTecnica'] = buscar_mao_obra_tecnica(cursor, proposta['id'])
+            proposta_dict['materiaisTecnica'] = buscar_materiais_tecnica(cursor, proposta['id'])
+            proposta_dict['equipamentosTecnica'] = buscar_equipamentos_tecnica(cursor, proposta['id'])
+            
+            # Buscar tabelas comerciais
+            proposta_dict['servicosComercial'] = buscar_servicos_comercial(cursor, proposta['id'])
+            proposta_dict['maoObraComercial'] = buscar_mao_obra_comercial(cursor, proposta['id'])
+            proposta_dict['materiaisComercial'] = buscar_materiais_comercial(cursor, proposta['id'])
+            proposta_dict['equipamentosComercial'] = buscar_equipamentos_comercial(cursor, proposta['id'])
+            
+            # Buscar BDI
+            proposta_dict['bdi'] = buscar_bdi(cursor, proposta['id'])
+            
+            # Calcular resumo financeiro
+            proposta_dict['resumoFinanceiro'] = calcular_resumo_financeiro(proposta_dict)
+            
+            propostas_formatadas.append(proposta_dict)
+        
+        conn.close()
+        
+        return jsonify({
+            'processo': {
+                'id': processo['id'],
+                'numero': processo['numero'],
+                'tr_numero': processo['tr_numero'],
+                'objeto': processo['objeto'],
+                'status': processo['status']
+            },
+            'propostas': propostas_formatadas
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao buscar comparativo: {str(e)}")
+        return jsonify({'message': 'Erro ao buscar dados do comparativo'}), 500
+
+# ===== FUNÇÕES AUXILIARES PARA BUSCAR DADOS DAS PROPOSTAS =====
+
+def buscar_proposta_tecnica(cursor, proposta_id):
+    """Busca dados da proposta técnica"""
+    cursor.execute('''
+        SELECT * FROM proposta_tecnica WHERE proposta_id = ?
+    ''', (proposta_id,))
+    
+    tecnica = cursor.fetchone()
+    if not tecnica:
+        return {
+            'objetoConcorrencia': 'Não informado',
+            'escopoInclusos': 'Não informado',
+            'escopoExclusos': 'Não informado',
+            'metodologia': 'Não informado',
+            'sequenciaExecucao': 'Não informado',
+            'prazoExecucao': 'Não informado',
+            'prazoMobilizacao': 'Não informado',
+            'garantias': 'Não informado',
+            'estruturaCanteiro': 'Não informado',
+            'obrigacoesContratada': 'Não informado',
+            'obrigacoesContratante': 'Não informado'
+        }
+    
+    return dict(tecnica)
+
+def buscar_servicos_tecnica(cursor, proposta_id):
+    """Busca tabela de serviços (quantidades)"""
+    cursor.execute('''
+        SELECT descricao, unidade, quantidade
+        FROM servicos_proposta 
+        WHERE proposta_id = ?
+        ORDER BY id
+    ''', (proposta_id,))
+    
+    return [dict(row) for row in cursor.fetchall()]
+
+def buscar_mao_obra_tecnica(cursor, proposta_id):
+    """Busca tabela de mão de obra (quantidades)"""
+    cursor.execute('''
+        SELECT funcao, quantidade, tempo
+        FROM mao_obra_proposta 
+        WHERE proposta_id = ?
+        ORDER BY id
+    ''', (proposta_id,))
+    
+    return [dict(row) for row in cursor.fetchall()]
+
+def buscar_materiais_tecnica(cursor, proposta_id):
+    """Busca tabela de materiais (quantidades)"""
+    cursor.execute('''
+        SELECT material, especificacao, unidade, quantidade
+        FROM materiais_proposta 
+        WHERE proposta_id = ?
+        ORDER BY id
+    ''', (proposta_id,))
+    
+    return [dict(row) for row in cursor.fetchall()]
+
+def buscar_equipamentos_tecnica(cursor, proposta_id):
+    """Busca tabela de equipamentos (quantidades)"""
+    cursor.execute('''
+        SELECT equipamento, especificacao, unidade, quantidade, tempo
+        FROM equipamentos_proposta 
+        WHERE proposta_id = ?
+        ORDER BY id
+    ''', (proposta_id,))
+    
+    return [dict(row) for row in cursor.fetchall()]
+
+def buscar_servicos_comercial(cursor, proposta_id):
+    """Busca tabela de serviços (valores)"""
+    cursor.execute('''
+        SELECT descricao, unidade, quantidade, preco_unitario, 
+               (quantidade * preco_unitario) as total
+        FROM servicos_proposta 
+        WHERE proposta_id = ?
+        ORDER BY id
+    ''', (proposta_id,))
+    
+    return [dict(row) for row in cursor.fetchall()]
+
+def buscar_mao_obra_comercial(cursor, proposta_id):
+    """Busca tabela de mão de obra (custos)"""
+    cursor.execute('''
+        SELECT funcao, quantidade, tempo, salario, encargos_sociais,
+               (quantidade * tempo * salario * (1 + encargos_sociais/100)) as total
+        FROM mao_obra_proposta 
+        WHERE proposta_id = ?
+        ORDER BY id
+    ''', (proposta_id,))
+    
+    return [dict(row) for row in cursor.fetchall()]
+
+def buscar_materiais_comercial(cursor, proposta_id):
+    """Busca tabela de materiais (custos)"""
+    cursor.execute('''
+        SELECT material, especificacao, unidade, quantidade, preco_unitario,
+               (quantidade * preco_unitario) as total
+        FROM materiais_proposta 
+        WHERE proposta_id = ?
+        ORDER BY id
+    ''', (proposta_id,))
+    
+    return [dict(row) for row in cursor.fetchall()]
+
+def buscar_equipamentos_comercial(cursor, proposta_id):
+    """Busca tabela de equipamentos (custos)"""
+    cursor.execute('''
+        SELECT equipamento, especificacao, quantidade, tempo, preco_mensal,
+               (quantidade * tempo * preco_mensal) as total
+        FROM equipamentos_proposta 
+        WHERE proposta_id = ?
+        ORDER BY id
+    ''', (proposta_id,))
+    
+    return [dict(row) for row in cursor.fetchall()]
+
+def buscar_bdi(cursor, proposta_id):
+    """Busca BDI detalhado"""
+    cursor.execute('''
+        SELECT item, percentual, valor
+        FROM bdi_proposta 
+        WHERE proposta_id = ?
+        ORDER BY id
+    ''', (proposta_id,))
+    
+    bdi_items = cursor.fetchall()
+    if not bdi_items:
+        # BDI padrão se não informado
+        return [
+            {'item': 'Administração Central', 'percentual': 0, 'valor': 0},
+            {'item': 'Seguros e Garantias', 'percentual': 0, 'valor': 0},
+            {'item': 'Riscos', 'percentual': 0, 'valor': 0},
+            {'item': 'Despesas Financeiras', 'percentual': 0, 'valor': 0},
+            {'item': 'Lucro', 'percentual': 0, 'valor': 0},
+            {'item': 'Tributos (ISS, PIS, COFINS)', 'percentual': 0, 'valor': 0}
+        ]
+    
+    return [dict(row) for row in bdi_items]
+
+def calcular_resumo_financeiro(proposta_dict):
+    """Calcula resumo financeiro da proposta"""
+    try:
+        # Somar totais de cada categoria
+        total_servicos = sum(item.get('total', 0) for item in proposta_dict.get('servicosComercial', []))
+        total_mao_obra = sum(item.get('total', 0) for item in proposta_dict.get('maoObraComercial', []))
+        total_materiais = sum(item.get('total', 0) for item in proposta_dict.get('materiaisComercial', []))
+        total_equipamentos = sum(item.get('total', 0) for item in proposta_dict.get('equipamentosComercial', []))
+        
+        custo_direto = total_servicos + total_mao_obra + total_materiais + total_equipamentos
+        
+        # Somar BDI
+        bdi_valor = sum(item.get('valor', 0) for item in proposta_dict.get('bdi', []))
+        bdi_percentual = (bdi_valor / custo_direto * 100) if custo_direto > 0 else 0
+        
+        valor_total = custo_direto + bdi_valor
+        
+        return {
+            'totalServicos': total_servicos,
+            'totalMaoObra': total_mao_obra,
+            'totalMateriais': total_materiais,
+            'totalEquipamentos': total_equipamentos,
+            'custoDireto': custo_direto,
+            'bdiPercentual': round(bdi_percentual, 1),
+            'bdiValor': bdi_valor,
+            'valorTotal': valor_total
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro ao calcular resumo financeiro: {str(e)}")
+        return {
+            'totalServicos': 0,
+            'totalMaoObra': 0,
+            'totalMateriais': 0,
+            'totalEquipamentos': 0,
+            'custoDireto': 0,
+            'bdiPercentual': 0,
+            'bdiValor': 0,
+            'valorTotal': 0
+        }
+
+# ===== ROTA PARA LISTAR PROCESSOS COM PROPOSTAS =====
+
+@app.route('/api/processos/com-propostas', methods=['GET'])
+@require_auth
+def listar_processos_com_propostas():
+    """Lista processos que têm propostas para comparação"""
+    try:
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Acesso negado'}), 403
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT DISTINCT p.id, p.numero, p.objeto, p.status,
+                   COUNT(pr.id) as total_propostas,
+                   tr.numero as tr_numero
+            FROM processos p
+            LEFT JOIN propostas pr ON p.id = pr.processo_id
+            LEFT JOIN termos_referencia tr ON p.tr_id = tr.id
+            WHERE pr.id IS NOT NULL
+            GROUP BY p.id, p.numero, p.objeto, p.status, tr.numero
+            HAVING COUNT(pr.id) >= 2
+            ORDER BY p.criado_em DESC
+        ''')
+        
+        processos = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify(processos), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar processos com propostas: {str(e)}")
+        return jsonify({'message': 'Erro ao listar processos'}), 500
+
+# ===== ATUALIZAÇÃO DO BANCO DE DADOS =====
+
+def atualizar_schema_comparativo():
+    """Atualiza schema do banco para suportar comparativo"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    try:
+        # Tabela para proposta técnica
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS proposta_tecnica (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                proposta_id INTEGER NOT NULL,
+                objetoConcorrencia TEXT,
+                escopoInclusos TEXT,
+                escopoExclusos TEXT,
+                metodologia TEXT,
+                sequenciaExecucao TEXT,
+                prazoExecucao TEXT,
+                prazoMobilizacao TEXT,
+                garantias TEXT,
+                estruturaCanteiro TEXT,
+                obrigacoesContratada TEXT,
+                obrigacoesContratante TEXT,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (proposta_id) REFERENCES propostas (id)
+            )
+        ''')
+        
+        # Tabela para serviços da proposta
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS servicos_proposta (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                proposta_id INTEGER NOT NULL,
+                descricao TEXT NOT NULL,
+                unidade TEXT NOT NULL,
+                quantidade REAL NOT NULL,
+                preco_unitario REAL DEFAULT 0,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (proposta_id) REFERENCES propostas (id)
+            )
+        ''')
+        
+        # Tabela para mão de obra da proposta
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS mao_obra_proposta (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                proposta_id INTEGER NOT NULL,
+                funcao TEXT NOT NULL,
+                quantidade INTEGER NOT NULL,
+                tempo REAL NOT NULL,
+                salario REAL DEFAULT 0,
+                encargos_sociais REAL DEFAULT 0,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (proposta_id) REFERENCES propostas (id)
+            )
+        ''')
+        
+        # Tabela para materiais da proposta
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS materiais_proposta (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                proposta_id INTEGER NOT NULL,
+                material TEXT NOT NULL,
+                especificacao TEXT,
+                unidade TEXT NOT NULL,
+                quantidade REAL NOT NULL,
+                preco_unitario REAL DEFAULT 0,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (proposta_id) REFERENCES propostas (id)
+            )
+        ''')
+        
+        # Tabela para equipamentos da proposta
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS equipamentos_proposta (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                proposta_id INTEGER NOT NULL,
+                equipamento TEXT NOT NULL,
+                especificacao TEXT,
+                unidade TEXT NOT NULL,
+                quantidade REAL NOT NULL,
+                tempo REAL NOT NULL,
+                preco_mensal REAL DEFAULT 0,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (proposta_id) REFERENCES propostas (id)
+            )
+        ''')
+        
+        # Tabela para BDI da proposta
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS bdi_proposta (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                proposta_id INTEGER NOT NULL,
+                item TEXT NOT NULL,
+                percentual REAL NOT NULL,
+                valor REAL NOT NULL,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (proposta_id) REFERENCES propostas (id)
+            )
+        ''')
+        
+        # Adicionar campos extras na tabela usuarios para dados cadastrais
+        try:
+            cursor.execute('ALTER TABLE usuarios ADD COLUMN cnpj TEXT')
+        except:
+            pass  # Campo já existe
+            
+        try:
+            cursor.execute('ALTER TABLE usuarios ADD COLUMN endereco TEXT')
+        except:
+            pass
+            
+        try:
+            cursor.execute('ALTER TABLE usuarios ADD COLUMN telefone TEXT')
+        except:
+            pass
+            
+        try:
+            cursor.execute('ALTER TABLE usuarios ADD COLUMN responsavel_tecnico TEXT')
+        except:
+            pass
+            
+        try:
+            cursor.execute('ALTER TABLE usuarios ADD COLUMN crea TEXT')
+        except:
+            pass
+        
+        conn.commit()
+        logger.info("Schema do comparativo atualizado com sucesso")
+        
+    except Exception as e:
+        logger.error(f"Erro ao atualizar schema: {str(e)}")
+        conn.rollback()
+    finally:
+        conn.close()
+
+atualizar_schema_comparativo()
 
 # Rotas de arquivos estáticos
 @app.route('/')
