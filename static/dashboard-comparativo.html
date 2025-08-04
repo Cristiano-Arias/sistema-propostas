@@ -1192,6 +1192,110 @@ class ComparativoPropostasIntegrado {
         }
     }
 
+    // Novo método para formatar BDI
+    formatarBDI(bdis, valorTotal) {
+        if (!bdis || !Array.isArray(bdis)) return [];
+        
+        return bdis.map(item => ({
+            item: item[0] || item.item || 'Item BDI',
+            percentual: parseFloat(item[1] || item.percentual || 0),
+            valor: parseFloat(item[2] || item.valor || 0)
+        }));
+    }
+    
+    // Novo método para formatar resumo financeiro
+    formatarResumoFinanceiro(comercial, valorTotal) {
+        if (!comercial || !comercial.totais) {
+            return {
+                totalServicos: 0,
+                totalMaoObra: 0,
+                totalMateriais: 0,
+                totalEquipamentos: 0,
+                custoDireto: 0,
+                bdiPercentual: 0,
+                bdiValor: 0,
+                valorTotal: parseFloat(valorTotal || 0)
+            };
+        }
+        
+        const totais = comercial.totais;
+        return {
+            totalServicos: this.converterParaNumero(totais.servicos),
+            totalMaoObra: this.converterParaNumero(totais.maoObra),
+            totalMateriais: this.converterParaNumero(totais.materiais),
+            totalEquipamentos: this.converterParaNumero(totais.equipamentos),
+            custoDireto: this.converterParaNumero(totais.custoDirecto),
+            bdiPercentual: parseFloat(totais.bdiPercentual || 0),
+            bdiValor: this.converterParaNumero(totais.bdiValor),
+            valorTotal: this.converterParaNumero(comercial.valorTotal || valorTotal)
+        };
+    }
+    
+    // Método auxiliar para converter valores monetários
+    converterParaNumero(valor) {
+        if (!valor) return 0;
+        if (typeof valor === 'number') return valor;
+        
+        // Remove R$, pontos e converte vírgula em ponto
+        const numero = valor.toString()
+            .replace(/R\$/g, '')
+            .replace(/\./g, '')
+            .replace(',', '.')
+            .trim();
+        
+        return parseFloat(numero) || 0;
+    }
+    
+    // Método para propostas simples (sem dados completos)
+    formatarPropostaSimples(proposta) {
+        return {
+            id: proposta.id,
+            processoId: proposta.processoId,
+            dadosCadastrais: {
+                razaoSocial: proposta.fornecedorRazaoSocial,
+                cnpj: proposta.fornecedorCNPJ,
+                endereco: proposta.endereco || 'Não informado',
+                cidade: proposta.cidade || 'Não informado',
+                telefone: proposta.telefone || 'Não informado',
+                email: proposta.fornecedorEmail || proposta.email || 'Não informado',
+                respTecnico: proposta.responsavel || 'Não informado',
+                crea: proposta.crea || 'Não informado'
+            },
+            propostaTecnica: {
+                objetoConcorrencia: proposta.objeto || 'Conforme TR',
+                escopoInclusos: proposta.escopo || 'Conforme especificações',
+                escopoExclusos: 'Não especificado',
+                metodologia: proposta.descricao_tecnica || 'Conforme padrões técnicos',
+                sequenciaExecucao: proposta.cronograma || 'Conforme cronograma',
+                prazoExecucao: proposta.prazoExecucao || '180 dias',
+                prazoMobilizacao: '15 dias',
+                garantias: proposta.garantia || '12 meses',
+                estruturaCanteiro: 'Conforme necessário',
+                obrigacoesContratada: 'Conforme contrato',
+                obrigacoesContratante: 'Conforme contrato'
+            },
+            servicosTecnica: [],
+            maoObraTecnica: [],
+            materiaisTecnica: [],
+            equipamentosTecnica: [],
+            servicosComercial: [],
+            maoObraComercial: [],
+            materiaisComercial: [],
+            equipamentosComercial: [],
+            bdi: [],
+            resumoFinanceiro: {
+                totalServicos: 0,
+                totalMaoObra: 0,
+                totalMateriais: 0,
+                totalEquipamentos: 0,
+                custoDireto: 0,
+                bdiPercentual: 0,
+                bdiValor: 0,
+                valorTotal: parseFloat(proposta.valor || 0)
+            }
+        };
+    }
+    
     // Formatar proposta completa
     formatarPropostaCompleta(proposta) {
         return proposta; // Já está no formato correto
