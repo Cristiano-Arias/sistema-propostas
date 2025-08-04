@@ -2054,17 +2054,46 @@ function coletarTabelaSegura(tabelaId) {
         linhas.forEach(linha => {
             const inputs = linha.querySelectorAll('input, select, textarea');
             if (inputs.length > 0) {
-                const linhaDados = [];
-                inputs.forEach(input => {
+                const linhaDados = {};
+                inputs.forEach((input, index) => {
                     if (input.type !== 'button' && !input.classList.contains('remove-btn')) {
-                        linhaDados.push(input.value || '');
+                        // Mapear os índices para nomes de campo baseado na tabela
+                        const nomeCampo = obterNomeCampo(tabelaId, index);
+                        linhaDados[nomeCampo] = input.value || '';
                     }
                 });
-                if (linhaDados.some(valor => valor.trim() !== '')) {
+                if (Object.values(linhaDados).some(valor => valor.trim() !== '')) {
                     dados.push(linhaDados);
                 }
             }
         });
+        
+        return dados;
+    } catch (error) {
+        console.warn(`Erro ao coletar tabela ${tabelaId}:`, error);
+        return [];
+    }
+}
+
+// Nova função auxiliar para mapear campos
+function obterNomeCampo(tabelaId, index) {
+    const mapeamento = {
+        'servicosTecnicaTable': ['item', 'descricao', 'unidade', 'quantidade'],
+        'equipeTable': ['funcao', 'quantidade', 'tempo'],
+        'materiaisTable': ['material', 'especificacao', 'unidade', 'quantidade'],
+        'equipamentosTable': ['equipamento', 'especificacao', 'unidade', 'quantidade', 'tempo'],
+        'cronogramaTable': ['atividade', 'duracao', 'inicio', 'fim'],
+        'experienciaTable': ['obra', 'cliente', 'valor', 'ano', 'contato'],
+        'certificacoesTable': ['certificacao', 'orgao', 'validade'],
+        'servicosTable': ['item', 'descricao', 'unidade', 'quantidade', 'precoUnitario', 'total'],
+        'maoObraTable': ['funcao', 'quantidade', 'tempo', 'salario', 'encargos', 'totalMensal', 'totalGeral'],
+        'materiaisComercialTable': ['material', 'especificacao', 'unidade', 'quantidade', 'precoUnitario', 'total'],
+        'equipamentosComercialTable': ['equipamento', 'especificacao', 'quantidade', 'tempo', 'precoMensal', 'total'],
+        'bdiTable': ['item', 'percentual', 'valor']
+    };
+    
+    return mapeamento[tabelaId]?.[index] || `campo${index}`;
+}
         
         return dados;
     } catch (error) {
