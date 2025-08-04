@@ -1116,34 +1116,47 @@ class ComparativoPropostasIntegrado {
     // Buscar propostas de um processo específico
     buscarPropostasDoProcesso(processoId) {
         const propostas = [];
+        const propostasMap = new Map(); // Usar Map para evitar duplicatas
         
-        // Buscar em propostas_fornecedores
+        // Buscar em propostas_fornecedores (prioridade 1)
         const propostasFornecedores = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
         propostasFornecedores.forEach(p => {
-            if (p.processoId === processoId) {
-                propostas.push(this.formatarPropostaFornecedor(p));
+            if (p.processoId === processoId && p.status === 'ENVIADA') {
+                // Usar CNPJ como chave única para evitar duplicatas
+                const chave = p.fornecedorCNPJ || p.cnpj;
+                if (chave && !propostasMap.has(chave)) {
+                    propostasMap.set(chave, this.formatarPropostaFornecedor(p));
+                }
             }
         });
-
-        // ADICIONE: Buscar também em propostas_comparativo
+    
+        // Buscar em propostas_comparativo (prioridade 2)
         const propostasComparativo = JSON.parse(localStorage.getItem('propostas_comparativo') || '[]');
         propostasComparativo.forEach(p => {
-            if (p.numeroProcesso === processoId && !propostas.find(prop => prop.protocolo === p.protocolo)) {
-                propostas.push(this.formatarPropostaFornecedor(p));
+            if (p.numeroProcesso === processoId) {
+                const chave = p.fornecedorCNPJ || p.cnpj;
+                // Só adicionar se ainda não existe
+                if (chave && !propostasMap.has(chave)) {
+                    propostasMap.set(chave, this.formatarPropostaFornecedor(p));
+                }
             }
         });
         
-        // Buscar em propostas_completas
+        // Buscar em propostas_completas (prioridade 3)
         const propostasCompletas = JSON.parse(localStorage.getItem('propostas_completas') || '[]');
         propostasCompletas.forEach(p => {
-            if (p.processoId === processoId && !propostas.find(prop => prop.id === p.id)) {
-                propostas.push(this.formatarPropostaCompleta(p));
+            if (p.processoId === processoId) {
+                const chave = p.dadosCadastrais?.cnpj || p.cnpj;
+                // Só adicionar se ainda não existe
+                if (chave && !propostasMap.has(chave)) {
+                    propostasMap.set(chave, this.formatarPropostaCompleta(p));
+                }
             }
         });
         
-        return propostas;
+        // Converter Map para array
+        return Array.from(propostasMap.values());
     }
-
     // Formatar proposta do fornecedor para o formato esperado
     formatarPropostaFornecedor(proposta) {
         // Verificar se tem dados completos salvos
