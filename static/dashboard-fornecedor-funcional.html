@@ -1773,145 +1773,11 @@
                 return;
             }
             
-            // Se a proposta tem dados completos do portal, abrir em modo visualização
+            // Se a proposta tem dados completos do portal, usar eles
             if (proposta.dadosCompletos) {
-                // Criar modal com todos os dados
-                const modal = document.createElement('div');
-                modal.className = 'modal-overlay';
-                
-                const dados = proposta.dadosCompletos;
-                const valorTotal = dados.propostaComercial?.valorTotal || proposta.valor || '0,00';
-                
-                modal.innerHTML = `
-                    <div class="modal-content" style="max-width: 900px;">
-                        <div class="modal-header">
-                            <div>
-                                <h3 style="margin: 0; color: #333;">Proposta Enviada - ${proposta.protocolo}</h3>
-                                <p style="margin: 5px 0 0 0; color: #666;">Processo: ${proposta.numeroProcesso}</p>
-                            </div>
-                            <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <div style="background: #d4edda; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                                <h4 style="color: #155724; margin-bottom: 10px;"><i class="fas fa-check-circle"></i> Status: ENVIADA</h4>
-                                <p style="margin: 5px 0;"><strong>Data de Envio:</strong> ${new Date(proposta.dataEnvio).toLocaleString('pt-BR')}</p>
-                                <p style="margin: 5px 0;"><strong>Protocolo:</strong> ${proposta.protocolo}</p>
-                            </div>
-                            
-                            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h4 style="color: #333; margin-bottom: 15px;">Dados da Empresa</h4>
-                                <p><strong>Razão Social:</strong> ${dados.dadosCadastrais?.razaoSocial || proposta.fornecedorRazaoSocial}</p>
-                                <p><strong>CNPJ:</strong> ${dados.dadosCadastrais?.cnpj || proposta.fornecedorCNPJ}</p>
-                                <p><strong>E-mail:</strong> ${dados.dadosCadastrais?.email || proposta.fornecedorEmail}</p>
-                                <p><strong>Telefone:</strong> ${dados.dadosCadastrais?.telefone || 'Não informado'}</p>
-                            </div>
-                            
-                            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h4 style="color: #333; margin-bottom: 15px;">Proposta Comercial</h4>
-                                <p style="font-size: 24px; color: #27ae60; font-weight: bold;">
-                                    Valor Total: R$ ${valorTotal}
-                                </p>
-                                <p><strong>Prazo de Execução:</strong> ${dados.propostaTecnica?.prazoExecucao || proposta.prazoExecucao}</p>
-                                <p><strong>Condições de Pagamento:</strong> ${dados.resumo?.formaPagamento || proposta.condicoesPagamento || 'A definir'}</p>
-                                <p><strong>Validade da Proposta:</strong> ${dados.propostaComercial?.validadeProposta || '60 dias'}</p>
-                            </div>
-
-                            ${dados.propostaComercial?.servicos?.length > 0 ? `
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 15px;">Detalhamento de Serviços</h4>
-                                    <table style="width: 100%; border-collapse: collapse;">
-                                        <thead>
-                                            <tr style="background: #e9ecef;">
-                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Item</th>
-                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Descrição</th>
-                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Qtd</th>
-                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Valor Unit.</th>
-                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${dados.propostaComercial.servicos.map(servico => `
-                                                <tr>
-                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${servico[0]}</td>
-                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${servico[1]}</td>
-                                                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">${servico[3]}</td>
-                                                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">R$ ${servico[4]}</td>
-                                                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: right;">R$ ${servico[5]}</td>
-                                                </tr>
-                                            `).join('')}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ` : ''}
-                            
-                            ${dados.propostaTecnica?.cronograma?.length > 0 ? `
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 15px;">Cronograma de Execução</h4>
-                                    <table style="width: 100%; border-collapse: collapse;">
-                                        <thead>
-                                            <tr style="background: #e9ecef;">
-                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Atividade</th>
-                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Duração</th>
-                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Início</th>
-                                                <th style="padding: 8px; border: 1px solid #dee2e6;">Fim</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${dados.propostaTecnica.cronograma.map(item => `
-                                                <tr>
-                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${item[0]}</td>
-                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${item[1]} dias</td>
-                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${item[2]}</td>
-                                                    <td style="padding: 8px; border: 1px solid #dee2e6;">${item[3]}</td>
-                                                </tr>
-                                            `).join('')}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ` : ''}
-                            
-                            ${dados.propostaTecnica ? `
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 15px;">Metodologia de Execução</h4>
-                                    <p style="white-space: pre-wrap;">${dados.propostaTecnica.metodologia || 'Não informado'}</p>
-                                </div>
-                            ` : ''}
-                            
-                            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeaa7;">
-                                <p style="margin: 0; color: #856404;">
-                                    <i class="fas fa-info-circle"></i> Esta proposta foi enviada e não pode mais ser alterada.
-                                    Para visualizar todos os detalhes técnicos e comerciais, clique em "Abrir Proposta Completa".
-                                </p>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" onclick="baixarComprovante('${proposta.id}')">
-                                <i class="fas fa-receipt"></i> Baixar Comprovante
-                            </button>
-                            <button class="btn btn-primary" onclick="baixarPropostaCompleta('${proposta.id}')">
-                                <i class="fas fa-download"></i> Baixar Proposta Completa
-                            </button>
-                            <button class="btn btn-primary" onclick="abrirPropostaCompleta('${proposta.id}')">
-                                <i class="fas fa-external-link-alt"></i> Abrir Proposta Completa
-                            </button>
-                            <button class="btn btn-secondary btn-fechar-modal">
-                                Fechar
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.appendChild(modal);
-                
-                // Event listeners
-                modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
-                    btn.addEventListener('click', () => modal.remove());
-                });
-                
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) modal.remove();
-                });
-                
+                // Abrir proposta completa em nova janela com os dados salvos
+                sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
+                window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
             } else {
                 // Fallback para propostas antigas
                 alert(`
@@ -1927,7 +1793,6 @@
                 `);
             }
         }
-
         // Função auxiliar para abrir proposta completa
         function abrirPropostaCompleta(propostaId) {
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
