@@ -1801,21 +1801,16 @@ Deseja realmente enviar a proposta?
             }
         }
         
-        // Função enviarProposta - CORRIGIDA
-        async function enviarProposta() {
+// Função enviarProposta - CORRIGIDA
+async function enviarProposta() {
     // Verificar se já está enviando
     if (typeof enviandoProposta !== 'undefined' && enviandoProposta) {
         return;
     }
     
-    // Definir variável se não existir
-    if (typeof enviandoProposta === 'undefined') {
-        window.enviandoProposta = false;
-    }
-    
     window.enviandoProposta = true;
     
-    // Validações básicas (MANTIDAS DO ORIGINAL)
+    // Validações básicas
     const camposObrigatorios = ['razaoSocial', 'cnpj', 'email', 'objetoConcorrencia'];
     let tudoPreenchido = true;
     
@@ -1835,7 +1830,7 @@ Deseja realmente enviar a proposta?
         return;
     }
     
-    // Mostrar loading (MANTIDO DO ORIGINAL)
+    // Mostrar loading
     const submitBtn = document.querySelector('.submit-btn[onclick="confirmarEnvio()"]');
     if (!submitBtn) {
         window.enviandoProposta = false;
@@ -1847,55 +1842,73 @@ Deseja realmente enviar a proposta?
     submitBtn.disabled = true;
     
     try {
-        // ===== COLETAR DADOS BÁSICOS (ORIGINAL) =====
-        const dadosBasicos = {
-            // Dados cadastrais básicos
-            razaoSocial: document.getElementById('razaoSocial')?.value || '',
-            cnpj: document.getElementById('cnpj')?.value || '',
-            email: document.getElementById('email')?.value || '',
-            telefone: document.getElementById('telefone')?.value || '',
-            endereco: document.getElementById('endereco')?.value || '',
-            cidade: document.getElementById('cidade')?.value || '',
-            respTecnico: document.getElementById('respTecnico')?.value || '',
-            crea: document.getElementById('crea')?.value || '',
-            
-            // Dados do processo
-            numeroProcesso: document.getElementById('numeroProcesso')?.value || '',
-            objetoProcesso: document.getElementById('objetoProcesso')?.value || '',
-            
-            // Dados básicos da proposta
-            objetoConcorrencia: document.getElementById('objetoConcorrencia')?.value || '',
-            valorTotal: document.getElementById('valorTotalCalculado')?.textContent || '0,00',
-            prazoExecucao: document.getElementById('prazoExecucao')?.value || '',
-            validadeProposta: document.getElementById('validadeProposta')?.value || '',
-            metodologia: document.getElementById('metodologia')?.value || ''
-        };
-        
-        // ===== ENVIO BÁSICO (SIMULADO - MANTIDO DO ORIGINAL) =====
-        // Simular envio para backend
+        // Simular envio
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Gerar protocolo único
         const protocolo = 'PROP-' + Date.now();
         
-        // ===== COLETAR DADOS EXTRAS (NOVO - SEM QUEBRAR) =====
-        let dadosExtras = null;
-        try {
-            dadosExtras = coletarDadosCompletosSeguro();
-        } catch (error) {
-            console.warn('Erro ao coletar dados extras (não crítico):', error);
-            // Continua sem os dados extras
+        // CORREÇÃO: Coletar TODOS os dados completos
+        const dadosCompletos = coletarDadosCompletos();
+        
+        // Preparar dados para salvar
+        const propostaParaSalvar = {
+            id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+            protocolo: protocolo,
+            numeroProcesso: document.getElementById('numeroProcesso').value,
+            fornecedorCNPJ: document.getElementById('cnpj').value,
+            fornecedorRazaoSocial: document.getElementById('razaoSocial').value,
+            fornecedorEmail: document.getElementById('email').value,
+            valor: dadosCompletos.propostaComercial.valorTotal,
+            prazoExecucao: dadosCompletos.propostaTecnica.prazoExecucao,
+            condicoesPagamento: dadosCompletos.resumo.formaPagamento,
+            validadeProposta: dadosCompletos.propostaComercial.validadeProposta,
+            garantia: dadosCompletos.propostaTecnica.garantias,
+            metodologia: dadosCompletos.propostaTecnica.metodologia,
+            descricao_tecnica: dadosCompletos.propostaTecnica.metodologia,
+            experiencia: dadosCompletos.propostaTecnica.experiencia ? 'Sim' : 'Não informado',
+            equipeTecnica: dadosCompletos.propostaTecnica.equipe ? 'Conforme detalhado' : 'Não informado',
+            telefone: dadosCompletos.dadosCadastrais.telefone,
+            endereco: dadosCompletos.dadosCadastrais.endereco,
+            cidade: dadosCompletos.dadosCadastrais.cidade,
+            responsavel: dadosCompletos.dadosCadastrais.respTecnico,
+            crea: dadosCompletos.dadosCadastrais.crea,
+            objeto: dadosCompletos.propostaTecnica.objetoConcorrencia,
+            escopo: dadosCompletos.propostaTecnica.escopoInclusos,
+            cronograma: dadosCompletos.propostaTecnica.cronograma ? 'Conforme detalhado' : 'A definir',
+            status: 'ENVIADA',
+            dataEnvio: new Date().toISOString(),
+            dadosCompletos: dadosCompletos // IMPORTANTE: Salvar dados completos
+        };
+        
+        // Salvar em propostas_fornecedores
+        if (window.fornecedorLogado && window.dadosOrigemDashboard) {
+            const propostasFornecedores = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
+            
+            // Remover rascunhos anteriores
+            const propostasFiltradas = propostasFornecedores.filter(p => 
+                !(p.processoId === window.dadosOrigemDashboard.processo.processoId && 
+                  p.fornecedorId === window.fornecedorLogado.id)
+            );
+            
+            // Adicionar proposta com processId correto
+            propostaParaSalvar.processoId = window.dadosOrigemDashboard.processo.processoId;
+            propostaParaSalvar.fornecedorId = window.fornecedorLogado.id;
+            
+            propostasFiltradas.push(propostaParaSalvar);
+            localStorage.setItem('propostas_fornecedores', JSON.stringify(propostasFiltradas));
         }
         
-        // ===== SALVAR NO LOCALSTORAGE (NOVO - PARA COMPARATIVO) =====
-        try {
-            salvarPropostaParaComparativo(dadosBasicos, dadosExtras, protocolo);
-        } catch (error) {
-            console.warn('Erro ao salvar para comparativo (não crítico):', error);
-            // Continua sem salvar para comparativo
-        }
+        // Salvar também em propostas_comparativo
+        const propostasComparativo = JSON.parse(localStorage.getItem('propostas_comparativo') || '[]');
+        const propostasComparativoFiltradas = propostasComparativo.filter(p => 
+            !(p.numeroProcesso === propostaParaSalvar.numeroProcesso && 
+              p.fornecedorCNPJ === propostaParaSalvar.fornecedorCNPJ)
+        );
+        propostasComparativoFiltradas.push(propostaParaSalvar);
+        localStorage.setItem('propostas_comparativo', JSON.stringify(propostasComparativoFiltradas));
         
-        // ===== SUCESSO (MANTIDO DO ORIGINAL) =====
+        // Sucesso
         mostrarMensagem(`
             <strong>✅ Proposta enviada com sucesso!</strong><br>
             <strong>Protocolo:</strong> ${protocolo}<br>
@@ -1903,23 +1916,10 @@ Deseja realmente enviar a proposta?
             <small>📧 E-mail de confirmação enviado</small>
         `, 'success');
         
-        // Desabilitar edição após envio (MANTIDO DO ORIGINAL)
+        // Desabilitar edição
         document.querySelectorAll('input, textarea, select').forEach(el => {
             el.disabled = true;
         });
-        
-        // Limpar rascunho (MANTIDO DO ORIGINAL)
-        try {
-            const numeroProcesso = dadosBasicos.numeroProcesso;
-            const cnpjFornecedor = dadosBasicos.cnpj;
-            if (numeroProcesso && cnpjFornecedor) {
-                const cnpjLimpo = cnpjFornecedor.replace(/[^0-9]/g, '');
-                const chaveRascunho = 'rascunho_' + cnpjLimpo + '_' + numeroProcesso;
-                localStorage.removeItem(chaveRascunho);
-            }
-        } catch (error) {
-            console.warn('Erro ao limpar rascunho:', error);
-        }
         
     } catch (error) {
         console.error('Erro ao enviar proposta:', error);
@@ -1929,14 +1929,13 @@ Deseja realmente enviar a proposta?
             <small>Tente novamente em alguns instantes</small>
         `, 'error');
     } finally {
-        // Restaurar botão (MANTIDO DO ORIGINAL)
         if (submitBtn) {
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
         }
         window.enviandoProposta = false;
     }
-}
+}    
 
 // ===== FUNÇÃO AUXILIAR PARA COLETAR DADOS EXTRAS (SEGURA) =====
 function coletarDadosCompletosSeguro() {
