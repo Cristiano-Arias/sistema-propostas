@@ -1668,102 +1668,122 @@ class ComparativoPropostasIntegrado {
     }
 
     updateMateriaisTecnicaTable() {
-        const tableBody = document.getElementById('materiaisTecnicaTable');
-        if (!tableBody) return;
-
-        // Coletar todos os materiais únicos
-        const materiaisUnicos = new Set();
-        this.proposals.forEach(proposal => {
-            if (proposal.materiaisTecnica) {
-                proposal.materiaisTecnica.forEach(mat => {
-                    materiaisUnicos.add(mat.material);
-                });
-            }
-        });
-
-        tableBody.innerHTML = '';
+        const tableContainer = document.querySelector('#materiaisTecnicaTable').closest('.table-container');
+    
+        tableContainer.innerHTML = `
+            <div class="side-by-side-container" style="display: flex; gap: 20px; overflow-x: auto; padding: 20px;">
+            </div>
+        `;
         
-        Array.from(materiaisUnicos).forEach(material => {
-            const row = document.createElement('tr');
+        const container = tableContainer.querySelector('.side-by-side-container');
+        
+        this.proposals.forEach(proposal => {
+            const column = document.createElement('div');
+            column.className = 'proposal-column';
+            column.style.cssText = 'flex: 0 0 450px; background: white; border-radius: 10px; border: 2px solid #e2e8f0; overflow: hidden;';
             
-            // Label column
-            const labelCell = document.createElement('td');
-            labelCell.className = 'item-label';
-            labelCell.textContent = material;
-            row.appendChild(labelCell);
-
-            // Proposal columns
-            this.proposals.forEach(proposal => {
-                const cell = document.createElement('td');
-                cell.className = 'proposal-cell';
-                
-                const mat = proposal.materiaisTecnica?.find(m => m.material === material);
-                if (mat) {
-                    cell.innerHTML = `
-                        <div><strong>Especificação:</strong> <span class="value-text">${mat.especificacao}</span></div>
-                        <div><strong>Unidade:</strong> <span class="value-text">${mat.unidade}</span></div>
-                        <div><strong>Quantidade:</strong> <span class="value-quantity">${mat.quantidade}</span></div>
+            // Header
+            const header = document.createElement('div');
+            header.style.cssText = 'background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 15px; text-align: center; font-weight: 700;';
+            header.textContent = proposal.dadosCadastrais.razaoSocial;
+            column.appendChild(header);
+            
+            // Tabela
+            const table = document.createElement('table');
+            table.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 0.9rem;';
+            
+            table.innerHTML = `
+                <thead>
+                    <tr style="background: #f1f5f9;">
+                        <th style="padding: 10px; text-align: left;">Material</th>
+                        <th style="padding: 10px; text-align: left;">Especificação</th>
+                        <th style="padding: 10px; text-align: center;">Unid.</th>
+                        <th style="padding: 10px; text-align: center;">Qtd</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            
+            const tbody = table.querySelector('tbody');
+            
+            if (proposal.materiaisTecnica && Array.isArray(proposal.materiaisTecnica)) {
+                proposal.materiaisTecnica.forEach(item => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1;">${item[0] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1;">${item[1] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center;">${item[2] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center; font-weight: 600; color: #3498db;">${item[3] || '-'}</td>
                     `;
-                } else {
-                    cell.innerHTML = '<span class="value-text">Não informado</span>';
-                }
-                
-                row.appendChild(cell);
-            });
-
-            tableBody.appendChild(row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #999;">Nenhum material informado</td></tr>';
+            }
+            
+            column.appendChild(table);
+            container.appendChild(column);
         });
     }
 
     updateEquipamentosTecnicaTable() {
-        const tableBody = document.getElementById('equipamentosTecnicaTable');
-        if (!tableBody) return;
-
-        // Coletar todos os equipamentos únicos
-        const equipamentosUnicos = new Set();
-        this.proposals.forEach(proposal => {
-            if (proposal.equipamentosTecnica) {
-                proposal.equipamentosTecnica.forEach(eq => {
-                    equipamentosUnicos.add(eq.equipamento);
-                });
-            }
-        });
-
-        tableBody.innerHTML = '';
+        const tableContainer = document.querySelector('#equipamentosTecnicaTable').closest('.table-container');
+    
+        tableContainer.innerHTML = `
+            <div class="side-by-side-container" style="display: flex; gap: 20px; overflow-x: auto; padding: 20px;">
+            </div>
+        `;
         
-        Array.from(equipamentosUnicos).forEach(equipamento => {
-            const row = document.createElement('tr');
+        const container = tableContainer.querySelector('.side-by-side-container');
+        
+        this.proposals.forEach(proposal => {
+            const column = document.createElement('div');
+            column.className = 'proposal-column';
+            column.style.cssText = 'flex: 0 0 500px; background: white; border-radius: 10px; border: 2px solid #e2e8f0; overflow: hidden;';
             
-            // Label column
-            const labelCell = document.createElement('td');
-            labelCell.className = 'item-label';
-            labelCell.textContent = equipamento;
-            row.appendChild(labelCell);
-
-            // Proposal columns
-            this.proposals.forEach(proposal => {
-                const cell = document.createElement('td');
-                cell.className = 'proposal-cell';
-                
-                const eq = proposal.equipamentosTecnica?.find(e => e.equipamento === equipamento);
-                if (eq) {
-                    cell.innerHTML = `
-                        <div><strong>Especificação:</strong> <span class="value-text">${eq.especificacao}</span></div>
-                        <div><strong>Unidade:</strong> <span class="value-text">${eq.unidade}</span></div>
-                        <div><strong>Quantidade:</strong> <span class="value-quantity">${eq.quantidade}</span></div>
-                        <div><strong>Tempo:</strong> <span class="value-text">${eq.tempo} meses</span></div>
+            // Header
+            const header = document.createElement('div');
+            header.style.cssText = 'background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 15px; text-align: center; font-weight: 700;';
+            header.textContent = proposal.dadosCadastrais.razaoSocial;
+            column.appendChild(header);
+            
+            // Tabela
+            const table = document.createElement('table');
+            table.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 0.9rem;';
+            
+            table.innerHTML = `
+                <thead>
+                    <tr style="background: #f1f5f9;">
+                        <th style="padding: 10px; text-align: left;">Equipamento</th>
+                        <th style="padding: 10px; text-align: left;">Especificação</th>
+                        <th style="padding: 10px;">Unid.</th>
+                        <th style="padding: 10px;">Qtd</th>
+                        <th style="padding: 10px;">Tempo</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            
+            const tbody = table.querySelector('tbody');
+            
+            if (proposal.equipamentosTecnica && Array.isArray(proposal.equipamentosTecnica)) {
+                proposal.equipamentosTecnica.forEach(item => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1;">${item[0] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1;">${item[1] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center;">${item[2] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center; font-weight: 600; color: #3498db;">${item[3] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center;">${item[4] || '-'} meses</td>
                     `;
-                } else {
-                    cell.innerHTML = '<span class="value-text">Não informado</span>';
-                }
-                
-                row.appendChild(cell);
-            });
-
-            tableBody.appendChild(row);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #999;">Nenhum equipamento informado</td></tr>';
+            }
+            
+            column.appendChild(table);
+            container.appendChild(column);
         });
     }
-
     // Tabelas de Análise Comercial
     updateServicosComercialTable() {
         const tableContainer = document.querySelector('#servicosComercialTable').closest('.table-container');
@@ -1841,155 +1861,229 @@ class ComparativoPropostasIntegrado {
     }
 
     updateMaoObraComercialTable() {
-        const tableBody = document.getElementById('maoObraComercialTable');
-        if (!tableBody) return;
-
-        // Coletar todas as funções únicas
-        const funcoesUnicas = new Set();
-        this.proposals.forEach(proposal => {
-            if (proposal.maoObraComercial) {
-                proposal.maoObraComercial.forEach(func => {
-                    funcoesUnicas.add(func.funcao);
-                });
-            }
-        });
-
-        tableBody.innerHTML = '';
+        const tableContainer = document.querySelector('#maoObraComercialTable').closest('.table-container');
+    
+        tableContainer.innerHTML = `
+            <div class="side-by-side-container" style="display: flex; gap: 20px; overflow-x: auto; padding: 20px;">
+            </div>
+        `;
         
-        Array.from(funcoesUnicas).forEach(funcao => {
-            const row = document.createElement('tr');
+        const container = tableContainer.querySelector('.side-by-side-container');
+        
+        this.proposals.forEach(proposal => {
+            const column = document.createElement('div');
+            column.className = 'proposal-column';
+            column.style.cssText = 'flex: 0 0 600px; background: white; border-radius: 10px; border: 2px solid #e2e8f0; overflow: hidden;';
             
-            // Label column
-            const labelCell = document.createElement('td');
-            labelCell.className = 'item-label';
-            labelCell.textContent = funcao;
-            row.appendChild(labelCell);
-
-            <!-- CONTINUAÇÃO DO ARQUIVO - PARTE 2 -->
-<!-- Cole este conteúdo logo após "row.appendChild(labelCell);" -->
-
-            // Proposal columns
-            this.proposals.forEach(proposal => {
-                const cell = document.createElement('td');
-                cell.className = 'proposal-cell';
+            // Header
+            const header = document.createElement('div');
+            header.style.cssText = 'background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 15px; text-align: center; font-weight: 700;';
+            header.textContent = proposal.dadosCadastrais.razaoSocial;
+            column.appendChild(header);
+            
+            // Tabela
+            const table = document.createElement('table');
+            table.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 0.9rem;';
+            
+            table.innerHTML = `
+                <thead>
+                    <tr style="background: #f1f5f9;">
+                        <th style="padding: 10px; text-align: left;">Função</th>
+                        <th style="padding: 10px;">Qtd</th>
+                        <th style="padding: 10px;">Meses</th>
+                        <th style="padding: 10px;">Salário</th>
+                        <th style="padding: 10px;">Enc.(%)</th>
+                        <th style="padding: 10px;">Total Mensal</th>
+                        <th style="padding: 10px;">Total Geral</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            
+            const tbody = table.querySelector('tbody');
+            
+            if (proposal.maoObraComercial && Array.isArray(proposal.maoObraComercial)) {
+                let totalMaoObra = 0;
                 
-                const func = proposal.maoObraComercial?.find(f => f.funcao === funcao);
-                if (func) {
-                    cell.innerHTML = `
-                        <div><strong>Quantidade:</strong> <span class="value-quantity">${func.quantidade}</span></div>
-                        <div><strong>Tempo:</strong> <span class="value-text">${func.tempo} meses</span></div>
-                        <div><strong>Salário:</strong> <span class="value-monetary">${this.formatCurrency(func.salario)}</span></div>
-                        <div><strong>Enc. Sociais:</strong> <span class="value-percentage">${func.encargos}%</span></div>
-                        <div><strong>Total:</strong> <span class="value-total">${this.formatCurrency(func.total)}</span></div>
+                proposal.maoObraComercial.forEach(item => {
+                    const row = tbody.insertRow();
+                    const totalGeral = this.converterParaNumero(item[6]) || 0;
+                    totalMaoObra += totalGeral;
+                    
+                    row.innerHTML = `
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1;">${item[0] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center;">${item[1] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center;">${item[2] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: right; color: #27ae60;">R$ ${item[3] || '0,00'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center; color: #f39c12;">${item[4] || '0'}%</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: right; color: #27ae60;">R$ ${item[5] || '0,00'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: right; color: #27ae60; font-weight: 700;">R$ ${item[6] || '0,00'}</td>
                     `;
-                } else {
-                    cell.innerHTML = '<span class="value-text">Não informado</span>';
-                }
+                });
                 
-                row.appendChild(cell);
-            });
-
-            tableBody.appendChild(row);
+                // Linha de total
+                const totalRow = tbody.insertRow();
+                totalRow.style.cssText = 'background: #f8fafc; font-weight: 700;';
+                totalRow.innerHTML = `
+                    <td colspan="6" style="padding: 15px; text-align: right;">TOTAL MÃO DE OBRA:</td>
+                    <td style="padding: 15px; text-align: right; color: #e74c3c; font-size: 1.1em;">R$ ${this.formatCurrency(totalMaoObra)}</td>
+                `;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #999;">Nenhuma informação de mão de obra</td></tr>';
+            }
+            
+            column.appendChild(table);
+            container.appendChild(column);
         });
     }
 
     updateMateriaisComercialTable() {
-        const tableBody = document.getElementById('materiaisComercialTable');
-        if (!tableBody) return;
-
-        // Coletar todos os materiais únicos
-        const materiaisUnicos = new Set();
-        this.proposals.forEach(proposal => {
-            if (proposal.materiaisComercial) {
-                proposal.materiaisComercial.forEach(mat => {
-                    materiaisUnicos.add(mat.material);
-                });
-            }
-        });
-
-        tableBody.innerHTML = '';
+        const tableContainer = document.querySelector('#materiaisComercialTable').closest('.table-container');
+    
+        tableContainer.innerHTML = `
+            <div class="side-by-side-container" style="display: flex; gap: 20px; overflow-x: auto; padding: 20px;">
+            </div>
+        `;
         
-        Array.from(materiaisUnicos).forEach(material => {
-            const row = document.createElement('tr');
+        const container = tableContainer.querySelector('.side-by-side-container');
+        
+        this.proposals.forEach(proposal => {
+            const column = document.createElement('div');
+            column.className = 'proposal-column';
+            column.style.cssText = 'flex: 0 0 550px; background: white; border-radius: 10px; border: 2px solid #e2e8f0; overflow: hidden;';
             
-            // Label column
-            const labelCell = document.createElement('td');
-            labelCell.className = 'item-label';
-            labelCell.textContent = material;
-            row.appendChild(labelCell);
-
-            // Proposal columns
-            this.proposals.forEach(proposal => {
-                const cell = document.createElement('td');
-                cell.className = 'proposal-cell';
+            // Header
+            const header = document.createElement('div');
+            header.style.cssText = 'background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 15px; text-align: center; font-weight: 700;';
+            header.textContent = proposal.dadosCadastrais.razaoSocial;
+            column.appendChild(header);
+            
+            // Tabela
+            const table = document.createElement('table');
+            table.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 0.9rem;';
+            
+            table.innerHTML = `
+                <thead>
+                    <tr style="background: #f1f5f9;">
+                        <th style="padding: 10px; text-align: left;">Material</th>
+                        <th style="padding: 10px; text-align: left;">Especificação</th>
+                        <th style="padding: 10px;">Unid.</th>
+                        <th style="padding: 10px;">Qtd</th>
+                        <th style="padding: 10px;">P.Unit</th>
+                        <th style="padding: 10px;">Total</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            
+            const tbody = table.querySelector('tbody');
+            
+            if (proposal.materiaisComercial && Array.isArray(proposal.materiaisComercial)) {
+                let totalMateriais = 0;
                 
-                const mat = proposal.materiaisComercial?.find(m => m.material === material);
-                if (mat) {
-                    cell.innerHTML = `
-                        <div><strong>Especificação:</strong> <span class="value-text">${mat.especificacao}</span></div>
-                        <div><strong>Unidade:</strong> <span class="value-text">${mat.unidade}</span></div>
-                        <div><strong>Quantidade:</strong> <span class="value-quantity">${mat.quantidade}</span></div>
-                        <div><strong>Preço Unit:</strong> <span class="value-monetary">${this.formatCurrency(mat.precoUnitario)}</span></div>
-                        <div><strong>Total:</strong> <span class="value-total">${this.formatCurrency(mat.total)}</span></div>
+                proposal.materiaisComercial.forEach(item => {
+                    const row = tbody.insertRow();
+                    const total = this.converterParaNumero(item[5]) || 0;
+                    totalMateriais += total;
+                    
+                    row.innerHTML = `
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1;">${item[0] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1;">${item[1] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center;">${item[2] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center;">${item[3] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: right; color: #27ae60;">R$ ${item[4] || '0,00'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: right; color: #27ae60; font-weight: 700;">R$ ${item[5] || '0,00'}</td>
                     `;
-                } else {
-                    cell.innerHTML = '<span class="value-text">Não informado</span>';
-                }
+                });
                 
-                row.appendChild(cell);
-            });
-
-            tableBody.appendChild(row);
+                // Linha de total
+                const totalRow = tbody.insertRow();
+                totalRow.style.cssText = 'background: #f8fafc; font-weight: 700;';
+                totalRow.innerHTML = `
+                    <td colspan="5" style="padding: 15px; text-align: right;">TOTAL MATERIAIS:</td>
+                    <td style="padding: 15px; text-align: right; color: #e74c3c; font-size: 1.1em;">R$ ${this.formatCurrency(totalMateriais)}</td>
+                `;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #999;">Nenhum material informado</td></tr>';
+            }
+            
+            column.appendChild(table);
+            container.appendChild(column);
         });
     }
 
     updateEquipamentosComercialTable() {
-        const tableBody = document.getElementById('equipamentosComercialTable');
-        if (!tableBody) return;
-
-        // Coletar todos os equipamentos únicos
-        const equipamentosUnicos = new Set();
-        this.proposals.forEach(proposal => {
-            if (proposal.equipamentosComercial) {
-                proposal.equipamentosComercial.forEach(eq => {
-                    equipamentosUnicos.add(eq.equipamento);
-                });
-            }
-        });
-
-        tableBody.innerHTML = '';
+        const tableContainer = document.querySelector('#equipamentosComercialTable').closest('.table-container');
+    
+        tableContainer.innerHTML = `
+            <div class="side-by-side-container" style="display: flex; gap: 20px; overflow-x: auto; padding: 20px;">
+            </div>
+        `;
         
-        Array.from(equipamentosUnicos).forEach(equipamento => {
-            const row = document.createElement('tr');
+        const container = tableContainer.querySelector('.side-by-side-container');
+        
+        this.proposals.forEach(proposal => {
+            const column = document.createElement('div');
+            column.className = 'proposal-column';
+            column.style.cssText = 'flex: 0 0 550px; background: white; border-radius: 10px; border: 2px solid #e2e8f0; overflow: hidden;';
             
-            // Label column
-            const labelCell = document.createElement('td');
-            labelCell.className = 'item-label';
-            labelCell.textContent = equipamento;
-            row.appendChild(labelCell);
-
-            // Proposal columns
-            this.proposals.forEach(proposal => {
-                const cell = document.createElement('td');
-                cell.className = 'proposal-cell';
+            // Header
+            const header = document.createElement('div');
+            header.style.cssText = 'background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 15px; text-align: center; font-weight: 700;';
+            header.textContent = proposal.dadosCadastrais.razaoSocial;
+            column.appendChild(header);
+            
+            // Tabela
+            const table = document.createElement('table');
+            table.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 0.9rem;';
+            
+            table.innerHTML = `
+                <thead>
+                    <tr style="background: #f1f5f9;">
+                        <th style="padding: 10px; text-align: left;">Equipamento</th>
+                        <th style="padding: 10px; text-align: left;">Especificação</th>
+                        <th style="padding: 10px;">Qtd</th>
+                        <th style="padding: 10px;">Meses</th>
+                        <th style="padding: 10px;">P./Mês</th>
+                        <th style="padding: 10px;">Total</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            
+            const tbody = table.querySelector('tbody');
+            
+            if (proposal.equipamentosComercial && Array.isArray(proposal.equipamentosComercial)) {
+                let totalEquipamentos = 0;
                 
-                const eq = proposal.equipamentosComercial?.find(e => e.equipamento === equipamento);
-                if (eq) {
-                    cell.innerHTML = `
-                        <div><strong>Especificação:</strong> <span class="value-text">${eq.especificacao}</span></div>
-                        <div><strong>Quantidade:</strong> <span class="value-quantity">${eq.quantidade}</span></div>
-                        <div><strong>Tempo:</strong> <span class="value-text">${eq.tempo} meses</span></div>
-                        <div><strong>Preço/mês:</strong> <span class="value-monetary">${this.formatCurrency(eq.precoMensal)}</span></div>
-                        <div><strong>Total:</strong> <span class="value-total">${this.formatCurrency(eq.total)}</span></div>
+                proposal.equipamentosComercial.forEach(item => {
+                    const row = tbody.insertRow();
+                    const total = this.converterParaNumero(item[5]) || 0;
+                    totalEquipamentos += total;
+                    
+                    row.innerHTML = `
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1;">${item[0] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1;">${item[1] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center;">${item[2] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center;">${item[3] || '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: right; color: #27ae60;">R$ ${item[4] || '0,00'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: right; color: #27ae60; font-weight: 700;">R$ ${item[5] || '0,00'}</td>
                     `;
-                } else {
-                    cell.innerHTML = '<span class="value-text">Não informado</span>';
-                }
+                });
                 
-                row.appendChild(cell);
-            });
-
-            tableBody.appendChild(row);
+                // Linha de total
+                const totalRow = tbody.insertRow();
+                totalRow.style.cssText = 'background: #f8fafc; font-weight: 700;';
+                totalRow.innerHTML = `
+                    <td colspan="5" style="padding: 15px; text-align: right;">TOTAL EQUIPAMENTOS:</td>
+                    <td style="padding: 15px; text-align: right; color: #e74c3c; font-size: 1.1em;">R$ ${this.formatCurrency(totalEquipamentos)}</td>
+                `;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #999;">Nenhum equipamento informado</td></tr>';
+            }
+            
+            column.appendChild(table);
+            container.appendChild(column);
         });
     }
 
