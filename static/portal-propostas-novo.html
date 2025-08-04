@@ -2110,11 +2110,47 @@ function salvarPropostaParaComparativo(dadosBasicos, dadosExtras, protocolo) {
         
         console.log('Proposta salva para comparativo:', protocolo);
         
+        // NOVO CÓDIGO - INÍCIO
+        // IMPORTANTE: Atualizar também em propostas_fornecedores para o dashboard
+        if (window.fornecedorLogado && window.dadosOrigemDashboard) {
+            const propostasFornecedores = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
+            
+            // Criar ou atualizar proposta
+            const propostaFornecedor = {
+                id: propostaComparativo.id,
+                processoId: window.dadosOrigemDashboard.processo.processoId,
+                numeroProcesso: dadosBasicos.numeroProcesso,
+                fornecedorId: window.fornecedorLogado.id,
+                fornecedorEmail: window.fornecedorLogado.email,
+                fornecedorCNPJ: window.fornecedorLogado.cnpj,
+                fornecedorRazaoSocial: window.fornecedorLogado.razaoSocial,
+                valor: dadosBasicos.valorTotal,
+                prazoExecucao: dadosBasicos.prazoExecucao,
+                condicoesPagamento: dadosExtras?.resumo?.formaPagamento || '',
+                status: 'ENVIADA', // IMPORTANTE: Status ENVIADA
+                dataEnvio: new Date().toISOString(),
+                protocolo: protocolo,
+                dadosCompletos: dadosExtras
+            };
+            
+            // Remover rascunhos anteriores do mesmo processo
+            const propostasFiltradas = propostasFornecedores.filter(p => 
+                !(p.processoId === window.dadosOrigemDashboard.processo.processoId && 
+                  p.fornecedorId === window.fornecedorLogado.id)
+            );
+            
+            // Adicionar nova proposta com status ENVIADA
+            propostasFiltradas.push(propostaFornecedor);
+            localStorage.setItem('propostas_fornecedores', JSON.stringify(propostasFiltradas));
+            
+            console.log('Proposta atualizada no dashboard do fornecedor');
+        }
+        // NOVO CÓDIGO - FIM
+        
     } catch (error) {
         console.warn('Erro ao salvar proposta para comparativo:', error);
     }
 }
-
 // ===== FUNÇÃO MOSTRAR MENSAGEM (MANTIDA SE NÃO EXISTIR) =====
 if (typeof mostrarMensagem === 'undefined') {
     function mostrarMensagem(texto, tipo) {
