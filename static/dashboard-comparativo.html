@@ -1124,6 +1124,14 @@ class ComparativoPropostasIntegrado {
                 propostas.push(this.formatarPropostaFornecedor(p));
             }
         });
+
+        // ADICIONE: Buscar também em propostas_comparativo
+        const propostasComparativo = JSON.parse(localStorage.getItem('propostas_comparativo') || '[]');
+        propostasComparativo.forEach(p => {
+            if (p.numeroProcesso === processoId && !propostas.find(prop => prop.protocolo === p.protocolo)) {
+                propostas.push(this.formatarPropostaFornecedor(p));
+            }
+        });
         
         // Buscar em propostas_completas
         const propostasCompletas = JSON.parse(localStorage.getItem('propostas_completas') || '[]');
