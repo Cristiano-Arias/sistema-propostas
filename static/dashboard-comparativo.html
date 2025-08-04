@@ -1146,43 +1146,50 @@ class ComparativoPropostasIntegrado {
 
     // Formatar proposta do fornecedor para o formato esperado
     formatarPropostaFornecedor(proposta) {
-        return {
-            id: proposta.id,
-            processoId: proposta.processoId,
-            dadosCadastrais: {
-                razaoSocial: proposta.fornecedorRazaoSocial,
-                cnpj: proposta.fornecedorCNPJ,
-                endereco: proposta.endereco || 'Não informado',
-                cidade: proposta.cidade || 'Não informado',
-                telefone: proposta.telefone || 'Não informado',
-                email: proposta.email || 'Não informado',
-                respTecnico: proposta.responsavel || 'Não informado',
-                crea: proposta.crea || 'Não informado'
-            },
-            propostaTecnica: {
-                objetoConcorrencia: proposta.objeto || 'Conforme TR',
-                escopoInclusos: proposta.escopo || 'Conforme especificações',
-                escopoExclusos: 'Não especificado',
-                metodologia: proposta.descricao_tecnica || 'Conforme padrões técnicos',
-                sequenciaExecucao: proposta.cronograma || 'Conforme cronograma',
-                prazoExecucao: proposta.prazoExecucao || '180 dias',
-                prazoMobilizacao: '15 dias',
-                garantias: proposta.garantia || '12 meses',
-                estruturaCanteiro: 'Conforme necessário',
-                obrigacoesContratada: 'Conforme contrato',
-                obrigacoesContratante: 'Conforme contrato'
-            },
-            servicosTecnica: this.gerarServicosTecnica(proposta),
-            maoObraTecnica: this.gerarMaoObraTecnica(proposta),
-            materiaisTecnica: this.gerarMateriaisTecnica(proposta),
-            equipamentosTecnica: this.gerarEquipamentosTecnica(proposta),
-            servicosComercial: this.gerarServicosComercial(proposta),
-            maoObraComercial: this.gerarMaoObraComercial(proposta),
-            materiaisComercial: this.gerarMateriaisComercial(proposta),
-            equipamentosComercial: this.gerarEquipamentosComercial(proposta),
-            bdi: this.gerarBDI(proposta),
-            resumoFinanceiro: this.gerarResumoFinanceiro(proposta)
-        };
+        // Verificar se tem dados completos salvos
+        if (proposta.dadosCompletos) {
+            const dados = proposta.dadosCompletos;
+            return {
+                id: proposta.id,
+                processoId: proposta.processoId,
+                dadosCadastrais: dados.dadosCadastrais || {
+                    razaoSocial: proposta.fornecedorRazaoSocial,
+                    cnpj: proposta.fornecedorCNPJ,
+                    endereco: proposta.endereco || 'Não informado',
+                    cidade: proposta.cidade || 'Não informado',
+                    telefone: proposta.telefone || 'Não informado',
+                    email: proposta.fornecedorEmail || proposta.email || 'Não informado',
+                    respTecnico: proposta.responsavel || dados.dadosCadastrais?.respTecnico || 'Não informado',
+                    crea: proposta.crea || dados.dadosCadastrais?.crea || 'Não informado'
+                },
+                propostaTecnica: dados.propostaTecnica || {
+                    objetoConcorrencia: proposta.objeto || 'Conforme TR',
+                    escopoInclusos: proposta.escopo || dados.propostaTecnica?.escopoInclusos || 'Conforme especificações',
+                    escopoExclusos: dados.propostaTecnica?.escopoExclusos || 'Não especificado',
+                    metodologia: proposta.descricao_tecnica || dados.propostaTecnica?.metodologia || 'Conforme padrões técnicos',
+                    sequenciaExecucao: dados.propostaTecnica?.sequenciaExecucao || 'Conforme cronograma',
+                    prazoExecucao: proposta.prazoExecucao || '180 dias',
+                    prazoMobilizacao: dados.propostaTecnica?.prazoMobilizacao || '15 dias',
+                    garantias: proposta.garantia || dados.propostaTecnica?.garantias || '12 meses',
+                    estruturaCanteiro: dados.propostaTecnica?.estruturaCanteiro || 'Conforme necessário',
+                    obrigacoesContratada: dados.propostaTecnica?.obrigacoesContratada || 'Conforme contrato',
+                    obrigacoesContratante: dados.propostaTecnica?.obrigacoesContratante || 'Conforme contrato'
+                },
+                servicosTecnica: dados.propostaTecnica?.servicosTecnica || [],
+                maoObraTecnica: dados.propostaTecnica?.equipe || [],
+                materiaisTecnica: dados.propostaTecnica?.materiais || [],
+                equipamentosTecnica: dados.propostaTecnica?.equipamentos || [],
+                servicosComercial: dados.propostaComercial?.servicos || [],
+                maoObraComercial: dados.propostaComercial?.maoObra || [],
+                materiaisComercial: dados.propostaComercial?.materiaisComercial || [],
+                equipamentosComercial: dados.propostaComercial?.equipamentosComercial || [],
+                bdi: this.formatarBDI(dados.propostaComercial?.bdi, proposta.valor),
+                resumoFinanceiro: this.formatarResumoFinanceiro(dados.propostaComercial, proposta.valor)
+            };
+        } else {
+            // Fallback para propostas sem dados completos
+            return this.formatarPropostaSimples(proposta);
+        }
     }
 
     // Formatar proposta completa
@@ -1442,20 +1449,30 @@ class ComparativoPropostasIntegrado {
     updateServicosTecnicaTable() {
         const tableBody = document.getElementById('servicosTecnicaTable');
         if (!tableBody) return;
-
+    
         // Coletar todos os serviços únicos
-        const servicosUnicos = new Set();
+        const servicosMap = new Map();
+        
         this.proposals.forEach(proposal => {
-            if (proposal.servicosTecnica) {
+            if (proposal.servicosTecnica && Array.isArray(proposal.servicosTecnica)) {
                 proposal.servicosTecnica.forEach(servico => {
-                    servicosUnicos.add(servico.descricao);
+                    // Serviço pode ser array ou objeto
+                    const descricao = Array.isArray(servico) ? servico[1] : servico.descricao;
+                    if (descricao) {
+                        servicosMap.set(descricao, true);
+                    }
                 });
             }
         });
-
+    
         tableBody.innerHTML = '';
         
-        Array.from(servicosUnicos).forEach(servicoDesc => {
+        if (servicosMap.size === 0) {
+            tableBody.innerHTML = '<tr><td colspan="' + (this.proposals.length + 1) + '" style="text-align: center; color: #999;">Nenhum serviço técnico informado</td></tr>';
+            return;
+        }
+        
+        Array.from(servicosMap.keys()).forEach(servicoDesc => {
             const row = document.createElement('tr');
             
             // Label column
@@ -1463,29 +1480,38 @@ class ComparativoPropostasIntegrado {
             labelCell.className = 'item-label';
             labelCell.textContent = servicoDesc;
             row.appendChild(labelCell);
-
+    
             // Proposal columns
             this.proposals.forEach(proposal => {
                 const cell = document.createElement('td');
                 cell.className = 'proposal-cell';
                 
-                const servico = proposal.servicosTecnica?.find(s => s.descricao === servicoDesc);
+                let servico = null;
+                if (proposal.servicosTecnica && Array.isArray(proposal.servicosTecnica)) {
+                    servico = proposal.servicosTecnica.find(s => {
+                        const desc = Array.isArray(s) ? s[1] : s.descricao;
+                        return desc === servicoDesc;
+                    });
+                }
+                
                 if (servico) {
+                    const unidade = Array.isArray(servico) ? servico[2] : servico.unidade;
+                    const quantidade = Array.isArray(servico) ? servico[3] : servico.quantidade;
+                    
                     cell.innerHTML = `
-                        <div><strong>Unidade:</strong> <span class="value-text">${servico.unidade}</span></div>
-                        <div><strong>Quantidade:</strong> <span class="value-quantity">${servico.quantidade}</span></div>
+                        <div><strong>Unidade:</strong> <span class="value-text">${unidade || 'Não informado'}</span></div>
+                        <div><strong>Quantidade:</strong> <span class="value-quantity">${quantidade || 'Não informado'}</span></div>
                     `;
                 } else {
-                    cell.innerHTML = '<span class="value-text">Não informado</span>';
+                    cell.innerHTML = '<span class="value-text">-</span>';
                 }
                 
                 row.appendChild(cell);
             });
-
+    
             tableBody.appendChild(row);
         });
     }
-
     updateMaoObraTecnicaTable() {
         const tableBody = document.getElementById('maoObraTecnicaTable');
         if (!tableBody) return;
