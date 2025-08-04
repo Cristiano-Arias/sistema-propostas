@@ -3439,26 +3439,23 @@
        aplicarCorrecoesModuloComprador();
 
        function abrirComparativo() {
-            // Verificar se há processos com propostas
-            fetch('/api/processos/com-propostas', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.length > 0) {
-                    // Abrir modal de seleção de processo ou redirecionar
-                    window.open('dashboard-comprador-comparativo.html', '_blank');
-                } else {
-                    alert('Não há processos com propostas suficientes para comparação.');
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro ao verificar processos disponíveis.');
-            });
-        }
+       // Verificar se há processos com propostas no localStorage
+       const processos = JSON.parse(localStorage.getItem('processos_licitatorios') || '[]');
+       const propostasFornecedores = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
+       const propostasCompletas = JSON.parse(localStorage.getItem('propostas_completas') || '[]');
+    
+       // Filtrar processos que têm propostas
+       const processosComPropostas = processos.filter(processo => {
+           const temPropostaFornecedor = propostasFornecedores.some(p => p.processoId === processo.id);
+           const temPropostaCompleta = propostasCompletas.some(p => p.processoId === processo.id);
+           return temPropostaFornecedor || temPropostaCompleta;
+       });
+    
+       if (processosComPropostas.length === 0) {
+           alert('Não há processos com propostas para comparar!');
+           return;
+       }
+     
    </script>
    <!-- Integração com Azure AI -->
    <script src="azure-config.js"></script>
