@@ -1076,12 +1076,16 @@ class ComparativoPropostasIntegrado {
         // Limpar opções existentes
         processSelect.innerHTML = '<option value="">Selecione um processo para análise...</option>';
         
+        // Contador de processos com propostas
+        let processosComPropostas = 0;
+        
         // Adicionar processos que têm propostas
         processos.forEach(processo => {
             // Buscar propostas para este processo
             const propostas = this.buscarPropostasDoProcesso(processo.id);
             
             if (propostas.length > 0) {
+                processosComPropostas++;
                 const option = document.createElement('option');
                 option.value = processo.id;
                 option.textContent = `${processo.numeroProcesso} - ${processo.trVinculado?.titulo || 'Sem título'}`;
@@ -1089,10 +1093,21 @@ class ComparativoPropostasIntegrado {
             }
         });
         
+        // Se não houver nenhum processo com propostas, mostrar mensagem
+        if (processosComPropostas === 0) {
+            processSelect.innerHTML = '<option value="">Nenhum processo com propostas disponível para comparação</option>';
+            
+            // Opcional: Mostrar mensagem informativa na tela
+            const aiHighlight = document.getElementById('aiHighlight');
+            if (aiHighlight) {
+                aiHighlight.textContent = 'Não há processos com propostas para análise. Aguarde o envio de propostas pelos fornecedores.';
+            }
+        }
+        
         // Se vier com processo selecionado na URL
         const urlParams = new URLSearchParams(window.location.search);
         const processoId = urlParams.get('processo');
-        if (processoId) {
+        if (processoId && processosComPropostas > 0) {
             processSelect.value = processoId;
             this.loadProcess(processoId);
         }
