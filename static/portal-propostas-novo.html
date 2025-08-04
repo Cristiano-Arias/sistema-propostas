@@ -2094,13 +2094,6 @@ function obterNomeCampo(tabelaId, index) {
     return mapeamento[tabelaId]?.[index] || `campo${index}`;
 }
         
-        return dados;
-    } catch (error) {
-        console.warn(`Erro ao coletar tabela ${tabelaId}:`, error);
-        return [];
-    }
-}
-
 // ===== FUNÇÃO PARA SALVAR PROPOSTA PARA COMPARATIVO =====
 function salvarPropostaParaComparativo(dadosBasicos, dadosExtras, protocolo) {
     try {
