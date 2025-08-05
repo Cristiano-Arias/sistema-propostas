@@ -1939,6 +1939,16 @@
                 const propostasFornecedor = SistemaLocal.carregar('propostas_fornecedores', []);
                 const propostasProcesso = propostasFornecedor.filter(p => p.processoId === processo.id);
                 
+                // Remover duplicatas por CNPJ
+                const cnpjsVistos = new Set();
+                const propostasSemDuplicatas = propostasProcesso.filter(proposta => {
+                    if (cnpjsVistos.has(proposta.fornecedorCNPJ)) {
+                        return false;
+                    }
+                    cnpjsVistos.add(proposta.fornecedorCNPJ);
+                    return true;
+                });
+                
                 const statusColor = processo.status === 'ATIVO' ? '#28a745' : '#6c757d';
                 const statusIcon = processo.status === 'ATIVO' ? 'fa-check-circle' : 'fa-pause-circle';
                 
