@@ -1141,30 +1141,6 @@
             }
         }
 
-         // Aplicar correções ao carregar
-         aplicarCorrecoesModuloComprador();
-        
-        function abrirComparativo() {
-       // Verificar se há processos com propostas no localStorage
-       const processos = JSON.parse(localStorage.getItem('processos_licitatorios') || '[]');
-       const propostasFornecedores = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
-       const propostasCompletas = JSON.parse(localStorage.getItem('propostas_completas') || '[]');
-    
-       // Filtrar processos que têm propostas
-       const processosComPropostas = processos.filter(processo => {
-           const temPropostaFornecedor = propostasFornecedores.some(p => p.processoId === processo.id);
-           const temPropostaCompleta = propostasCompletas.some(p => p.processoId === processo.id);
-           return temPropostaFornecedor || temPropostaCompleta;
-       });
-    
-       if (processosComPropostas.length === 0) {
-           alert('Não há processos com propostas para comparar!');
-           return;
-       }
-
-       window.open('dashboard-comparativo.html', '_blank');
-   }
-        
         // Resetar criação de processo
         function resetarCriacaoProcesso() {
             processoAtual = {
@@ -3106,6 +3082,30 @@
                 }
             }
         }
+
+        // Aplicar correções ao carregar
+         aplicarCorrecoesModuloComprador();
+        
+        function abrirComparativo() {
+       // Verificar se há processos com propostas no localStorage
+       const processos = JSON.parse(localStorage.getItem('processos_licitatorios') || '[]');
+       const propostasFornecedores = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
+       const propostasCompletas = JSON.parse(localStorage.getItem('propostas_completas') || '[]');
+    
+       // Filtrar processos que têm propostas
+       const processosComPropostas = processos.filter(processo => {
+           const temPropostaFornecedor = propostasFornecedores.some(p => p.processoId === processo.id);
+           const temPropostaCompleta = propostasCompletas.some(p => p.processoId === processo.id);
+           return temPropostaFornecedor || temPropostaCompleta;
+       });
+    
+       if (processosComPropostas.length === 0) {
+           alert('Não há processos com propostas para comparar!');
+           return;
+       }
+
+       window.open('dashboard-comparativo.html', '_blank');
+   }
         
         // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
