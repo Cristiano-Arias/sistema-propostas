@@ -2288,12 +2288,72 @@ class ComparativoPropostasIntegrado {
         return value || 'R$ 0,00';
     }
 
-    updateAIInsights(tabType) {
-        const insights = this.getAIInsights(tabType);
+    async updateAIInsights(tabType) {
+        // Elementos do DOM
+        const highlightElement = document.getElementById('aiHighlight');
+        const attentionElement = document.getElementById('aiAttention');
+        const marketElement = document.getElementById('aiMarket');
         
-        document.getElementById('aiHighlight').textContent = insights.highlight;
-        document.getElementById('aiAttention').textContent = insights.attention;
-        document.getElementById('aiMarket').textContent = insights.market;
+        // Verificar se temos propostas para analisar
+        if (!this.proposals || this.proposals.length === 0) {
+            highlightElement.textContent = 'Selecione um processo para ver os insights...';
+            attentionElement.textContent = 'Aguardando análise das propostas...';
+            marketElement.textContent = 'Dados de mercado serão exibidos após seleção do processo...';
+            return;
+        }
+        
+        // Mostrar loading
+        highlightElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
+        attentionElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+        marketElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calculando...';
+        
+        try {
+            // Verificar se Azure IA está disponível
+            if (typeof window.AzureIAPropostas !== 'undefined') {
+                console.log('Azure IA disponível - usando análise avançada');
+                
+                // Criar instância do Azure IA
+                const azureIA = new window.AzureIAPropostas();
+                
+                // Executar análise
+                const insights = await azureIA.analisarPropostas(this.proposals, tabType);
+                
+                // Atualizar interface com resultados
+                highlightElement.textContent = insights.highlight || 'Análise concluída';
+                attentionElement.textContent = insights.attention || 'Sem alertas identificados';
+                marketElement.textContent = insights.market || 'Dados do mercado processados';
+                
+                // Adicionar indicador de modo
+                const modoIndicador = azureIA.fallbackMode ? ' (Modo Simulado)' : ' (Azure IA)';
+                highlightElement.innerHTML += `<small style="opacity: 0.7;">${modoIndicador}</small>`;
+                
+            } else {
+                console.log('Azure IA não disponível - usando análise básica');
+                
+                // Fallback para análise básica
+                const insights = this.getAIInsights(tabType);
+                
+                highlightElement.textContent = insights.highlight;
+                attentionElement.textContent = insights.attention;
+                marketElement.textContent = insights.market;
+                
+                // Adicionar indicador de modo básico
+                highlightElement.innerHTML += '<small style="opacity: 0.7;"> (Análise Básica)</small>';
+            }
+            
+        } catch (error) {
+            console.error('Erro ao obter insights:', error);
+            
+            // Em caso de erro, usar análise básica
+            const insights = this.getAIInsights(tabType);
+            
+            highlightElement.textContent = insights.highlight;
+            attentionElement.textContent = insights.attention;
+            marketElement.textContent = insights.market;
+            
+            // Indicar que houve erro
+            marketElement.innerHTML += '<br><small style="color: #e74c3c;">⚠️ Erro na análise avançada</small>';
+        }
     }
 
     getAIInsights(tabType) {
