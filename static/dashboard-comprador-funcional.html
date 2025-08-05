@@ -1141,6 +1141,9 @@
             }
         }
 
+         // Aplicar correções ao carregar
+         aplicarCorrecoesModuloComprador();
+        
         function abrirComparativo() {
        // Verificar se há processos com propostas no localStorage
        const processos = JSON.parse(localStorage.getItem('processos_licitatorios') || '[]');
@@ -3189,9 +3192,7 @@
            console.log('Correções aplicadas com sucesso!');
        }
 
-       // Aplicar correções ao carregar
-       aplicarCorrecoesModuloComprador();
-
+   
        
    </script>
    
