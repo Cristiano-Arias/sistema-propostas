@@ -28,6 +28,7 @@ class AzureIAPropostas {
             console.log('Azure IA configurado e ativo');
         } else {
             console.log('Azure IA não configurado - usando modo simulado');
+            console.log('Use AzureIAPropostas.configurarAzure() para ativar');
             this.fallbackMode = true;
         }
     }
