@@ -1939,46 +1939,15 @@
                 const propostasFornecedor = SistemaLocal.carregar('propostas_fornecedores', []);
                 const propostasProcesso = propostasFornecedor.filter(p => p.processoId === processo.id);
                 
-                // CORREÇÃO: Filtrar propostas do processo e remover duplicatas corretamente
-                const propostasProcesso = propostasFornecedor.filter(p => p.processoId === processo.id);
-                
-                // Criar um Map para garantir apenas uma proposta por fornecedor
-                // Usar a proposta mais recente se houver duplicatas
-                const propostasPorFornecedor = new Map();
-                
-                propostasProcesso.forEach(proposta => {
-                    // Usar CNPJ como chave única para identificar fornecedor
-                    const chaveFornecedor = proposta.fornecedorCNPJ;
-                    
-                    // Se já existe uma proposta deste fornecedor
-                    if (propostasPorFornecedor.has(chaveFornecedor)) {
-                        const propostaExistente = propostasPorFornecedor.get(chaveFornecedor);
-                        
-                        // Comparar datas para manter a mais recente
-                        const dataExistente = new Date(propostaExistente.dataEnvio || propostaExistente.dataCriacao);
-                        const dataAtual = new Date(proposta.dataEnvio || proposta.dataCriacao);
-                        
-                        // Se a proposta atual for mais recente, substituir
-                        if (dataAtual > dataExistente) {
-                            propostasPorFornecedor.set(chaveFornecedor, proposta);
-                        }
-                        // Se as datas forem iguais, priorizar proposta ENVIADA sobre RASCUNHO
-                        else if (dataAtual.getTime() === dataExistente.getTime()) {
-                            if (proposta.status === 'ENVIADA' && propostaExistente.status === 'RASCUNHO') {
-                                propostasPorFornecedor.set(chaveFornecedor, proposta);
-                            }
-                        }
-                    } else {
-                        // Primeira proposta deste fornecedor
-                        propostasPorFornecedor.set(chaveFornecedor, proposta);
+                // Remover duplicatas por CNPJ
+                const cnpjsVistos = new Set();
+                const propostasSemDuplicatas = propostasProcesso.filter(proposta => {
+                    if (cnpjsVistos.has(proposta.fornecedorCNPJ)) {
+                        return false;
                     }
+                    cnpjsVistos.add(proposta.fornecedorCNPJ);
+                    return true;
                 });
-                
-                // Converter Map para Array, mantendo apenas propostas únicas
-                const propostasSemDuplicatas = Array.from(propostasPorFornecedor.values());
-                
-                // Filtrar apenas propostas ENVIADAS para exibição
-                const propostasEnviadas = propostasSemDuplicatas.filter(p => p.status === 'ENVIADA');
                 
                 const statusColor = processo.status === 'ATIVO' ? '#28a745' : '#6c757d';
                 const statusIcon = processo.status === 'ATIVO' ? 'fa-check-circle' : 'fa-pause-circle';
