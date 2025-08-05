@@ -1939,15 +1939,28 @@
                 const propostasFornecedor = SistemaLocal.carregar('propostas_fornecedores', []);
                 const propostasProcesso = propostasFornecedor.filter(p => p.processoId === processo.id);
                 
-                // Remover duplicatas por CNPJ
-                const cnpjsVistos = new Set();
-                const propostasSemDuplicatas = propostasProcesso.filter(proposta => {
-                    if (cnpjsVistos.has(proposta.fornecedorCNPJ)) {
-                        return false;
-                    }
-                    cnpjsVistos.add(proposta.fornecedorCNPJ);
-                    return true;
-                });
+                // Filtra propostas para exibir apenas a mais relevante por fornecedor,
+                // priorizando a enviada ('ENVIADA') sobre o rascunho ('RASCUNHO').
+                const propostasUnicas = Array.from(
+                    propostasProcesso
+                        .reduce((map, proposta) => {
+                            const cnpj = proposta.fornecedorCNPJ;
+                            const propostaExistente = map.get(cnpj);
+                
+                            // Regra: A proposta nova substitui a antiga se:
+                            // 1. Ainda não vimos este fornecedor.
+                            // 2. A nova é 'ENVIADA' e a antiga não era.
+                            // 3. Ambas têm o mesmo status, mas a nova é mais recente.
+                            if (!propostaExistente ||
+                                (proposta.status === 'ENVIADA' && propostaExistente.status !== 'ENVIADA') ||
+                                (proposta.status === propostaExistente.status && new Date(proposta.dataEnvio || proposta.dataCriacao) > new Date(propostaExistente.dataEnvio || propostaExistente.dataCriacao))
+                            ) {
+                                map.set(cnpj, proposta);
+                            }
+                            return map;
+                        }, new Map())
+                        .values()
+                );
                 
                 const statusColor = processo.status === 'ATIVO' ? '#28a745' : '#6c757d';
                 const statusIcon = processo.status === 'ATIVO' ? 'fa-check-circle' : 'fa-pause-circle';
@@ -1972,12 +1985,12 @@
                             <strong>Valor Estimado:</strong> R$ ${parseFloat(processo.trVinculado?.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                         </div>
                         
-                        ${propostasProcesso.length > 0 ? `
+                        ${propostasUnicas.length > 0 ? `
                             <div style="margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
                                 <h5 style="color: #333; margin-bottom: 10px;">
-                                    <i class="fas fa-envelope"></i> Propostas Recebidas (${propostasProcesso.length})
+                                    <i class="fas fa-envelope"></i> Propostas Recebidas (${propostasUnicas.length})
                                 </h5>
-                                ${propostasProcesso.map(proposta => `
+                                ${propostasUnicas.map(proposta => `
                                     <div style="background: white; padding: 10px; margin-bottom: 8px; border-radius: 4px; border-left: 3px solid #11998e;">
                                         <strong>${proposta.fornecedorRazaoSocial}</strong><br>
                                         <small>
