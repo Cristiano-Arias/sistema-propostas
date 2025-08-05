@@ -3039,48 +3039,30 @@
         }
 
         // Função para inicializar Azure IA
-        function inicializarAzureIA() {
-            // Configurar Azure AI antigo primeiro (sem barra final)
-            if (window.AzureAI) {
-                AzureAI.saveConfig(
-                    'https://portalcompras.openai.azure.com',  // SEM BARRA FINAL
-                    '6Z0VYdgofYJMu32yWoaJfQtuocrVPKFi0sZhnBge7hluMgJXDVvuJQQJ99BHACYeBjFXJ3w3AAABACOGvaka',
-                    'gpt-4'
-                );
-                console.log('✅ AzureAI configurado');
-            }
-            
-            // Aguardar um momento para garantir que AzureAI foi inicializado
-            setTimeout(() => {
-                if (window.AzureIAPropostas) {
-                    const ia = new window.AzureIAPropostas();
-                    console.log('📊 Status Azure IA Propostas:', ia.obterEstatisticas());
+                function inicializarAzureIA() {
+                    // Configurar Azure AI antigo primeiro (sem barra final)
+                    if (window.AzureAI) {
+                        AzureAI.saveConfig(
+                            'https://portalcompras.openai.azure.com',  // SEM BARRA FINAL
+                            '6Z0VYdgofYJMu32yWoaJfQtuocrVPKFi0sZhnBge7hluMgJXDVvuJQQJ99BHACYeBjFXJ3w3AAABACOGvaka',
+                            'gpt-4'
+                        );
+                        console.log('✅ AzureAI configurado');
+                    }
                     
-                    // Testar conexão
-                    ia.testarConexao().then(resultado => {
-                        console.log('🔌 Teste de conexão:', resultado);
-                    });
+                    // Aguardar um momento para garantir que AzureAI foi inicializado
+                    setTimeout(() => {
+                        if (window.AzureIAPropostas) {
+                            const ia = new window.AzureIAPropostas();
+                            console.log('📊 Status Azure IA Propostas:', ia.obterEstatisticas());
+                            
+                            // Testar conexão
+                            ia.testarConexao().then(resultado => {
+                                console.log('🔌 Teste de conexão:', resultado);
+                            });
+                        }
+                    }, 100);
                 }
-            }, 100);
-        }
-            
-            // Configurar novo Azure IA Propostas
-            if (window.AzureIAPropostas) {
-                const ia = new window.AzureIAPropostas();
-                const configurado = ia.configurarAzure(
-                    'https://portalcompras.openai.azure.com/',
-                    '6Z0VYdgofYJMu32yWoaJfQtuocrVPKFi0sZhnBge7hluMgJXDVvuJQQJ99BHACYeBjFXJ3w3AAABACOGvaka'
-                );
-                
-                if (configurado) {
-                    console.log('✅ Azure IA Propostas configurado com sucesso!');
-                    
-                    // Testar conexão
-                    ia.testarConexao().then(resultado => {
-                        console.log('🔌 Status da conexão:', resultado);
-                    });
-                }
-            }
        
         // Aplicar correções ao carregar
          aplicarCorrecoesModuloComprador();
