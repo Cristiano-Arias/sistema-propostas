@@ -9,7 +9,40 @@ class AzureIAPropostas {
         this.azureKey = null;
         this.isConfigured = false;
         this.fallbackMode = true; // Modo simulado quando Azure não configurado
+        
+        // Tentar configurar automaticamente
+        this.configuracaoAutomatica();
         this.init();
+    }
+    
+    configuracaoAutomatica() {
+        // Tentar usar configuração do AzureAI se disponível
+        if (window.AzureAI && window.AzureAI.config) {
+            const config = window.AzureAI.config;
+            if (config.endpoint && config.apiKey) {
+                this.azureEndpoint = config.endpoint;
+                this.azureKey = config.apiKey;
+                this.isConfigured = true;
+                this.fallbackMode = false;
+                console.log('✅ Azure IA configurado automaticamente via AzureAI');
+                return true;
+            }
+        }
+        
+        // Configuração direta como fallback
+        const endpoint = 'https://portalcompras.openai.azure.com';
+        const key = '6Z0VYdgofYJMu32yWoaJfQtuocrVPKFi0sZhnBge7hluMgJXDVvuJQQJ99BHACYeBjFXJ3w3AAABACOGvaka';
+        
+        if (endpoint && key) {
+            this.azureEndpoint = endpoint;
+            this.azureKey = key;
+            this.isConfigured = true;
+            this.fallbackMode = false;
+            console.log('✅ Azure IA configurado automaticamente com credenciais diretas');
+            return true;
+        }
+        
+        return false;
     }
 
     init() {
@@ -49,7 +82,9 @@ class AzureIAPropostas {
     async analisarPropostasAzure(proposals, tabType) {
         const analysisPrompt = this.buildAnalysisPrompt(proposals, tabType);
         
-        const response = await fetch(`${this.azureEndpoint}/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview`, {
+        // Garantir que não há barra dupla
+        const endpoint = this.azureEndpoint.replace(/\/$/, ''); // Remove barra final se existir
+        const response = await fetch(`${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -396,23 +431,35 @@ Responda em formato JSON:
 
     // Método para configurar Azure em runtime
     configurarAzure(endpoint, key) {
-        this.azureEndpoint = endpoint;
+        // Validar e limpar endpoint
+        if (!endpoint || !key) {
+            console.error('❌ Endpoint e key são obrigatórios');
+            return false;
+        }
+        
+        // Remover barra final do endpoint
+        this.azureEndpoint = endpoint.replace(/\/$/, '');
         this.azureKey = key;
         this.isConfigured = true;
         this.fallbackMode = false;
         
-        console.log('Azure IA configurado com sucesso');
+        console.log('✅ Azure IA configurado manualmente com sucesso');
+        console.log('📍 Endpoint:', this.azureEndpoint);
         return true;
     }
-
+    
     // Método para testar conexão Azure
     async testarConexao() {
         if (this.fallbackMode) {
             return { status: 'simulado', message: 'Modo simulado ativo' };
         }
 
-        try {
-            const response = await fetch(`${this.azureEndpoint}/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview`, {
+    try {
+            const endpoint = this.azureEndpoint.replace(/\/$/, '');
+            const url = `${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15`;
+            console.log('🔗 Testando URL:', url);
+            
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
