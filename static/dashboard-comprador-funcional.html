@@ -2039,34 +2039,7 @@
             if (propostasComPontuacao.length > 0) {
                 const melhorProposta = propostasComPontuacao[0];
                 html += `
-                    <div style="background: #d4edda; padding: 20px; border-radius: 10px; margin-top: 20px;">
-                        <h4 style="color: #155724;">Recomendação</h4>
-                        <p style="color: #155724;">
-                            Com base na análise técnica e comercial, recomenda-se a contratação de 
-                            <strong>${melhorProposta.fornecedorRazaoSocial}</strong> com pontuação final de 
-                            <strong>${melhorProposta.pontuacaoFinal.toFixed(2)} pontos</strong>.
-                        </p>
-                        <button class="btn btn-success" onclick="gerarRelatorioCompleto('${melhorProposta.processoId}')">
-                            <i class="fas fa-file-pdf"></i> Gerar Relatório Completo
-                        </button>
-                    </div>
-                `;
-            }
-
-            html += '</div></div>';
-            return html;
-        }
-
-            // Mostrar aba selecionada
-            const secao = document.getElementById(aba);
-            if (secao) secao.classList.add('active');
-            
-            // Ativar tab correspondente
-            if (event && event.target) {
-                event.target.classList.add('active');
-            }
-        }
-
+        
         // Calcular pontuação técnica
         function calcularPontuacaoTecnica(proposta) {
             let pontuacao = 0;
