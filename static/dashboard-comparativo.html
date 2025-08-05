@@ -2312,8 +2312,16 @@ class ComparativoPropostasIntegrado {
             if (typeof window.AzureIAPropostas !== 'undefined') {
                 console.log('Azure IA disponível - usando análise avançada');
                 
-                // Criar instância do Azure IA
-                const azureIA = new window.AzureIAPropostas();
+                // Usar instância global ou criar nova
+                const azureIA = window.azureIAGlobal || new window.AzureIAPropostas();
+                
+                // Garantir que está configurado
+                if (azureIA.fallbackMode) {
+                    azureIA.configurarAzure(
+                        'https://portalcompras.openai.azure.com/',
+                        '6Z0VYdgofYJMu32yWoaJfQtuocrVPKFi0sZhnBge7hluMgJXDVvuJQQJ99BHACYeBjFXJ3w3AAABACOGvaka'
+                    );
+                }
                 
                 // Executar análise
                 const insights = await azureIA.analisarPropostas(this.proposals, tabType);
