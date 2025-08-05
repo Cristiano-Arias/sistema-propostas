@@ -3153,7 +3153,24 @@
        window.open('dashboard-comparativo.html', '_blank');
    }
    </script>
-   <!-- Integração com Azure AI -->
+   
+   <!-- Carregamento dos scripts de IA na ordem correta -->
+   <script src="azure-ia-propostas.js"></script>
    <script src="azure-config.js"></script>
+   
+   <!-- Script de verificação -->
+   <script>
+       // Verificar carregamento após 1 segundo
+       setTimeout(() => {
+           if (typeof window.AzureIAPropostas !== 'undefined') {
+               console.log('✅ Sistema de IA carregado com sucesso!');
+               // Testar
+               const ia = new AzureIAPropostas();
+               console.log('📊 Modo:', ia.obterEstatisticas().modo);
+           } else {
+               console.error('❌ Sistema de IA não foi carregado');
+           }
+       }, 1000);
+   </script>
 </body>
 </html>
