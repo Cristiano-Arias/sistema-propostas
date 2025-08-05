@@ -50,7 +50,13 @@ class AzureIAPropostas {
     }
 
     checkAzureConfiguration() {
-        // Verificar se Azure está configurado
+        // Se já foi configurado automaticamente, não fazer nada
+        if (this.isConfigured) {
+            console.log('Azure IA já está configurado e ativo');
+            return;
+        }
+        
+        // Verificar se Azure está configurado via window.azureConfig
         const azureConfig = window.azureConfig || {};
         
         if (azureConfig.endpoint && azureConfig.key) {
@@ -58,7 +64,7 @@ class AzureIAPropostas {
             this.azureKey = azureConfig.key;
             this.isConfigured = true;
             this.fallbackMode = false;
-            console.log('Azure IA configurado e ativo');
+            console.log('Azure IA configurado via azureConfig');
         } else {
             console.log('Azure IA não configurado - usando modo simulado');
             console.log('Use AzureIAPropostas.configurarAzure() para ativar');
