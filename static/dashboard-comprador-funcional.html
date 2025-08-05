@@ -2016,30 +2016,6 @@
             container.innerHTML = html;
         }
 
-            // Ordenar por pontuação final
-            propostasComPontuacao.sort((a, b) => b.pontuacaoFinal - a.pontuacaoFinal);
-
-            html += '<div class="proposta-grid">';
-            propostasComPontuacao.forEach((proposta, index) => {
-                html += `
-                    <div class="proposta-info">
-                        <label>${index + 1}º Lugar</label>
-                        <div class="value">${proposta.fornecedorRazaoSocial}</div>
-                        <small>
-                            Técnica: ${proposta.pontuacaoTecnica.toFixed(2)} pts<br>
-                            Comercial: ${proposta.pontuacaoComercial.toFixed(2)} pts<br>
-                            <strong>Final: ${proposta.pontuacaoFinal.toFixed(2)} pts</strong>
-                        </small>
-                    </div>
-                `;
-            });
-            html += '</div>';
-
-            // Recomendação
-            if (propostasComPontuacao.length > 0) {
-                const melhorProposta = propostasComPontuacao[0];
-                html += `
-        
         // Calcular pontuação técnica
         function calcularPontuacaoTecnica(proposta) {
             let pontuacao = 0;
