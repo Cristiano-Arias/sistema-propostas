@@ -90,7 +90,7 @@ class AzureIAPropostas {
         
         // Garantir que não há barra dupla
         const endpoint = this.azureEndpoint.replace(/\/$/, ''); // Remove barra final se existir
-        const response = await fetch(`${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15`, {
+        const response = await fetch(`${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2024-08-01-preview`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -462,7 +462,7 @@ Responda em formato JSON:
 
     try {
             const endpoint = this.azureEndpoint.replace(/\/$/, '');
-            const url = `${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15`;
+            const url = `${endpoint}/openai/deployments/gpt-4/chat/completions?api-version=2024-08-01-preview`;
             console.log('🔗 Testando URL:', url);
             
             const response = await fetch(url, {
