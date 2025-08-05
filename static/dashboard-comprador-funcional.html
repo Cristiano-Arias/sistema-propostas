@@ -842,9 +842,6 @@
             <button class="nav-item" id="btn-criar-processo">
                 <i class="fas fa-plus-circle"></i> Criar Processo
             </button>
-            <button class="nav-item" id="btn-analise">
-                <i class="fas fa-chart-bar"></i> Análise Comparativa
-            </button>
             <button class="nav-item" onclick="abrirComparativo()">
                 <i class="fas fa-balance-scale"></i> Comparativo de Propostas
             </button>
@@ -985,17 +982,6 @@
             </div>
         </div>
 
-        <!-- Análise Comparativa -->
-        <div id="analise" class="content-section">
-            <div class="section-title">
-                <i class="fas fa-chart-bar"></i> Análise Comparativa
-            </div>
-
-            <div id="analise-content">
-                <!-- Conteúdo será carregado dinamicamente -->
-            </div>
-        </div>
-
         <!-- Relatórios -->
         <div id="relatorios" class="content-section">
             <div class="section-title">
@@ -1109,7 +1095,6 @@
                 'aprovacao-tr': 'btn-aprovacao-tr',
                 'criar-processo': 'btn-criar-processo',
                 'processos': 'btn-processos',
-                'analise': 'btn-analise',
                 'relatorios': 'btn-relatorios'
             };
             
@@ -1138,8 +1123,6 @@
                 carregarTRsAprovados();
             } else if (pagina === 'processos') {
                 carregarProcessos();
-            } else if (pagina === 'analise') {
-                carregarAnaliseComparativa();
             }
         }
 
@@ -2033,204 +2016,7 @@
             container.innerHTML = html;
         }
 
-        // Nova função para carregar análise comparativa
-        function carregarAnaliseComparativa() {
-            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            const propostasFornecedor = SistemaLocal.carregar('propostas_fornecedores', []);
-            
-            const container = document.getElementById('analise-content');
-            
-            // Se foi selecionado um processo específico
-            const processoSelecionadoId = sessionStorage.getItem('processoAnalise');
-            
-            if (processoSelecionadoId) {
-                const processoEspecifico = processos.find(p => p.id === processoSelecionadoId);
-                const propostasDoProcesso = propostasFornecedor.filter(p => p.processoId === processoSelecionadoId);
-                
-                if (propostasDoProcesso.length === 0) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: #666;">
-                            <i class="fas fa-info-circle" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                            <h3>Nenhuma proposta recebida para este processo</h3>
-                            <p>Aguarde os fornecedores enviarem suas propostas.</p>
-                            <button class="btn btn-primary" onclick="mostrarPagina('processos')">
-                                <i class="fas fa-arrow-left"></i> Voltar aos Processos
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                let html = `<h3 style="margin-bottom: 20px;">Análise do Processo: ${processoEspecifico.numeroProcesso}</h3>`;
-                html += '<div class="proposta-tabs">';
-                html += '<button class="proposta-tab active" onclick="mostrarAba(\'tecnica\')">Análise Técnica</button>';
-                html += '<button class="proposta-tab" onclick="mostrarAba(\'comercial\')">Análise Comercial</button>';
-                html += '<button class="proposta-tab" onclick="mostrarAba(\'geral\')">Análise Geral</button>';
-                html += '</div>';
-
-                html += '<div id="tecnica" class="proposta-section active">';
-                html += renderizarAnaliseTecnica([processoEspecifico], propostasDoProcesso);
-                html += '</div>';
-
-                html += '<div id="comercial" class="proposta-section">';
-                html += renderizarAnaliseComercial([processoEspecifico], propostasDoProcesso);
-                html += '</div>';
-
-                html += '<div id="geral" class="proposta-section">';
-                html += renderizarAnaliseGeral([processoEspecifico], propostasDoProcesso);
-                html += '</div>';
-
-                container.innerHTML = html;
-                
-                // Limpar seleção
-                sessionStorage.removeItem('processoAnalise');
-                
-            } else {
-                // Análise geral de todos os processos
-                if (processos.length === 0) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: #666;">
-                            <i class="fas fa-info-circle" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                            <h3>Nenhum processo disponível</h3>
-                            <p>Crie um processo para realizar análises comparativas.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                let html = '<div class="proposta-tabs">';
-                html += '<button class="proposta-tab active" onclick="mostrarAba(\'tecnica\')">Análise Técnica</button>';
-                html += '<button class="proposta-tab" onclick="mostrarAba(\'comercial\')">Análise Comercial</button>';
-                html += '<button class="proposta-tab" onclick="mostrarAba(\'geral\')">Análise Geral</button>';
-                html += '</div>';
-
-                html += '<div id="tecnica" class="proposta-section active">';
-                html += renderizarAnaliseTecnica(processos, propostasFornecedor);
-                html += '</div>';
-
-                html += '<div id="comercial" class="proposta-section">';
-                html += renderizarAnaliseComercial(processos, propostasFornecedor);
-                html += '</div>';
-
-                html += '<div id="geral" class="proposta-section">';
-                html += renderizarAnaliseGeral(processos, propostasFornecedor);
-                html += '</div>';
-
-                container.innerHTML = html;
-            }
-        }
-
-        // Renderizar análise técnica COMPLETA
-        function renderizarAnaliseTecnica(processos, propostas) {
-            if (propostas.length === 0) {
-                return '<p style="text-align: center; color: #666;">Nenhuma proposta técnica recebida.</p>';
-            }
-
-            let html = '<div class="comparison-section">';
-            html += '<h3>Comparação de Propostas Técnicas</h3>';
-            html += '<table class="comparison-table">';
-            html += '<thead><tr>';
-            html += '<th>Fornecedor</th>';
-            html += '<th>Experiência</th>';
-            html += '<th>Equipe Técnica</th>';
-            html += '<th>Metodologia</th>';
-            html += '<th>Prazo de Execução</th>';
-            html += '<th>Pontuação Total</th>';
-            html += '<th>Ações</th>';
-            html += '</tr></thead><tbody>';
-
-            propostas.forEach(proposta => {
-                const pontuacaoTecnica = calcularPontuacaoTecnica(proposta);
-                html += `<tr>
-                    <td><strong>${proposta.fornecedorRazaoSocial}</strong><br><small>${proposta.fornecedorCNPJ}</small></td>
-                    <td>${proposta.experiencia || 'N/A'}</td>
-                    <td>${proposta.equipeTecnica || 'N/A'}</td>
-                    <td>${proposta.descricao_tecnica || 'N/A'}</td>
-                    <td>${proposta.prazoExecucao || 'N/A'}</td>
-                    <td class="${pontuacaoTecnica >= 80 ? 'best-value' : ''}">${pontuacaoTecnica} pontos</td>
-                    <td>
-                        <button class="btn btn-info" onclick="enviarPropostaTecnicaRequisitante('${proposta.id}')">
-                            <i class="fas fa-share"></i> Enviar ao Requisitante
-                        </button>
-                    </td>
-                </tr>`;
-            });
-
-            html += '</tbody></table></div>';
-            return html;
-        }
-
-        // Renderizar análise comercial COMPLETA
-        function renderizarAnaliseComercial(processos, propostas) {
-            if (propostas.length === 0) {
-                return '<p style="text-align: center; color: #666;">Nenhuma proposta comercial recebida.</p>';
-            }
-
-            let html = '<div class="comparison-section">';
-            html += '<h3>Comparação de Propostas Comerciais</h3>';
-            html += '<table class="comparison-table">';
-            html += '<thead><tr>';
-            html += '<th>Fornecedor</th>';
-            html += '<th>CNPJ</th>';
-            html += '<th>Valor Total</th>';
-            html += '<th>Prazo de Execução</th>';
-            html += '<th>Condições de Pagamento</th>';
-            html += '<th>Validade da Proposta</th>';
-            html += '<th>Garantia</th>';
-            html += '<th>Economia</th>';
-            html += '</tr></thead><tbody>';
-
-            // Encontrar menor valor
-            const valores = propostas.map(p => parseFloat(p.valor || 0)).filter(v => v > 0);
-            const menorValor = valores.length > 0 ? Math.min(...valores) : 0;
-
-            propostas.forEach(proposta => {
-                const valorTotal = parseFloat(proposta.valor || 0);
-                const economia = valorTotal - menorValor;
-                const percentualEconomia = menorValor > 0 ? ((economia / menorValor) * 100).toFixed(2) : 0;
-                
-                html += `<tr>
-                    <td><strong>${proposta.fornecedorRazaoSocial}</strong></td>
-                    <td>${proposta.fornecedorCNPJ}</td>
-                    <td class="${valorTotal === menorValor && valorTotal > 0 ? 'best-value' : ''}">
-                        R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                    </td>
-                    <td>${proposta.prazoExecucao || 'N/A'}</td>
-                    <td>${proposta.condicoesPagamento || '30 dias'}</td>
-                    <td>${proposta.validadeProposta || '60 dias'}</td>
-                    <td>${proposta.garantia || '12 meses'}</td>
-                    <td>${economia > 0 ? `+${percentualEconomia}%` : 'Menor Valor'}</td>
-                </tr>`;
-            });
-
-            html += '</tbody></table></div>';
-            return html;
-        }
-
-        // Renderizar análise geral
-        function renderizarAnaliseGeral(processos, propostas) {
-            if (propostas.length === 0) {
-                return '<p style="text-align: center; color: #666;">Nenhuma proposta recebida.</p>';
-            }
-
-            let html = '<div class="comparison-section">';
-            html += '<h3>Análise Geral - Técnica + Comercial</h3>';
-            html += '<div class="proposta-resumo">';
-            html += '<h4>Resumo Executivo</h4>';
-            
-            // Calcular pontuações
-            const propostasComPontuacao = propostas.map(proposta => {
-                const pontuacaoTecnica = calcularPontuacaoTecnica(proposta);
-                const pontuacaoComercial = calcularPontuacaoComercial(proposta, propostas);
-                const pontuacaoFinal = (pontuacaoTecnica * 0.6) + (pontuacaoComercial * 0.4); // 60% técnica, 40% comercial
-                
-                return {
-                    ...proposta,
-                    pontuacaoTecnica,
-                    pontuacaoComercial,
-                    pontuacaoFinal
-                };
-            });
+        });
 
             // Ordenar por pontuação final
             propostasComPontuacao.sort((a, b) => b.pontuacaoFinal - a.pontuacaoFinal);
@@ -2272,16 +2058,6 @@
             html += '</div></div>';
             return html;
         }
-
-        // Função para mostrar aba
-        function mostrarAba(aba) {
-            // Esconder todas as abas
-            document.querySelectorAll('.proposta-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.querySelectorAll('.proposta-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
 
             // Mostrar aba selecionada
             const secao = document.getElementById(aba);
@@ -3359,7 +3135,6 @@
             document.getElementById('btn-aprovacao-tr').addEventListener('click', () => mostrarPagina('aprovacao-tr'));
             document.getElementById('btn-criar-processo').addEventListener('click', () => mostrarPagina('criar-processo'));
            document.getElementById('btn-processos').addEventListener('click', () => mostrarPagina('processos'));
-           document.getElementById('btn-analise').addEventListener('click', () => mostrarPagina('analise'));
            document.getElementById('btn-relatorios').addEventListener('click', () => mostrarPagina('relatorios'));
            document.getElementById('btn-voltar').addEventListener('click', voltarSistema);
            document.getElementById('btn-logout').addEventListener('click', logout);
