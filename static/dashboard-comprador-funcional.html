@@ -2909,6 +2909,9 @@
 
         // Executar análise AI
         async function executarAnaliseIA(processoId) {
+            // Inicializar Azure IA
+            const azureIA = new AzureIAPropostas();
+            
             // Buscar processo
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
             const processo = processos.find(p => p.id === processoId);
@@ -2927,37 +2930,18 @@
                 return;
             }
             
-            // Formatar propostas para análise
-            const propostasFormatadas = propostasProcesso.map(p => ({
-                id: p.id,
-                fornecedor: {
-                    razaoSocial: p.fornecedorRazaoSocial,
-                    cnpj: p.fornecedorCNPJ
-                },
-                propostaComercial: {
-                    valorTotal: p.valor
-                },
-                propostaTecnica: {
-                    prazoExecucao: p.prazoExecucao,
-                    experiencia: p.experiencia || 'Não informado',
-                    metodologia: p.descricao_tecnica || 'Não informado'
-                },
-                valor: p.valor,
-                prazoExecucao: p.prazoExecucao
-            }));
-            
             // Mostrar loading
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
             modal.innerHTML = `
                 <div class="modal-content" style="max-width: 900px;">
                     <div class="modal-header">
-                        <h3><i class="fas fa-brain"></i> Análise Inteligente com Azure OpenAI</h3>
+                        <h3><i class="fas fa-brain"></i> Análise Inteligente com IA</h3>
                         <button class="btn-fechar-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                     </div>
                     <div class="modal-body" style="text-align: center; padding: 40px;">
                         <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #007bff; margin-bottom: 20px;"></i>
-                        <p>Analisando ${propostasProcesso.length} propostas com GPT-4...</p>
+                        <p>Analisando ${propostasProcesso.length} propostas...</p>
                         <small style="color: #666;">Isso pode levar alguns segundos</small>
                     </div>
                 </div>
@@ -2965,66 +2949,60 @@
             document.body.appendChild(modal);
             
             try {
-                // Executar análise com Azure AI
-                const resultado = await AzureAI.analisarPropostas(propostasFormatadas, processo);
+                // Formatar propostas
+                const propostasFormatadas = propostasProcesso.map(p => ({
+                    dadosCadastrais: {
+                        razaoSocial: p.fornecedorRazaoSocial,
+                        cnpj: p.fornecedorCNPJ
+                    },
+                    propostaTecnica: {
+                        prazoExecucao: p.prazoExecucao,
+                        metodologia: p.descricao_tecnica || 'Não informado'
+                    },
+                    resumoFinanceiro: {
+                        valorTotal: parseFloat(p.valor || 0),
+                        bdiPercentual: 25 // Valor padrão se não informado
+                    }
+                }));
+                
+                // Executar análise técnica e comercial
+                const analiseTecnica = await azureIA.analisarPropostas(propostasFormatadas, 'tecnica');
+                const analiseComercial = await azureIA.analisarPropostas(propostasFormatadas, 'comercial');
+                
+                // Obter estatísticas
+                const stats = azureIA.obterEstatisticas();
                 
                 // Mostrar resultados
                 modal.querySelector('.modal-body').innerHTML = `
                     <div style="text-align: left; max-height: 600px; overflow-y: auto;">
+                        <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <small><i class="fas fa-info-circle"></i> Modo: ${stats.modo}</small>
+                        </div>
+                        
                         <h4 style="color: #333; margin-bottom: 20px;">
                             <i class="fas fa-check-circle" style="color: #28a745;"></i> 
                             Análise Concluída
                         </h4>
                         
-                        ${resultado.analiseComercial ? `
-                            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h5><i class="fas fa-dollar-sign"></i> Análise Comercial</h5>
-                                <p>${resultado.analiseComercial}</p>
-                            </div>
-                        ` : ''}
+                        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <h5><i class="fas fa-dollar-sign"></i> Análise Comercial</h5>
+                            <p><strong>Destaque:</strong> ${analiseComercial.highlight}</p>
+                            <p><strong>Atenção:</strong> ${analiseComercial.attention}</p>
+                            <p><strong>Mercado:</strong> ${analiseComercial.market}</p>
+                        </div>
                         
-                        ${resultado.analiseTecnica ? `
-                            <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h5><i class="fas fa-cogs"></i> Análise Técnica</h5>
-                                <p>${resultado.analiseTecnica}</p>
-                            </div>
-                        ` : ''}
-                        
-                        ${resultado.riscos && Object.keys(resultado.riscos).length > 0 ? `
-                            <div style="background: #ffebee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h5><i class="fas fa-exclamation-triangle"></i> Riscos Identificados</h5>
-                                ${Object.entries(resultado.riscos).map(([key, risco]) => `
-                                    <p style="margin: 10px 0;">• ${risco}</p>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                        
-                        ${resultado.recomendacao ? `
-                            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h5><i class="fas fa-trophy"></i> Recomendação</h5>
-                                <p><strong>${resultado.recomendacao}</strong></p>
-                            </div>
-                        ` : ''}
-                        
-                        ${resultado.propostas && resultado.propostas.length > 0 ? `
-                            <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h5><i class="fas fa-list-ol"></i> Ranking das Propostas</h5>
-                                ${resultado.propostas.map((p, idx) => `
-                                    <div style="padding: 10px; margin: 5px 0; background: white; border-radius: 5px; 
-                                                ${p.recomendado ? 'border: 2px solid #4caf50;' : 'border: 1px solid #ddd;'}">
-                                        <strong>${idx + 1}º - ${p.fornecedor}</strong><br>
-                                        <small>Pontuação: ${p.pontuacao} pontos</small>
-                                        ${p.riscos && p.riscos.length > 0 ? `<br><small style="color: #d32f2f;">⚠️ ${p.riscos.join(', ')}</small>` : ''}
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
+                        <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <h5><i class="fas fa-cogs"></i> Análise Técnica</h5>
+                            <p><strong>Destaque:</strong> ${analiseTecnica.highlight}</p>
+                            <p><strong>Atenção:</strong> ${analiseTecnica.attention}</p>
+                            <p><strong>Mercado:</strong> ${analiseTecnica.market}</p>
+                        </div>
                         
                         <div style="text-align: center; margin-top: 30px;">
                             <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">
                                 Fechar Análise
                             </button>
-                            <button class="btn btn-success" onclick="salvarAnaliseIA('${processoId}', ${JSON.stringify(resultado).replace(/"/g, '&quot;')})">
+                            <button class="btn btn-success" onclick="salvarAnaliseIA('${processoId}', ${JSON.stringify({tecnica: analiseTecnica, comercial: analiseComercial}).replace(/"/g, '&quot;')})">
                                 <i class="fas fa-save"></i> Salvar Análise
                             </button>
                         </div>
@@ -3037,7 +3015,7 @@
                     <div style="text-align: center;">
                         <i class="fas fa-exclamation-circle" style="font-size: 48px; color: #dc3545; margin-bottom: 20px;"></i>
                         <h4>Erro na Análise</h4>
-                        <p style="color: #666;">${error.message}</p>
+                        <p style="color: #666;">Usando modo simulado - ${error.message}</p>
                         <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()" style="margin-top: 20px;">
                             Fechar
                         </button>
