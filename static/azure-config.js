@@ -4,8 +4,8 @@ const AzureAI = {
     config: {
         endpoint: 'https://portalcompras.openai.azure.com',
         apiKey: '6Z0VYdgofYJMu32yWoaJfQtuocrVPKFi0sZhnBge7hluMgJXDVvuJQQJ99BHACYeBjFXJ3w3AAABACOGvaka',
-        deployment: 'gpt-4',
-        apiVersion: '2023-05-15'
+        deployment: 'gpt-35-turbo',
+        apiVersion: '2024-08-01-preview'
     },
 
     // Inicializar configuração do localStorage
@@ -256,4 +256,5 @@ Formato da resposta: JSON estruturado.`;
         return analise;
     }
 };
+
 
