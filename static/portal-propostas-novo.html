@@ -1885,11 +1885,15 @@ async function enviarProposta() {
         if (window.fornecedorLogado && window.dadosOrigemDashboard) {
             const propostasFornecedores = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
             
-            // Remover rascunhos anteriores
-            const propostasFiltradas = propostasFornecedores.filter(p => 
-                !(p.processoId === window.dadosOrigemDashboard.processo.processoId && 
-                  p.fornecedorId === window.fornecedorLogado.id)
-            );
+            // Remover TODAS as propostas anteriores do mesmo fornecedor para o mesmo processo
+            // Isso inclui rascunhos E propostas enviadas anteriormente
+            const propostasFiltradas = propostasFornecedores.filter(p => {
+                // Remove se for do mesmo processo E mesmo fornecedor
+                const mesmoProcesso = p.processoId === window.dadosOrigemDashboard.processo.processoId;
+                const mesmoFornecedor = p.fornecedorId === window.fornecedorLogado.id || 
+                                       p.fornecedorCNPJ === window.fornecedorLogado.cnpj;
+                return !(mesmoProcesso && mesmoFornecedor);
+            });
             
             // Adicionar proposta com processId correto
             propostaParaSalvar.processoId = window.dadosOrigemDashboard.processo.processoId;
@@ -1901,12 +1905,19 @@ async function enviarProposta() {
         
         // Salvar também em propostas_comparativo
         const propostasComparativo = JSON.parse(localStorage.getItem('propostas_comparativo') || '[]');
-        const propostasComparativoFiltradas = propostasComparativo.filter(p => 
-            !(p.numeroProcesso === propostaParaSalvar.numeroProcesso && 
-              p.fornecedorCNPJ === propostaParaSalvar.fornecedorCNPJ)
-        );
+        // Remover propostas anteriores do mesmo fornecedor para o mesmo processo
+        const propostasComparativoFiltradas = propostasComparativo.filter(p => {
+            const mesmoProcesso = p.numeroProcesso === propostaParaSalvar.numeroProcesso;
+            const mesmoFornecedor = p.fornecedorCNPJ === propostaParaSalvar.fornecedorCNPJ;
+            return !(mesmoProcesso && mesmoFornecedor);
+        });
         propostasComparativoFiltradas.push(propostaParaSalvar);
         localStorage.setItem('propostas_comparativo', JSON.stringify(propostasComparativoFiltradas));
+        
+        // CORREÇÃO 3: Limpar rascunhos após envio
+        const cnpjLimpo = propostaParaSalvar.fornecedorCNPJ.replace(/[^0-9]/g, '');
+        const chaveRascunho = 'rascunho_' + cnpjLimpo + '_' + propostaParaSalvar.numeroProcesso;
+        localStorage.removeItem(chaveRascunho);
         
         // Sucesso
         mostrarMensagem(`
@@ -2382,12 +2393,15 @@ if (typeof mostrarMensagem === 'undefined') {
                 if (window.fornecedorLogado && window.dadosOrigemDashboard) {
                     const propostas = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
                     
-                    // Procurar se já existe um rascunho
-                    const propostaIndex = propostas.findIndex(p => 
-                        p.numeroProcesso === numeroProcesso && 
-                        p.fornecedorCNPJ === cnpjFornecedor &&
-                        p.status === 'RASCUNHO'
-                    );
+                        // Remover TODOS os rascunhos anteriores do mesmo fornecedor para o mesmo processo
+                        const propostasFiltradas = propostas.filter(p => {
+                            const mesmoProcesso = p.processoId === window.dadosOrigemDashboard.processo.processoId;
+                            const mesmoFornecedor = p.fornecedorId === window.fornecedorLogado.id || 
+                                                   p.fornecedorCNPJ === window.fornecedorLogado.cnpj;
+                            const ehRascunho = p.status === 'RASCUNHO';
+                            // Remove apenas rascunhos do mesmo processo e fornecedor
+                            return !(mesmoProcesso && mesmoFornecedor && ehRascunho);
+                        });
                     
                     const propostaSistema = {
                         id: dadosRascunho.id || Date.now().toString(36) + Math.random().toString(36).substr(2),
@@ -2406,13 +2420,9 @@ if (typeof mostrarMensagem === 'undefined') {
                         dadosCompletos: dadosRascunho // Armazena todos os dados do portal
                     };
                     
-                    if (propostaIndex >= 0) {
-                        propostas[propostaIndex] = propostaSistema;
-                    } else {
-                        propostas.push(propostaSistema);
-                    }
+                    propostasFiltradas.push(propostaSistema);
                     
-                    localStorage.setItem('propostas_fornecedores', JSON.stringify(propostas));
+                    localStorage.setItem('propostas_fornecedores', JSON.stringify(propostasFiltradas));
                 }
                 mostrarMensagem('💾 Rascunho salvo com sucesso!', 'success');
             } catch (error) {
