@@ -335,7 +335,46 @@
             font-size: 14px;
         }
 
-        /* Responsividade */
+        /* Abas de navegação */
+        .abas-relatorio {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .aba-btn {
+            padding: 12px 24px;
+            border: none;
+            background: #e9ecef;
+            color: #495057;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .aba-btn:hover {
+            background: #dee2e6;
+        }
+
+        .aba-btn.ativa {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+        }
+
+        .conteudo-aba {
+            display: none;
+        }
+
+        .conteudo-aba.ativa {
+            display: block;
+        }
         @media (max-width: 768px) {
             .relatorio-container {
                 padding: 10px;
@@ -425,9 +464,43 @@
             </div>
         </div>
 
-        <!-- Conteúdo do Relatório será inserido aqui dinamicamente -->
+        <!-- Abas de Navegação -->
+        <div class="abas-relatorio">
+            <button class="aba-btn ativa" onclick="mudarAba('completa')">
+                <i class="fas fa-list"></i> Visão Completa
+            </button>
+            <button class="aba-btn" onclick="mudarAba('tecnica')">
+                <i class="fas fa-cogs"></i> Análise Técnica
+            </button>
+            <button class="aba-btn" onclick="mudarAba('comercial')">
+                <i class="fas fa-dollar-sign"></i> Análise Comercial
+            </button>
+            <button class="aba-btn" onclick="mudarAba('consolidada')">
+                <i class="fas fa-chart-bar"></i> Análise Consolidada
+            </button>
+        </div>
+
+        <!-- Conteúdo das Abas -->
         <div id="conteudo-relatorio">
-            <!-- As seções serão geradas via JavaScript -->
+            <!-- Aba Visão Completa -->
+            <div id="aba-completa" class="conteudo-aba ativa">
+                <!-- Conteúdo será gerado dinamicamente -->
+            </div>
+            
+            <!-- Aba Análise Técnica -->
+            <div id="aba-tecnica" class="conteudo-aba">
+                <!-- Conteúdo será gerado dinamicamente -->
+            </div>
+            
+            <!-- Aba Análise Comercial -->
+            <div id="aba-comercial" class="conteudo-aba">
+                <!-- Conteúdo será gerado dinamicamente -->
+            </div>
+            
+            <!-- Aba Análise Consolidada -->
+            <div id="aba-consolidada" class="conteudo-aba">
+                <!-- Conteúdo será gerado dinamicamente -->
+            </div>
         </div>
     </div>
 
@@ -477,62 +550,88 @@
 
             buscarPropostasCompletas(processoId) {
                 const propostas = [];
+                const propostasMap = new Map();
                 
                 // Buscar em todas as fontes de propostas
                 const propostasCompletas = JSON.parse(localStorage.getItem('propostas_completas') || '[]');
                 const propostasFornecedores = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
                 const propostasComparativo = JSON.parse(localStorage.getItem('propostas_comparativo') || '[]');
                 
-                // Combinar propostas do processo
-                [...propostasCompletas, ...propostasFornecedores, ...propostasComparativo].forEach(p => {
-                    if (p.processoId === processoId || p.numeroProcesso === processoId) {
-                        // Evitar duplicatas
-                        const existe = propostas.find(prop => 
-                            prop.fornecedorCNPJ === p.fornecedorCNPJ || 
-                            prop.cnpj === p.cnpj
-                        );
-                        
-                        if (!existe) {
-                            propostas.push(this.formatarProposta(p));
+                // Primeiro, adicionar propostas_fornecedores (prioridade)
+                propostasFornecedores.forEach(p => {
+                    if (p.processoId === processoId && p.status === 'ENVIADA') {
+                        const chave = p.fornecedorCNPJ || p.cnpj;
+                        if (chave && !propostasMap.has(chave)) {
+                            propostasMap.set(chave, this.formatarProposta(p));
                         }
                     }
                 });
                 
-                return propostas;
+                // Depois, adicionar propostas_comparativo
+                propostasComparativo.forEach(p => {
+                    if (p.numeroProcesso === processoId || p.processoId === processoId) {
+                        const chave = p.fornecedorCNPJ || p.cnpj;
+                        if (chave && !propostasMap.has(chave)) {
+                            propostasMap.set(chave, this.formatarProposta(p));
+                        }
+                    }
+                });
+                
+                // Por último, propostas_completas
+                propostasCompletas.forEach(p => {
+                    if (p.processoId === processoId) {
+                        const chave = p.dadosCadastrais?.cnpj || p.cnpj;
+                        if (chave && !propostasMap.has(chave)) {
+                            propostasMap.set(chave, this.formatarProposta(p));
+                        }
+                    }
+                });
+                
+                // Converter Map para array
+                return Array.from(propostasMap.values());
             }
 
             formatarProposta(proposta) {
                 // Formatar dados para estrutura padrão
                 const dadosCompletos = proposta.dadosCompletos || {};
                 
+                // Verificar se é array e converter
+                const converterArray = (dados) => {
+                    if (!dados) return [];
+                    if (Array.isArray(dados)) return dados;
+                    return [];
+                };
+                
                 return {
                     id: proposta.id,
                     dadosCadastrais: {
-                        razaoSocial: proposta.fornecedorRazaoSocial || dadosCompletos.dadosCadastrais?.razaoSocial || 'Não informado',
+                        razaoSocial: proposta.fornecedorRazaoSocial || dadosCompletos.dadosCadastrais?.razaoSocial || proposta.razaoSocial || 'Não informado',
                         cnpj: proposta.fornecedorCNPJ || proposta.cnpj || dadosCompletos.dadosCadastrais?.cnpj || 'Não informado',
-                        email: proposta.fornecedorEmail || dadosCompletos.dadosCadastrais?.email || 'Não informado',
-                        telefone: dadosCompletos.dadosCadastrais?.telefone || 'Não informado',
-                        endereco: dadosCompletos.dadosCadastrais?.endereco || 'Não informado',
-                        respTecnico: dadosCompletos.dadosCadastrais?.respTecnico || 'Não informado',
-                        crea: dadosCompletos.dadosCadastrais?.crea || 'Não informado'
+                        email: proposta.fornecedorEmail || proposta.email || dadosCompletos.dadosCadastrais?.email || 'Não informado',
+                        telefone: proposta.telefone || dadosCompletos.dadosCadastrais?.telefone || 'Não informado',
+                        endereco: proposta.endereco || dadosCompletos.dadosCadastrais?.endereco || 'Não informado',
+                        respTecnico: proposta.responsavel || dadosCompletos.dadosCadastrais?.respTecnico || 'Não informado',
+                        crea: proposta.crea || dadosCompletos.dadosCadastrais?.crea || 'Não informado'
                     },
                     propostaTecnica: dadosCompletos.propostaTecnica || {
                         prazoExecucao: proposta.prazoExecucao || 'Não informado',
                         metodologia: proposta.descricao_tecnica || 'Não informado',
-                        garantias: proposta.garantia || 'Não informado'
+                        garantias: proposta.garantia || 'Não informado',
+                        prazoMobilizacao: '15 dias',
+                        estruturaCanteiro: 'Conforme necessário'
                     },
                     propostaComercial: dadosCompletos.propostaComercial || {
                         valorTotal: proposta.valor || 0
                     },
-                    servicosTecnica: dadosCompletos.propostaTecnica?.servicosTecnica || [],
-                    servicosComercial: dadosCompletos.propostaComercial?.servicos || [],
-                    maoObraTecnica: dadosCompletos.propostaTecnica?.equipe || [],
-                    maoObraComercial: dadosCompletos.propostaComercial?.maoObra || [],
-                    materiaisTecnica: dadosCompletos.propostaTecnica?.materiais || [],
-                    materiaisComercial: dadosCompletos.propostaComercial?.materiaisComercial || [],
-                    equipamentosTecnica: dadosCompletos.propostaTecnica?.equipamentos || [],
-                    equipamentosComercial: dadosCompletos.propostaComercial?.equipamentosComercial || [],
-                    bdi: dadosCompletos.propostaComercial?.bdi || [],
+                    servicosTecnica: converterArray(dadosCompletos.propostaTecnica?.servicosTecnica),
+                    servicosComercial: converterArray(dadosCompletos.propostaComercial?.servicos),
+                    maoObraTecnica: converterArray(dadosCompletos.propostaTecnica?.equipe),
+                    maoObraComercial: converterArray(dadosCompletos.propostaComercial?.maoObra),
+                    materiaisTecnica: converterArray(dadosCompletos.propostaTecnica?.materiais),
+                    materiaisComercial: converterArray(dadosCompletos.propostaComercial?.materiaisComercial),
+                    equipamentosTecnica: converterArray(dadosCompletos.propostaTecnica?.equipamentos),
+                    equipamentosComercial: converterArray(dadosCompletos.propostaComercial?.equipamentosComercial),
+                    bdi: converterArray(dadosCompletos.propostaComercial?.bdi),
                     resumoFinanceiro: this.calcularResumoFinanceiro(dadosCompletos.propostaComercial, proposta.valor)
                 };
             }
@@ -572,6 +671,8 @@
             }
 
             gerarRelatorio() {
+                console.log('Propostas encontradas:', this.propostas.length);
+                
                 if (this.propostas.length === 0) {
                     document.getElementById('conteudo-relatorio').innerHTML = `
                         <div style="text-align: center; padding: 50px; color: #666;">
@@ -586,18 +687,43 @@
                 // Atualizar resumo executivo
                 this.atualizarResumo();
 
-                // Gerar seções do relatório
-                const conteudo = document.getElementById('conteudo-relatorio');
-                conteudo.innerHTML = '';
+                // Gerar conteúdo para cada aba
+                this.gerarConteudoCompleto();
+                this.gerarConteudoTecnico();
+                this.gerarConteudoComercial();
+                this.gerarConteudoConsolidado();
+            }
 
-                // 1. Análise Técnica
-                conteudo.appendChild(this.gerarSecaoTecnica());
+            gerarConteudoCompleto() {
+                const container = document.getElementById('aba-completa');
+                container.innerHTML = '';
+                
+                // Adicionar seção técnica
+                container.appendChild(this.gerarSecaoTecnica());
+                
+                // Adicionar seção comercial
+                container.appendChild(this.gerarSecaoComercial());
+                
+                // Adicionar seção consolidada
+                container.appendChild(this.gerarSecaoConsolidada());
+            }
 
-                // 2. Análise Comercial
-                conteudo.appendChild(this.gerarSecaoComercial());
+            gerarConteudoTecnico() {
+                const container = document.getElementById('aba-tecnica');
+                container.innerHTML = '';
+                container.appendChild(this.gerarSecaoTecnica());
+            }
 
-                // 3. Análise Consolidada
-                conteudo.appendChild(this.gerarSecaoConsolidada());
+            gerarConteudoComercial() {
+                const container = document.getElementById('aba-comercial');
+                container.innerHTML = '';
+                container.appendChild(this.gerarSecaoComercial());
+            }
+
+            gerarConteudoConsolidado() {
+                const container = document.getElementById('aba-consolidada');
+                container.innerHTML = '';
+                container.appendChild(this.gerarSecaoConsolidada());
             }
 
             atualizarResumo() {
@@ -1470,11 +1596,40 @@
             alert('Funcionalidade de exportação PDF será implementada em breve.\n\nPor enquanto, use Ctrl+P e selecione "Salvar como PDF".');
         }
 
+        function mudarAba(aba) {
+            // Remover classe ativa de todas as abas
+            document.querySelectorAll('.aba-btn').forEach(btn => {
+                btn.classList.remove('ativa');
+            });
+            
+            // Remover classe ativa de todos os conteúdos
+            document.querySelectorAll('.conteudo-aba').forEach(conteudo => {
+                conteudo.classList.remove('ativa');
+            });
+            
+            // Adicionar classe ativa à aba selecionada
+            event.target.closest('.aba-btn').classList.add('ativa');
+            
+            // Mostrar conteúdo da aba selecionada
+            document.getElementById(`aba-${aba}`).classList.add('ativa');
+        }
+
         // Inicializar relatório quando carregar a página
         document.addEventListener('DOMContentLoaded', function() {
-            new RelatorioAnalitico();
+            const relatorio = new RelatorioAnalitico();
+            
+            // Debug: verificar dados carregados
+            console.log('Processo:', relatorio.processo);
+            console.log('Total de propostas:', relatorio.propostas.length);
+            
+            // Mostrar empresas encontradas
+            if (relatorio.propostas.length > 0) {
+                console.log('Empresas encontradas:');
+                relatorio.propostas.forEach(p => {
+                    console.log('- ' + p.dadosCadastrais.razaoSocial);
+                });
+            }
         });
     </script>
 </body>
-</html>
-                    
+</html>                  
