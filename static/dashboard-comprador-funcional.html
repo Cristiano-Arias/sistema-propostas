@@ -2996,7 +2996,7 @@
                 const stats = azureIA.obterEstatisticas();
                 
                 // Mostrar resultados
-                modal.querySelector('.modal-body').innerHTML = this.gerarRelatorioProfissional(
+                modal.querySelector('.modal-body').innerHTML = gerarRelatorioProfissional(
                     analiseTecnica, 
                     analiseComercial, 
                     this.proposals,
@@ -3018,10 +3018,40 @@
             }
         }
 
+        // Função para salvar análise
+        function salvarAnaliseIA(processoId, resultado) {
+            const analises = SistemaLocal.carregar('analises_ia', []);
+            analises.push({
+                id: SistemaLocal.gerarId(),
+                processoId: processoId,
+                resultado: resultado,
+                dataAnalise: new Date().toISOString(),
+                analistaPor: SistemaLocal.obterUsuario().nome
+            });
+            SistemaLocal.salvar('analises_ia', analises);
+            alert('Análise salva com sucesso!');
+        }
+
         // Nova função para gerar relatório profissional
-        gerarRelatorioProfissional(analiseTecnica, analiseComercial, propostas, modo) {
+        function gerarRelatorioProfissional(analiseTecnica, analiseComercial, propostas, modo) {
             // Processar dados das propostas
-            const dadosComparativos = this.processarDadosParaTabela(propostas);
+            const dadosComparativos = processarDadosParaTabela(propostas);
+            
+            return `
+                <div style="max-height: 600px; overflow-y: auto;">
+                    <!-- Cabeçalho do Relatório -->
+                    <div style="background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 25px; border-radius: 10px; margin: -20px -20px 20px -20px; text-align: center;">
+                        <h3 style="margin: 0; font-size: 24px;">
+                            <i class="fas fa-file-alt"></i> RELATÓRIO DE ANÁLISE COMPARATIVA
+                        </h3>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9;">
+                            Processo: ${processoId} | Data: ${new Date().toLocaleDateString('pt-BR')}
+                        </p>
+                        <small style="opacity: 0.8;">Análise realizada via: ${modo}</small>
+                    </div>
+                    
+            // Processar dados das propostas
+            const dadosComparativos = processarDadosParaTabela(propostas);
             
             return `
                 <div style="max-height: 600px; overflow-y: auto;">
@@ -3051,7 +3081,7 @@
                                 <div style="color: #666; font-size: 14px;">Variação de Preços</div>
                             </div>
                             <div style="background: white; padding: 15px; border-radius: 6px; text-align: center;">
-                                <div style="font-size: 20px; font-weight: bold; color: #27ae60;">${this.formatCurrency(dadosComparativos.menorValor)}</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #27ae60;">${formatarMoeda(dadosComparativos.menorValor)}</div>
                                 <div style="color: #666; font-size: 14px;">Menor Valor</div>
                             </div>
                         </div>
