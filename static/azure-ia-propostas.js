@@ -255,12 +255,63 @@ Responda em formato JSON:
     }
 
     gerarAnaliseSimuladaTecnica(proposals) {
+        // Análise real baseada nos dados recebidos
+        const analiseReal = this.analisarDadosReaisTecnicos(proposals);
+        
         const insights = [
             {
-                highlight: 'Empresa A apresenta metodologia mais detalhada e equipe técnica robusta com maior experiência em obras similares.',
-                attention: 'Empresa C tem prazo muito otimista (120 dias) que pode indicar subdimensionamento. Empresa B não detalhou adequadamente a metodologia.',
-                market: 'Tendência do mercado valoriza empresas com certificações ambientais e uso de tecnologia BIM para controle de qualidade.'
-            },
+                highlight: analiseReal.destaques,
+                attention: analiseReal.divergencias,
+                market: analiseReal.comparativo
+            }
+        ];
+        
+        return insights[0];
+    }
+    
+    // Nova função para análise real
+    analisarDadosReaisTecnicos(proposals) {
+        if (!proposals || proposals.length === 0) {
+            return {
+                destaques: 'Aguardando propostas para análise.',
+                divergencias: 'Nenhuma proposta disponível.',
+                comparativo: 'Análise comparativa será exibida quando houver propostas.'
+            };
+        }
+    
+        // Análise de prazos reais
+        const prazos = proposals.map(p => ({
+            empresa: p.dadosCadastrais?.razaoSocial || 'Empresa',
+            prazo: p.propostaTecnica?.prazoExecucao || 'Não informado'
+        }));
+        
+        // Análise de metodologias
+        const metodologias = proposals.map(p => ({
+            empresa: p.dadosCadastrais?.razaoSocial,
+            temMetodologia: !!p.propostaTecnica?.metodologia
+        }));
+    
+        // Análise de serviços
+        const quantidadeServicos = proposals.map(p => ({
+            empresa: p.dadosCadastrais?.razaoSocial,
+            totalServicos: p.servicosTecnica?.length || 0
+        }));
+    
+        // Construir análise
+        const menorPrazo = prazos.reduce((min, p) => p.prazo < min.prazo ? p : min);
+        const maiorPrazo = prazos.reduce((max, p) => p.prazo > max.prazo ? p : max);
+        
+        const destaques = `${menorPrazo.empresa} oferece o menor prazo de execução (${menorPrazo.prazo}). ` +
+                         `${quantidadeServicos[0].empresa} detalhou ${quantidadeServicos[0].totalServicos} serviços.`;
+        
+        const divergencias = `Variação de prazo entre propostas: ${menorPrazo.prazo} a ${maiorPrazo.prazo}. ` +
+                            `${metodologias.filter(m => !m.temMetodologia).length} empresa(s) não detalharam metodologia.`;
+        
+        const comparativo = `Total de ${proposals.length} propostas analisadas. ` +
+                           `Diferença de ${quantidadeServicos[0].totalServicos - quantidadeServicos[quantidadeServicos.length-1].totalServicos} itens entre propostas.`;
+    
+        return { destaques, divergencias, comparativo };
+    }
             {
                 highlight: 'Empresa C demonstra inovação tecnológica com metodologia BIM 5D e sistemas IoT, mas prazo agressivo requer atenção.',
                 attention: 'Empresa B apresenta metodologia básica sem detalhamento de controle de qualidade. Prazo intermediário pode ser mais realista.',
@@ -278,12 +329,73 @@ Responda em formato JSON:
     }
 
     gerarAnaliseSimuladaComercial(proposals) {
-        const insights = [
-            {
-                highlight: 'Empresa A oferece melhor custo-benefício com BDI equilibrado (28%) e preços competitivos nos materiais.',
-                attention: 'Empresa C tem valor 45% acima da média. BDI da Empresa B está muito baixo (22%) - verificar viabilidade.',
-                market: 'Preços de materiais estão 8% acima da média histórica devido à alta do aço. Mão de obra especializada valorizada 12%.'
-            },
+        // Análise real baseada nos dados recebidos
+        const analiseReal = this.analisarDadosReaisComerciais(proposals);
+        
+        return {
+            highlight: analiseReal.destaques,
+            attention: analiseReal.divergencias,
+            market: analiseReal.comparativo
+        };
+    }
+    
+    // Nova função para análise comercial real
+    analisarDadosReaisComerciais(proposals) {
+        if (!proposals || proposals.length === 0) {
+            return {
+                destaques: 'Aguardando propostas comerciais.',
+                divergencias: 'Nenhuma proposta disponível.',
+                comparativo: 'Análise será exibida quando houver propostas.'
+            };
+        }
+    
+        // Extrair valores reais
+        const valores = proposals.map(p => ({
+            empresa: p.dadosCadastrais?.razaoSocial || 'Empresa',
+            valor: p.resumoFinanceiro?.valorTotal || 0,
+            bdi: p.resumoFinanceiro?.bdiPercentual || 0
+        })).sort((a, b) => a.valor - b.valor);
+    
+        // Análise de BDI real
+        const bdis = valores.map(v => v.bdi).filter(b => b > 0);
+        const bdMin = Math.min(...bdis);
+        const bdiMax = Math.max(...bdis);
+    
+        // Análise de serviços comerciais
+        const servicosComerciais = proposals.map(p => ({
+            empresa: p.dadosCadastrais?.razaoSocial,
+            qtdServicos: p.servicosComercial?.length || 0,
+            totalServicos: p.resumoFinanceiro?.totalServicos || 0
+        }));
+    
+        // Calcular diferenças reais
+        const menorValor = valores[0];
+        const maiorValor = valores[valores.length - 1];
+        const diferenca = ((maiorValor.valor - menorValor.valor) / menorValor.valor * 100).toFixed(1);
+    
+        const destaques = `${menorValor.empresa} apresenta o menor valor: ${this.formatarMoeda(menorValor.valor)}. ` +
+                         `BDI varia de ${bdMin}% a ${bdiMax}% entre as propostas.`;
+        
+        const divergencias = `Diferença de ${diferenca}% entre maior e menor proposta. ` +
+                            `${valores.filter(v => v.bdi < 20 || v.bdi > 30).length} empresa(s) com BDI fora da faixa 20-30%.`;
+        
+        const comparativo = `Valor médio das propostas: ${this.formatarMoeda(this.calcularMedia(valores.map(v => v.valor)))}. ` +
+                           `${servicosComerciais[0].empresa} detalhou ${servicosComerciais[0].qtdServicos} serviços.`;
+    
+        return { destaques, divergencias, comparativo };
+    }
+    
+    // Funções auxiliares
+    formatarMoeda(valor) {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(valor);
+    }
+    
+    calcularMedia(valores) {
+        return valores.reduce((a, b) => a + b, 0) / valores.length;
+    }
             {
                 highlight: 'Empresa B apresenta proposta mais econômica, mas BDI baixo (22%) pode indicar subdimensionamento de custos.',
                 attention: 'Empresa C com valor muito alto pode estar superfaturada. Empresa A tem BDI dentro da média de mercado.',
