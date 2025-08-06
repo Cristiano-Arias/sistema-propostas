@@ -26,12 +26,17 @@
         }
 
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: var(--text-primary);
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .comparativo-wrapper {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
 
         .container {
             max-width: 1600px;
@@ -506,8 +511,9 @@
     </style>
 </head>
 <body>
-    <!-- Botão Voltar -->
-    <a href="dashboard-comprador-funcional.html" class="btn-voltar">
+    <div class="comparativo-wrapper">
+        <!-- Botão Voltar -->
+        <a href="dashboard-comprador-funcional.html" class="btn-voltar">
         <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
     </a>
 
@@ -2556,5 +2562,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
    <!-- Integração com Azure AI -->
    <script src="azure-config.js"></script>
+    </div> <!-- Fechamento da comparativo-wrapper -->
 </body>
 </html>
