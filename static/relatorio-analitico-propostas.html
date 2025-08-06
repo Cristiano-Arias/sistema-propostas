@@ -378,6 +378,80 @@
         @media (max-width: 768px) {
             .relatorio-container {
                 padding: 10px;
+            gerarTabelaMateriaisTecnica() {
+                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">1.5 Materiais - Quantidades</h3>';
+                
+                const materiaisUnicos = this.coletarItensUnicos('materiaisTecnica', 0); // índice 0 = material
+                
+                if (materiaisUnicos.length === 0) {
+                    return html + '<p style="color: #666; padding: 20px;">Nenhum material técnico detalhado nas propostas.</p>';
+                }
+
+                html += '<table class="tabela-comparativa">';
+                html += '<thead><tr><th>Material</th>';
+                
+                this.propostas.forEach(p => {
+                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Qtd | Unid</small></th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                materiaisUnicos.forEach(material => {
+                    html += `<tr><td><strong>${material}</strong></td>`;
+                    
+                    this.propostas.forEach(p => {
+                        const materialProposta = p.materiaisTecnica?.find(m => m[0] === material);
+                        if (materialProposta) {
+                            const qtd = materialProposta[3] || '-';
+                            const unid = materialProposta[2] || '-';
+                            html += `<td>${qtd} ${unid}</td>`;
+                        } else {
+                            html += '<td><span class="valor-ausente">Não informado</span></td>';
+                        }
+                    });
+                    
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                return html;
+            }
+
+            gerarTabelaEquipamentosTecnica() {
+                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">1.6 Equipamentos - Quantidades</h3>';
+                
+                const equipamentosUnicos = this.coletarItensUnicos('equipamentosTecnica', 0); // índice 0 = equipamento
+                
+                if (equipamentosUnicos.length === 0) {
+                    return html + '<p style="color: #666; padding: 20px;">Nenhum equipamento técnico detalhado nas propostas.</p>';
+                }
+
+                html += '<table class="tabela-comparativa">';
+                html += '<thead><tr><th>Equipamento</th>';
+                
+                this.propostas.forEach(p => {
+                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Qtd | Tempo</small></th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                equipamentosUnicos.forEach(equipamento => {
+                    html += `<tr><td><strong>${equipamento}</strong></td>`;
+                    
+                    this.propostas.forEach(p => {
+                        const equipamentoProposta = p.equipamentosTecnica?.find(e => e[0] === equipamento);
+                        if (equipamentoProposta) {
+                            const qtd = equipamentoProposta[3] || '-';
+                            const tempo = equipamentoProposta[4] || '-';
+                            html += `<td>${qtd} unid. | ${tempo} meses</td>`;
+                        } else {
+                            html += '<td><span class="valor-ausente">Não informado</span></td>';
+                        }
+                    });
+                    
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                return html;
             }
 
             .tabela-comparativa {
@@ -466,10 +540,7 @@
 
         <!-- Abas de Navegação -->
         <div class="abas-relatorio">
-            <button class="aba-btn ativa" onclick="mudarAba('completa')">
-                <i class="fas fa-list"></i> Visão Completa
-            </button>
-            <button class="aba-btn" onclick="mudarAba('tecnica')">
+            <button class="aba-btn ativa" onclick="mudarAba('tecnica')">
                 <i class="fas fa-cogs"></i> Análise Técnica
             </button>
             <button class="aba-btn" onclick="mudarAba('comercial')">
@@ -482,13 +553,8 @@
 
         <!-- Conteúdo das Abas -->
         <div id="conteudo-relatorio">
-            <!-- Aba Visão Completa -->
-            <div id="aba-completa" class="conteudo-aba ativa">
-                <!-- Conteúdo será gerado dinamicamente -->
-            </div>
-            
             <!-- Aba Análise Técnica -->
-            <div id="aba-tecnica" class="conteudo-aba">
+            <div id="aba-tecnica" class="conteudo-aba ativa">
                 <!-- Conteúdo será gerado dinamicamente -->
             </div>
             
@@ -688,24 +754,9 @@
                 this.atualizarResumo();
 
                 // Gerar conteúdo para cada aba
-                this.gerarConteudoCompleto();
                 this.gerarConteudoTecnico();
                 this.gerarConteudoComercial();
                 this.gerarConteudoConsolidado();
-            }
-
-            gerarConteudoCompleto() {
-                const container = document.getElementById('aba-completa');
-                container.innerHTML = '';
-                
-                // Adicionar seção técnica
-                container.appendChild(this.gerarSecaoTecnica());
-                
-                // Adicionar seção comercial
-                container.appendChild(this.gerarSecaoComercial());
-                
-                // Adicionar seção consolidada
-                container.appendChild(this.gerarSecaoConsolidada());
             }
 
             gerarConteudoTecnico() {
@@ -755,6 +806,8 @@
                         ${this.gerarTabelaPropostaTecnica()}
                         ${this.gerarTabelaServicosTecnicos()}
                         ${this.gerarTabelaMaoObraTecnica()}
+                        ${this.gerarTabelaMateriaisTecnica()}
+                        ${this.gerarTabelaEquipamentosTecnica()}
                         ${this.gerarAnaliseTecnicaIA()}
                     </div>
                 `;
@@ -772,11 +825,12 @@
                         ANÁLISE COMERCIAL COMPARATIVA
                     </div>
                     <div class="secao-content">
+                        ${this.gerarTabelaResumoFinanceiro()}
                         ${this.gerarTabelaServicosComerciais()}
                         ${this.gerarTabelaMaoObraComercial()}
                         ${this.gerarTabelaMateriaisComercial()}
+                        ${this.gerarTabelaEquipamentosComercial()}
                         ${this.gerarTabelaBDI()}
-                        ${this.gerarTabelaResumoFinanceiro()}
                         ${this.gerarAnaliseComercialIA()}
                     </div>
                 `;
@@ -961,7 +1015,7 @@
             }
 
             gerarTabelaServicosComerciais() {
-                let html = '<h3 style="margin-bottom: 15px;">2.1 Serviços - Valores</h3>';
+                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">2.2 Serviços - Valores</h3>';
                 
                 const servicosUnicos = this.coletarItensUnicos('servicosComercial', 1); // índice 1 = descrição
                 
@@ -973,7 +1027,7 @@
                 html += '<thead><tr><th>Serviço</th>';
                 
                 this.propostas.forEach(p => {
-                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Preço Unit. | Total</small></th>`;
+                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Qtd | Un | Preço Unit. | Total</small></th>`;
                 });
                 html += '</tr></thead><tbody>';
 
@@ -984,12 +1038,15 @@
                     this.propostas.forEach(p => {
                         const servicoProposta = p.servicosComercial?.find(s => s[1] === servico);
                         if (servicoProposta) {
+                            const qtd = servicoProposta[3] || '-';
+                            const unid = servicoProposta[2] || '-';
                             const precoUnit = this.converterParaNumero(servicoProposta[4]);
                             const total = this.converterParaNumero(servicoProposta[5]);
                             precos.push(precoUnit);
                             
                             const classePrecio = this.getClasseValor(precoUnit, precos);
                             html += `<td class="${classePrecio}">
+                                ${qtd} ${unid}<br>
                                 R$ ${servicoProposta[4] || '0,00'}<br>
                                 <strong>R$ ${servicoProposta[5] || '0,00'}</strong>
                             </td>`;
@@ -1006,7 +1063,7 @@
             }
 
             gerarTabelaMaoObraComercial() {
-                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">2.2 Mão de Obra - Custos</h3>';
+                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">2.3 Mão de Obra - Custos</h3>';
                 
                 const funcoesUnicas = this.coletarItensUnicos('maoObraComercial', 0);
                 
@@ -1018,7 +1075,7 @@
                 html += '<thead><tr><th>Função</th>';
                 
                 this.propostas.forEach(p => {
-                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Salário | Encargos | Total</small></th>`;
+                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Qtd | Meses | Salário | Enc. | Total</small></th>`;
                 });
                 html += '</tr></thead><tbody>';
 
@@ -1029,11 +1086,14 @@
                     this.propostas.forEach(p => {
                         const funcaoProposta = p.maoObraComercial?.find(f => f[0] === funcao);
                         if (funcaoProposta) {
+                            const qtd = funcaoProposta[1] || '-';
+                            const meses = funcaoProposta[2] || '-';
                             const salario = this.converterParaNumero(funcaoProposta[3]);
                             salarios.push(salario);
                             
                             const classeSalario = this.getClasseValor(salario, salarios);
                             html += `<td class="${classeSalario}">
+                                ${qtd} prof. | ${meses} meses<br>
                                 R$ ${funcaoProposta[3] || '0,00'}<br>
                                 ${funcaoProposta[4] || '0'}%<br>
                                 <strong>R$ ${funcaoProposta[6] || '0,00'}</strong>
@@ -1051,7 +1111,7 @@
             }
 
             gerarTabelaMateriaisComercial() {
-                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">2.3 Materiais - Custos</h3>';
+                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">2.4 Materiais - Custos</h3>';
                 
                 const materiaisUnicos = this.coletarItensUnicos('materiaisComercial', 0);
                 
@@ -1063,7 +1123,7 @@
                 html += '<thead><tr><th>Material</th>';
                 
                 this.propostas.forEach(p => {
-                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Preço Unit. | Total</small></th>`;
+                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Qtd | Un | Preço Unit. | Total</small></th>`;
                 });
                 html += '</tr></thead><tbody>';
 
@@ -1074,11 +1134,14 @@
                     this.propostas.forEach(p => {
                         const materialProposta = p.materiaisComercial?.find(m => m[0] === material);
                         if (materialProposta) {
+                            const qtd = materialProposta[3] || '-';
+                            const unid = materialProposta[2] || '-';
                             const precoUnit = this.converterParaNumero(materialProposta[4]);
                             precos.push(precoUnit);
                             
                             const classePreco = this.getClasseValor(precoUnit, precos);
                             html += `<td class="${classePreco}">
+                                ${qtd} ${unid}<br>
                                 R$ ${materialProposta[4] || '0,00'}<br>
                                 <strong>R$ ${materialProposta[5] || '0,00'}</strong>
                             </td>`;
@@ -1094,8 +1157,55 @@
                 return html;
             }
 
+            gerarTabelaEquipamentosComercial() {
+                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">2.5 Equipamentos - Custos</h3>';
+                
+                const equipamentosUnicos = this.coletarItensUnicos('equipamentosComercial', 0);
+                
+                if (equipamentosUnicos.length === 0) {
+                    return html + '<p style="color: #666; padding: 20px;">Nenhum equipamento detalhado nas propostas.</p>';
+                }
+
+                html += '<table class="tabela-comparativa">';
+                html += '<thead><tr><th>Equipamento</th>';
+                
+                this.propostas.forEach(p => {
+                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Qtd | Meses | P./Mês | Total</small></th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                equipamentosUnicos.forEach(equipamento => {
+                    html += `<tr><td><strong>${equipamento}</strong></td>`;
+                    
+                    const precos = [];
+                    this.propostas.forEach(p => {
+                        const equipamentoProposta = p.equipamentosComercial?.find(e => e[0] === equipamento);
+                        if (equipamentoProposta) {
+                            const qtd = equipamentoProposta[2] || '-';
+                            const meses = equipamentoProposta[3] || '-';
+                            const precoMes = this.converterParaNumero(equipamentoProposta[4]);
+                            precos.push(precoMes);
+                            
+                            const classePreco = this.getClasseValor(precoMes, precos);
+                            html += `<td class="${classePreco}">
+                                ${qtd} unid. | ${meses} meses<br>
+                                R$ ${equipamentoProposta[4] || '0,00'}<br>
+                                <strong>R$ ${equipamentoProposta[5] || '0,00'}</strong>
+                            </td>`;
+                        } else {
+                            html += '<td><span class="valor-ausente">Não cotado</span></td>';
+                        }
+                    });
+                    
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                return html;
+            }
+
             gerarTabelaBDI() {
-                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">2.4 BDI Detalhado</h3>';
+                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">2.6 BDI Detalhado</h3>';
                 
                 const itensBDI = this.coletarItensUnicos('bdi', 0);
                 
@@ -1149,7 +1259,7 @@
             }
 
             gerarTabelaResumoFinanceiro() {
-                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">2.5 Resumo Financeiro</h3>';
+                let html = '<h3 style="margin-bottom: 15px;">2.1 Resumo Financeiro</h3>';
                 html += '<table class="tabela-comparativa">';
                 html += '<thead><tr><th>Componente</th>';
                 
@@ -1632,4 +1742,4 @@
         });
     </script>
 </body>
-</html>                  
+</html>
