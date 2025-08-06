@@ -3243,7 +3243,7 @@
         }
         
         // Função auxiliar para processar dados
-        processarDadosParaTabela(propostas) {
+        function processarDadosParaTabela(propostas) {
             const valores = propostas.map(p => p.resumoFinanceiro?.valorTotal || 0);
             const menorValor = Math.min(...valores);
             const maiorValor = Math.max(...valores);
