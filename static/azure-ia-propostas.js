@@ -312,12 +312,7 @@ Responda em formato JSON:
     
         return { destaques, divergencias, comparativo };
     }
-            {
-                highlight: 'Empresa C demonstra inovação tecnológica com metodologia BIM 5D e sistemas IoT, mas prazo agressivo requer atenção.',
-                attention: 'Empresa B apresenta metodologia básica sem detalhamento de controle de qualidade. Prazo intermediário pode ser mais realista.',
-                market: 'Mercado está migrando para construção sustentável e lean construction. Certificações LEED agregam valor significativo.'
-            },
-           
+            
     gerarAnaliseSimuladaComercial(proposals) {
         // Análise real baseada nos dados recebidos
         const analiseReal = this.analisarDadosReaisComerciais(proposals);
