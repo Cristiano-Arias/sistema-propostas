@@ -2996,41 +2996,12 @@
                 const stats = azureIA.obterEstatisticas();
                 
                 // Mostrar resultados
-                modal.querySelector('.modal-body').innerHTML = `
-                    <div style="text-align: left; max-height: 600px; overflow-y: auto;">
-                        <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                            <small><i class="fas fa-info-circle"></i> Modo: ${stats.modo}</small>
-                        </div>
-                        
-                        <h4 style="color: #333; margin-bottom: 20px;">
-                            <i class="fas fa-check-circle" style="color: #28a745;"></i> 
-                            Análise Concluída
-                        </h4>
-                        
-                        <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h5><i class="fas fa-dollar-sign"></i> Análise Comercial</h5>
-                            <p><strong>Destaque:</strong> ${analiseComercial.highlight}</p>
-                            <p><strong>Atenção:</strong> ${analiseComercial.attention}</p>
-                            <p><strong>Mercado:</strong> ${analiseComercial.market}</p>
-                        </div>
-                        
-                        <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h5><i class="fas fa-cogs"></i> Análise Técnica</h5>
-                            <p><strong>Destaque:</strong> ${analiseTecnica.highlight}</p>
-                            <p><strong>Atenção:</strong> ${analiseTecnica.attention}</p>
-                            <p><strong>Mercado:</strong> ${analiseTecnica.market}</p>
-                        </div>
-                        
-                        <div style="text-align: center; margin-top: 30px;">
-                            <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">
-                                Fechar Análise
-                            </button>
-                            <button class="btn btn-success" onclick="salvarAnaliseIA('${processoId}', ${JSON.stringify({tecnica: analiseTecnica, comercial: analiseComercial}).replace(/"/g, '&quot;')})">
-                                <i class="fas fa-save"></i> Salvar Análise
-                            </button>
-                        </div>
-                    </div>
-                `;
+                modal.querySelector('.modal-body').innerHTML = this.gerarRelatorioProfissional(
+                    analiseTecnica, 
+                    analiseComercial, 
+                    this.proposals,
+                    stats.modo
+                );
                 
             } catch (error) {
                 console.error('Erro na análise:', error);
@@ -3047,6 +3018,191 @@
             }
         }
 
+        // Nova função para gerar relatório profissional
+        gerarRelatorioProfissional(analiseTecnica, analiseComercial, propostas, modo) {
+            // Processar dados das propostas
+            const dadosComparativos = this.processarDadosParaTabela(propostas);
+            
+            return `
+                <div style="max-height: 600px; overflow-y: auto;">
+                    <!-- Cabeçalho do Relatório -->
+                    <div style="background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 25px; border-radius: 10px; margin: -20px -20px 20px -20px; text-align: center;">
+                        <h3 style="margin: 0; font-size: 24px;">
+                            <i class="fas fa-file-alt"></i> RELATÓRIO DE ANÁLISE COMPARATIVA
+                        </h3>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9;">
+                            Processo: ${this.currentProcess} | Data: ${new Date().toLocaleDateString('pt-BR')}
+                        </p>
+                        <small style="opacity: 0.8;">Análise realizada via: ${modo}</small>
+                    </div>
+        
+                    <!-- Resumo Executivo -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #11998e;">
+                        <h4 style="color: #11998e; margin-bottom: 15px;">
+                            <i class="fas fa-chart-line"></i> RESUMO EXECUTIVO
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 28px; font-weight: bold; color: #11998e;">${propostas.length}</div>
+                                <div style="color: #666; font-size: 14px;">Propostas Analisadas</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 28px; font-weight: bold; color: #e74c3c;">${dadosComparativos.variacaoPercentual}%</div>
+                                <div style="color: #666; font-size: 14px;">Variação de Preços</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 20px; font-weight: bold; color: #27ae60;">${this.formatCurrency(dadosComparativos.menorValor)}</div>
+                                <div style="color: #666; font-size: 14px;">Menor Valor</div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Tabela Comparativa Comercial -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                        <h4 style="color: #2c3e50; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-dollar-sign" style="color: #27ae60;"></i> 
+                            ANÁLISE COMERCIAL COMPARATIVA
+                        </h4>
+                        
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Empresa</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">Valor Total</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">BDI (%)</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">Prazo</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${propostas.map((proposta, index) => `
+                                    <tr style="${index === dadosComparativos.indiceMenorValor ? 'background: #d4edda;' : ''}">
+                                        <td style="padding: 12px; border-bottom: 1px solid #dee2e6;">
+                                            <strong>${proposta.dadosCadastrais?.razaoSocial || 'Empresa ' + (index + 1)}</strong>
+                                        </td>
+                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #dee2e6; font-weight: bold; color: #27ae60;">
+                                            ${this.formatCurrency(proposta.resumoFinanceiro?.valorTotal || 0)}
+                                        </td>
+                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #dee2e6;">
+                                            ${proposta.resumoFinanceiro?.bdiPercentual || 'N/I'}%
+                                        </td>
+                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #dee2e6;">
+                                            ${proposta.propostaTecnica?.prazoExecucao || 'N/I'}
+                                        </td>
+                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #dee2e6;">
+                                            ${index === dadosComparativos.indiceMenorValor ? 
+                                                '<span style="background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">Menor Valor</span>' : 
+                                                '<span style="background: #6c757d; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">Em Análise</span>'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 6px;">
+                            <h5 style="color: #1976d2; margin-bottom: 10px;">
+                                <i class="fas fa-lightbulb"></i> Análise Comercial Detalhada
+                            </h5>
+                            <p style="margin-bottom: 8px;"><strong>✓ Destaque:</strong> ${analiseComercial.highlight}</p>
+                            <p style="margin-bottom: 8px;"><strong>⚠ Atenção:</strong> ${analiseComercial.attention}</p>
+                            <p style="margin-bottom: 0;"><strong>📊 Mercado:</strong> ${analiseComercial.market}</p>
+                        </div>
+                    </div>
+        
+                    <!-- Tabela Comparativa Técnica -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                        <h4 style="color: #2c3e50; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-cogs" style="color: #3498db;"></i> 
+                            ANÁLISE TÉCNICA COMPARATIVA
+                        </h4>
+                        
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Empresa</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">Metodologia</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">Equipe</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">Garantias</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">Certificações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${propostas.map((proposta) => `
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid #dee2e6;">
+                                            <strong>${proposta.dadosCadastrais?.razaoSocial || 'Empresa'}</strong>
+                                        </td>
+                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #dee2e6;">
+                                            ${proposta.propostaTecnica?.metodologia ? 
+                                                '<i class="fas fa-check-circle" style="color: #27ae60;"></i> Detalhada' : 
+                                                '<i class="fas fa-times-circle" style="color: #e74c3c;"></i> Não Informada'}
+                                        </td>
+                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #dee2e6;">
+                                            ${proposta.maoObraTecnica?.length || 0} profissionais
+                                        </td>
+                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #dee2e6;">
+                                            ${proposta.propostaTecnica?.garantias || 'Não Informado'}
+                                        </td>
+                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #dee2e6;">
+                                            ${proposta.dadosCadastrais?.certificacoes || 'N/I'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: #f3e5f5; border-radius: 6px;">
+                            <h5 style="color: #9c27b0; margin-bottom: 10px;">
+                                <i class="fas fa-clipboard-check"></i> Análise Técnica Detalhada
+                            </h5>
+                            <p style="margin-bottom: 8px;"><strong>✓ Destaque:</strong> ${analiseTecnica.highlight}</p>
+                            <p style="margin-bottom: 8px;"><strong>⚠ Atenção:</strong> ${analiseTecnica.attention}</p>
+                            <p style="margin-bottom: 0;"><strong>📊 Mercado:</strong> ${analiseTecnica.market}</p>
+                        </div>
+                    </div>
+        
+                    <!-- Recomendações -->
+                    <div style="background: #fff3cd; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                        <h4 style="color: #856404; margin-bottom: 15px;">
+                            <i class="fas fa-exclamation-triangle"></i> RECOMENDAÇÕES
+                        </h4>
+                        <ol style="margin: 0; padding-left: 20px;">
+                            <li style="margin-bottom: 8px;">Verificar documentação completa das empresas com menor valor</li>
+                            <li style="margin-bottom: 8px;">Solicitar esclarecimentos sobre metodologias não detalhadas</li>
+                            <li style="margin-bottom: 8px;">Analisar viabilidade dos prazos propostos</li>
+                            <li>Confirmar certificações e qualificações técnicas apresentadas</li>
+                        </ol>
+                    </div>
+        
+                    <!-- Rodapé -->
+                    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
+                        <button class="btn btn-primary" onclick="window.print()">
+                            <i class="fas fa-print"></i> Imprimir Relatório
+                        </button>
+                        <button class="btn btn-success" onclick="this.closest('.modal-overlay').remove()">
+                            <i class="fas fa-check"></i> Concluir Análise
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Função auxiliar para processar dados
+        processarDadosParaTabela(propostas) {
+            const valores = propostas.map(p => p.resumoFinanceiro?.valorTotal || 0);
+            const menorValor = Math.min(...valores);
+            const maiorValor = Math.max(...valores);
+            const indiceMenorValor = valores.indexOf(menorValor);
+            const variacaoPercentual = ((maiorValor - menorValor) / menorValor * 100).toFixed(1);
+            
+            return {
+                menorValor,
+                maiorValor,
+                indiceMenorValor,
+                variacaoPercentual
+            };
+        }
+        
         // Função para salvar análise
         function salvarAnaliseIA(processoId, resultado) {
             const analises = SistemaLocal.carregar('analises_ia', []);
