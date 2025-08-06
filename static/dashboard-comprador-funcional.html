@@ -3136,7 +3136,7 @@
                                             <strong>${proposta.dadosCadastrais?.razaoSocial || 'Empresa ' + (index + 1)}</strong>
                                         </td>
                                         <td style="padding: 12px; text-align: center; border-bottom: 1px solid #dee2e6; font-weight: bold; color: #27ae60;">
-                                            ${this.formatCurrency(proposta.resumoFinanceiro?.valorTotal || 0)}
+                                            ${formatarMoeda(proposta.resumoFinanceiro?.valorTotal || 0)}
                                         </td>
                                         <td style="padding: 12px; text-align: center; border-bottom: 1px solid #dee2e6;">
                                             ${proposta.resumoFinanceiro?.bdiPercentual || 'N/I'}%
