@@ -317,17 +317,7 @@ Responda em formato JSON:
                 attention: 'Empresa B apresenta metodologia básica sem detalhamento de controle de qualidade. Prazo intermediário pode ser mais realista.',
                 market: 'Mercado está migrando para construção sustentável e lean construction. Certificações LEED agregam valor significativo.'
             },
-            {
-                highlight: 'Empresa B oferece equilíbrio entre prazo e metodologia tradicional, adequada para execução sem riscos.',
-                attention: 'Empresa A tem prazo conservador que pode encarecer custos indiretos. Empresa C pode ter dificuldades na mobilização.',
-                market: 'Metodologias tradicionais ainda dominam 70% do mercado, mas inovação tecnológica cresce 15% ao ano.'
-            }
-        ];
-
-        const randomIndex = Math.floor(Math.random() * insights.length);
-        return insights[randomIndex];
-    }
-
+           
     gerarAnaliseSimuladaComercial(proposals) {
         // Análise real baseada nos dados recebidos
         const analiseReal = this.analisarDadosReaisComerciais(proposals);
