@@ -381,22 +381,7 @@ Responda em formato JSON:
     calcularMedia(valores) {
         return valores.reduce((a, b) => a + b, 0) / valores.length;
     }
-            {
-                highlight: 'Empresa B apresenta proposta mais econômica, mas BDI baixo (22%) pode indicar subdimensionamento de custos.',
-                attention: 'Empresa C com valor muito alto pode estar superfaturada. Empresa A tem BDI dentro da média de mercado.',
-                market: 'BDI médio do mercado está entre 25-30%. Valores abaixo de 20% são suspeitos, acima de 35% podem ser excessivos.'
-            },
-            {
-                highlight: 'Empresa C justifica valor alto com tecnologia avançada e materiais sustentáveis, mas requer análise de ROI.',
-                attention: 'Diferença de 47% entre menor e maior proposta é significativa. Empresa B pode ter omitido custos importantes.',
-                market: 'Investimento em sustentabilidade pode gerar economia de 15-20% em operação, justificando custos iniciais maiores.'
-            }
-        ];
-
-        const randomIndex = Math.floor(Math.random() * insights.length);
-        return insights[randomIndex];
-    }
-
+    
     // Análises específicas por tabela
     async analisarTabelaServicos(proposals) {
         const servicos = this.extrairServicosUnicos(proposals);
