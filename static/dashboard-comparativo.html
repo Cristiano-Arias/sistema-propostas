@@ -2372,11 +2372,21 @@ class ComparativoPropostasIntegrado {
                 market: 'Aguardando dados...'
             };
         }
+    
+        // Usar a nova classe de análise se disponível
+        if (window.AzureIAPropostas) {
+            const ia = new window.AzureIAPropostas();
+            if (tabType === 'tecnica') {
+                return ia.analisarDadosReaisTecnicos(this.proposals);
+            } else {
+                return ia.analisarDadosReaisComerciais(this.proposals);
+            }
+        }
 
-        // Encontrar menor valor
-        const valores = this.proposals.map(p => p.resumoFinanceiro?.valorTotal || 0);
-        const menorValor = Math.min(...valores);
-        const melhorProposta = this.proposals.find(p => p.resumoFinanceiro?.valorTotal === menorValor);
+    // Fallback mantém o código original
+    const valores = this.proposals.map(p => p.resumoFinanceiro?.valorTotal || 0);
+    const menorValor = Math.min(...valores);
+    const melhorProposta = this.proposals.find(p => p.resumoFinanceiro?.valorTotal === menorValor);
 
         if (tabType === 'tecnica') {
             return {
