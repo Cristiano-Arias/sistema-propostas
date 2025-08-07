@@ -468,13 +468,13 @@
 
         <!-- Abas de Navegação -->
         <div class="abas-relatorio">
-            <button class="aba-btn ativa" onclick="mudarAba('tecnica')">
+            <button class="aba-btn ativa" onclick="mudarAba(event, 'tecnica')">
                 <i class="fas fa-cogs"></i> Análise Técnica
             </button>
-            <button class="aba-btn" onclick="mudarAba('comercial')">
+            <button class="aba-btn" onclick="mudarAba(event, 'comercial')">
                 <i class="fas fa-dollar-sign"></i> Análise Comercial
             </button>
-            <button class="aba-btn" onclick="mudarAba('consolidada')">
+            <button class="aba-btn" onclick="mudarAba(event, 'consolidada')">
                 <i class="fas fa-chart-bar"></i> Análise Consolidada
             </button>
         </div>
@@ -1531,6 +1531,7 @@
                 
                 // Risco de prazo
                 if (prazos.length > 0) {
+                    const mediaPrazo = prazos.reduce((sum, p) => sum + p.prazo, 0) / prazos.length;
                     const cvPrazo = (Math.max(...prazos.map(p => p.prazo)) - Math.min(...prazos.map(p => p.prazo))) / mediaPrazo;
                     if (cvPrazo > 0.3) riscos.push('Alta variação nos prazos propostos (risco de cronograma)');
                 }
@@ -2021,7 +2022,10 @@
             alert('Funcionalidade de exportação PDF será implementada em breve.\n\nPor enquanto, use Ctrl+P e selecione "Salvar como PDF".');
         }
 
-        function mudarAba(aba) {
+        function mudarAba(event, aba) {
+            // Prevenir comportamento padrão
+            if (event) event.preventDefault();
+            
             // Remover classe ativa de todas as abas
             document.querySelectorAll('.aba-btn').forEach(btn => {
                 btn.classList.remove('ativa');
@@ -2032,11 +2036,19 @@
                 conteudo.classList.remove('ativa');
             });
             
-            // Adicionar classe ativa à aba selecionada
-            event.target.closest('.aba-btn').classList.add('ativa');
+            // Adicionar classe ativa à aba clicada
+            if (event && event.target) {
+                const botao = event.target.closest('.aba-btn');
+                if (botao) {
+                    botao.classList.add('ativa');
+                }
+            }
             
             // Mostrar conteúdo da aba selecionada
-            document.getElementById(`aba-${aba}`).classList.add('ativa');
+            const conteudoAba = document.getElementById(`aba-${aba}`);
+            if (conteudoAba) {
+                conteudoAba.classList.add('ativa');
+            }
         }
 
         // Inicializar relatório quando carregar a página
