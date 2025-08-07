@@ -1430,39 +1430,132 @@
             analisarAspectosTecnicos() {
                 const insights = [];
                 
-                // Análise de prazos
-                const prazos = this.propostas.map(p => p.propostaTecnica?.prazoExecucao).filter(p => p);
-                if (prazos.length > 0 && new Set(prazos).size > 1) {
+                // 1. Análise detalhada de prazos
+                const prazos = this.propostas.map(p => ({
+                    empresa: p.dadosCadastrais.razaoSocial,
+                    prazo: parseInt(p.propostaTecnica?.prazoExecucao) || 0
+                })).filter(p => p.prazo > 0);
+                
+                if (prazos.length > 0) {
+                    const menorPrazo = Math.min(...prazos.map(p => p.prazo));
+                    const maiorPrazo = Math.max(...prazos.map(p => p.prazo));
+                    const mediaPrazo = prazos.reduce((sum, p) => sum + p.prazo, 0) / prazos.length;
+                    
+                    if (maiorPrazo - menorPrazo > 30) {
+                        const empresaMenorPrazo = prazos.find(p => p.prazo === menorPrazo).empresa;
+                        const empresaMaiorPrazo = prazos.find(p => p.prazo === maiorPrazo).empresa;
+                        
+                        insights.push({
+                            tipo: 'Análise Crítica de Prazos',
+                            icone: 'fas fa-clock',
+                            texto: `<strong>Divergência significativa identificada:</strong><br>
+                                    • Menor prazo: ${menorPrazo} dias (${empresaMenorPrazo})<br>
+                                    • Maior prazo: ${maiorPrazo} dias (${empresaMaiorPrazo})<br>
+                                    • Diferença: ${maiorPrazo - menorPrazo} dias (${((maiorPrazo - menorPrazo) / menorPrazo * 100).toFixed(0)}%)<br>
+                                    • Média: ${mediaPrazo.toFixed(0)} dias<br><br>
+                                    <strong>Recomendação:</strong> Solicitar cronograma físico-financeiro detalhado da empresa com menor prazo 
+                                    para verificar exequibilidade e avaliar riscos de atrasos.`
+                        });
+                    }
+                }
+                
+                // 2. Análise de equipe técnica
+                const equipes = this.propostas.map(p => ({
+                    empresa: p.dadosCadastrais.razaoSocial,
+                    totalProfissionais: p.maoObraTecnica?.reduce((sum, f) => sum + (parseInt(f[1]) || 0), 0) || 0,
+                    funcoes: p.maoObraTecnica?.length || 0
+                }));
+                
+                if (equipes.some(e => e.totalProfissionais > 0)) {
+                    const maiorEquipe = Math.max(...equipes.map(e => e.totalProfissionais));
+                    const menorEquipe = Math.min(...equipes.filter(e => e.totalProfissionais > 0).map(e => e.totalProfissionais));
+                    
                     insights.push({
-                        tipo: 'Divergência de Prazos',
-                        icone: 'fas fa-clock',
-                        texto: `Foram identificadas diferenças nos prazos de execução propostos. 
-                                As propostas variam entre ${Math.min(...prazos.map(p => parseInt(p)))} e ${Math.max(...prazos.map(p => parseInt(p)))} dias.
-                                Recomenda-se verificar a viabilidade técnica dos prazos menores.`
+                        tipo: 'Dimensionamento de Equipe',
+                        icone: 'fas fa-users',
+                        texto: `<strong>Análise de recursos humanos:</strong><br>
+                                ${equipes.map(e => `• ${e.empresa}: ${e.totalProfissionais} profissionais em ${e.funcoes} funções`).join('<br>')}<br><br>
+                                <strong>Observação:</strong> Equipes variam de ${menorEquipe} a ${maiorEquipe} profissionais.<br>
+                                ${maiorEquipe / menorEquipe > 2 ? '<strong>⚠️ Alerta:</strong> Diferença superior a 100% pode indicar interpretações divergentes do escopo.' : ''}
+                                <br><strong>Recomendação:</strong> Verificar se o dimensionamento proposto é adequado ao prazo e escopo dos serviços.`
                     });
                 }
                 
-                // Análise de completude
-                const completudes = this.propostas.map(p => this.calcularCompletude(p));
-                const mediaCompletude = completudes.reduce((a, b) => a + b, 0) / completudes.length;
+                // 3. Análise de metodologia e qualidade técnica
+                const metodologias = this.propostas.map(p => ({
+                    empresa: p.dadosCadastrais.razaoSocial,
+                    temMetodologia: p.propostaTecnica?.metodologia && p.propostaTecnica.metodologia !== 'Não informado',
+                    temGarantia: p.propostaTecnica?.garantias && p.propostaTecnica.garantias !== 'Não informado',
+                    completude: this.calcularCompletude(p)
+                }));
                 
-                if (mediaCompletude < 80) {
+                const bemDocumentadas = metodologias.filter(m => m.temMetodologia && m.temGarantia).length;
+                const malDocumentadas = metodologias.filter(m => !m.temMetodologia || !m.temGarantia);
+                
+                if (malDocumentadas.length > 0) {
                     insights.push({
-                        tipo: 'Documentação Incompleta',
+                        tipo: 'Qualidade da Documentação Técnica',
+                        icone: 'fas fa-file-alt',
+                        texto: `<strong>Avaliação da documentação:</strong><br>
+                                • Propostas bem documentadas: ${bemDocumentadas} de ${this.propostas.length}<br>
+                                • Média de completude: ${(metodologias.reduce((sum, m) => sum + m.completude, 0) / metodologias.length).toFixed(0)}%<br><br>
+                                <strong>Propostas com documentação insuficiente:</strong><br>
+                                ${malDocumentadas.map(m => `• ${m.empresa}: ${!m.temMetodologia ? 'Metodologia ausente' : ''} ${!m.temGarantia ? 'Garantia não especificada' : ''}`).join('<br>')}<br><br>
+                                <strong>Recomendação:</strong> Solicitar complementação de informações técnicas antes da adjudicação.`
+                    });
+                }
+                
+                // 4. Análise de materiais e equipamentos
+                const recursos = this.propostas.map(p => ({
+                    empresa: p.dadosCadastrais.razaoSocial,
+                    qtdMateriais: p.materiaisTecnica?.length || 0,
+                    qtdEquipamentos: p.equipamentosTecnica?.length || 0
+                }));
+                
+                const variacaoRecursos = recursos.some(r => r.qtdMateriais > 0 || r.qtdEquipamentos > 0);
+                if (variacaoRecursos) {
+                    insights.push({
+                        tipo: 'Recursos Materiais e Equipamentos',
+                        icone: 'fas fa-tools',
+                        texto: `<strong>Comparativo de recursos propostos:</strong><br>
+                                ${recursos.map(r => `• ${r.empresa}: ${r.qtdMateriais} tipos de materiais, ${r.qtdEquipamentos} tipos de equipamentos`).join('<br>')}<br><br>
+                                <strong>Análise:</strong> ${recursos.some(r => r.qtdMateriais === 0 && r.qtdEquipamentos === 0) ? 
+                                'Algumas empresas não detalharam recursos, o que pode indicar:<br>• Inclusão no BDI<br>• Subcontratação prevista<br>• Omissão de informações' : 
+                                'Todas as empresas especificaram recursos necessários.'}<br><br>
+                                <strong>Recomendação:</strong> Confirmar disponibilidade de recursos críticos para execução.`
+                    });
+                }
+                
+                // 5. Análise de riscos técnicos
+                const riscos = [];
+                
+                // Risco de prazo
+                if (prazos.length > 0) {
+                    const cvPrazo = (Math.max(...prazos.map(p => p.prazo)) - Math.min(...prazos.map(p => p.prazo))) / mediaPrazo;
+                    if (cvPrazo > 0.3) riscos.push('Alta variação nos prazos propostos (risco de cronograma)');
+                }
+                
+                // Risco de equipe
+                if (equipes.some(e => e.totalProfissionais < 5)) {
+                    riscos.push('Equipes reduzidas propostas (risco de capacidade produtiva)');
+                }
+                
+                // Risco de documentação
+                if (metodologias.filter(m => m.completude < 70).length > 0) {
+                    riscos.push('Propostas com baixa completude técnica (risco de indefinições)');
+                }
+                
+                if (riscos.length > 0) {
+                    insights.push({
+                        tipo: 'Matriz de Riscos Técnicos',
                         icone: 'fas fa-exclamation-triangle',
-                        texto: `A média de completude das propostas técnicas é de ${mediaCompletude.toFixed(0)}%. 
-                                Recomenda-se solicitar complementação de informações aos fornecedores.`
-                    });
-                }
-                
-                // Análise de garantias
-                const garantias = this.propostas.map(p => p.propostaTecnica?.garantias).filter(g => g);
-                if (garantias.length > 0 && new Set(garantias).size > 1) {
-                    insights.push({
-                        tipo: 'Variação de Garantias',
-                        icone: 'fas fa-shield-alt',
-                        texto: `As propostas apresentam diferentes períodos de garantia. 
-                                Verificar se as garantias oferecidas atendem aos requisitos mínimos do TR.`
+                        texto: `<strong>Riscos identificados na análise técnica:</strong><br>
+                                ${riscos.map((r, i) => `${i + 1}. ${r}`).join('<br>')}<br><br>
+                                <strong>Mitigação sugerida:</strong><br>
+                                • Realizar reunião de alinhamento técnico pré-contratual<br>
+                                • Estabelecer marcos de verificação no cronograma<br>
+                                • Definir penalidades contratuais para atrasos<br>
+                                • Exigir seguro-garantia de execução`
                     });
                 }
                 
@@ -1472,48 +1565,173 @@
             analisarAspectosComerciais() {
                 const insights = [];
                 
-                // Análise de variação de preços
-                const valores = this.propostas.map(p => p.resumoFinanceiro?.valorTotal || 0).filter(v => v > 0);
+                // 1. Análise detalhada de valores
+                const valores = this.propostas.map(p => ({
+                    empresa: p.dadosCadastrais.razaoSocial,
+                    valor: p.resumoFinanceiro?.valorTotal || 0,
+                    bdi: p.resumoFinanceiro?.bdiPercentual || 0,
+                    custoDireto: p.resumoFinanceiro?.custoDireto || 0
+                })).filter(v => v.valor > 0);
+                
                 if (valores.length > 0) {
-                    const menorValor = Math.min(...valores);
-                    const maiorValor = Math.max(...valores);
+                    const menorValor = Math.min(...valores.map(v => v.valor));
+                    const maiorValor = Math.max(...valores.map(v => v.valor));
+                    const mediaValor = valores.reduce((sum, v) => sum + v.valor, 0) / valores.length;
                     const variacao = ((maiorValor - menorValor) / menorValor * 100).toFixed(1);
                     
-                    if (variacao > 20) {
-                        insights.push({
-                            tipo: 'Alta Variação de Preços',
-                            icone: 'fas fa-chart-line',
-                            texto: `Identificada variação de ${variacao}% entre o menor e maior valor. 
-                                    Menor valor: ${this.formatarMoeda(menorValor)}. 
-                                    Maior valor: ${this.formatarMoeda(maiorValor)}.
-                                    Recomenda-se análise detalhada dos itens que causam esta diferença.`
-                        });
-                    }
-                }
-                
-                // Análise de BDI
-                const bdis = this.propostas.map(p => p.resumoFinanceiro?.bdiPercentual || 0).filter(b => b > 0);
-                if (bdis.length > 0) {
-                    const mediaBDI = bdis.reduce((a, b) => a + b, 0) / bdis.length;
+                    // Encontrar empresas
+                    const empresaMenor = valores.find(v => v.valor === menorValor);
+                    const empresaMaior = valores.find(v => v.valor === maiorValor);
                     
-                    if (mediaBDI > 30) {
-                        insights.push({
-                            tipo: 'BDI Elevado',
-                            icone: 'fas fa-percentage',
-                            texto: `A média de BDI das propostas é de ${mediaBDI.toFixed(1)}%, acima do usual para este tipo de serviço. 
-                                    Recomenda-se solicitar demonstrativo de composição do BDI detalhado.`
-                        });
-                    }
+                    insights.push({
+                        tipo: 'Análise Detalhada de Preços',
+                        icone: 'fas fa-chart-line',
+                        texto: `<strong>Resumo da análise de valores:</strong><br>
+                                • Menor valor: ${this.formatarMoeda(menorValor)} (${empresaMenor.empresa})<br>
+                                • Maior valor: ${this.formatarMoeda(maiorValor)} (${empresaMaior.empresa})<br>
+                                • Valor médio: ${this.formatarMoeda(mediaValor)}<br>
+                                • Variação: ${variacao}% entre menor e maior<br><br>
+                                <strong>Análise estatística:</strong><br>
+                                • Desvio do menor valor em relação à média: ${(((menorValor - mediaValor) / mediaValor) * 100).toFixed(1)}%<br>
+                                • ${variacao > 20 ? '⚠️ <strong>Alerta:</strong> Variação superior a 20% indica possível divergência na interpretação do escopo' : '✓ Variação dentro de parâmetros aceitáveis'}<br><br>
+                                <strong>Recomendação:</strong> ${variacao > 20 ? 'Realizar diligência para confirmar escopo com todos os licitantes' : 'Valores apresentam consistência adequada'}`
+                    });
                 }
                 
-                // Análise de custos unitários
+                // 2. Análise de composição de custos
+                const composicoes = valores.map(v => {
+                    const servicos = this.propostas.find(p => p.dadosCadastrais.razaoSocial === v.empresa)?.resumoFinanceiro?.totalServicos || 0;
+                    const maoObra = this.propostas.find(p => p.dadosCadastrais.razaoSocial === v.empresa)?.resumoFinanceiro?.totalMaoObra || 0;
+                    const materiais = this.propostas.find(p => p.dadosCadastrais.razaoSocial === v.empresa)?.resumoFinanceiro?.totalMateriais || 0;
+                    const equipamentos = this.propostas.find(p => p.dadosCadastrais.razaoSocial === v.empresa)?.resumoFinanceiro?.totalEquipamentos || 0;
+                    
+                    return {
+                        empresa: v.empresa,
+                        servicos: servicos,
+                        maoObra: maoObra,
+                        materiais: materiais,
+                        equipamentos: equipamentos,
+                        total: servicos + maoObra + materiais + equipamentos
+                    };
+                });
+                
+                if (composicoes.some(c => c.total > 0)) {
+                    const analiseComposicao = composicoes.map(c => {
+                        const percServicos = c.total > 0 ? (c.servicos / c.total * 100).toFixed(1) : 0;
+                        const percMaoObra = c.total > 0 ? (c.maoObra / c.total * 100).toFixed(1) : 0;
+                        const percMateriais = c.total > 0 ? (c.materiais / c.total * 100).toFixed(1) : 0;
+                        const percEquipamentos = c.total > 0 ? (c.equipamentos / c.total * 100).toFixed(1) : 0;
+                        
+                        return `• ${c.empresa}:<br>
+                                &nbsp;&nbsp;- Serviços: ${percServicos}% | Mão de obra: ${percMaoObra}%<br>
+                                &nbsp;&nbsp;- Materiais: ${percMateriais}% | Equipamentos: ${percEquipamentos}%`;
+                    }).join('<br>');
+                    
+                    insights.push({
+                        tipo: 'Composição de Custos Diretos',
+                        icone: 'fas fa-calculator',
+                        texto: `<strong>Distribuição percentual dos custos:</strong><br>
+                                ${analiseComposicao}<br><br>
+                                <strong>Análise:</strong> Variações significativas na composição podem indicar:<br>
+                                • Diferentes estratégias de execução<br>
+                                • Interpretações divergentes do escopo<br>
+                                • Diferentes níveis de verticalização<br><br>
+                                <strong>Recomendação:</strong> Avaliar se as composições são compatíveis com a natureza dos serviços.`
+                    });
+                }
+                
+                // 3. Análise de BDI
+                const bdis = valores.filter(v => v.bdi > 0);
+                if (bdis.length > 0) {
+                    const menorBDI = Math.min(...bdis.map(b => b.bdi));
+                    const maiorBDI = Math.max(...bdis.map(b => b.bdi));
+                    const mediaBDI = bdis.reduce((sum, b) => sum + b.bdi, 0) / bdis.length;
+                    
+                    // Análise de componentes do BDI
+                    const componentesBDI = this.propostas.map(p => ({
+                        empresa: p.dadosCadastrais.razaoSocial,
+                        itens: p.bdi || []
+                    })).filter(c => c.itens.length > 0);
+                    
+                    insights.push({
+                        tipo: 'Análise Detalhada do BDI',
+                        icone: 'fas fa-percentage',
+                        texto: `<strong>Análise comparativa do BDI:</strong><br>
+                                • BDI mínimo: ${menorBDI.toFixed(1)}%<br>
+                                • BDI máximo: ${maiorBDI.toFixed(1)}%<br>
+                                • BDI médio: ${mediaBDI.toFixed(1)}%<br>
+                                • Variação: ${(maiorBDI - menorBDI).toFixed(1)} pontos percentuais<br><br>
+                                <strong>Referências (Acórdão TCU 2622/2013):</strong><br>
+                                • Construção civil: 20,34% a 25,00%<br>
+                                • Reformas: 24,23% a 28,82%<br><br>
+                                ${mediaBDI > 28.82 ? '⚠️ <strong>Alerta:</strong> BDI médio acima dos parâmetros do TCU' : '✓ BDI dentro dos parâmetros referenciais'}<br><br>
+                                <strong>Recomendação:</strong> ${maiorBDI > 28.82 ? 'Solicitar detalhamento e justificativa para BDI acima do referencial' : 'BDI apresentado está adequado'}`
+                    });
+                }
+                
+                // 4. Análise de preços unitários críticos
                 const servicosComuns = this.coletarItensUnicos('servicosComercial', 1);
                 if (servicosComuns.length > 0) {
+                    // Analisar os 5 serviços mais relevantes
+                    const servicosRelevantes = servicosComuns.slice(0, 5).map(servico => {
+                        const precos = this.propostas.map(p => {
+                            const item = p.servicosComercial?.find(s => s[1] === servico);
+                            return {
+                                empresa: p.dadosCadastrais.razaoSocial,
+                                precoUnit: item ? this.converterParaNumero(item[4]) : 0,
+                                quantidade: item ? parseFloat(item[3]) || 0 : 0
+                            };
+                        }).filter(p => p.precoUnit > 0);
+                        
+                        if (precos.length > 0) {
+                            const menorPreco = Math.min(...precos.map(p => p.precoUnit));
+                            const maiorPreco = Math.max(...precos.map(p => p.precoUnit));
+                            const variacaoPreco = ((maiorPreco - menorPreco) / menorPreco * 100).toFixed(0);
+                            
+                            return {
+                                servico: servico.substring(0, 50) + (servico.length > 50 ? '...' : ''),
+                                variacao: variacaoPreco,
+                                critico: variacaoPreco > 30
+                            };
+                        }
+                        return null;
+                    }).filter(s => s !== null);
+                    
+                    const servicosCriticos = servicosRelevantes.filter(s => s.critico);
+                    
+                    if (servicosRelevantes.length > 0) {
+                        insights.push({
+                            tipo: 'Análise de Preços Unitários',
+                            icone: 'fas fa-search-dollar',
+                            texto: `<strong>Variação nos principais serviços:</strong><br>
+                                    ${servicosRelevantes.map(s => `• ${s.servico}: ${s.variacao}% ${s.critico ? '⚠️' : '✓'}`).join('<br>')}<br><br>
+                                    ${servicosCriticos.length > 0 ? 
+                                    `<strong>⚠️ Serviços com variação crítica (>30%):</strong> ${servicosCriticos.length}<br>
+                                    <strong>Recomendação:</strong> Solicitar memória de cálculo para itens com alta variação` : 
+                                    '<strong>✓ Preços unitários apresentam consistência adequada</strong>'}`
+                        });
+                    }
+                }
+                
+                // 5. Análise de exequibilidade
+                const menorValorGlobal = Math.min(...valores.map(v => v.valor));
+                const valorEstimado = this.processo?.valorEstimado || 0;
+                
+                if (valorEstimado > 0) {
+                    const percentualMenor = ((menorValorGlobal / valorEstimado) * 100).toFixed(1);
+                    
                     insights.push({
-                        tipo: 'Comparação de Preços Unitários',
+                        tipo: 'Análise de Exequibilidade',
                         icone: 'fas fa-balance-scale',
-                        texto: `Foram identificados ${servicosComuns.length} serviços em comum nas propostas. 
-                                Recomenda-se análise detalhada dos preços unitários para identificar possíveis discrepâncias.`
+                        texto: `<strong>Comparação com valor estimado:</strong><br>
+                                • Valor estimado: ${this.formatarMoeda(valorEstimado)}<br>
+                                • Menor proposta: ${this.formatarMoeda(menorValorGlobal)} (${percentualMenor}% do estimado)<br>
+                                • Economia potencial: ${this.formatarMoeda(valorEstimado - menorValorGlobal)}<br><br>
+                                ${percentualMenor < 70 ? 
+                                '⚠️ <strong>Alerta de inexequibilidade:</strong> Proposta inferior a 70% do valor estimado<br><strong>Ação necessária:</strong> Solicitar demonstração de exequibilidade conforme art. 48 da Lei 8.666/93' : 
+                                percentualMenor < 85 ? 
+                                '⚠️ <strong>Atenção:</strong> Desconto significativo - verificar composição de custos' :
+                                '✓ Valor dentro de parâmetros normais de mercado'}`
                     });
                 }
                 
@@ -1523,40 +1741,181 @@
             gerarRecomendacoes() {
                 const insights = [];
                 
-                // Proposta vencedora
-                const valores = this.propostas.map((p, index) => ({
-                    index,
-                    empresa: p.dadosCadastrais.razaoSocial,
-                    valor: p.resumoFinanceiro?.valorTotal || 0
-                })).filter(v => v.valor > 0).sort((a, b) => a.valor - b.valor);
+                // 1. Análise multicritério para escolha da proposta
+                const analiseMulticriterio = this.propostas.map(p => {
+                    const valor = p.resumoFinanceiro?.valorTotal || 0;
+                    const prazo = parseInt(p.propostaTecnica?.prazoExecucao) || 999;
+                    const completude = this.calcularCompletude(p);
+                    const equipe = p.maoObraTecnica?.reduce((sum, f) => sum + (parseInt(f[1]) || 0), 0) || 0;
+                    const bdi = p.resumoFinanceiro?.bdiPercentual || 0;
+                    
+                    // Pontuação (quanto menor melhor para valor e prazo)
+                    const menorValor = Math.min(...this.propostas.map(prop => prop.resumoFinanceiro?.valorTotal || Infinity));
+                    const menorPrazo = Math.min(...this.propostas.map(prop => parseInt(prop.propostaTecnica?.prazoExecucao) || Infinity));
+                    
+                    const scoreValor = valor > 0 ? (menorValor / valor) * 40 : 0; // 40% peso
+                    const scorePrazo = prazo < 999 ? (menorPrazo / prazo) * 20 : 0; // 20% peso
+                    const scoreCompletude = (completude / 100) * 20; // 20% peso
+                    const scoreEquipe = equipe > 0 ? Math.min(equipe / 10, 1) * 10 : 0; // 10% peso
+                    const scoreBDI = bdi > 0 && bdi <= 28.82 ? 10 : 5; // 10% peso
+                    
+                    const scoreTotal = scoreValor + scorePrazo + scoreCompletude + scoreEquipe + scoreBDI;
+                    
+                    return {
+                        empresa: p.dadosCadastrais.razaoSocial,
+                        valor: valor,
+                        prazo: prazo,
+                        completude: completude,
+                        equipe: equipe,
+                        bdi: bdi,
+                        scoreTotal: scoreTotal,
+                        scores: {
+                            valor: scoreValor.toFixed(1),
+                            prazo: scorePrazo.toFixed(1),
+                            completude: scoreCompletude.toFixed(1),
+                            equipe: scoreEquipe.toFixed(1),
+                            bdi: scoreBDI.toFixed(1)
+                        }
+                    };
+                }).sort((a, b) => b.scoreTotal - a.scoreTotal);
                 
-                if (valores.length > 0) {
-                    insights.push({
-                        tipo: 'Proposta Mais Vantajosa',
-                        icone: 'fas fa-trophy',
-                        texto: `Baseado exclusivamente no critério de menor preço, a proposta da empresa 
-                                ${valores[0].empresa} apresenta o menor valor global: ${this.formatarMoeda(valores[0].valor)}.`
-                    });
-                }
-                
-                // Verificações necessárias
-                if (this.divergencias > 0) {
-                    insights.push({
-                        tipo: 'Divergências Identificadas',
-                        icone: 'fas fa-exclamation-circle',
-                        texto: `Foram identificadas ${this.divergencias} divergências significativas entre as propostas. 
-                                Recomenda-se diligência para esclarecimento dos pontos divergentes antes da adjudicação.`
-                    });
-                }
-                
-                // Documentação
                 insights.push({
-                    tipo: 'Próximos Passos',
+                    tipo: 'Análise Multicritério - Ranking Final',
+                    icone: 'fas fa-trophy',
+                    texto: `<strong>Classificação geral das propostas (análise ponderada):</strong><br><br>
+                            ${analiseMulticriterio.map((a, index) => 
+                                `<strong>${index + 1}º lugar: ${a.empresa}</strong><br>
+                                • Pontuação total: ${a.scoreTotal.toFixed(1)}/100<br>
+                                • Valor: ${this.formatarMoeda(a.valor)} (score: ${a.scores.valor})<br>
+                                • Prazo: ${a.prazo} dias (score: ${a.scores.prazo})<br>
+                                • Documentação: ${a.completude}% completa (score: ${a.scores.completude})<br>
+                                • Equipe: ${a.equipe} profissionais (score: ${a.scores.equipe})<br>
+                                • BDI: ${a.bdi}% (score: ${a.scores.bdi})<br>`
+                            ).join('<br>')}<br>
+                            <strong>Metodologia:</strong> Valor (40%), Prazo (20%), Documentação (20%), Equipe (10%), BDI (10%)`
+                });
+                
+                // 2. Análise de conformidade e riscos
+                const empresaRecomendada = analiseMulticriterio[0];
+                const riscos = [];
+                const conformidades = [];
+                
+                // Verificar riscos
+                if (empresaRecomendada.bdi > 28.82) {
+                    riscos.push({
+                        tipo: 'BDI acima do referencial TCU',
+                        acao: 'Solicitar justificativa detalhada e composição do BDI'
+                    });
+                }
+                
+                if (empresaRecomendada.completude < 80) {
+                    riscos.push({
+                        tipo: 'Documentação incompleta',
+                        acao: 'Solicitar complementação antes da contratação'
+                    });
+                }
+                
+                const menorValor = Math.min(...this.propostas.map(p => p.resumoFinanceiro?.valorTotal || Infinity));
+                if (empresaRecomendada.valor > menorValor * 1.1) {
+                    riscos.push({
+                        tipo: 'Não é a proposta de menor valor',
+                        acao: 'Justificar escolha baseada em critérios técnicos se não for menor preço'
+                    });
+                }
+                
+                // Verificar conformidades
+                if (empresaRecomendada.prazo <= 180) {
+                    conformidades.push('Prazo de execução adequado');
+                }
+                
+                if (empresaRecomendada.equipe >= 10) {
+                    conformidades.push('Equipe técnica robusta');
+                }
+                
+                if (empresaRecomendada.bdi <= 28.82) {
+                    conformidades.push('BDI dentro dos parâmetros TCU');
+                }
+                
+                insights.push({
+                    tipo: 'Análise de Conformidade e Riscos',
+                    icone: 'fas fa-clipboard-check',
+                    texto: `<strong>Empresa melhor classificada: ${empresaRecomendada.empresa}</strong><br><br>
+                            <strong>✓ Pontos positivos:</strong><br>
+                            ${conformidades.map(c => `• ${c}`).join('<br>')}<br><br>
+                            ${riscos.length > 0 ? 
+                            `<strong>⚠️ Pontos de atenção:</strong><br>
+                            ${riscos.map(r => `• ${r.tipo}<br>&nbsp;&nbsp;<em>Ação: ${r.acao}</em>`).join('<br>')}<br><br>` : 
+                            '<strong>✓ Nenhum risco significativo identificado</strong><br><br>'}
+                            <strong>Recomendação:</strong> ${riscos.length === 0 ? 
+                            'Prosseguir com a contratação após verificação de documentos de habilitação' : 
+                            'Realizar diligências para esclarecer pontos de atenção antes da adjudicação'}`
+                });
+                
+                // 3. Checklist de próximos passos
+                const checklistItems = [
+                    {
+                        etapa: 'Análise de documentação',
+                        itens: [
+                            'Verificar autenticidade dos documentos de habilitação',
+                            'Confirmar regularidade fiscal e trabalhista',
+                            'Validar atestados de capacidade técnica',
+                            'Verificar capital social mínimo e índices contábeis'
+                        ]
+                    },
+                    {
+                        etapa: 'Diligências técnicas',
+                        itens: [
+                            'Solicitar cronograma físico-financeiro detalhado',
+                            'Requerer ART/RRT do responsável técnico',
+                            'Confirmar disponibilidade de equipamentos críticos',
+                            'Validar composições de custos unitários'
+                        ]
+                    },
+                    {
+                        etapa: 'Negociação e contratação',
+                        itens: [
+                            'Negociar redução de preço com o primeiro colocado',
+                            'Ajustar cronograma conforme necessidades do órgão',
+                            'Definir marcos de medição e pagamento',
+                            'Estabelecer matriz de riscos contratuais'
+                        ]
+                    }
+                ];
+                
+                insights.push({
+                    tipo: 'Roteiro de Ações - Próximos Passos',
                     icone: 'fas fa-tasks',
-                    texto: `1. Verificar documentação de habilitação da empresa vencedora<br>
-                            2. Confirmar atendimento integral aos requisitos do TR<br>
-                            3. Solicitar esclarecimentos sobre divergências identificadas<br>
-                            4. Elaborar parecer técnico conclusivo`
+                    texto: `<strong>Checklist para conclusão do processo:</strong><br><br>
+                            ${checklistItems.map(item => 
+                                `<strong>${item.etapa}:</strong><br>
+                                ${item.itens.map(i => `☐ ${i}`).join('<br>')}`
+                            ).join('<br><br>')}<br><br>
+                            <strong>Prazo estimado:</strong> 10-15 dias úteis para conclusão de todas as etapas<br>
+                            <strong>Responsável sugerido:</strong> Comissão de Licitação com apoio da área técnica`
+                });
+                
+                // 4. Resumo executivo para decisão
+                const economia = this.processo?.valorEstimado ? 
+                    ((this.processo.valorEstimado - empresaRecomendada.valor) / this.processo.valorEstimado * 100).toFixed(1) : 0;
+                
+                insights.push({
+                    tipo: 'Resumo Executivo para Decisão',
+                    icone: 'fas fa-file-signature',
+                    texto: `<strong>PARECER TÉCNICO CONCLUSIVO</strong><br><br>
+                            <strong>Processo:</strong> ${this.processo?.numeroProcesso || 'N/A'}<br>
+                            <strong>Objeto:</strong> ${this.processo?.objeto || 'Conforme TR'}<br>
+                            <strong>Propostas analisadas:</strong> ${this.propostas.length}<br><br>
+                            <strong>Recomendação:</strong> ${empresaRecomendada.empresa}<br>
+                            <strong>Valor:</strong> ${this.formatarMoeda(empresaRecomendada.valor)}<br>
+                            <strong>Economia:</strong> ${economia}% em relação ao valor estimado<br>
+                            <strong>Prazo:</strong> ${empresaRecomendada.prazo} dias<br><br>
+                            <strong>Fundamentação:</strong><br>
+                            1. Melhor pontuação na análise multicritério (${empresaRecomendada.scoreTotal.toFixed(1)}/100)<br>
+                            2. Atende aos requisitos técnicos do TR<br>
+                            3. Preço compatível com o mercado<br>
+                            4. ${riscos.length === 0 ? 'Não foram identificados riscos significativos' : 'Riscos identificados são mitigáveis'}<br><br>
+                            <strong>Conclusão:</strong> Recomenda-se a adjudicação à empresa ${empresaRecomendada.empresa}, 
+                            condicionada ao atendimento dos requisitos de habilitação e esclarecimentos pendentes.`
                 });
                 
                 return insights;
