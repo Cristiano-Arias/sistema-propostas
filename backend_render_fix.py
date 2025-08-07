@@ -9,7 +9,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import Flask, request, jsonify, send_from_directory, session
+from flask import Flask, request, jsonify, send_from_directory, session, send_file
 from flask_cors import CORS
 import jwt
 import bcrypt
@@ -47,7 +47,7 @@ if os.environ.get('FLASK_ENV') == 'production':
     CORS(app, origins=allowed_origins)
 else:
     # Em desenvolvimento, permitir qualquer origem
-    CORS(app, origins=['*'])
+    CORS(app, origins=['https://SEU-DOMINIO.com'])
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -305,10 +305,12 @@ def login():
             log_auditoria('LOGIN_FALHOU', detalhes={'email': email, 'motivo': 'usuario_nao_encontrado'})
             return jsonify({'message': 'Usuário não encontrado'}), 404
         
-        # Verificar senha
-        if not bcrypt.checkpw(senha.encode('utf-8'), usuario['senha']):
+        # Verificar senha (garante bytes vs str)
+        hash_db = usuario['senha']
+        if isinstance(hash_db, str):
+            hash_db = hash_db.encode('utf-8')
+        if not bcrypt.checkpw(senha.encode('utf-8'), hash_db):
             conn.close()
-            log_auditoria('LOGIN_FALHOU', usuario_id=usuario['id'], detalhes={'email': email, 'motivo': 'senha_incorreta'})
             return jsonify({'message': 'Senha incorreta'}), 401
         
         # Gerar token
@@ -320,7 +322,11 @@ def login():
         log_auditoria('LOGIN_SUCESSO', usuario_id=usuario['id'], detalhes={'email': email, 'perfil': usuario['perfil']})
         
         return jsonify({
-            'token': token,
+            'success': True,
+            'message': 'Login OK',
+            'token': token,              # compat com front antigo
+            'access_token': token,       # compat com front novo
+            'refresh_token': None,       # placeholder (se quiser implementar depois)
             'usuario': {
                 'id': usuario['id'],
                 'nome': usuario['nome'],
