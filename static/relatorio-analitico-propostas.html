@@ -375,83 +375,11 @@
         .conteudo-aba.ativa {
             display: block;
         }
+
+        /* Responsividade */
         @media (max-width: 768px) {
             .relatorio-container {
                 padding: 10px;
-            gerarTabelaMateriaisTecnica() {
-                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">1.5 Materiais - Quantidades</h3>';
-                
-                const materiaisUnicos = this.coletarItensUnicos('materiaisTecnica', 0); // índice 0 = material
-                
-                if (materiaisUnicos.length === 0) {
-                    return html + '<p style="color: #666; padding: 20px;">Nenhum material técnico detalhado nas propostas.</p>';
-                }
-
-                html += '<table class="tabela-comparativa">';
-                html += '<thead><tr><th>Material</th>';
-                
-                this.propostas.forEach(p => {
-                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Qtd | Unid</small></th>`;
-                });
-                html += '</tr></thead><tbody>';
-
-                materiaisUnicos.forEach(material => {
-                    html += `<tr><td><strong>${material}</strong></td>`;
-                    
-                    this.propostas.forEach(p => {
-                        const materialProposta = p.materiaisTecnica?.find(m => m[0] === material);
-                        if (materialProposta) {
-                            const qtd = materialProposta[3] || '-';
-                            const unid = materialProposta[2] || '-';
-                            html += `<td>${qtd} ${unid}</td>`;
-                        } else {
-                            html += '<td><span class="valor-ausente">Não informado</span></td>';
-                        }
-                    });
-                    
-                    html += '</tr>';
-                });
-
-                html += '</tbody></table>';
-                return html;
-            }
-
-            gerarTabelaEquipamentosTecnica() {
-                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">1.6 Equipamentos - Quantidades</h3>';
-                
-                const equipamentosUnicos = this.coletarItensUnicos('equipamentosTecnica', 0); // índice 0 = equipamento
-                
-                if (equipamentosUnicos.length === 0) {
-                    return html + '<p style="color: #666; padding: 20px;">Nenhum equipamento técnico detalhado nas propostas.</p>';
-                }
-
-                html += '<table class="tabela-comparativa">';
-                html += '<thead><tr><th>Equipamento</th>';
-                
-                this.propostas.forEach(p => {
-                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Qtd | Tempo</small></th>`;
-                });
-                html += '</tr></thead><tbody>';
-
-                equipamentosUnicos.forEach(equipamento => {
-                    html += `<tr><td><strong>${equipamento}</strong></td>`;
-                    
-                    this.propostas.forEach(p => {
-                        const equipamentoProposta = p.equipamentosTecnica?.find(e => e[0] === equipamento);
-                        if (equipamentoProposta) {
-                            const qtd = equipamentoProposta[3] || '-';
-                            const tempo = equipamentoProposta[4] || '-';
-                            html += `<td>${qtd} unid. | ${tempo} meses</td>`;
-                        } else {
-                            html += '<td><span class="valor-ausente">Não informado</span></td>';
-                        }
-                    });
-                    
-                    html += '</tr>';
-                });
-
-                html += '</tbody></table>';
-                return html;
             }
 
             .tabela-comparativa {
@@ -856,6 +784,7 @@
                 return secao;
             }
 
+            // TABELAS TÉCNICAS
             gerarTabelaDadosCadastrais() {
                 let html = '<h3 style="margin-bottom: 15px;">1.1 Dados Cadastrais</h3>';
                 html += '<table class="tabela-comparativa">';
@@ -1004,6 +933,135 @@
                             html += `<td>${qtd} profissionais | ${meses} meses</td>`;
                         } else {
                             html += '<td><span class="valor-ausente">Não informado</span></td>';
+                        }
+                    });
+                    
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                return html;
+            }
+
+            gerarTabelaMateriaisTecnica() {
+                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">1.5 Materiais - Quantidades</h3>';
+                
+                const materiaisUnicos = this.coletarItensUnicos('materiaisTecnica', 0); // índice 0 = material
+                
+                if (materiaisUnicos.length === 0) {
+                    return html + '<p style="color: #666; padding: 20px;">Nenhum material técnico detalhado nas propostas.</p>';
+                }
+
+                html += '<table class="tabela-comparativa">';
+                html += '<thead><tr><th>Material</th>';
+                
+                this.propostas.forEach(p => {
+                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Qtd | Unid</small></th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                materiaisUnicos.forEach(material => {
+                    html += `<tr><td><strong>${material}</strong></td>`;
+                    
+                    this.propostas.forEach(p => {
+                        const materialProposta = p.materiaisTecnica?.find(m => m[0] === material);
+                        if (materialProposta) {
+                            const qtd = materialProposta[3] || '-';
+                            const unid = materialProposta[2] || '-';
+                            html += `<td>${qtd} ${unid}</td>`;
+                        } else {
+                            html += '<td><span class="valor-ausente">Não informado</span></td>';
+                        }
+                    });
+                    
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                return html;
+            }
+
+            gerarTabelaEquipamentosTecnica() {
+                let html = '<h3 style="margin-top: 30px; margin-bottom: 15px;">1.6 Equipamentos - Quantidades</h3>';
+                
+                const equipamentosUnicos = this.coletarItensUnicos('equipamentosTecnica', 0); // índice 0 = equipamento
+                
+                if (equipamentosUnicos.length === 0) {
+                    return html + '<p style="color: #666; padding: 20px;">Nenhum equipamento técnico detalhado nas propostas.</p>';
+                }
+
+                html += '<table class="tabela-comparativa">';
+                html += '<thead><tr><th>Equipamento</th>';
+                
+                this.propostas.forEach(p => {
+                    html += `<th>${p.dadosCadastrais.razaoSocial}<br><small>Qtd | Tempo</small></th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                equipamentosUnicos.forEach(equipamento => {
+                    html += `<tr><td><strong>${equipamento}</strong></td>`;
+                    
+                    this.propostas.forEach(p => {
+                        const equipamentoProposta = p.equipamentosTecnica?.find(e => e[0] === equipamento);
+                        if (equipamentoProposta) {
+                            const qtd = equipamentoProposta[3] || '-';
+                            const tempo = equipamentoProposta[4] || '-';
+                            html += `<td>${qtd} unid. | ${tempo} meses</td>`;
+                        } else {
+                            html += '<td><span class="valor-ausente">Não informado</span></td>';
+                        }
+                    });
+                    
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                return html;
+            }
+
+            // TABELAS COMERCIAIS
+            gerarTabelaResumoFinanceiro() {
+                let html = '<h3 style="margin-bottom: 15px;">2.1 Resumo Financeiro</h3>';
+                html += '<table class="tabela-comparativa">';
+                html += '<thead><tr><th>Componente</th>';
+                
+                this.propostas.forEach(p => {
+                    html += `<th>${p.dadosCadastrais.razaoSocial}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                // Componentes do resumo
+                const componentes = [
+                    { label: 'Total Serviços', key: 'totalServicos' },
+                    { label: 'Total Mão de Obra', key: 'totalMaoObra' },
+                    { label: 'Total Materiais', key: 'totalMateriais' },
+                    { label: 'Total Equipamentos', key: 'totalEquipamentos' },
+                    { label: 'Custo Direto', key: 'custoDireto' },
+                    { label: 'BDI (%)', key: 'bdiPercentual', tipo: 'percentual' },
+                    { label: 'BDI (R$)', key: 'bdiValor' },
+                    { label: 'VALOR TOTAL', key: 'valorTotal', destaque: true }
+                ];
+
+                componentes.forEach(comp => {
+                    const estilo = comp.destaque ? 'background: #34495e; color: white;' : '';
+                    html += `<tr><td style="${estilo}"><strong>${comp.label}</strong></td>`;
+                    
+                    const valores = [];
+                    this.propostas.forEach(p => {
+                        const valor = p.resumoFinanceiro?.[comp.key] || 0;
+                        if (comp.tipo !== 'percentual') {
+                            valores.push(valor);
+                        }
+                        
+                        if (comp.tipo === 'percentual') {
+                            html += `<td style="${estilo}">${valor}%</td>`;
+                        } else {
+                            const classeValor = comp.destaque ? this.getClasseValor(valor, valores) : '';
+                            html += `<td class="${classeValor}" style="${estilo}">
+                                ${comp.destaque ? '<strong>' : ''}
+                                R$ ${this.formatarMoeda(valor)}
+                                ${comp.destaque ? '</strong>' : ''}
+                            </td>`;
                         }
                     });
                     
@@ -1258,58 +1316,6 @@
                 return html;
             }
 
-            gerarTabelaResumoFinanceiro() {
-                let html = '<h3 style="margin-bottom: 15px;">2.1 Resumo Financeiro</h3>';
-                html += '<table class="tabela-comparativa">';
-                html += '<thead><tr><th>Componente</th>';
-                
-                this.propostas.forEach(p => {
-                    html += `<th>${p.dadosCadastrais.razaoSocial}</th>`;
-                });
-                html += '</tr></thead><tbody>';
-
-                // Componentes do resumo
-                const componentes = [
-                    { label: 'Total Serviços', key: 'totalServicos' },
-                    { label: 'Total Mão de Obra', key: 'totalMaoObra' },
-                    { label: 'Total Materiais', key: 'totalMateriais' },
-                    { label: 'Total Equipamentos', key: 'totalEquipamentos' },
-                    { label: 'Custo Direto', key: 'custoDireto' },
-                    { label: 'BDI (%)', key: 'bdiPercentual', tipo: 'percentual' },
-                    { label: 'BDI (R$)', key: 'bdiValor' },
-                    { label: 'VALOR TOTAL', key: 'valorTotal', destaque: true }
-                ];
-
-                componentes.forEach(comp => {
-                    const estilo = comp.destaque ? 'background: #34495e; color: white;' : '';
-                    html += `<tr><td style="${estilo}"><strong>${comp.label}</strong></td>`;
-                    
-                    const valores = [];
-                    this.propostas.forEach(p => {
-                        const valor = p.resumoFinanceiro?.[comp.key] || 0;
-                        if (comp.tipo !== 'percentual') {
-                            valores.push(valor);
-                        }
-                        
-                        if (comp.tipo === 'percentual') {
-                            html += `<td style="${estilo}">${valor}%</td>`;
-                        } else {
-                            const classeValor = comp.destaque ? this.getClasseValor(valor, valores) : '';
-                            html += `<td class="${classeValor}" style="${estilo}">
-                                ${comp.destaque ? '<strong>' : ''}
-                                R$ ${this.formatarMoeda(valor)}
-                                ${comp.destaque ? '</strong>' : ''}
-                            </td>`;
-                        }
-                    });
-                    
-                    html += '</tr>';
-                });
-
-                html += '</tbody></table>';
-                return html;
-            }
-
             gerarGraficoComparativo() {
                 let html = '<h3 style="margin-bottom: 20px;">Comparativo de Valores Totais</h3>';
                 html += '<div class="grafico-barras">';
@@ -1344,19 +1350,17 @@
                 return html;
             }
 
+            // ANÁLISES IA
             gerarAnaliseTecnicaIA() {
-                const analise = this.analisarPropostasTecnicas();
+                let html = '<div class="analise-ia">';
+                html += '<div class="analise-ia-header">';
+                html += '<i class="fas fa-brain"></i> Análise Inteligente - Aspectos Técnicos';
+                html += '</div>';
+                html += '<div class="analise-ia-content">';
                 
-                let html = `
-                    <div class="analise-ia">
-                        <div class="analise-ia-header">
-                            <i class="fas fa-robot"></i>
-                            Análise Inteligente - Aspectos Técnicos
-                        </div>
-                        <div class="analise-ia-content">
-                `;
+                const insights = this.analisarAspectosTecnicos();
                 
-                analise.forEach(insight => {
+                insights.forEach(insight => {
                     html += `
                         <div class="insight-item">
                             <div class="insight-tipo">
@@ -1373,18 +1377,15 @@
             }
 
             gerarAnaliseComercialIA() {
-                const analise = this.analisarPropostasComerciais();
+                let html = '<div class="analise-ia">';
+                html += '<div class="analise-ia-header">';
+                html += '<i class="fas fa-brain"></i> Análise Inteligente - Aspectos Comerciais';
+                html += '</div>';
+                html += '<div class="analise-ia-content">';
                 
-                let html = `
-                    <div class="analise-ia">
-                        <div class="analise-ia-header">
-                            <i class="fas fa-robot"></i>
-                            Análise Inteligente - Aspectos Comerciais
-                        </div>
-                        <div class="analise-ia-content">
-                `;
+                const insights = this.analisarAspectosComerciais();
                 
-                analise.forEach(insight => {
+                insights.forEach(insight => {
                     html += `
                         <div class="insight-item">
                             <div class="insight-tipo">
@@ -1401,18 +1402,15 @@
             }
 
             gerarAnaliseConsolidadaIA() {
-                const analise = this.analisarConsolidado();
+                let html = '<div class="analise-ia">';
+                html += '<div class="analise-ia-header">';
+                html += '<i class="fas fa-brain"></i> Recomendações Finais';
+                html += '</div>';
+                html += '<div class="analise-ia-content">';
                 
-                let html = `
-                    <div class="analise-ia">
-                        <div class="analise-ia-header">
-                            <i class="fas fa-robot"></i>
-                            Análise Inteligente - Visão Consolidada
-                        </div>
-                        <div class="analise-ia-content">
-                `;
+                const insights = this.gerarRecomendacoes();
                 
-                analise.forEach(insight => {
+                insights.forEach(insight => {
                     html += `
                         <div class="insight-item">
                             <div class="insight-tipo">
@@ -1428,180 +1426,138 @@
                 return html;
             }
 
-            // Métodos de análise IA
-            analisarPropostasTecnicas() {
+            // Métodos de análise
+            analisarAspectosTecnicos() {
                 const insights = [];
                 
                 // Análise de prazos
-                const prazos = this.propostas.map(p => ({
-                    empresa: p.dadosCadastrais.razaoSocial,
-                    prazo: p.propostaTecnica?.prazoExecucao || 'Não informado'
-                }));
-                
-                const prazosNumericos = prazos
-                    .map(p => parseInt(p.prazo))
-                    .filter(p => !isNaN(p));
-                
-                if (prazosNumericos.length > 0) {
-                    const menorPrazo = Math.min(...prazosNumericos);
-                    const maiorPrazo = Math.max(...prazosNumericos);
-                    const diferenca = maiorPrazo - menorPrazo;
-                    
+                const prazos = this.propostas.map(p => p.propostaTecnica?.prazoExecucao).filter(p => p);
+                if (prazos.length > 0 && new Set(prazos).size > 1) {
                     insights.push({
                         tipo: 'Divergência de Prazos',
                         icone: 'fas fa-clock',
-                        texto: `Identificada variação de ${diferenca} dias entre o menor prazo (${menorPrazo} dias) e o maior prazo (${maiorPrazo} dias). Esta diferença pode indicar diferentes metodologias de execução ou diferentes interpretações do escopo.`
+                        texto: `Foram identificadas diferenças nos prazos de execução propostos. 
+                                As propostas variam entre ${Math.min(...prazos.map(p => parseInt(p)))} e ${Math.max(...prazos.map(p => parseInt(p)))} dias.
+                                Recomenda-se verificar a viabilidade técnica dos prazos menores.`
                     });
                 }
                 
-                // Análise de itens ausentes
-                const itensAusentes = [];
-                this.propostas.forEach((p, index) => {
-                    if (!p.propostaTecnica?.metodologia || p.propostaTecnica.metodologia === 'Não informado') {
-                        itensAusentes.push(p.dadosCadastrais.razaoSocial);
-                    }
-                });
+                // Análise de completude
+                const completudes = this.propostas.map(p => this.calcularCompletude(p));
+                const mediaCompletude = completudes.reduce((a, b) => a + b, 0) / completudes.length;
                 
-                if (itensAusentes.length > 0) {
+                if (mediaCompletude < 80) {
                     insights.push({
-                        tipo: 'Informações Ausentes',
+                        tipo: 'Documentação Incompleta',
                         icone: 'fas fa-exclamation-triangle',
-                        texto: `${itensAusentes.length} empresa(s) não apresentaram metodologia detalhada: ${itensAusentes.join(', ')}. Recomenda-se solicitar esclarecimentos.`
+                        texto: `A média de completude das propostas técnicas é de ${mediaCompletude.toFixed(0)}%. 
+                                Recomenda-se solicitar complementação de informações aos fornecedores.`
                     });
                 }
                 
-                // Análise de equipe
-                const tamanhosEquipe = this.propostas.map(p => 
-                    p.maoObraTecnica?.reduce((total, func) => total + (parseInt(func[1]) || 0), 0) || 0
-                );
-                
-                const menorEquipe = Math.min(...tamanhosEquipe.filter(t => t > 0));
-                const maiorEquipe = Math.max(...tamanhosEquipe);
-                
-                if (maiorEquipe > menorEquipe * 2) {
+                // Análise de garantias
+                const garantias = this.propostas.map(p => p.propostaTecnica?.garantias).filter(g => g);
+                if (garantias.length > 0 && new Set(garantias).size > 1) {
                     insights.push({
-                        tipo: 'Dimensionamento de Equipe',
-                        icone: 'fas fa-users',
-                        texto: `Grande variação no dimensionamento de equipes: de ${menorEquipe} a ${maiorEquipe} profissionais. A empresa com menor equipe pode estar subdimensionando ou usando metodologia mais eficiente.`
+                        tipo: 'Variação de Garantias',
+                        icone: 'fas fa-shield-alt',
+                        texto: `As propostas apresentam diferentes períodos de garantia. 
+                                Verificar se as garantias oferecidas atendem aos requisitos mínimos do TR.`
                     });
                 }
                 
                 return insights;
             }
 
-            analisarPropostasComerciais() {
+            analisarAspectosComerciais() {
                 const insights = [];
                 
-                // Análise de valores
+                // Análise de variação de preços
                 const valores = this.propostas.map(p => p.resumoFinanceiro?.valorTotal || 0).filter(v => v > 0);
                 if (valores.length > 0) {
                     const menorValor = Math.min(...valores);
                     const maiorValor = Math.max(...valores);
-                    const variacaoPercentual = ((maiorValor - menorValor) / menorValor * 100).toFixed(1);
+                    const variacao = ((maiorValor - menorValor) / menorValor * 100).toFixed(1);
                     
-                    const empresaMenorValor = this.propostas.find(p => p.resumoFinanceiro?.valorTotal === menorValor);
-                    const empresaMaiorValor = this.propostas.find(p => p.resumoFinanceiro?.valorTotal === maiorValor);
-                    
-                    insights.push({
-                        tipo: 'Diferença de Valores',
-                        icone: 'fas fa-dollar-sign',
-                        texto: `Variação de ${variacaoPercentual}% entre ${empresaMenorValor?.dadosCadastrais.razaoSocial} (${this.formatarMoeda(menorValor)}) e ${empresaMaiorValor?.dadosCadastrais.razaoSocial} (${this.formatarMoeda(maiorValor)}). ${variacaoPercentual > 30 ? 'Esta diferença significativa requer análise detalhada de exequibilidade.' : ''}`
-                    });
+                    if (variacao > 20) {
+                        insights.push({
+                            tipo: 'Alta Variação de Preços',
+                            icone: 'fas fa-chart-line',
+                            texto: `Identificada variação de ${variacao}% entre o menor e maior valor. 
+                                    Menor valor: ${this.formatarMoeda(menorValor)}. 
+                                    Maior valor: ${this.formatarMoeda(maiorValor)}.
+                                    Recomenda-se análise detalhada dos itens que causam esta diferença.`
+                        });
+                    }
                 }
                 
                 // Análise de BDI
                 const bdis = this.propostas.map(p => p.resumoFinanceiro?.bdiPercentual || 0).filter(b => b > 0);
                 if (bdis.length > 0) {
-                    const menorBDI = Math.min(...bdis);
-                    const maiorBDI = Math.max(...bdis);
+                    const mediaBDI = bdis.reduce((a, b) => a + b, 0) / bdis.length;
                     
-                    if (menorBDI < 20 || maiorBDI > 30) {
+                    if (mediaBDI > 30) {
                         insights.push({
-                            tipo: 'BDI Fora do Padrão',
+                            tipo: 'BDI Elevado',
                             icone: 'fas fa-percentage',
-                            texto: `Identificados valores de BDI fora da faixa usual (20-30%): menor BDI ${menorBDI}%, maior BDI ${maiorBDI}%. Verificar composição detalhada do BDI.`
+                            texto: `A média de BDI das propostas é de ${mediaBDI.toFixed(1)}%, acima do usual para este tipo de serviço. 
+                                    Recomenda-se solicitar demonstrativo de composição do BDI detalhado.`
                         });
                     }
                 }
                 
-                // Análise de itens não cotados
-                const servicosNaoCotados = {};
-                const todosServicos = this.coletarItensUnicos('servicosComercial', 1);
-                
-                todosServicos.forEach(servico => {
-                    this.propostas.forEach(p => {
-                        const temServico = p.servicosComercial?.some(s => s[1] === servico);
-                        if (!temServico) {
-                            if (!servicosNaoCotados[servico]) {
-                                servicosNaoCotados[servico] = [];
-                            }
-                            servicosNaoCotados[servico].push(p.dadosCadastrais.razaoSocial);
-                        }
-                    });
-                });
-                
-                const servicosProblematicos = Object.entries(servicosNaoCotados)
-                    .filter(([servico, empresas]) => empresas.length > 0);
-                
-                if (servicosProblematicos.length > 0) {
+                // Análise de custos unitários
+                const servicosComuns = this.coletarItensUnicos('servicosComercial', 1);
+                if (servicosComuns.length > 0) {
                     insights.push({
-                        tipo: 'Itens Não Cotados',
-                        icone: 'fas fa-exclamation-circle',
-                        texto: `${servicosProblematicos.length} serviço(s) não foram cotados por todas as empresas. Isso pode indicar interpretações diferentes do escopo ou omissões que afetam a comparabilidade das propostas.`
+                        tipo: 'Comparação de Preços Unitários',
+                        icone: 'fas fa-balance-scale',
+                        texto: `Foram identificados ${servicosComuns.length} serviços em comum nas propostas. 
+                                Recomenda-se análise detalhada dos preços unitários para identificar possíveis discrepâncias.`
                     });
                 }
                 
                 return insights;
             }
 
-            analisarConsolidado() {
+            gerarRecomendacoes() {
                 const insights = [];
                 
-                // Recomendação geral
-                const valores = this.propostas.map(p => ({
+                // Proposta vencedora
+                const valores = this.propostas.map((p, index) => ({
+                    index,
                     empresa: p.dadosCadastrais.razaoSocial,
-                    valor: p.resumoFinanceiro?.valorTotal || 0,
-                    prazo: parseInt(p.propostaTecnica?.prazoExecucao) || 999,
-                    completude: this.calcularCompletude(p)
-                })).filter(v => v.valor > 0);
-                
-                valores.sort((a, b) => {
-                    // Pontuação: 60% valor, 20% prazo, 20% completude
-                    const scoreA = (a.valor * 0.6) + (a.prazo * 0.2) + ((100 - a.completude) * 0.2);
-                    const scoreB = (b.valor * 0.6) + (b.prazo * 0.2) + ((100 - b.completude) * 0.2);
-                    return scoreA - scoreB;
-                });
+                    valor: p.resumoFinanceiro?.valorTotal || 0
+                })).filter(v => v.valor > 0).sort((a, b) => a.valor - b.valor);
                 
                 if (valores.length > 0) {
                     insights.push({
-                        tipo: 'Recomendação',
+                        tipo: 'Proposta Mais Vantajosa',
                         icone: 'fas fa-trophy',
-                        texto: `Baseado na análise integrada de valor, prazo e completude das informações, ${valores[0].empresa} apresenta a proposta mais vantajosa. Valor: ${this.formatarMoeda(valores[0].valor)}, Prazo: ${valores[0].prazo} dias, Completude: ${valores[0].completude}%.`
+                        texto: `Baseado exclusivamente no critério de menor preço, a proposta da empresa 
+                                ${valores[0].empresa} apresenta o menor valor global: ${this.formatarMoeda(valores[0].valor)}.`
                     });
                 }
                 
-                // Alertas gerais
-                if (this.divergencias > 10) {
+                // Verificações necessárias
+                if (this.divergencias > 0) {
                     insights.push({
-                        tipo: 'Alto Número de Divergências',
-                        icone: 'fas fa-exclamation-triangle',
-                        texto: `Foram identificadas ${this.divergencias} divergências significativas entre as propostas. Recomenda-se realizar diligência para esclarecer os pontos divergentes antes da decisão final.`
+                        tipo: 'Divergências Identificadas',
+                        icone: 'fas fa-exclamation-circle',
+                        texto: `Foram identificadas ${this.divergencias} divergências significativas entre as propostas. 
+                                Recomenda-se diligência para esclarecimento dos pontos divergentes antes da adjudicação.`
                     });
                 }
                 
-                // Análise de risco
-                const propostasRisco = valores.filter(v => {
-                    const variacaoNegativa = ((valores[0].valor - v.valor) / valores[0].valor * 100);
-                    return variacaoNegativa < -30; // Valor 30% abaixo do menor
+                // Documentação
+                insights.push({
+                    tipo: 'Próximos Passos',
+                    icone: 'fas fa-tasks',
+                    texto: `1. Verificar documentação de habilitação da empresa vencedora<br>
+                            2. Confirmar atendimento integral aos requisitos do TR<br>
+                            3. Solicitar esclarecimentos sobre divergências identificadas<br>
+                            4. Elaborar parecer técnico conclusivo`
                 });
-                
-                if (propostasRisco.length > 0) {
-                    insights.push({
-                        tipo: 'Análise de Risco',
-                        icone: 'fas fa-shield-alt',
-                        texto: `${propostasRisco.length} proposta(s) apresentam valores que podem indicar risco de inexequibilidade. Recomenda-se solicitar demonstrativo de composição de custos detalhado.`
-                    });
-                }
                 
                 return insights;
             }
