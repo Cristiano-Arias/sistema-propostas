@@ -27,6 +27,7 @@ app = Flask(__name__, static_folder='static')
 
 # Configurações
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
@@ -36,8 +37,17 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Extensões permitidas
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg'}
 
-# Inicializar CORS
-CORS(app, origins=['*'])
+# Configuração CORS baseada no ambiente
+if os.environ.get('FLASK_ENV') == 'production':
+    # Em produção, restringir CORS a domínios específicos
+    allowed_origins = [
+        'https://sistema-propostas.onrender.com',
+        'https://sistema-gestao-propostas.onrender.com'
+    ]
+    CORS(app, origins=allowed_origins)
+else:
+    # Em desenvolvimento, permitir qualquer origem
+    CORS(app, origins=['*'])
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -147,6 +157,19 @@ def init_db():
         )
     ''')
     
+    # Criar tabela de auditoria
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS auditoria (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            acao TEXT NOT NULL,
+            usuario_id INTEGER,
+            ip TEXT,
+            detalhes TEXT,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
     conn.commit()
     
     # Criar usuários de teste se não existirem
@@ -184,19 +207,48 @@ def allowed_file(filename):
     """Verifica se o arquivo é permitido"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def log_auditoria(acao, usuario_id=None, detalhes=None, ip=None):
+    """Registra ações importantes para auditoria"""
+    try:
+        timestamp = datetime.utcnow().isoformat()
+        ip_address = ip or request.remote_addr if request else 'unknown'
+        
+        log_entry = {
+            'timestamp': timestamp,
+            'acao': acao,
+            'usuario_id': usuario_id,
+            'ip': ip_address,
+            'detalhes': detalhes
+        }
+        
+        logger.info(f"AUDITORIA: {json.dumps(log_entry)}")
+        
+        # Salvar no banco de dados para auditoria
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT OR IGNORE INTO auditoria (timestamp, acao, usuario_id, ip, detalhes)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (timestamp, acao, usuario_id, ip_address, json.dumps(detalhes) if detalhes else None))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.error(f"Erro ao registrar auditoria: {str(e)}")
+
 def gerar_token(usuario_id, perfil):
     """Gera token JWT"""
     payload = {
         'usuario_id': usuario_id,
         'perfil': perfil,
+        'iat': datetime.utcnow(),
         'exp': datetime.utcnow() + timedelta(hours=8)
     }
-    return jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+    return jwt.encode(payload, app.config['JWT_SECRET_KEY'], algorithm='HS256')
 
 def verificar_token(token):
     """Verifica e decodifica token JWT"""
     try:
-        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        payload = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
         return payload
     except jwt.ExpiredSignatureError:
         return None
@@ -250,17 +302,22 @@ def login():
         
         if not usuario:
             conn.close()
+            log_auditoria('LOGIN_FALHOU', detalhes={'email': email, 'motivo': 'usuario_nao_encontrado'})
             return jsonify({'message': 'Usuário não encontrado'}), 404
         
         # Verificar senha
         if not bcrypt.checkpw(senha.encode('utf-8'), usuario['senha']):
             conn.close()
+            log_auditoria('LOGIN_FALHOU', usuario_id=usuario['id'], detalhes={'email': email, 'motivo': 'senha_incorreta'})
             return jsonify({'message': 'Senha incorreta'}), 401
         
         # Gerar token
         token = gerar_token(usuario['id'], usuario['perfil'])
         
         conn.close()
+        
+        # Log de sucesso
+        log_auditoria('LOGIN_SUCESSO', usuario_id=usuario['id'], detalhes={'email': email, 'perfil': usuario['perfil']})
         
         return jsonify({
             'token': token,
@@ -1478,6 +1535,262 @@ def atualizar_schema_comparativo():
 
 atualizar_schema_comparativo()
 
+# Health Check
+@app.route('/health')
+def health_check():
+    """Health check endpoint para monitoramento"""
+    try:
+        # Verificar conexão com banco de dados
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        conn.close()
+        
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': datetime.utcnow().isoformat(),
+            'version': '5.0',
+            'database': 'connected'
+        }), 200
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return jsonify({
+            'status': 'unhealthy',
+            'timestamp': datetime.utcnow().isoformat(),
+            'error': str(e)
+        }), 503
+
+# Rotas de Administração de Usuários
+@app.route('/api/admin/usuarios', methods=['GET'])
+@token_required
+def listar_usuarios():
+    """Lista todos os usuários (apenas para administradores)"""
+    try:
+        # Verificar se é administrador (comprador com permissões especiais)
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Acesso negado'}), 403
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, nome, email, perfil, criado_em 
+            FROM usuarios 
+            ORDER BY criado_em DESC
+        ''')
+        usuarios = cursor.fetchall()
+        
+        usuarios_list = []
+        for usuario in usuarios:
+            usuarios_list.append({
+                'id': usuario['id'],
+                'nome': usuario['nome'],
+                'email': usuario['email'],
+                'perfil': usuario['perfil'],
+                'criado_em': usuario['criado_em']
+            })
+        
+        conn.close()
+        log_auditoria('LISTAR_USUARIOS', usuario_id=request.usuario_id)
+        
+        return jsonify({'usuarios': usuarios_list}), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar usuários: {str(e)}")
+        return jsonify({'message': 'Erro interno'}), 500
+
+@app.route('/api/admin/usuarios', methods=['POST'])
+@token_required
+def criar_usuario():
+    """Cria novo usuário (apenas para administradores)"""
+    try:
+        # Verificar se é administrador
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Acesso negado'}), 403
+        
+        data = request.json
+        nome = data.get('nome')
+        email = data.get('email')
+        perfil = data.get('perfil')
+        senha_temporaria = data.get('senha', 'temp123456')  # Senha temporária padrão
+        
+        if not all([nome, email, perfil]):
+            return jsonify({'message': 'Nome, email e perfil são obrigatórios'}), 400
+        
+        if perfil not in ['requisitante', 'comprador', 'fornecedor']:
+            return jsonify({'message': 'Perfil inválido'}), 400
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Verificar se email já existe
+        cursor.execute('SELECT id FROM usuarios WHERE email = ?', (email,))
+        if cursor.fetchone():
+            conn.close()
+            return jsonify({'message': 'Email já cadastrado'}), 409
+        
+        # Criptografar senha
+        senha_hash = bcrypt.hashpw(senha_temporaria.encode('utf-8'), bcrypt.gensalt())
+        
+        # Inserir usuário
+        cursor.execute('''
+            INSERT INTO usuarios (nome, email, senha, perfil)
+            VALUES (?, ?, ?, ?)
+        ''', (nome, email, senha_hash, perfil))
+        
+        usuario_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        log_auditoria('CRIAR_USUARIO', usuario_id=request.usuario_id, 
+                     detalhes={'novo_usuario_id': usuario_id, 'email': email, 'perfil': perfil})
+        
+        return jsonify({
+            'message': 'Usuário criado com sucesso',
+            'usuario_id': usuario_id,
+            'senha_temporaria': senha_temporaria
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Erro ao criar usuário: {str(e)}")
+        return jsonify({'message': 'Erro interno'}), 500
+
+@app.route('/api/admin/usuarios/<int:usuario_id>', methods=['PUT'])
+@token_required
+def atualizar_usuario(usuario_id):
+    """Atualiza dados de usuário (apenas para administradores)"""
+    try:
+        # Verificar se é administrador
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Acesso negado'}), 403
+        
+        data = request.json
+        nome = data.get('nome')
+        email = data.get('email')
+        perfil = data.get('perfil')
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Verificar se usuário existe
+        cursor.execute('SELECT id FROM usuarios WHERE id = ?', (usuario_id,))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'message': 'Usuário não encontrado'}), 404
+        
+        # Atualizar campos fornecidos
+        updates = []
+        params = []
+        
+        if nome:
+            updates.append('nome = ?')
+            params.append(nome)
+        if email:
+            updates.append('email = ?')
+            params.append(email)
+        if perfil and perfil in ['requisitante', 'comprador', 'fornecedor']:
+            updates.append('perfil = ?')
+            params.append(perfil)
+        
+        if not updates:
+            conn.close()
+            return jsonify({'message': 'Nenhum campo para atualizar'}), 400
+        
+        params.append(usuario_id)
+        query = f"UPDATE usuarios SET {', '.join(updates)} WHERE id = ?"
+        
+        cursor.execute(query, params)
+        conn.commit()
+        conn.close()
+        
+        log_auditoria('ATUALIZAR_USUARIO', usuario_id=request.usuario_id,
+                     detalhes={'usuario_atualizado': usuario_id, 'campos': updates})
+        
+        return jsonify({'message': 'Usuário atualizado com sucesso'}), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao atualizar usuário: {str(e)}")
+        return jsonify({'message': 'Erro interno'}), 500
+
+@app.route('/api/admin/usuarios/<int:usuario_id>/reset-senha', methods=['POST'])
+@token_required
+def resetar_senha(usuario_id):
+    """Reseta senha de usuário (apenas para administradores)"""
+    try:
+        # Verificar se é administrador
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Acesso negado'}), 403
+        
+        nova_senha = 'temp123456'  # Senha temporária padrão
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Verificar se usuário existe
+        cursor.execute('SELECT email FROM usuarios WHERE id = ?', (usuario_id,))
+        usuario = cursor.fetchone()
+        if not usuario:
+            conn.close()
+            return jsonify({'message': 'Usuário não encontrado'}), 404
+        
+        # Criptografar nova senha
+        senha_hash = bcrypt.hashpw(nova_senha.encode('utf-8'), bcrypt.gensalt())
+        
+        # Atualizar senha
+        cursor.execute('UPDATE usuarios SET senha = ? WHERE id = ?', (senha_hash, usuario_id))
+        conn.commit()
+        conn.close()
+        
+        log_auditoria('RESET_SENHA', usuario_id=request.usuario_id,
+                     detalhes={'usuario_resetado': usuario_id, 'email': usuario['email']})
+        
+        return jsonify({
+            'message': 'Senha resetada com sucesso',
+            'nova_senha': nova_senha
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao resetar senha: {str(e)}")
+        return jsonify({'message': 'Erro interno'}), 500
+
+@app.route('/api/admin/usuarios/<int:usuario_id>', methods=['DELETE'])
+@token_required
+def desativar_usuario(usuario_id):
+    """Desativa usuário (apenas para administradores)"""
+    try:
+        # Verificar se é administrador
+        if request.perfil != 'comprador':
+            return jsonify({'message': 'Acesso negado'}), 403
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Verificar se usuário existe
+        cursor.execute('SELECT email FROM usuarios WHERE id = ?', (usuario_id,))
+        usuario = cursor.fetchone()
+        if not usuario:
+            conn.close()
+            return jsonify({'message': 'Usuário não encontrado'}), 404
+        
+        # Em vez de deletar, podemos adicionar um campo 'ativo' ou prefixar email
+        cursor.execute('''
+            UPDATE usuarios 
+            SET email = 'DESATIVADO_' || email || '_' || datetime('now')
+            WHERE id = ?
+        ''', (usuario_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        log_auditoria('DESATIVAR_USUARIO', usuario_id=request.usuario_id,
+                     detalhes={'usuario_desativado': usuario_id, 'email': usuario['email']})
+        
+        return jsonify({'message': 'Usuário desativado com sucesso'}), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao desativar usuário: {str(e)}")
+        return jsonify({'message': 'Erro interno'}), 500
+
 # Rotas de arquivos estáticos
 @app.route('/')
 def index():
@@ -1513,4 +1826,3 @@ if __name__ == '__main__':
     logger.info(f"Debug mode: {debug}")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
-    
