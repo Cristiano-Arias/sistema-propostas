@@ -3,7 +3,7 @@ services:
     name: sistema-gestao-propostas
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn backend_corrigido:app
+    startCommand: gunicorn backend_render_fix:app --bind 0.0.0.0:$PORT --workers 2
     plan: free
     envVars:
       - key: PYTHON_VERSION
@@ -14,4 +14,7 @@ services:
         generateValue: true
       - key: JWT_SECRET_KEY
         generateValue: true
+      - key: LOG_LEVEL
+        value: INFO
     staticPublishPath: ./static
+    healthCheckPath: /health
