@@ -1562,7 +1562,7 @@ def health_check():
 
 # Rotas de Administração de Usuários
 @app.route('/api/admin/usuarios', methods=['GET'])
-@token_required
+@require_auth
 def listar_usuarios():
     """Lista todos os usuários (apenas para administradores)"""
     try:
@@ -1600,7 +1600,7 @@ def listar_usuarios():
         return jsonify({'message': 'Erro interno'}), 500
 
 @app.route('/api/admin/usuarios', methods=['POST'])
-@token_required
+@require_auth
 def criar_usuario():
     """Cria novo usuário (apenas para administradores)"""
     try:
@@ -1656,7 +1656,7 @@ def criar_usuario():
         return jsonify({'message': 'Erro interno'}), 500
 
 @app.route('/api/admin/usuarios/<int:usuario_id>', methods=['PUT'])
-@token_required
+@require_auth
 def atualizar_usuario(usuario_id):
     """Atualiza dados de usuário (apenas para administradores)"""
     try:
@@ -1713,7 +1713,7 @@ def atualizar_usuario(usuario_id):
         return jsonify({'message': 'Erro interno'}), 500
 
 @app.route('/api/admin/usuarios/<int:usuario_id>/reset-senha', methods=['POST'])
-@token_required
+@require_auth
 def resetar_senha(usuario_id):
     """Reseta senha de usuário (apenas para administradores)"""
     try:
@@ -1754,7 +1754,7 @@ def resetar_senha(usuario_id):
         return jsonify({'message': 'Erro interno'}), 500
 
 @app.route('/api/admin/usuarios/<int:usuario_id>', methods=['DELETE'])
-@token_required
+@require_auth
 def desativar_usuario(usuario_id):
     """Desativa usuário (apenas para administradores)"""
     try:
