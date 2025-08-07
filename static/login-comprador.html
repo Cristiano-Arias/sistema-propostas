@@ -203,12 +203,6 @@
     </div>
 
     <script>
-        // Credenciais válidas para o sistema
-        const credenciaisValidas = [
-            { login: 'comprador_admin', senha: 'Comp2025!', nome: 'Administrador Comprador', perfil: 'admin' },
-            { login: 'comprador_user', senha: 'User123', nome: 'Usuário Comprador', perfil: 'user' }
-        ];
-
         document.addEventListener('DOMContentLoaded', function() {
             const loginForm = document.getElementById('loginForm');
             
@@ -218,37 +212,50 @@
             });
         });
 
-        function realizarLogin() {
-            const login = document.getElementById('login').value.trim();
+        async function realizarLogin() {
+            const email = document.getElementById('login').value.trim();
             const senha = document.getElementById('senha').value.trim();
             
-            if (!login || !senha) {
+            if (!email || !senha) {
                 mostrarErro('Por favor, preencha todos os campos.');
                 return;
             }
             
-            // Verificar credenciais
-            const credencial = credenciaisValidas.find(c => c.login === login && c.senha === senha);
-            
-            if (credencial) {
-                // Salvar dados do usuário logado
-                const usuarioLogado = {
-                    login: credencial.login,
-                    nome: credencial.nome,
-                    perfil: credencial.perfil,
-                    dataLogin: new Date().toISOString()
-                };
-                
-                localStorage.setItem('comprador_logado', JSON.stringify(usuarioLogado));
-                
-                mostrarSucesso('Login realizado com sucesso! Redirecionando...');
-                
-                // Redirecionar para o dashboard correto que existe no servidor
-                setTimeout(() => {
-                    window.location.href = 'dashboard-comprador-funcional.html';
-                }, 1500);
-            } else {
-                mostrarErro('Login ou senha incorretos.');
+            try {
+                // Fazer requisição para API de autenticação
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Verificar se é comprador
+                    if (data.usuario.perfil !== 'comprador') {
+                        mostrarErro('Acesso negado. Este portal é exclusivo para compradores.');
+                        return;
+                    }
+                    
+                    // Salvar token e dados do usuário
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('usuario_atual', JSON.stringify(data.usuario));
+                    
+                    mostrarSucesso('Login realizado com sucesso! Redirecionando...');
+                    
+                    // Redirecionar para o dashboard
+                    setTimeout(() => {
+                        window.location.href = 'dashboard-comprador-funcional.html';
+                    }, 1500);
+                } else {
+                    mostrarErro(data.message || 'Login ou senha incorretos.');
+                }
+            } catch (error) {
+                console.error('Erro no login:', error);
+                mostrarErro('Erro de conexão. Tente novamente.');
             }
         }
 
