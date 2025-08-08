@@ -155,6 +155,25 @@ def login():
             }
         }
         
+        # Se o perfil for fornecedor, adicionar informações extras se disponíveis
+        if usuario['perfil'] == 'fornecedor':
+            # Buscar dados adicionais do fornecedor se existirem
+            cursor.execute('''
+                SELECT cnpj, endereco, telefone, responsavel_tecnico, crea 
+                FROM usuarios 
+                WHERE id = ?
+            ''', (usuario['id'],))
+            dados_extras = cursor.fetchone()
+            
+            if dados_extras:
+                resultado['usuario'].update({
+                    'cnpj': dados_extras['cnpj'],
+                    'endereco': dados_extras['endereco'],
+                    'telefone': dados_extras['telefone'],
+                    'responsavel_tecnico': dados_extras['responsavel_tecnico'],
+                    'crea': dados_extras['crea']
+                })
+        
         # Login bem-sucedido
         logger.info(f"Login bem-sucedido: {email} de {ip_origem}")
         return jsonify(resultado), 200
