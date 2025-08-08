@@ -72,21 +72,32 @@
 
       if (!email || !senha) { showErr('Preencha e-mail e senha.'); return; }
 
-      const res = await Auth.login(email, senha);
+      try {
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ login: email, senha })
+        });
 
-      if (!res.success) {
-        showErr(res.message || 'Falha no login');
-        return;
-      }
-      
-      const perfil = res.usuario?.perfil || 'fornecedor';
-      
-      if (perfil === 'comprador') {
-        location.href = '/static/dashboard-comprador.html';
-      } else if (perfil === 'requisitante') {
-        location.href = '/static/dashboard-requisitante.html';
-      } else {
-        location.href = '/static/dashboard-fornecedor.html';
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          showErr(data.message || 'Falha no login');
+          return;
+        }
+
+        const perfil = data.usuario?.perfil || 'fornecedor';
+
+        if (perfil === 'comprador') {
+          location.href = '/static/dashboard-comprador.html';
+        } else if (perfil === 'requisitante') {
+          location.href = '/static/dashboard-requisitante.html';
+        } else {
+          location.href = '/static/dashboard-fornecedor.html';
+        }
+      } catch (err) {
+        showErr('Erro de conexão com o servidor');
       }
     });
   </script>
