@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Portal do Fornecedor – Login</title>
   <style>
-    /* ... (mantém o mesmo CSS que você já usa) ... */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
     .portal-container{display:flex; width:100%; max-width:1200px; gap:40px; align-items:center;}
     .portal-info{flex:1; color:#fff; text-align:center}
@@ -20,8 +19,11 @@
     .form-group input:focus{outline:none; border-color:#667eea}
     .login-btn{width:100%; padding:14px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; transition:transform .3s ease}
     .login-btn:hover{transform: translateY(-2px)}
+    .login-btn:disabled{opacity:0.6; cursor:not-allowed}
     .error-message{background:#fee; color:#c33; padding:12px; border-radius:8px; margin-bottom:20px; display:none; text-align:center}
     .success-message{background:#efe; color:#3c3; padding:12px; border-radius:8px; margin-bottom:20px; display:none; text-align:center}
+    .loading{display:inline-block; width:14px; height:14px; border:2px solid #fff; border-radius:50%; border-top-color:transparent; animation:spin 0.8s linear infinite; margin-right:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
     @media (max-width:768px){.portal-container{flex-direction:column; gap:20px}.portal-info h1{font-size:24px}.portal-info .logo{font-size:48px}}
   </style>
 </head>
@@ -47,7 +49,7 @@
           <label for="senha">Senha</label>
           <input type="password" id="senha" placeholder="Digite sua senha" required>
         </div>
-        <button type="submit" class="login-btn">Entrar</button>
+        <button type="submit" class="login-btn" id="btn-login">Entrar</button>
       </form>
 
       <p style="font-size:12px; color:#666; margin-top:12px; text-align:center;">
@@ -56,50 +58,119 @@
     </div>
   </div>
 
-  <!-- Importa o auth.js unificado -->
-  <script src="/static/js/auth.js"></script>
+  <!-- Script inline para evitar problemas de carregamento -->
   <script>
     const $err = document.getElementById('error-message');
     const $ok  = document.getElementById('success-message');
+    const $btn = document.getElementById('btn-login');
 
-    function showErr(msg){ $ok.style.display='none'; $err.textContent=msg; $err.style.display='block'; }
-    function showOk(msg){  $err.style.display='none'; $ok.textContent=msg;  $ok.style.display='block'; }
+    function showErr(msg){ 
+      $ok.style.display='none'; 
+      $err.textContent=msg; 
+      $err.style.display='block'; 
+    }
+    
+    function showOk(msg){  
+      $err.style.display='none'; 
+      $ok.textContent=msg;  
+      $ok.style.display='block'; 
+    }
+
+    function setLoading(loading) {
+      $btn.disabled = loading;
+      $btn.innerHTML = loading ? '<span class="loading"></span>Entrando...' : 'Entrar';
+    }
 
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      
       const email = document.getElementById('email').value.trim();
       const senha = document.getElementById('senha').value.trim();
 
-      if (!email || !senha) { showErr('Preencha e-mail e senha.'); return; }
+      if (!email || !senha) { 
+        showErr('Preencha e-mail e senha.'); 
+        return; 
+      }
+
+      setLoading(true);
 
       try {
+        // Fazer requisição diretamente aqui para evitar problemas com auth.js
         const resp = await fetch('/api/auth/login', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ login: email, senha })
+          body: JSON.stringify({ 
+            login: email,  // Enviar como 'login'
+            email: email,  // E também como 'email' para compatibilidade
+            senha: senha 
+          })
         });
 
         const data = await resp.json();
+        console.log('Resposta do servidor:', data);
 
         if (!resp.ok) {
           showErr(data.message || 'Falha no login');
+          setLoading(false);
           return;
         }
 
-        const perfil = data.usuario?.tipo || data.usuario?.perfil || 'fornecedor';
-
-        if (perfil === 'comprador') {
-          location.href = '/static/dashboard-comprador.html';
-        } else if (perfil === 'requisitante') {
-          location.href = '/static/dashboard-requisitante.html';
-        } else {
-          location.href = '/static/dashboard-fornecedor.html';
+        // Armazenar token e dados do usuário
+        const token = data.access_token || data.token;
+        if (token) {
+          localStorage.setItem('auth_token', token);
         }
+        
+        if (data.usuario) {
+          // Normalizar o perfil
+          if (!data.usuario.perfil && data.usuario.tipo) {
+            data.usuario.perfil = data.usuario.tipo;
+          }
+          localStorage.setItem('usuario_atual', JSON.stringify(data.usuario));
+        }
+
+        showOk('Login realizado com sucesso! Redirecionando...');
+
+        // Redirecionar baseado no perfil
+        const perfil = data.usuario?.tipo || data.usuario?.perfil || 'fornecedor';
+        
+        setTimeout(() => {
+          if (perfil === 'comprador') {
+            location.href = '/static/dashboard-comprador.html';
+          } else if (perfil === 'requisitante') {
+            location.href = '/static/dashboard-requisitante.html';
+          } else {
+            location.href = '/static/dashboard-fornecedor.html';
+          }
+        }, 1000);
+        
       } catch (err) {
+        console.error('Erro:', err);
         showErr('Erro de conexão com o servidor');
+        setLoading(false);
       }
     });
+
+    // Verificar se já está logado
+    const token = localStorage.getItem('auth_token');
+    const usuario = localStorage.getItem('usuario_atual');
+    
+    if (token && usuario) {
+      try {
+        const user = JSON.parse(usuario);
+        const perfil = user.tipo || user.perfil;
+        
+        // Redirecionar se já estiver logado
+        if (perfil === 'fornecedor') {
+          location.href = '/static/dashboard-fornecedor.html';
+        }
+      } catch (e) {
+        // Limpar dados inválidos
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('usuario_atual');
+      }
+    }
   </script>
 </body>
 </html>
