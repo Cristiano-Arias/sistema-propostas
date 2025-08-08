@@ -1827,10 +1827,11 @@ def index():
 @app.route('/<path:path>')
 def serve_static(path):
     """Serve arquivos estáticos com mapeamento"""
-    # Mapeamento de nomes
+    # Mapeamento de nomes CORRETOS
     file_mapping = {
         'dashboard-fornecedor.html': 'dashboard-fornecedor-funcional.html',
-        # Adicione outros mapeamentos se necessário
+        'dashboard-comprador.html': 'dashboard-comprador-funcional.html',
+        'dashboard-requisitante.html': 'dashboard-requisitante-funcional.html',
     }
     
     # Verifica se precisa mapear
