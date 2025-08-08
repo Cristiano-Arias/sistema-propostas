@@ -297,7 +297,7 @@ def require_auth(f):
 def login():
     try:
         data = request.get_json()
-        email = data.get('email')
+        email = data.get('email') or data.get('login')  # ACEITAR AMBOS
         senha = data.get('senha')
 
         conn = get_db()
