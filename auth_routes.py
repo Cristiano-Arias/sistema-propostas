@@ -14,7 +14,7 @@ import re
 
 # Importar classes do sistema existente
 from auth import AuthService
-from models import Usuario, db
+# from models import Usuario, db  # Comentar
 
 # Configurar blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
@@ -94,8 +94,52 @@ def login():
         # Obter IP do cliente
         ip_origem = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
         
-        # Tentar fazer login
-        resultado = auth_service.login(email, senha, ip_origem)
+        # Buscar usuário no banco
+        from backend_render_fix import get_db
+        import bcrypt
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM usuarios WHERE email = ?', (email,))
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            conn.close()
+            return jsonify({
+                'success': False,
+                'error': 'Credenciais inválidas',
+                'message': 'Email ou senha incorretos'
+            }), 401
+        
+        # Verificar senha
+        hash_db = usuario['senha']
+        if isinstance(hash_db, str):
+            hash_db = hash_db.encode('utf-8')
+        if not bcrypt.checkpw(senha.encode('utf-8'), hash_db):
+            conn.close()
+            return jsonify({
+                'success': False,
+                'error': 'Credenciais inválidas', 
+                'message': 'Email ou senha incorretos'
+            }), 401
+        
+        # Gerar token
+        from backend_render_fix import gerar_token
+        token = gerar_token(usuario['id'], usuario['perfil'])
+        
+        conn.close()
+        
+        resultado = {
+            'success': True,
+            'message': 'Login realizado com sucesso',
+            'access_token': token,
+            'usuario': {
+                'id': usuario['id'],
+                'nome': usuario['nome'],
+                'email': usuario['email'],
+                'tipo': usuario['perfil']
+            }
+        }
         
         if resultado['success']:
             # Login bem-sucedido
