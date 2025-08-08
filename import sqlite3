@@ -12,6 +12,8 @@ from flask_limiter.util import get_remote_address
 import logging
 from datetime import datetime
 import re
+import sqlite3
+import traceback
 
 # Importar classes do sistema existente
 from auth import AuthService
@@ -57,13 +59,64 @@ def validate_password_strength(password):
     
     return True, "Senha válida"
 
+def validar_acesso_perfil(perfil_requerido):
+    """Middleware para validar acesso por perfil"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Obter token da requisição
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return jsonify({
+                    'success': False,
+                    'error': 'Token ausente',
+                    'message': 'Token de autenticação necessário'
+                }), 401
+            
+            token = auth_header.split(' ')[1]
+            
+            try:
+                # Decodificar token
+                payload = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+                perfil_usuario = payload.get('perfil')
+                
+                # Validar perfil
+                if perfil_usuario != perfil_requerido:
+                    logger.warning(f"Acesso negado: usuário com perfil '{perfil_usuario}' tentou acessar área de '{perfil_requerido}'")
+                    return jsonify({
+                        'success': False,
+                        'error': 'Acesso negado',
+                        'message': f'Esta área é exclusiva para {perfil_requerido}s'
+                    }), 403
+                
+                # Adicionar informações do usuário à requisição
+                request.usuario_id = payload.get('usuario_id')
+                request.perfil = perfil_usuario
+                
+                return f(*args, **kwargs)
+                
+            except jwt.ExpiredSignatureError:
+                return jsonify({
+                    'success': False,
+                    'error': 'Token expirado',
+                    'message': 'Faça login novamente'
+                }), 401
+            except jwt.InvalidTokenError:
+                return jsonify({
+                    'success': False,
+                    'error': 'Token inválido',
+                    'message': 'Token de acesso inválido'
+                }), 401
+                
+        return decorated_function
+    return decorator
+
 @auth_bp.route('/login', methods=['POST'])
-@limiter.limit("20 per minute")  # Rate limiting para login
+@limiter.limit("20 per minute")
 def login():
     """
-    Endpoint de login
+    Endpoint de login com validação de perfil
     POST /api/auth/login
-    Aceita tanto 'email' quanto 'login' para compatibilidade
     """
     try:
         # Validar dados de entrada
@@ -75,7 +128,7 @@ def login():
                 'message': 'JSON não fornecido'
             }), 400
         
-        # CORREÇÃO: Aceitar tanto 'email' quanto 'login'
+        # Aceitar tanto 'email' quanto 'login'
         email = data.get('email') or data.get('login')
         if email:
             email = email.strip().lower()
@@ -89,7 +142,8 @@ def login():
                 'message': 'Email e senha são obrigatórios'
             }), 400
         
-        if not validate_email(email):
+        # IMPORTANTE: Validar formato de email
+        if '@' not in email or '.' not in email:
             return jsonify({
                 'success': False,
                 'error': 'Email inválido',
@@ -105,6 +159,13 @@ def login():
 
         conn = get_db()
         cursor = conn.cursor()
+        
+        # Debug: listar todos os usuários (remover em produção)
+        cursor.execute('SELECT email, perfil FROM usuarios')
+        todos_usuarios = cursor.fetchall()
+        logger.info(f"Usuários no banco: {[(u['email'], u['perfil']) for u in todos_usuarios]}")
+        
+        # Buscar usuário específico
         cursor.execute('SELECT * FROM usuarios WHERE email = ?', (email,))
         usuario = cursor.fetchone()
 
@@ -122,9 +183,6 @@ def login():
         if isinstance(hash_db, str):
             hash_db = hash_db.encode('utf-8')
         
-        # Log para debug (remover em produção)
-        logger.info(f"Verificando senha para usuário: {email}")
-        
         if not bcrypt.checkpw(senha.encode('utf-8'), hash_db):
             conn.close()
             logger.warning(f"Senha incorreta para: {email}")
@@ -140,102 +198,33 @@ def login():
 
         conn.close()
 
-        # CORREÇÃO: Retornar no formato esperado pelo frontend
+        # Retornar resposta padronizada
         resultado = {
             'success': True,
             'message': 'Login realizado com sucesso',
-            'token': token,              # Para compatibilidade com frontend antigo
-            'access_token': token,       # Para compatibilidade com frontend novo
+            'token': token,
+            'access_token': token,
+            'refresh_token': None,
             'usuario': {
                 'id': usuario['id'],
                 'nome': usuario['nome'],
                 'email': usuario['email'],
                 'tipo': usuario['perfil'],  # Frontend espera 'tipo'
-                'perfil': usuario['perfil'] # Manter ambos para compatibilidade
+                'perfil': usuario['perfil']  # Manter ambos
             }
         }
         
-        # Se o perfil for fornecedor, adicionar informações extras se disponíveis
-        if usuario['perfil'] == 'fornecedor':
-            # Buscar dados adicionais do fornecedor se existirem
-            cursor.execute('''
-                SELECT cnpj, endereco, telefone, responsavel_tecnico, crea 
-                FROM usuarios 
-                WHERE id = ?
-            ''', (usuario['id'],))
-            dados_extras = cursor.fetchone()
-            
-            if dados_extras:
-                resultado['usuario'].update({
-                    'cnpj': dados_extras['cnpj'],
-                    'endereco': dados_extras['endereco'],
-                    'telefone': dados_extras['telefone'],
-                    'responsavel_tecnico': dados_extras['responsavel_tecnico'],
-                    'crea': dados_extras['crea']
-                })
-        
-        # Login bem-sucedido
-        logger.info(f"Login bem-sucedido: {email} de {ip_origem}")
+        logger.info(f"Login bem-sucedido: {email} ({usuario['perfil']}) de {ip_origem}")
         return jsonify(resultado), 200
             
     except Exception as e:
         logger.error(f"Erro no login: {str(e)}")
+        logger.error(f"Detalhes: {traceback.format_exc()}")
         return jsonify({
             'success': False,
             'error': 'Erro interno',
             'message': 'Erro interno do servidor'
         }), 500
-
-@auth_bp.route('/refresh', methods=['POST'])
-@jwt_required(refresh=True)
-def refresh():
-    """
-    Endpoint para renovar token de acesso
-    POST /api/auth/refresh
-    """
-    try:
-        # Obter identidade do usuário do refresh token
-        usuario_id = get_jwt_identity()
-        
-        # Buscar usuário no banco
-        usuario = Usuario.query.get(usuario_id)
-        if not usuario or not usuario.ativo:
-            return jsonify({
-                'success': False,
-                'error': 'Usuário inválido',
-                'message': 'Usuário não encontrado ou inativo'
-            }), 401
-        
-        # Criar novo access token
-        from flask_jwt_extended import create_access_token
-        
-        access_token = create_access_token(
-            identity=usuario.id,
-            additional_claims={
-                'tipo': usuario.tipo,
-                'nivel_acesso': usuario.nivel_acesso,
-                'nome': usuario.nome,
-                'email': usuario.email
-            }
-        )
-        
-        logger.info(f"Token renovado para usuário: {usuario.email}")
-        
-        return jsonify({
-            'success': True,
-            'message': 'Token renovado com sucesso',
-            'access_token': access_token,
-            'usuario': usuario.to_dict()
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro na renovação de token: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Erro interno',
-            'message': 'Erro interno do servidor'
-        }), 500
-
 @auth_bp.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
