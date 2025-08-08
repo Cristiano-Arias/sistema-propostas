@@ -183,6 +183,9 @@ def init_db():
             ('Requisitante Teste', 'requisitante@empresa.com', 'req123', 'requisitante'),
             ('Comprador Teste', 'comprador@empresa.com', 'comp123', 'comprador'),
             ('Fornecedor Teste', 'fornecedor@empresa.com', 'forn123', 'fornecedor')
+            ('Forte & Oliveira Construções', 'wesley.lopes@forteoliveira.com', '123456', 'fornecedor'),
+            ('Equilibra Construções LTDA', 'orcamento@equilibraengenharia.com.br', '123456', 'fornecedor'),
+            ('GRAFYT ENGENHARIA LTDA', 'fbezerra@grafyt.com.br', '123456', 'fornecedor')
         ]
         
         for nome, email, senha, perfil in usuarios_teste:
