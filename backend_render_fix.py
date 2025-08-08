@@ -62,6 +62,9 @@ def init_db():
     """Inicializa o banco de dados"""
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
+
+    # ADICIONAR ESTA LINHA PARA FORÇAR RECRIAÇÃO:
+    cursor.execute("DROP TABLE IF EXISTS usuarios")
     
     # Criar tabela de usuários
     cursor.execute('''
