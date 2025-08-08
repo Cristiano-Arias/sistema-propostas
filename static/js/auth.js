@@ -47,16 +47,23 @@ const Auth = {
                 return { success: false, message: data.message || data.error || 'Credenciais inválidas' };
             }
 
-            // Esperado do backend: access_token, refresh_token, usuario
-            localStorage.setItem('auth_token', data.access_token);
-            if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+            // Ajuste de compatibilidade — aceita access_token OU token
+            const token = data.access_token || data.token;
+            if (!token) {
+                return { success: false, message: 'Token não recebido do servidor' };
+            }
+            
+            localStorage.setItem('auth_token', token);
+            if (data.refresh_token) {
+                localStorage.setItem('refresh_token', data.refresh_token);
+            }
             localStorage.setItem('usuario_atual', JSON.stringify(data.usuario));
-
+            
             return { success: true, usuario: data.usuario };
-        } catch (e) {
-            console.error('Erro no login:', e);
-            return { success: false, message: 'Erro de conexão' };
-        }
+            } catch (e) {
+                console.error('Erro no login:', e);
+                return { success: false, message: 'Erro de conexão' };
+            }
     },
 
     // Renovar access_token usando refresh_token (opcional)
