@@ -286,6 +286,23 @@ def require_auth(f):
     
     return decorated_function
 
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        senha = data.get('senha')
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM usuarios WHERE email = ?', (email,))
+        usuario = cursor.fetchone()
+
+        if not usuario:
+            conn.close()
+            return jsonify({'message': 'Usuário não encontrado'}), 404
+
         # Verificar senha (garante bytes vs str)
         hash_db = usuario['senha']
         if isinstance(hash_db, str):
@@ -293,7 +310,7 @@ def require_auth(f):
         if not bcrypt.checkpw(senha.encode('utf-8'), hash_db):
             conn.close()
             return jsonify({'message': 'Senha incorreta'}), 401
-        
+
         # Gerar token
         token = gerar_token(usuario['id'], usuario['perfil'])
         
@@ -307,7 +324,7 @@ def require_auth(f):
             'message': 'Login OK',
             'token': token,              # compat com front antigo
             'access_token': token,       # compat com front novo
-            'refresh_token': None,       # placeholder (se quiser implementar depois)
+            'refresh_token': None,       # placeholder
             'usuario': {
                 'id': usuario['id'],
                 'nome': usuario['nome'],
@@ -319,6 +336,7 @@ def require_auth(f):
     except Exception as e:
         logger.error(f"Erro no login: {str(e)}")
         return jsonify({'message': 'Erro interno'}), 500
+
 
 @app.route('/api/auth/verify', methods=['GET'])
 @require_auth
