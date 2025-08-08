@@ -286,29 +286,6 @@ def require_auth(f):
     
     return decorated_function
 
-# Rotas de Autenticação
-@app.route('/api/auth/login', methods=['POST'])
-def login():
-    """Login de usuário"""
-    try:
-        data = request.json
-        email = data.get('email')
-        senha = data.get('senha')
-        
-        if not email or not senha:
-            return jsonify({'message': 'Email e senha são obrigatórios'}), 400
-        
-        conn = get_db()
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM usuarios WHERE email = ?', (email,))
-        usuario = cursor.fetchone()
-        
-        if not usuario:
-            conn.close()
-            log_auditoria('LOGIN_FALHOU', detalhes={'email': email, 'motivo': 'usuario_nao_encontrado'})
-            return jsonify({'message': 'Usuário não encontrado'}), 404
-        
         # Verificar senha (garante bytes vs str)
         hash_db = usuario['senha']
         if isinstance(hash_db, str):
