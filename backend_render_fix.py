@@ -1818,12 +1818,6 @@ def dashboard_comprador():
     """Serve dashboard do comprador"""
     return send_from_directory('static', 'dashboard-comprador.html')
 
-# Rotas de arquivos estáticos (← esta linha já existe)
-@app.route('/')
-def index():
-    """Rota principal"""
-    return send_from_directory('static', 'index.html')
-
 # Rotas de arquivos estáticos
 @app.route('/')
 def index():
