@@ -292,58 +292,6 @@ def require_auth(f):
     
     return decorated_function
 
-
-@app.route('/api/auth/login', methods=['POST'])
-def login():
-    try:
-        data = request.get_json()
-        email = data.get('email') or data.get('login')  # ACEITAR AMBOS
-        senha = data.get('senha')
-
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM usuarios WHERE email = ?', (email,))
-        usuario = cursor.fetchone()
-
-        if not usuario:
-            conn.close()
-            return jsonify({'message': 'Usuário não encontrado'}), 404
-
-        # Verificar senha (garante bytes vs str)
-        hash_db = usuario['senha']
-        if isinstance(hash_db, str):
-            hash_db = hash_db.encode('utf-8')
-        if not bcrypt.checkpw(senha.encode('utf-8'), hash_db):
-            conn.close()
-            return jsonify({'message': 'Senha incorreta'}), 401
-
-        # Gerar token
-        token = gerar_token(usuario['id'], usuario['perfil'])
-        
-        conn.close()
-        
-        # Log de sucesso
-        log_auditoria('LOGIN_SUCESSO', usuario_id=usuario['id'], detalhes={'email': email, 'perfil': usuario['perfil']})
-        
-        return jsonify({
-            'success': True,
-            'message': 'Login OK',
-            'token': token,              # compat com front antigo
-            'access_token': token,       # compat com front novo
-            'refresh_token': None,       # placeholder
-            'usuario': {
-                'id': usuario['id'],
-                'nome': usuario['nome'],
-                'email': usuario['email'],
-                'perfil': usuario['perfil']
-            }
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro no login: {str(e)}")
-        return jsonify({'message': 'Erro interno'}), 500
-
-
 @app.route('/api/auth/verify', methods=['GET'])
 @require_auth
 def verify_token():
