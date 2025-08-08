@@ -30,7 +30,7 @@ limiter = Limiter(
 logger = logging.getLogger(__name__)
 
 # Instanciar serviço de autenticação
-auth_service = AuthService()
+# auth_service = AuthService()  # Comentar por enquanto
 
 def validate_email(email):
     """Valida formato de email"""
