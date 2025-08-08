@@ -189,9 +189,9 @@ SECURITY_HEADERS = {
     'Content-Security-Policy': (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-        "style-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
         "img-src 'self' data: https:; "
-        "font-src 'self'; "
+        "font-src 'self' https://cdnjs.cloudflare.com; "
         "connect-src 'self'; "
         "frame-ancestors 'none';"
     ),
