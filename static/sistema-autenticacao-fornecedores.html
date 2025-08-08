@@ -87,7 +87,7 @@
           return;
         }
 
-        const perfil = data.usuario?.perfil || 'fornecedor';
+        const perfil = data.usuario?.tipo || data.usuario?.perfil || 'fornecedor';
 
         if (perfil === 'comprador') {
           location.href = '/static/dashboard-comprador.html';
