@@ -73,16 +73,21 @@
       if (!email || !senha) { showErr('Preencha e-mail e senha.'); return; }
 
       const res = await Auth.login(email, senha);
-      if (!res.success) { showErr(res.message || 'Falha no login'); return; }
 
-      showOk('Login realizado. Redirecionando...');
-      const perfil = (res.usuario && res.usuario.perfil) || 'fornecedor';
-
-      setTimeout(() => {
-        if (perfil === 'comprador')      window.location.href = '/static/dashboard-comprador.html';
-        else if (perfil === 'requisitante') window.location.href = '/static/dashboard-requisitante.html';
-        else                              window.location.href = '/static/dashboard-fornecedor.html';
-      }, 500);
+      if (!res.success) {
+        showErr(res.message || 'Falha no login');
+        return;
+      }
+      
+      const perfil = res.usuario?.perfil || 'fornecedor';
+      
+      if (perfil === 'comprador') {
+        location.href = '/static/dashboard-comprador.html';
+      } else if (perfil === 'requisitante') {
+        location.href = '/static/dashboard-requisitante.html';
+      } else {
+        location.href = '/static/dashboard-fornecedor.html';
+      }
     });
   </script>
 </body>
