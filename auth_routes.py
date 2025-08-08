@@ -2,6 +2,7 @@
 """
 Blueprint de Rotas de Autenticação - Sistema de Propostas
 Implementa as rotas /api/auth/* que o frontend está chamando
+VERSÃO CORRIGIDA - Aceita tanto 'login' quanto 'email'
 """
 
 from flask import Blueprint, request, jsonify, current_app
@@ -62,6 +63,7 @@ def login():
     """
     Endpoint de login
     POST /api/auth/login
+    Aceita tanto 'email' quanto 'login' para compatibilidade
     """
     try:
         # Validar dados de entrada
@@ -73,7 +75,10 @@ def login():
                 'message': 'JSON não fornecido'
             }), 400
         
-        email = data.get('email', '').strip().lower()
+        # CORREÇÃO: Aceitar tanto 'email' quanto 'login'
+        email = data.get('email') or data.get('login')
+        if email:
+            email = email.strip().lower()
         senha = data.get('senha', '')
         
         # Validações básicas
@@ -105,6 +110,7 @@ def login():
 
         if not usuario:
             conn.close()
+            logger.warning(f"Usuário não encontrado: {email}")
             return jsonify({
                 'success': False,
                 'error': 'Credenciais inválidas',
@@ -115,8 +121,13 @@ def login():
         hash_db = usuario['senha']
         if isinstance(hash_db, str):
             hash_db = hash_db.encode('utf-8')
+        
+        # Log para debug (remover em produção)
+        logger.info(f"Verificando senha para usuário: {email}")
+        
         if not bcrypt.checkpw(senha.encode('utf-8'), hash_db):
             conn.close()
+            logger.warning(f"Senha incorreta para: {email}")
             return jsonify({
                 'success': False,
                 'error': 'Credenciais inválidas', 
@@ -129,27 +140,24 @@ def login():
 
         conn.close()
 
+        # CORREÇÃO: Retornar no formato esperado pelo frontend
         resultado = {
             'success': True,
             'message': 'Login realizado com sucesso',
-            'access_token': token,
+            'token': token,              # Para compatibilidade com frontend antigo
+            'access_token': token,       # Para compatibilidade com frontend novo
             'usuario': {
                 'id': usuario['id'],
                 'nome': usuario['nome'],
                 'email': usuario['email'],
-                'tipo': usuario['perfil'],
-                'perfil': usuario['perfil']
+                'tipo': usuario['perfil'],  # Frontend espera 'tipo'
+                'perfil': usuario['perfil'] # Manter ambos para compatibilidade
             }
         }
         
-        if resultado['success']:
-            # Login bem-sucedido
-            logger.info(f"Login bem-sucedido: {email} de {ip_origem}")
-            return jsonify(resultado), 200
-        else:
-            # Login falhado
-            logger.warning(f"Tentativa de login falhada: {email} de {ip_origem}")
-            return jsonify(resultado), 401
+        # Login bem-sucedido
+        logger.info(f"Login bem-sucedido: {email} de {ip_origem}")
+        return jsonify(resultado), 200
             
     except Exception as e:
         logger.error(f"Erro no login: {str(e)}")
@@ -484,4 +492,3 @@ def internal_error_handler(e):
         'error': 'Erro interno',
         'message': 'Erro interno do servidor'
     }), 500
-
