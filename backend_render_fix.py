@@ -1826,7 +1826,22 @@ def index():
 
 @app.route('/<path:path>')
 def serve_static(path):
-    """Serve arquivos estáticos"""
+    """Serve arquivos estáticos com mapeamento"""
+    # Mapeamento de nomes
+    file_mapping = {
+        'dashboard-fornecedor.html': 'dashboard-fornecedor-funcional.html',
+        # Adicione outros mapeamentos se necessário
+    }
+    
+    # Verifica se precisa mapear
+    if path in file_mapping:
+        path = file_mapping[path]
+    
+    # Remove 'static/' do início se existir
+    if path.startswith('static/'):
+        path = path[7:]
+    
+    # Tenta servir o arquivo
     if path and os.path.exists(os.path.join('static', path)):
         return send_from_directory('static', path)
     else:
