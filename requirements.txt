@@ -1,116 +1,17 @@
-# Requirements.txt - Sistema de Propostas Seguro
-# Versões específicas para garantir compatibilidade e segurança
-
-# Framework principal
 Flask==2.3.3
-Werkzeug==2.3.7
-
-# Banco de dados
-SQLAlchemy==2.0.23
 Flask-SQLAlchemy==3.1.1
-psycopg2-binary==2.9.9  # Para PostgreSQL
-PyMySQL==1.1.0  # Para MySQL (alternativa)
-
-# Autenticação e segurança
 Flask-JWT-Extended==4.5.3
+Flask-CORS==4.0.0
+Flask-Limiter==3.5.0
 bcrypt==4.1.2
 cryptography>=40.0.0
 PyJWT==2.8.0
-
-# CORS e headers de segurança
-Flask-CORS==4.0.0
-flask-talisman==1.1.0  # Headers de segurança automáticos
-
-# Rate limiting
-Flask-Limiter==3.5.0
-redis==5.0.1  # Para rate limiting distribuído
-
-# Validação de dados
 marshmallow==3.20.2
-Flask-Marshmallow==0.15.0
-marshmallow-sqlalchemy==0.29.0
 email-validator==2.1.0.post1
-
-# Formulários e CSRF
-Flask-WTF==1.2.1
-WTForms==3.1.1
-
-# Logging e monitoramento
-python-json-logger==2.0.7
-structlog==23.2.0
-
-# Utilitários de segurança
-python-dotenv==1.0.0  # Para variáveis de ambiente
-secrets  # Já incluído no Python 3.6+
-hashlib  # Já incluído no Python
-hmac  # Já incluído no Python
-
-# Validação de entrada
-bleach==6.1.0  # Para sanitização de HTML
-html5lib==1.1  # Dependência do bleach
-
-# Geração de documentos (se necessário)
-reportlab==4.0.7
-fpdf2==2.7.6
-weasyprint==60.2  # Para PDF a partir de HTML
-
-# Manipulação de arquivos
-openpyxl==3.1.2  # Excel
-python-docx==1.1.0  # Word
-PyPDF2==3.0.1  # PDF
-
-# HTTP e requisições
+python-dotenv==1.0.0
 requests==2.31.0
-urllib3==2.1.0
-
-# Data e tempo
-python-dateutil==2.8.2
-pytz==2023.3.post1
-
-# Utilitários gerais
-click==8.1.7  # Para CLI
-colorama==0.4.6  # Para cores no terminal
-tabulate==0.9.0  # Para tabelas formatadas
-
-# Desenvolvimento e testes (opcional)
-pytest==7.4.3
-pytest-flask==1.3.0
-pytest-cov==4.1.0
-black==23.11.0  # Formatação de código
-flake8==6.1.0  # Linting
-mypy==1.7.1  # Type checking
-
-# Produção
-gunicorn==21.2.0  # WSGI server para produção
-gevent==23.9.1  # Para melhor performance
-
-# Monitoramento (opcional)
-sentry-sdk[flask]==1.38.0  # Para monitoramento de erros
-
-# Cache (opcional)
-Flask-Caching==2.1.0
-
-# Sessões (opcional)
-Flask-Session==0.5.0
-
-# Email (opcional)
-Flask-Mail==0.9.1
-
-# Backup e migração (opcional)
-Flask-Migrate==4.0.5
-alembic==1.13.1
-
-# Compressão (opcional)
-Flask-Compress==1.14
-
-# API documentation (opcional)
-flask-restx==1.3.0
-flasgger==0.9.7.1
-
-# Configurações específicas por ambiente
-# Desenvolvimento
-flask-debugtoolbar==0.13.1  # Apenas para desenvolvimento
-
-# Produção adicional
-supervisor==4.2.5  # Para gerenciar processos
-nginx  # Configurar separadamente no sistema
+reportlab==4.0.7
+openpyxl==3.1.2
+gunicorn==21.2.0
+redis==5.0.1
+Werkzeug==2.3.7
