@@ -57,7 +57,7 @@ def validate_password_strength(password):
     return True, "Senha válida"
 
 @auth_bp.route('/login', methods=['POST'])
-@limiter.limit("5 per minute")  # Rate limiting para login
+@limiter.limit("20 per minute")  # Rate limiting para login
 def login():
     """
     Endpoint de login
