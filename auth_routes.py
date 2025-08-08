@@ -97,12 +97,12 @@ def login():
         # Buscar usuário no banco
         from backend_render_fix import get_db
         import bcrypt
-        
+
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM usuarios WHERE email = ?', (email,))
         usuario = cursor.fetchone()
-        
+
         if not usuario:
             conn.close()
             return jsonify({
@@ -110,7 +110,7 @@ def login():
                 'error': 'Credenciais inválidas',
                 'message': 'Email ou senha incorretos'
             }), 401
-        
+
         # Verificar senha
         hash_db = usuario['senha']
         if isinstance(hash_db, str):
@@ -122,13 +122,13 @@ def login():
                 'error': 'Credenciais inválidas', 
                 'message': 'Email ou senha incorretos'
             }), 401
-        
+
         # Gerar token
         from backend_render_fix import gerar_token
         token = gerar_token(usuario['id'], usuario['perfil'])
-        
+
         conn.close()
-        
+
         resultado = {
             'success': True,
             'message': 'Login realizado com sucesso',
