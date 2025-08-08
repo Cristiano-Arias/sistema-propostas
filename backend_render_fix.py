@@ -7,6 +7,8 @@ Versão 5.0 - Totalmente Integrado
 import os
 import json
 import logging
+from auth_routes import auth_bp
+from security_middleware import init_security_middleware
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory, session, send_file
@@ -24,6 +26,8 @@ from reportlab.lib.units import inch
 
 # Configuração do Flask
 app = Flask(__name__, static_folder='static')
+app.register_blueprint(auth_bp)
+init_security_middleware(app)
 
 # Configurações
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
