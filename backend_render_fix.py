@@ -1802,6 +1802,28 @@ def desativar_usuario(usuario_id):
         logger.error(f"Erro ao desativar usuário: {str(e)}")
         return jsonify({'message': 'Erro interno'}), 500
 
+# Rotas específicas para os dashboards
+@app.route('/static/dashboard-fornecedor.html')
+def dashboard_fornecedor():
+    """Serve dashboard do fornecedor"""
+    return send_from_directory('static', 'dashboard-fornecedor.html')
+
+@app.route('/static/dashboard-requisitante.html')
+def dashboard_requisitante():
+    """Serve dashboard do requisitante"""
+    return send_from_directory('static', 'dashboard-requisitante.html')
+
+@app.route('/static/dashboard-comprador.html')
+def dashboard_comprador():
+    """Serve dashboard do comprador"""
+    return send_from_directory('static', 'dashboard-comprador.html')
+
+# Rotas de arquivos estáticos (← esta linha já existe)
+@app.route('/')
+def index():
+    """Rota principal"""
+    return send_from_directory('static', 'index.html')
+
 # Rotas de arquivos estáticos
 @app.route('/')
 def index():
