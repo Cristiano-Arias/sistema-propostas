@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Acesso - Fornecedores</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .portal-container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .portal-info {
+            flex: 1;
+            color: white;
+            text-align: center;
+        }
+
+        .portal-info .logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .portal-info h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .portal-info p {
+            font-size: 16px;
+            line-height: 1.6;
+            opacity: 0.9;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #3c3;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+        }
+
+        .demo-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .demo-credentials {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .demo-credentials h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .credential-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .portal-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .portal-info h1 {
+                font-size: 24px;
+            }
+
+            .portal-info .logo {
+                font-size: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-container">
+        <div class="portal-info">
+            <div class="logo">🏢</div>
+            <h1>Portal do Fornecedor</h1>
+            <p>Acesse sua área exclusiva para participar de processos licitatórios. Envie propostas, acompanhe resultados e mantenha seus dados atualizados.</p>
+        </div>
+
+        <div class="login-container">
+            <h2>Acesso ao Sistema</h2>
+
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login">E-mail</label>
+                    <input type="email" id="login" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="login-btn" id="btn-login">
+                    Entrar no Sistema
+                </button>
+            </form>
+
+            <div class="demo-section">
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                    Não possui acesso? Entre em contato com o setor de licitações.
+                </p>
+                
+                <div class="demo-credentials">
+                    <h3>🔑 Credenciais de Teste</h3>
+                    
+                    <div class="credential-item">
+                        <strong>Fornecedor Teste</strong><br>
+                        <strong>E-mail:</strong> fornecedor@empresa.com<br>
+                        <strong>Senha:</strong> forn123
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para mostrar erro
+        function mostrarErro(mensagem) {
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            
+            successDiv.style.display = 'none';
+            errorDiv.textContent = mensagem;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Função para mostrar sucesso
+        function mostrarSucesso(mensagem) {
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            
+            errorDiv.style.display = 'none';
+            successDiv.textContent = mensagem;
+            successDiv.style.display = 'block';
+        }
+
+        // Função para setar estado de loading
+        function setLoading(isLoading) {
+            const btn = document.getElementById('btn-login');
+            btn.disabled = isLoading;
+            
+            if (isLoading) {
+                btn.innerHTML = '<span class="loading"></span>Entrando...';
+            } else {
+                btn.innerHTML = 'Entrar no Sistema';
+            }
+        }
+
+        // Função de login via API
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login').value.trim();
+            const senha = document.getElementById('senha').value.trim();
+            
+            if (!email || !senha) {
+                mostrarErro('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Chamar API de login
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,  // Enviar como email
+                        login: email,  // E também como login para compatibilidade
+                        senha: senha
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Resposta do servidor:', data);
+
+                if (response.ok && data.success) {
+                    // Login bem-sucedido
+                    mostrarSucesso('Login realizado com sucesso! Redirecionando...');
+                    
+                    // Salvar token e dados do usuário
+                    const token = data.access_token || data.token;
+                    if (token) {
+                        localStorage.setItem('auth_token', token);
+                    }
+                    
+                    if (data.usuario) {
+                        localStorage.setItem('usuario_atual', JSON.stringify(data.usuario));
+                    }
+                    
+                    // Verificar se é realmente um fornecedor
+                    const tipo = data.usuario?.tipo || data.usuario?.perfil;
+                    if (tipo !== 'fornecedor') {
+                        mostrarErro('Acesso negado. Esta área é exclusiva para fornecedores.');
+                        setLoading(false);
+                        return;
+                    }
+                    
+                    // Redirecionar após 1 segundo
+                    setTimeout(() => {
+                        window.location.href = '/static/dashboard-fornecedor-funcional.html';
+                    }, 1000);
+                    
+                } else {
+                    // Erro no login
+                    mostrarErro(data.message || 'Email ou senha incorretos');
+                    setLoading(false);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao fazer login:', error);
+                mostrarErro('Erro de conexão. Tente novamente mais tarde.');
+                setLoading(false);
+            }
+        });
+
+        // Verificar se já está logado ao carregar a página
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('auth_token');
+            const usuario = localStorage.getItem('usuario_atual');
+            
+            if (token && usuario) {
+                try {
+                    const user = JSON.parse(usuario);
+                    const tipo = user.tipo || user.perfil;
+                    
+                    // Se já está logado como fornecedor, redirecionar
+                    if (tipo === 'fornecedor') {
+                        window.location.href = '/static/dashboard-fornecedor-funcional.html';
+                    }
+                } catch (e) {
+                    // Limpar dados inválidos
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('usuario_atual');
+                }
+            }
+        });
+
+        console.log('Sistema de autenticação via API carregado!');
+    </script>
+</body>
+</html>
