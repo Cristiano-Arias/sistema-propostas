@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Propostas - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .login-header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .login-form {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .alert-success {
+            background: #efe;
+            color: #363;
+            border: 1px solid #cfc;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .forgot-password a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .system-info {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 10px;
+            }
+            
+            .login-header {
+                padding: 30px 20px;
+            }
+            
+            .login-form {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Sistema de Propostas</h1>
+            <p>Portal de Acesso Unificado</p>
+        </div>
+        
+        <div class="login-form">
+            <div id="alert" class="alert"></div>
+            
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Autenticando...</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required autocomplete="username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="senha" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="login-button" id="loginButton">
+                    Entrar
+                </button>
+            </form>
+            
+            <div class="forgot-password">
+                <a href="#" onclick="alert('Entre em contato com o administrador do sistema para recuperar sua senha.')">
+                    Esqueceu sua senha?
+                </a>
+            </div>
+        </div>
+        
+        <div class="system-info">
+            Sistema RBAC v2.0 - Acesso seguro com controle granular de permissões
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            const alertDiv = document.getElementById('alert');
+            const loading = document.getElementById('loading');
+            const loginButton = document.getElementById('loginButton');
+            
+            // Limpar alertas anteriores
+            alertDiv.style.display = 'none';
+            
+            // Mostrar loading
+            loading.style.display = 'block';
+            loginButton.disabled = true;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, senha })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Login bem-sucedido
+                    showAlert('Login realizado com sucesso! Redirecionando...', 'success');
+                    
+                    // Salvar token se fornecido
+                    if (result.access_token) {
+                        localStorage.setItem('access_token', result.access_token);
+                        localStorage.setItem('refresh_token', result.refresh_token);
+                        localStorage.setItem('user_data', JSON.stringify(result.user));
+                    }
+                    
+                    // Redirecionar baseado no role
+                    setTimeout(() => {
+                        const user = result.user;
+                        const primaryRole = user.primary_role;
+                        
+                        const roleRedirects = {
+                            'SUPER_ADMIN': '/admin/dashboard',
+                            'ADMIN_COMPRADOR': '/dashboard-comprador-funcional.html',
+                            'ADMIN_REQUISITANTE': '/dashboard-requisitante-integrado.html',
+                            'COMPRADOR_SENIOR': '/dashboard-comprador-funcional.html',
+                            'COMPRADOR_JUNIOR': '/dashboard-comprador-funcional.html',
+                            'REQUISITANTE_SENIOR': '/dashboard-requisitante-integrado.html',
+                            'REQUISITANTE_JUNIOR': '/dashboard-requisitante-funcional.html',
+                            'FORNECEDOR_PREMIUM': '/dashboard-fornecedor-funcional.html',
+                            'FORNECEDOR_BASICO': '/dashboard-fornecedor-funcional.html'
+                        };
+                        
+                        const redirectUrl = roleRedirects[primaryRole] || '/index.html';
+                        window.location.href = redirectUrl;
+                    }, 1500);
+                    
+                } else {
+                    // Login falhou
+                    let errorMessage = result.error || 'Erro desconhecido';
+                    
+                    // Personalizar mensagens de erro
+                    switch (result.code) {
+                        case 'RATE_LIMIT_EXCEEDED':
+                            errorMessage = 'Muitas tentativas de login. Aguarde alguns minutos e tente novamente.';
+                            break;
+                        case 'ACCOUNT_BLOCKED':
+                            errorMessage = 'Sua conta foi temporariamente bloqueada devido a múltiplas tentativas de login incorretas.';
+                            break;
+                        case 'ACCOUNT_INACTIVE':
+                            errorMessage = 'Sua conta está desativada. Entre em contato com o administrador.';
+                            break;
+                        case 'PASSWORD_EXPIRED':
+                            errorMessage = 'Sua senha expirou. É necessário alterá-la.';
+                            break;
+                        case 'INVALID_CREDENTIALS':
+                            errorMessage = 'Email ou senha incorretos. Verifique suas credenciais e tente novamente.';
+                            break;
+                    }
+                    
+                    showAlert(errorMessage, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erro no login:', error);
+                showAlert('Erro de conexão. Verifique sua internet e tente novamente.', 'error');
+            } finally {
+                // Esconder loading
+                loading.style.display = 'none';
+                loginButton.disabled = false;
+            }
+        });
+        
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            alertDiv.textContent = message;
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.display = 'block';
+            
+            // Auto-hide success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Verificar se já está logado
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('access_token');
+            const userData = localStorage.getItem('user_data');
+            
+            if (token && userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    showAlert('Você já está logado. Redirecionando...', 'success');
+                    
+                    setTimeout(() => {
+                        const primaryRole = user.primary_role;
+                        const roleRedirects = {
+                            'SUPER_ADMIN': '/admin/dashboard',
+                            'ADMIN_COMPRADOR': '/dashboard-comprador-funcional.html',
+                            'ADMIN_REQUISITANTE': '/dashboard-requisitante-integrado.html',
+                            'COMPRADOR_SENIOR': '/dashboard-comprador-funcional.html',
+                            'COMPRADOR_JUNIOR': '/dashboard-comprador-funcional.html',
+                            'REQUISITANTE_SENIOR': '/dashboard-requisitante-integrado.html',
+                            'REQUISITANTE_JUNIOR': '/dashboard-requisitante-funcional.html',
+                            'FORNECEDOR_PREMIUM': '/dashboard-fornecedor-funcional.html',
+                            'FORNECEDOR_BASICO': '/dashboard-fornecedor-funcional.html'
+                        };
+                        
+                        const redirectUrl = roleRedirects[primaryRole] || '/index.html';
+                        window.location.href = redirectUrl;
+                    }, 2000);
+                } catch (e) {
+                    // Token inválido, limpar storage
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('user_data');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
