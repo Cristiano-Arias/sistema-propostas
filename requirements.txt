@@ -27,26 +27,19 @@ gevent==23.7.0
 reportlab==4.0.4
 PyPDF2==3.0.1
 
-# Email
-flask-mail==0.9.1
-
 # Utilities
 requests==2.31.0
 python-dateutil==2.8.2
 pytz==2023.3
 
 # Development (optional)
-flask-debugtoolbar==0.13.1
-pytest==7.4.0
-pytest-flask==1.2.0
-black==23.7.0
-flake8==6.1.0
-
-# Monitoring (optional)
-flask-monitoring-dashboard==3.2.0
-prometheus-flask-exporter==0.22.4
+# flask-debugtoolbar==0.13.1
+# pytest==7.4.0
+# pytest-flask==1.2.0
+# black==23.7.0
+# flake8==6.1.0
 
 # Excel/CSV Processing (if needed)
-pandas==2.0.3
-openpyxl==3.1.2
-xlsxwriter==3.1.2
+# pandas==2.0.3
+# openpyxl==3.1.2
+# xlsxwriter==3.1.2
