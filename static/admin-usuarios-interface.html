@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração de Usuários - Sistema de Propostas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+        }
+
+        body {
+            background-color: #f5f6fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+
+        .sidebar {
+            background-color: white;
+            min-height: calc(100vh - 56px);
+            box-shadow: 2px 0 4px rgba(0,0,0,.05);
+            padding: 20px 0;
+        }
+
+        .sidebar .nav-link {
+            color: #333;
+            padding: 10px 20px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: #f8f9fa;
+            border-left-color: var(--secondary-color);
+        }
+
+        .sidebar .nav-link.active {
+            background-color: #e3f2fd;
+            border-left-color: var(--secondary-color);
+            color: var(--secondary-color);
+        }
+
+        .content-header {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.05);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.05);
+            border-left: 4px solid;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,.1);
+        }
+
+        .stat-card.primary { border-left-color: var(--primary-color); }
+        .stat-card.success { border-left-color: var(--success-color); }
+        .stat-card.warning { border-left-color: var(--warning-color); }
+        .stat-card.danger { border-left-color: var(--danger-color); }
+
+        .data-table {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.05);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .form-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .search-box input {
+            padding-left: 40px;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .tab-content {
+            background: white;
+            padding: 20px;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            border: none;
+            padding: 10px 20px;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background-color: white;
+            border-bottom: 3px solid var(--secondary-color);
+        }
+
+        .password-strength {
+            height: 5px;
+            border-radius: 3px;
+            transition: all 0.3s;
+            margin-top: 5px;
+        }
+
+        .strength-weak { background-color: var(--danger-color); width: 33%; }
+        .strength-medium { background-color: var(--warning-color); width: 66%; }
+        .strength-strong { background-color: var(--success-color); width: 100%; }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -250px;
+                width: 250px;
+                z-index: 1000;
+                transition: left 0.3s;
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-users-cog"></i> Administração do Sistema
+            </a>
+            <div class="ms-auto d-flex align-items-center">
+                <div class="text-white me-3">
+                    <i class="fas fa-user-circle"></i> 
+                    <span id="usuario-nome">Admin</span>
+                </div>
+                <button class="btn btn-sm btn-outline-light" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="mostrarSecao('dashboard')">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarSecao('usuarios')">
+                            <i class="fas fa-users"></i> Usuários
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarSecao('fornecedores')">
+                            <i class="fas fa-building"></i> Fornecedores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarSecao('logs')">
+                            <i class="fas fa-history"></i> Logs de Auditoria
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarSecao('relatorios')">
+                            <i class="fas fa-chart-bar"></i> Relatórios
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Content -->
+            <div class="col-md-10">
+                <!-- Dashboard Section -->
+                <div id="dashboard-section" class="content-section">
+                    <div class="content-header">
+                        <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+                        <p class="text-muted">Visão geral do sistema</p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="stat-card primary">
+                                <h3 id="total-usuarios">0</h3>
+                                <p>Total de Usuários</p>
+                                <i class="fas fa-users fa-2x opacity-25"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card success">
+                                <h3 id="usuarios-ativos">0</h3>
+                                <p>Usuários Ativos</p>
+                                <i class="fas fa-user-check fa-2x opacity-25"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card warning">
+                                <h3 id="fornecedores-pendentes">0</h3>
+                                <p>Fornecedores Pendentes</p>
+                                <i class="fas fa-clock fa-2x opacity-25"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card danger">
+                                <h3 id="usuarios-bloqueados">0</h3>
+                                <p>Usuários Bloqueados</p>
+                                <i class="fas fa-user-lock fa-2x opacity-25"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="data-table">
+                                <h5>Últimos Acessos</h5>
+                                <div id="ultimos-acessos" class="mt-3">
+                                    <p class="text-muted">Carregando...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="data-table">
+                                <h5>Atividades Recentes</h5>
+                                <div id="atividades-recentes" class="mt-3">
+                                    <p class="text-muted">Carregando...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Usuários Section -->
+                <div id="usuarios-section" class="content-section" style="display: none;">
+                    <div class="content-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2><i class="fas fa-users"></i> Gerenciar Usuários</h2>
+                            <p class="text-muted">Cadastro e controle de usuários do sistema</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="abrirModalNovoUsuario()">
+                            <i class="fas fa-plus"></i> Novo Usuário
+                        </button>
+                    </div>
+
+                    <div class="data-table">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="search-box">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" class="form-control" placeholder="Buscar usuários..." 
+                                           id="buscar-usuarios" onkeyup="filtrarUsuarios()">
+                                </div>
+                            </div>
+                            <div class="col-md-8 text-end">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="exportarUsuarios()">
+                                    <i class="fas fa-download"></i> Exportar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>E-mail</th>
+                                        <th>CPF</th>
+                                        <th>Perfil</th>
+                                        <th>Departamento</th>
+                                        <th>Status</th>
+                                        <th>Último Acesso</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-usuarios">
+                                    <tr>
+                                        <td colspan="8" class="text-center">Carregando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fornecedores Section -->
+                <div id="fornecedores-section" class="content-section" style="display: none;">
+                    <div class="content-header">
+                        <h2><i class="fas fa-building"></i> Gerenciar Fornecedores</h2>
+                        <p class="text-muted">Aprovação e controle de fornecedores</p>
+                    </div>
+
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#pendentes-tab">
+                                Pendentes <span class="badge bg-warning" id="badge-pendentes">0</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#aprovados-tab">
+                                Aprovados
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#bloqueados-tab">
+                                Bloqueados
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div id="pendentes-tab" class="tab-pane fade show active">
+                            <div id="fornecedores-pendentes-list" class="mt-3">
+                                <p class="text-muted">Carregando...</p>
+                            </div>
+                        </div>
+                        <div id="aprovados-tab" class="tab-pane fade">
+                            <div id="fornecedores-aprovados-list" class="mt-3">
+                                <p class="text-muted">Carregando...</p>
+                            </div>
+                        </div>
+                        <div id="bloqueados-tab" class="tab-pane fade">
+                            <div id="fornecedores-bloqueados-list" class="mt-3">
+                                <p class="text-muted">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs Section -->
+                <div id="logs-section" class="content-section" style="display: none;">
+                    <div class="content-header">
+                        <h2><i class="fas fa-history"></i> Logs de Auditoria</h2>
+                        <p class="text-muted">Histórico de ações do sistema</p>
+                    </div>
+
+                    <div class="data-table">
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <input type="date" class="form-control" id="log-data-inicio">
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" class="form-control" id="log-data-fim">
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-control" id="log-tipo">
+                                    <option value="">Todas as ações</option>
+                                    <option value="LOGIN">Login</option>
+                                    <option value="CRIAR_USUARIO">Criação de usuário</option>
+                                    <option value="ALTERAR_SENHA">Alteração de senha</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary w-100" onclick="filtrarLogs()">
+                                    <i class="fas fa-filter"></i> Filtrar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="lista-logs" class="mt-3">
+                            <p class="text-muted">Selecione os filtros e clique em filtrar</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Relatórios Section -->
+                <div id="relatorios-section" class="content-section" style="display: none;">
+                    <div class="content-header">
+                        <h2><i class="fas fa-chart-bar"></i> Relatórios</h2>
+                        <p class="text-muted">Análises e estatísticas do sistema</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                                    <h5>Relatório de Usuários</h5>
+                                    <p class="text-muted">Estatísticas completas de usuários</p>
+                                    <button class="btn btn-primary" onclick="gerarRelatorioUsuarios()">
+                                        Gerar Relatório
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-building fa-3x text-success mb-3"></i>
+                                    <h5>Relatório de Fornecedores</h5>
+                                    <p class="text-muted">Análise de fornecedores cadastrados</p>
+                                    <button class="btn btn-success" onclick="gerarRelatorioFornecedores()">
+                                        Gerar Relatório
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-line fa-3x text-warning mb-3"></i>
+                                    <h5>Relatório de Acessos</h5>
+                                    <p class="text-muted">Histórico de acessos ao sistema</p>
+                                    <button class="btn btn-warning" onclick="gerarRelatorioAcessos()">
+                                        Gerar Relatório
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Usuário -->
+    <div class="modal fade" id="modalNovoUsuario" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus"></i> Novo Usuário
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formNovoUsuario">
+                        <div class="form-section">
+                            <h6>Dados Pessoais</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nome Completo *</label>
+                                    <input type="text" class="form-control" id="nome" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">CPF *</label>
+                                    <input type="text" class="form-control" id="cpf" required
+                                           placeholder="000.000.000-00" maxlength="14">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h6>Dados de Acesso</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">E-mail *</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Perfil *</label>
+                                    <select class="form-control" id="perfil" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="requisitante">Requisitante</option>
+                                        <option value="comprador">Comprador</option>
+                                        <option value="admin_sistema">Administrador</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h6>Dados Organizacionais</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Departamento *</label>
+                                    <input type="text" class="form-control" id="departamento" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Cargo</label>
+                                    <input type="text" class="form-control" id="cargo">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Telefone</label>
+                                    <input type="text" class="form-control" id="telefone"
+                                           placeholder="(00) 00000-0000">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            Uma senha temporária será gerada e enviada por e-mail ao usuário.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarUsuario()">
+                        <i class="fas fa-save"></i> Salvar Usuário
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes Fornecedor -->
+    <div class="modal fade" id="modalDetalhesFornecedor" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-building"></i> Detalhes do Fornecedor
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detalhes-fornecedor">
+                    <!-- Conteúdo será preenchido dinamicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-success" id="btn-aprovar-fornecedor">
+                        <i class="fas fa-check"></i> Aprovar Cadastro
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btn-rejeitar-fornecedor">
+                        <i class="fas fa-times"></i> Rejeitar Cadastro
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Configuração da API
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5001/api' 
+            : '/api';
+
+        // Token de autenticação
+        let authToken = localStorage.getItem('admin_token');
+
+        // Verificar autenticação
+        if (!authToken) {
+            alert('Sessão expirada. Faça login novamente.');
+            window.location.href = 'login-admin.html';
+        }
+
+        // Headers padrão para requisições
+        function getHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            };
+        }
+
+        // Funções de navegação
+        function mostrarSecao(secao) {
+            // Ocultar todas as seções
+            document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+            
+            // Remover active dos links
+            document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+            
+            // Mostrar seção selecionada
+            document.getElementById(`${secao}-section`).style.display = 'block';
+            
+            // Marcar link como ativo
+            event.target.closest('.nav-link').classList.add('active');
+            
+            // Carregar dados da seção
+            switch(secao) {
+                case 'dashboard':
+                    carregarDashboard();
+                    break;
+                case 'usuarios':
+                    carregarUsuarios();
+                    break;
+                case 'fornecedores':
+                    carregarFornecedores();
+                    break;
+                case 'logs':
+                    // Logs são carregados sob demanda
+                    break;
+                case 'relatorios':
+                    // Relatórios são gerados sob demanda
+                    break;
+            }
+        }
+
+        // Carregar Dashboard
+        async function carregarDashboard() {
+            try {
+                // Carregar estatísticas
+                const response = await fetch(`${API_BASE}/dashboard/stats`, {
+                    headers: getHeaders()
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    document.getElementById('total-usuarios').textContent = data.total_usuarios || 0;
+                    document.getElementById('usuarios-ativos').textContent = data.usuarios_ativos || 0;
+                    document.getElementById('fornecedores-pendentes').textContent = data.fornecedores_pendentes || 0;
+                    document.getElementById('usuarios-bloqueados').textContent = data.usuarios_bloqueados || 0;
+                    
+                    // Últimos acessos
+                    if (data.ultimos_acessos) {
+                        let html = '<div class="list-group">';
+                        data.ultimos_acessos.forEach(acesso => {
+                            html += `
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong>${acesso.nome}</strong>
+                                            <small class="text-muted d-block">${acesso.email}</small>
+                                        </div>
+                                        <small class="text-muted">
+                                            ${new Date(acesso.ultimo_login).toLocaleString('pt-BR')}
+                                        </small>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        document.getElementById('ultimos-acessos').innerHTML = html;
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+            }
+        }
+
+        // Carregar Usuários
+        async function carregarUsuarios() {
+            try {
+                const response = await fetch(`${API_BASE}/usuarios`, {
+                    headers: getHeaders()
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const usuarios = data.usuarios || [];
+                    
+                    let html = '';
+                    usuarios.forEach(usuario => {
+                        const avatar = usuario.nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                        const statusClass = usuario.ativo ? 'status-active' : 'status-inactive';
+                        const statusText = usuario.ativo ? 'Ativo' : 'Inativo';
+                        const ultimoAcesso = usuario.ultimo_login 
+                            ? new Date(usuario.ultimo_login).toLocaleDateString('pt-BR')
+                            : 'Nunca';
+                        
+                        html += `
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-2">${avatar}</div>
+                                        <div>
+                                            <strong>${usuario.nome}</strong>
+                                            <small class="d-block text-muted">${usuario.cargo || 'Sem cargo'}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>${usuario.email}</td>
+                                <td>${usuario.cpf}</td>
+                                <td>
+                                    <span class="badge bg-primary">${usuario.perfil}</span>
+                                </td>
+                                <td>${usuario.departamento || '-'}</td>
+                                <td>
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                </td>
+                                <td>${ultimoAcesso}</td>
+                                <td class="action-buttons">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editarUsuario(${usuario.id})" 
+                                            title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="resetarSenha(${usuario.id})"
+                                            title="Resetar Senha">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-${usuario.ativo ? 'danger' : 'success'}" 
+                                            onclick="toggleUsuarioStatus(${usuario.id})"
+                                            title="${usuario.ativo ? 'Desativar' : 'Ativar'}">
+                                        <i class="fas fa-${usuario.ativo ? 'ban' : 'check'}"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    document.getElementById('tabela-usuarios').innerHTML = html || 
+                        '<tr><td colspan="8" class="text-center">Nenhum usuário encontrado</td></tr>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+                document.getElementById('tabela-usuarios').innerHTML = 
+                    '<tr><td colspan="8" class="text-center text-danger">Erro ao carregar usuários</td></tr>';
+            }
+        }
+
+        // Carregar Fornecedores
+        async function carregarFornecedores() {
+            try {
+                // Pendentes
+                const pendentesResponse = await fetch(`${API_BASE}/fornecedores/pendentes`, {
+                    headers: getHeaders()
+                });
+                
+                if (pendentesResponse.ok) {
+                    const data = await pendentesResponse.json();
+                    const fornecedores = data.fornecedores || [];
+                    
+                    document.getElementById('badge-pendentes').textContent = fornecedores.length;
+                    
+                    let html = '<div class="row">';
+                    fornecedores.forEach(fornecedor => {
+                        html += `
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${fornecedor.razao_social}</h5>
+                                        <p class="card-text">
+                                            <strong>CNPJ:</strong> ${fornecedor.cnpj}<br>
+                                            <strong>E-mail:</strong> ${fornecedor.email}<br>
+                                            <strong>Cidade:</strong> ${fornecedor.cidade}/${fornecedor.estado}<br>
+                                            <strong>Data Cadastro:</strong> ${new Date(fornecedor.data_cadastro).toLocaleDateString('pt-BR')}
+                                        </p>
+                                        <button class="btn btn-primary btn-sm" onclick="verDetalhesFornecedor(${fornecedor.id})">
+                                            <i class="fas fa-eye"></i> Ver Detalhes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    
+                    document.getElementById('fornecedores-pendentes-list').innerHTML = html || 
+                        '<p class="text-muted">Nenhum fornecedor pendente de aprovação</p>';
+                }
+                
+                // Aprovados
+                const aprovadosResponse = await fetch(`${API_BASE}/fornecedores/aprovados`, {
+                    headers: getHeaders()
+                });
+                
+                if (aprovadosResponse.ok) {
+                    const data = await aprovadosResponse.json();
+                    const fornecedores = data.fornecedores || [];
+                    
+                    let html = '<div class="table-responsive"><table class="table"><thead><tr>';
+                    html += '<th>Razão Social</th><th>CNPJ</th><th>E-mail</th><th>Cidade/UF</th>';
+                    html += '<th>Certidões</th><th>Ações</th></tr></thead><tbody>';
+                    
+                    fornecedores.forEach(fornecedor => {
+                        const certidoesClass = fornecedor.certidoes_validas ? 'text-success' : 'text-danger';
+                        const certidoesIcon = fornecedor.certidoes_validas ? 'check-circle' : 'times-circle';
+                        
+                        html += `
+                            <tr>
+                                <td>${fornecedor.razao_social}</td>
+                                <td>${fornecedor.cnpj}</td>
+                                <td>${fornecedor.email}</td>
+                                <td>${fornecedor.cidade}/${fornecedor.estado}</td>
+                                <td class="${certidoesClass}">
+                                    <i class="fas fa-${certidoesIcon}"></i>
+                                    ${fornecedor.certidoes_validas ? 'Válidas' : 'Pendentes'}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="verDetalhesFornecedor(${fornecedor.id})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="bloquearFornecedor(${fornecedor.id})">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    document.getElementById('fornecedores-aprovados-list').innerHTML = html || 
+                        '<p class="text-muted">Nenhum fornecedor aprovado</p>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar fornecedores:', error);
+            }
+        }
+
+        // Abrir modal novo usuário
+        function abrirModalNovoUsuario() {
+            document.getElementById('formNovoUsuario').reset();
+            new bootstrap.Modal(document.getElementById('modalNovoUsuario')).show();
+        }
+
+        // Salvar usuário
+        async function salvarUsuario() {
+            const dados = {
+                nome: document.getElementById('nome').value,
+                cpf: document.getElementById('cpf').value,
+                email: document.getElementById('email').value,
+                perfil: document.getElementById('perfil').value,
+                departamento: document.getElementById('departamento').value,
+                cargo: document.getElementById('cargo').value,
+                telefone: document.getElementById('telefone').value
+            };
+            
+            // Validações
+            if (!dados.nome || !dados.cpf || !dados.email || !dados.perfil || !dados.departamento) {
+                alert('Por favor, preencha todos os campos obrigatórios');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/usuarios/criar`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(dados)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('Usuário criado com sucesso! As credenciais foram enviadas por e-mail.');
+                    bootstrap.Modal.getInstance(document.getElementById('modalNovoUsuario')).hide();
+                    carregarUsuarios();
+                } else {
+                    alert(result.erro || 'Erro ao criar usuário');
+                }
+            } catch (error) {
+                console.error('Erro ao salvar usuário:', error);
+                alert('Erro ao salvar usuário');
+            }
+        }
+
+        // Resetar senha
+        async function resetarSenha(usuarioId) {
+            if (!confirm('Deseja realmente resetar a senha deste usuário?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/usuarios/${usuarioId}/resetar-senha`, {
+                    method: 'POST',
+                    headers: getHeaders()
+                });
+                
+                if (response.ok) {
+                    alert('Senha resetada com sucesso! Uma nova senha foi enviada por e-mail.');
+                } else {
+                    alert('Erro ao resetar senha');
+                }
+            } catch (error) {
+                console.error('Erro ao resetar senha:', error);
+                alert('Erro ao resetar senha');
+            }
+        }
+
+        // Toggle status usuário
+        async function toggleUsuarioStatus(usuarioId) {
+            if (!confirm('Deseja realmente alterar o status deste usuário?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/usuarios/${usuarioId}/ativar`, {
+                    method: 'PUT',
+                    headers: getHeaders()
+                });
+                
+                if (response.ok) {
+                    carregarUsuarios();
+                } else {
+                    alert('Erro ao alterar status do usuário');
+                }
+            } catch (error) {
+                console.error('Erro ao alterar status:', error);
+                alert('Erro ao alterar status do usuário');
+            }
+        }
+
+        // Ver detalhes fornecedor
+        async function verDetalhesFornecedor(fornecedorId) {
+            try {
+                const response = await fetch(`${API_BASE}/fornecedores/${fornecedorId}`, {
+                    headers: getHeaders()
+                });
+                
+                if (response.ok) {
+                    const fornecedor = await response.json();
+                    
+                    let html = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Dados da Empresa</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>Razão Social:</strong></td><td>${fornecedor.razao_social}</td></tr>
+                                    <tr><td><strong>Nome Fantasia:</strong></td><td>${fornecedor.nome_fantasia || '-'}</td></tr>
+                                    <tr><td><strong>CNPJ:</strong></td><td>${fornecedor.cnpj}</td></tr>
+                                    <tr><td><strong>I.E.:</strong></td><td>${fornecedor.inscricao_estadual || '-'}</td></tr>
+                                    <tr><td><strong>I.M.:</strong></td><td>${fornecedor.inscricao_municipal || '-'}</td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Endereço</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>Endereço:</strong></td><td>${fornecedor.endereco}, ${fornecedor.numero || 'S/N'}</td></tr>
+                                    <tr><td><strong>Complemento:</strong></td><td>${fornecedor.complemento || '-'}</td></tr>
+                                    <tr><td><strong>Bairro:</strong></td><td>${fornecedor.bairro || '-'}</td></tr>
+                                    <tr><td><strong>Cidade/UF:</strong></td><td>${fornecedor.cidade}/${fornecedor.estado}</td></tr>
+                                    <tr><td><strong>CEP:</strong></td><td>${fornecedor.cep}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h6>Contatos</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>E-mail:</strong></td><td>${fornecedor.email}</td></tr>
+                                    <tr><td><strong>Telefone:</strong></td><td>${fornecedor.telefone}</td></tr>
+                                    <tr><td><strong>Celular:</strong></td><td>${fornecedor.celular || '-'}</td></tr>
+                                    <tr><td><strong>Website:</strong></td><td>${fornecedor.website || '-'}</td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Responsáveis</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>Responsável:</strong></td><td>${fornecedor.responsavel_nome}</td></tr>
+                                    <tr><td><strong>CPF:</strong></td><td>${fornecedor.responsavel_cpf}</td></tr>
+                                    <tr><td><strong>E-mail:</strong></td><td>${fornecedor.responsavel_email || '-'}</td></tr>
+                                    <tr><td><strong>Telefone:</strong></td><td>${fornecedor.responsavel_telefone || '-'}</td></tr>
+                                </table>
+                                ${fornecedor.responsavel_tecnico ? `
+                                    <h6 class="mt-3">Responsável Técnico</h6>
+                                    <table class="table table-sm">
+                                        <tr><td><strong>Nome:</strong></td><td>${fornecedor.responsavel_tecnico}</td></tr>
+                                        <tr><td><strong>CREA/CAU:</strong></td><td>${fornecedor.crea_cau || '-'}</td></tr>
+                                    </table>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('detalhes-fornecedor').innerHTML = html;
+                    
+                    // Configurar botões
+                    if (!fornecedor.aprovado) {
+                        document.getElementById('btn-aprovar-fornecedor').style.display = 'block';
+                        document.getElementById('btn-rejeitar-fornecedor').style.display = 'block';
+                        
+                        document.getElementById('btn-aprovar-fornecedor').onclick = () => aprovarFornecedor(fornecedorId);
+                        document.getElementById('btn-rejeitar-fornecedor').onclick = () => rejeitarFornecedor(fornecedorId);
+                    } else {
+                        document.getElementById('btn-aprovar-fornecedor').style.display = 'none';
+                        document.getElementById('btn-rejeitar-fornecedor').style.display = 'none';
+                    }
+                    
+                    new bootstrap.Modal(document.getElementById('modalDetalhesFornecedor')).show();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar detalhes:', error);
+                alert('Erro ao carregar detalhes do fornecedor');
+            }
+        }
+
+        // Aprovar fornecedor
+        async function aprovarFornecedor(fornecedorId) {
+            if (!confirm('Deseja aprovar este fornecedor?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/fornecedores/${fornecedorId}/aprovar`, {
+                    method: 'PUT',
+                    headers: getHeaders()
+                });
+                
+                if (response.ok) {
+                    alert('Fornecedor aprovado com sucesso!');
+                    bootstrap.Modal.getInstance(document.getElementById('modalDetalhesFornecedor')).hide();
+                    carregarFornecedores();
+                } else {
+                    alert('Erro ao aprovar fornecedor');
+                }
+            } catch (error) {
+                console.error('Erro ao aprovar fornecedor:', error);
+                alert('Erro ao aprovar fornecedor');
+            }
+        }
+
+        // Rejeitar fornecedor
+        async function rejeitarFornecedor(fornecedorId) {
+            const motivo = prompt('Informe o motivo da rejeição:');
+            if (!motivo) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/fornecedores/${fornecedorId}/rejeitar`, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ motivo })
+                });
+                
+                if (response.ok) {
+                    alert('Fornecedor rejeitado');
+                    bootstrap.Modal.getInstance(document.getElementById('modalDetalhesFornecedor')).hide();
+                    carregarFornecedores();
+                } else {
+                    alert('Erro ao rejeitar fornecedor');
+                }
+            } catch (error) {
+                console.error('Erro ao rejeitar fornecedor:', error);
+                alert('Erro ao rejeitar fornecedor');
+            }
+        }
+
+        // Filtrar usuários
+        function filtrarUsuarios() {
+            const busca = document.getElementById('buscar-usuarios').value.toLowerCase();
+            const linhas = document.querySelectorAll('#tabela-usuarios tr');
+            
+            linhas.forEach(linha => {
+                const texto = linha.textContent.toLowerCase();
+                linha.style.display = texto.includes(busca) ? '' : 'none';
+            });
+        }
+
+        // Filtrar logs
+        async function filtrarLogs() {
+            const dataInicio = document.getElementById('log-data-inicio').value;
+            const dataFim = document.getElementById('log-data-fim').value;
+            const tipo = document.getElementById('log-tipo').value;
+            
+            try {
+                const params = new URLSearchParams();
+                if (dataInicio) params.append('data_inicio', dataInicio);
+                if (dataFim) params.append('data_fim', dataFim);
+                if (tipo) params.append('tipo', tipo);
+                
+                const response = await fetch(`${API_BASE}/logs?${params}`, {
+                    headers: getHeaders()
+                });
+                
+                if (response.ok) {
+                    const logs = await response.json();
+                    
+                    let html = '<div class="table-responsive"><table class="table table-sm">';
+                    html += '<thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Descrição</th><th>IP</th></tr></thead><tbody>';
+                    
+                    logs.forEach(log => {
+                        const statusClass = log.sucesso ? '' : 'table-danger';
+                        html += `
+                            <tr class="${statusClass}">
+                                <td>${new Date(log.data_hora).toLocaleString('pt-BR')}</td>
+                                <td>${log.usuario_nome || 'Sistema'}</td>
+                                <td>${log.acao}</td>
+                                <td>${log.descricao || '-'}</td>
+                                <td>${log.ip_origem || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    document.getElementById('lista-logs').innerHTML = html || 
+                        '<p class="text-muted">Nenhum log encontrado</p>';
+                }
+            } catch (error) {
+                console.error('Erro ao filtrar logs:', error);
+                alert('Erro ao filtrar logs');
+            }
+        }
+
+        // Gerar relatórios
+        async function gerarRelatorioUsuarios() {
+            try {
+                const response = await fetch(`${API_BASE}/relatorios/usuarios`, {
+                    headers: getHeaders()
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Abrir nova janela com relatório
+                    const win = window.open('', 'Relatório de Usuários', 'width=800,height=600');
+                    win.document.write(`
+                        <html>
+                        <head>
+                            <title>Relatório de Usuários</title>
+                            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                        </head>
+                        <body class="p-4">
+                            <h2>Relatório de Usuários</h2>
+                            <p>Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+                            
+                            <h4>Estatísticas</h4>
+                            <table class="table table-bordered">
+                                <tr><td>Total de Usuários</td><td>${data.estatisticas.total}</td></tr>
+                                <tr><td>Usuários Ativos</td><td>${data.estatisticas.ativos}</td></tr>
+                                <tr><td>Usuários Inativos</td><td>${data.estatisticas.inativos}</td></tr>
+                            </table>
+                            
+                            <h4>Por Perfil</h4>
+                            <table class="table table-bordered">
+                                ${Object.entries(data.estatisticas.por_perfil).map(([perfil, qtd]) => 
+                                    `<tr><td>${perfil}</td><td>${qtd}</td></tr>`
+                                ).join('')}
+                            </table>
+                            
+                            <h4>Últimos Acessos</h4>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Último Login</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${data.ultimos_acessos.map(u => `
+                                        <tr>
+                                            <td>${u.nome}</td>
+                                            <td>${u.email}</td>
+                                            <td>${u.perfil}</td>
+                                            <td>${new Date(u.ultimo_login).toLocaleString('pt-BR')}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            
+                            <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
+                        </body>
+                        </html>
+                    `);
+                }
+            } catch (error) {
+                console.error('Erro ao gerar relatório:', error);
+                alert('Erro ao gerar relatório');
+            }
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Deseja realmente sair?')) {
+                localStorage.removeItem('admin_token');
+                window.location.href = 'login-admin.html';
+            }
+        }
+
+        // Máscaras
+        document.getElementById('cpf').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            if (value.length > 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            } else if (value.length > 6) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})/, '$1.$2.$3');
+            } else if (value.length > 3) {
+                value = value.replace(/(\d{3})(\d{3})/, '$1.$2');
+            }
+            
+            e.target.value = value;
+        });
+
+        document.getElementById('telefone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            if (value.length > 6) {
+                value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            } else if (value.length > 2) {
+                value = value.replace(/(\d{2})(\d+)/, '($1) $2');
+            }
+            
+            e.target.value = value;
+        });
+
+        // Carregar dashboard ao iniciar
+        carregarDashboard();
+    </script>
+</body>
+</html>
