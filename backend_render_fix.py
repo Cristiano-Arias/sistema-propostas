@@ -344,27 +344,28 @@ def login():
         conn = get_db()
         cursor = conn.cursor()
         
+        # Buscar usuário
         cursor.execute('SELECT * FROM usuarios WHERE email = ?', (email,))
         usuario = cursor.fetchone()
         
         if not usuario:
             conn.close()
-            return jsonify({'erro': 'Usuário não encontrado'}), 404
+            logger.warning(f"Usuário não encontrado: {email}")
+            return jsonify({'erro': 'Email ou senha incorretos'}), 401
         
         # Verificar senha
         try:
-            # Garantir que a senha do banco está em bytes
-            if isinstance(usuario['senha'], str):
-                senha_hash = usuario['senha'].encode('utf-8')
-            else:
-                senha_hash = usuario['senha']
+            # Acessar senha usando índice ou chave
+            senha_db = usuario['senha']
             
-            # Para senhas temporárias que não foram hasheadas (durante testes)
-            # REMOVA isso em produção!
-            if senha == 'Temp@2025!' and usuario['email'] in ['requisitante@empresa.com', 'comprador@empresa.com']:
-                senha_correta = True
+            # Garantir que a senha do banco está em bytes
+            if isinstance(senha_db, str):
+                senha_hash = senha_db.encode('utf-8')
             else:
-                senha_correta = bcrypt.checkpw(senha.encode('utf-8'), senha_hash)
+                senha_hash = senha_db
+            
+            # Verificação da senha
+            senha_correta = bcrypt.checkpw(senha.encode('utf-8'), senha_hash)
             
             if not senha_correta:
                 conn.close()
@@ -379,21 +380,34 @@ def login():
         # Gerar token
         token = gerar_token(usuario['id'], usuario['perfil'])
         
-        # Verificar primeiro acesso
-        primeiro_acesso = usuario.get('primeiro_acesso', 1) == 1
+        # Verificar primeiro acesso - usar try/except pois campo pode não existir
+        primeiro_acesso = False
+        try:
+            # Tentar acessar o campo primeiro_acesso
+            primeiro_acesso = usuario['primeiro_acesso'] == 1
+        except (KeyError, IndexError):
+            # Campo não existe, considerar como primeiro acesso para admin@sistema.com
+            if email == 'admin@sistema.com':
+                primeiro_acesso = True
         
-        # Atualizar último login
-        cursor.execute('''
-            UPDATE usuarios SET ultimo_login = CURRENT_TIMESTAMP 
-            WHERE id = ?
-        ''', (usuario['id'],))
-        conn.commit()
+        # Atualizar último login se o campo existir
+        try:
+            cursor.execute('''
+                UPDATE usuarios 
+                SET ultimo_login = CURRENT_TIMESTAMP 
+                WHERE id = ?
+            ''', (usuario['id'],))
+            conn.commit()
+        except:
+            # Campo pode não existir, ignorar
+            pass
         
         conn.close()
         
-        return jsonify({
+        # Preparar resposta
+        resposta = {
             'token': token,
-            'access_token': token,  # Para compatibilidade
+            'access_token': token,  # Para compatibilidade com frontend
             'usuario': {
                 'id': usuario['id'],
                 'nome': usuario['nome'],
@@ -401,11 +415,16 @@ def login():
                 'perfil': usuario['perfil']
             },
             'primeiro_acesso': primeiro_acesso
-        }), 200
+        }
+        
+        # Log de sucesso
+        logger.info(f"Login bem-sucedido para: {email} (perfil: {usuario['perfil']})")
+        
+        return jsonify(resposta), 200
         
     except Exception as e:
         logger.error(f"Erro no login: {str(e)}")
-        return jsonify({'erro': 'Erro interno'}), 500
+        return jsonify({'erro': 'Erro interno do servidor'}), 500
 
 @app.route('/api/auth/verify', methods=['GET'])
 @require_auth
