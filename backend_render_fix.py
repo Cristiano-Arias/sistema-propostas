@@ -299,6 +299,7 @@ def login():
     """Login de usuário"""
     try:
         data = request.json
+        logger.info(f"Tentativa de login: {email}")
         email = data.get('email')
         senha = data.get('senha')
         
