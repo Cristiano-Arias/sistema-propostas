@@ -613,7 +613,7 @@
         // Verificar autenticação
         if (!authToken) {
             alert('Sessão expirada. Faça login novamente.');
-            window.location.href = 'login-admin.html';
+            window.location.href = '/static/login-admin.html';
         }
 
         // Headers padrão para requisições
@@ -1204,7 +1204,7 @@
         function logout() {
             if (confirm('Deseja realmente sair?')) {
                 localStorage.removeItem('admin_token');
-                window.location.href = 'login-admin.html';
+                window.location.href = '/static/login-admin.html';
             }
         }
 
