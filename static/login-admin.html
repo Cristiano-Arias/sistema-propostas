@@ -432,7 +432,7 @@
                     } else {
                         mostrarSucesso('Login realizado com sucesso! Redirecionando...');
                         setTimeout(() => {
-                            window.location.href = 'admin-usuarios.html';
+                            window.location.href = '/static/admin-usuarios-interface.html';
                         }, 1500);
                     }
                 } else {
@@ -479,7 +479,7 @@
                 
                 if (response.ok) {
                     alert('Senha alterada com sucesso!');
-                    window.location.href = 'admin-usuarios.html';
+                    window.location.href = '/static/admin-usuarios-interface.html';
                 } else {
                     const data = await response.json();
                     alert(data.erro || 'Erro ao alterar senha');
@@ -569,7 +569,7 @@
                 }
             }).then(response => {
                 if (response.ok) {
-                    window.location.href = 'admin-usuarios.html';
+                    window.location.href = '/static/admin-usuarios-interface.html';
                 } else {
                     localStorage.removeItem('admin_token');
                     localStorage.removeItem('admin_user');
