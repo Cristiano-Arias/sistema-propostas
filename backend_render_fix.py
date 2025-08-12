@@ -218,6 +218,64 @@ def adicionar_campo_ultimo_login():
 adicionar_campo_primeiro_acesso()
 adicionar_campo_ultimo_login()
 
+def verificar_e_corrigir_banco():
+    """Verifica e corrige a estrutura do banco de dados"""
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    
+    try:
+        # Verificar se o usuário admin existe
+        cursor.execute("SELECT * FROM usuarios WHERE email = 'admin@sistema.com'")
+        admin = cursor.fetchone()
+        
+        if not admin:
+            logger.info("Criando usuário admin padrão...")
+            senha_hash = bcrypt.hashpw('Admin@2025!'.encode('utf-8'), bcrypt.gensalt())
+            cursor.execute('''
+                INSERT INTO usuarios (nome, email, senha, perfil)
+                VALUES (?, ?, ?, ?)
+            ''', ('Administrador do Sistema', 'admin@sistema.com', senha_hash, 'admin_sistema'))
+            conn.commit()
+            logger.info("Usuário admin criado com sucesso!")
+        else:
+            logger.info("Usuário admin já existe")
+        
+        # Tentar adicionar campos que podem estar faltando
+        campos_para_adicionar = [
+            ('primeiro_acesso', 'INTEGER DEFAULT 1'),
+            ('ultimo_login', 'TIMESTAMP'),
+            ('cpf', 'TEXT'),
+            ('departamento', 'TEXT'),
+            ('cargo', 'TEXT'),
+            ('telefone', 'TEXT'),
+            ('ativo', 'INTEGER DEFAULT 1')
+        ]
+        
+        for campo, tipo in campos_para_adicionar:
+            try:
+                cursor.execute(f'ALTER TABLE usuarios ADD COLUMN {campo} {tipo}')
+                conn.commit()
+                logger.info(f"Campo {campo} adicionado à tabela usuarios")
+            except:
+                # Campo já existe
+                pass
+        
+        # Listar estrutura atual da tabela para debug
+        cursor.execute("PRAGMA table_info(usuarios)")
+        colunas = cursor.fetchall()
+        logger.info("Estrutura atual da tabela usuarios:")
+        for col in colunas:
+            logger.info(f"  - {col[1]} ({col[2]})")
+        
+    except Exception as e:
+        logger.error(f"Erro ao verificar banco: {str(e)}")
+    finally:
+        conn.close()
+
+# CHAME esta função logo após init_db()
+init_db()
+verificar_e_corrigir_banco()  # Adicione esta linha
+
 # Funções de E-mail
 def enviar_email(destinatario, assunto, corpo_html):
     """Envia e-mail usando Flask-Mail"""
