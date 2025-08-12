@@ -420,8 +420,9 @@
                         return;
                     }
                     
-                    // Salvar token
-                    localStorage.setItem('admin_token', data.access_token);
+                    // Salvar token - verificar qual campo o backend retorna
+                    const token = data.access_token || data.token;
+                    localStorage.setItem('admin_token', token);
                     localStorage.setItem('admin_user', JSON.stringify(data.usuario));
                     
                     // Verificar se é primeiro acesso
