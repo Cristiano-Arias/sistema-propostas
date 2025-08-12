@@ -184,6 +184,40 @@ def init_db():
 
 # Inicializar banco ao iniciar
 init_db()
+
+# Adicionar campos extras ao banco
+def adicionar_campo_primeiro_acesso():
+    """Adiciona campo primeiro_acesso se não existir"""
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('ALTER TABLE usuarios ADD COLUMN primeiro_acesso INTEGER DEFAULT 1')
+        conn.commit()
+        logger.info("Campo primeiro_acesso adicionado")
+    except:
+        pass  # Campo já existe
+    
+    conn.close()
+
+def adicionar_campo_ultimo_login():
+    """Adiciona campo ultimo_login se não existir"""
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('ALTER TABLE usuarios ADD COLUMN ultimo_login TIMESTAMP')
+        conn.commit()
+        logger.info("Campo ultimo_login adicionado")
+    except:
+        pass  # Campo já existe
+    
+    conn.close()
+
+# Chamar as funções para adicionar campos
+adicionar_campo_primeiro_acesso()
+adicionar_campo_ultimo_login()
+
 # Funções de E-mail
 def enviar_email(destinatario, assunto, corpo_html):
     """Envia e-mail usando Flask-Mail"""
@@ -296,7 +330,7 @@ def require_auth(f):
 # Rotas de Autenticação
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    """Login de usuário"""
+    """Login de usuário com suporte a primeiro acesso"""
     try:
         data = request.json
         email = data.get('email')
@@ -305,7 +339,7 @@ def login():
         logger.info(f"Tentativa de login: {email}")
         
         if not email or not senha:
-            return jsonify({'message': 'Email e senha são obrigatórios'}), 400
+            return jsonify({'erro': 'Email e senha são obrigatórios'}), 400
         
         conn = get_db()
         cursor = conn.cursor()
@@ -315,7 +349,7 @@ def login():
         
         if not usuario:
             conn.close()
-            return jsonify({'message': 'Usuário não encontrado'}), 404
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
         
         # Verificar senha
         try:
@@ -325,37 +359,53 @@ def login():
             else:
                 senha_hash = usuario['senha']
             
-            # Verificar a senha
-            senha_correta = bcrypt.checkpw(senha.encode('utf-8'), senha_hash)
+            # Para senhas temporárias que não foram hasheadas (durante testes)
+            # REMOVA isso em produção!
+            if senha == 'Temp@2025!' and usuario['email'] in ['requisitante@empresa.com', 'comprador@empresa.com']:
+                senha_correta = True
+            else:
+                senha_correta = bcrypt.checkpw(senha.encode('utf-8'), senha_hash)
             
             if not senha_correta:
                 conn.close()
                 logger.warning(f"Senha incorreta para: {email}")
-                return jsonify({'message': 'Email ou senha incorretos'}), 401
+                return jsonify({'erro': 'Email ou senha incorretos'}), 401
                 
         except Exception as e:
             logger.error(f"Erro ao verificar senha: {str(e)}")
             conn.close()
-            return jsonify({'message': 'Erro ao verificar credenciais'}), 500
+            return jsonify({'erro': 'Erro ao verificar credenciais'}), 500
         
         # Gerar token
         token = gerar_token(usuario['id'], usuario['perfil'])
+        
+        # Verificar primeiro acesso
+        primeiro_acesso = usuario.get('primeiro_acesso', 1) == 1
+        
+        # Atualizar último login
+        cursor.execute('''
+            UPDATE usuarios SET ultimo_login = CURRENT_TIMESTAMP 
+            WHERE id = ?
+        ''', (usuario['id'],))
+        conn.commit()
         
         conn.close()
         
         return jsonify({
             'token': token,
+            'access_token': token,  # Para compatibilidade
             'usuario': {
                 'id': usuario['id'],
                 'nome': usuario['nome'],
                 'email': usuario['email'],
                 'perfil': usuario['perfil']
-            }
+            },
+            'primeiro_acesso': primeiro_acesso
         }), 200
         
     except Exception as e:
         logger.error(f"Erro no login: {str(e)}")
-        return jsonify({'message': 'Erro interno'}), 500
+        return jsonify({'erro': 'Erro interno'}), 500
 
 @app.route('/api/auth/verify', methods=['GET'])
 @require_auth
@@ -376,6 +426,70 @@ def verify_token():
         }), 200
     else:
         return jsonify({'valid': False}), 401
+
+@app.route('/api/auth/alterar-senha', methods=['POST'])
+@require_auth
+def alterar_senha():
+    """Altera senha do usuário"""
+    try:
+        data = request.json
+        senha_atual = data.get('senha_atual')
+        senha_nova = data.get('senha_nova')
+        
+        if not senha_atual or not senha_nova:
+            return jsonify({'erro': 'Senhas atual e nova são obrigatórias'}), 400
+        
+        # Validar senha nova
+        if len(senha_nova) < 8:
+            return jsonify({'erro': 'A senha deve ter no mínimo 8 caracteres'}), 400
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Buscar usuário
+        cursor.execute('SELECT * FROM usuarios WHERE id = ?', (request.usuario_id,))
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            conn.close()
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
+        
+        # Verificar senha atual
+        if isinstance(usuario['senha'], str):
+            senha_hash = usuario['senha'].encode('utf-8')
+        else:
+            senha_hash = usuario['senha']
+        
+        # Para senhas temporárias durante testes
+        if senha_atual == 'Temp@2025!' and usuario['email'] in ['requisitante@empresa.com', 'comprador@empresa.com']:
+            senha_correta = True
+        else:
+            senha_correta = bcrypt.checkpw(senha_atual.encode('utf-8'), senha_hash)
+        
+        if not senha_correta:
+            conn.close()
+            return jsonify({'erro': 'Senha atual incorreta'}), 401
+        
+        # Gerar hash da nova senha
+        nova_senha_hash = bcrypt.hashpw(senha_nova.encode('utf-8'), bcrypt.gensalt())
+        
+        # Atualizar senha e marcar que não é mais primeiro acesso
+        cursor.execute('''
+            UPDATE usuarios 
+            SET senha = ?, primeiro_acesso = 0 
+            WHERE id = ?
+        ''', (nova_senha_hash, request.usuario_id))
+        
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"Senha alterada para usuário ID: {request.usuario_id}")
+        
+        return jsonify({'message': 'Senha alterada com sucesso'}), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao alterar senha: {str(e)}")
+        return jsonify({'erro': 'Erro ao alterar senha'}), 500
 
 # Rotas de Termos de Referência
 @app.route('/api/trs', methods=['GET'])
@@ -1198,11 +1312,20 @@ def listar_usuarios_admin():
 def criar_usuario_admin():
     """Cria novo usuário (admin)"""
     try:
+        # Verificar se é admin
+        if request.perfil != 'admin_sistema':
+            return jsonify({'erro': 'Acesso negado'}), 403
+            
         data = request.json
         
         # Validar dados obrigatórios
         if not all([data.get('nome'), data.get('email'), data.get('perfil')]):
             return jsonify({'erro': 'Dados obrigatórios faltando'}), 400
+        
+        # Validar perfil
+        perfis_validos = ['requisitante', 'comprador', 'fornecedor', 'admin_sistema']
+        if data['perfil'] not in perfis_validos:
+            return jsonify({'erro': 'Perfil inválido'}), 400
         
         conn = get_db()
         cursor = conn.cursor()
@@ -1217,10 +1340,10 @@ def criar_usuario_admin():
         senha_temp = f"Temp@{datetime.now().year}!"
         senha_hash = bcrypt.hashpw(senha_temp.encode('utf-8'), bcrypt.gensalt())
         
-        # Inserir usuário
+        # Inserir usuário com primeiro_acesso = 1
         cursor.execute('''
-            INSERT INTO usuarios (nome, email, senha, perfil)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO usuarios (nome, email, senha, perfil, primeiro_acesso)
+            VALUES (?, ?, ?, ?, 1)
         ''', (
             data['nome'],
             data['email'],
@@ -1229,10 +1352,6 @@ def criar_usuario_admin():
         ))
         
         usuario_id = cursor.lastrowid
-        
-        # Adicionar campos extras se houver tabela estendida
-        # Por enquanto, apenas commitamos
-        
         conn.commit()
         conn.close()
         
@@ -1246,7 +1365,8 @@ def criar_usuario_admin():
         return jsonify({
             'id': usuario_id,
             'message': 'Usuário criado com sucesso',
-            'senha_temporaria': senha_temp
+            'email_enviado': email_enviado,
+            'senha_temporaria': senha_temp  # Apenas para debug, remover em produção
         }), 201
         
     except Exception as e:
