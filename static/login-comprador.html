@@ -122,22 +122,23 @@
             border: 1px solid #cfc;
         }
 
-        .credenciais-demo {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
+        .info-box {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
             border-radius: 10px;
-            padding: 20px;
+            padding: 15px;
             margin-top: 20px;
         }
 
-        .demo-item {
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 10px;
+        .info-box h4 {
+            color: #2e7d32;
             margin-bottom: 10px;
-            font-family: monospace;
+        }
+
+        .info-box p {
+            color: #1b5e20;
             font-size: 14px;
+            margin-bottom: 5px;
         }
 
         .back-link {
@@ -154,6 +155,70 @@
         .back-link a:hover {
             text-decoration: underline;
         }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal de alteração de senha */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .modal-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -169,8 +234,8 @@
             <div class="success-message" id="successMessage"></div>
 
             <div class="form-group">
-                <label for="login">Login</label>
-                <input type="text" id="login" name="login" required placeholder="Digite seu login">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" required placeholder="seu.email@empresa.com">
             </div>
 
             <div class="form-group">
@@ -179,22 +244,14 @@
             </div>
 
             <button type="submit" class="login-btn" id="loginBtn">
-                Entrar no Sistema
+                <span id="btnText">Entrar no Sistema</span>
             </button>
         </form>
 
-        <div class="credenciais-demo">
-            <h4>🔑 Credenciais de Demonstração</h4>
-            <div class="demo-item">
-                <div style="font-weight: 600; color: #6c757d; margin-bottom: 5px;">Administrador:</div>
-                <div style="color: #495057;">Login: comprador_admin</div>
-                <div style="color: #495057;">Senha: Comp2025!</div>
-            </div>
-            <div class="demo-item">
-                <div style="font-weight: 600; color: #6c757d; margin-bottom: 5px;">Usuário:</div>
-                <div style="color: #495057;">Login: comprador_user</div>
-                <div style="color: #495057;">Senha: User123</div>
-            </div>
+        <div class="info-box">
+            <h4>ℹ️ Informações de Acesso</h4>
+            <p><strong>Primeiro acesso?</strong> Use a senha temporária enviada por e-mail</p>
+            <p><strong>Esqueceu a senha?</strong> Solicite ao administrador do sistema</p>
         </div>
 
         <div class="back-link">
@@ -202,54 +259,155 @@
         </div>
     </div>
 
+    <!-- Modal de Alteração de Senha (Primeiro Acesso) -->
+    <div id="modalAlterarSenha" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharModal()">&times;</span>
+            <div class="modal-header">
+                <h3>Alterar Senha - Primeiro Acesso</h3>
+                <p>Por segurança, você deve alterar sua senha temporária</p>
+            </div>
+            
+            <form id="formAlterarSenha">
+                <div class="form-group">
+                    <label for="novaSenha">Nova Senha</label>
+                    <input type="password" id="novaSenha" required 
+                           pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}"
+                           title="Mínimo 8 caracteres, com letras maiúsculas, minúsculas, números e caracteres especiais">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmarSenha">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmarSenha" required>
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    Alterar Senha
+                </button>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // Credenciais válidas para o sistema
-        const credenciaisValidas = [
-            { login: 'comprador_admin', senha: 'Comp2025!', nome: 'Administrador Comprador', perfil: 'admin' },
-            { login: 'comprador_user', senha: 'User123', nome: 'Usuário Comprador', perfil: 'user' }
-        ];
+        // Configuração da API
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5001/api' 
+            : '/api';
 
         document.addEventListener('DOMContentLoaded', function() {
             const loginForm = document.getElementById('loginForm');
+            const formAlterarSenha = document.getElementById('formAlterarSenha');
             
             loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 realizarLogin();
             });
+
+            formAlterarSenha.addEventListener('submit', function(e) {
+                e.preventDefault();
+                alterarSenhaPrimeiroAcesso();
+            });
         });
 
-        function realizarLogin() {
-            const login = document.getElementById('login').value.trim();
+        async function realizarLogin() {
+            const email = document.getElementById('email').value.trim();
             const senha = document.getElementById('senha').value.trim();
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('btnText');
             
-            if (!login || !senha) {
+            if (!email || !senha) {
                 mostrarErro('Por favor, preencha todos os campos.');
                 return;
             }
             
-            // Verificar credenciais
-            const credencial = credenciaisValidas.find(c => c.login === login && c.senha === senha);
+            // Desabilitar botão e mostrar loading
+            loginBtn.disabled = true;
+            btnText.innerHTML = '<span class="loading"></span> Entrando...';
             
-            if (credencial) {
-                // Salvar dados do usuário logado
-                const usuarioLogado = {
-                    login: credencial.login,
-                    nome: credencial.nome,
-                    perfil: credencial.perfil,
-                    dataLogin: new Date().toISOString()
-                };
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                const data = await response.json();
                 
-                localStorage.setItem('comprador_logado', JSON.stringify(usuarioLogado));
-                
-                mostrarSucesso('Login realizado com sucesso! Redirecionando...');
-                
-                // Redirecionar para o dashboard correto que existe no servidor
-                setTimeout(() => {
-                    window.location.href = 'dashboard-comprador-funcional.html';
-                }, 1500);
-            } else {
-                mostrarErro('Login ou senha incorretos.');
+                if (response.ok) {
+                    // Verificar se é comprador
+                    if (data.usuario.perfil !== 'comprador') {
+                        mostrarErro('Acesso negado. Esta área é exclusiva para compradores.');
+                        return;
+                    }
+                    
+                    // Salvar token e dados do usuário
+                    const token = data.access_token || data.token;
+                    localStorage.setItem('comprador_token', token);
+                    localStorage.setItem('comprador_user', JSON.stringify(data.usuario));
+                    
+                    // Verificar se é primeiro acesso
+                    if (data.primeiro_acesso) {
+                        document.getElementById('modalAlterarSenha').style.display = 'flex';
+                    } else {
+                        mostrarSucesso('Login realizado com sucesso! Redirecionando...');
+                        setTimeout(() => {
+                            window.location.href = 'dashboard-comprador.html';
+                        }, 1500);
+                    }
+                } else {
+                    mostrarErro(data.message || data.erro || 'Email ou senha incorretos.');
+                }
+            } catch (error) {
+                console.error('Erro no login:', error);
+                mostrarErro('Erro ao conectar com o servidor. Tente novamente.');
+            } finally {
+                loginBtn.disabled = false;
+                btnText.textContent = 'Entrar no Sistema';
             }
+        }
+
+        async function alterarSenhaPrimeiroAcesso() {
+            const novaSenha = document.getElementById('novaSenha').value;
+            const confirmarSenha = document.getElementById('confirmarSenha').value;
+            
+            if (novaSenha !== confirmarSenha) {
+                alert('As senhas não coincidem!');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('comprador_token');
+                const senhaAtual = document.getElementById('senha').value;
+                
+                const response = await fetch(`${API_BASE}/auth/alterar-senha`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        senha_atual: senhaAtual,
+                        senha_nova: novaSenha
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('Senha alterada com sucesso!');
+                    window.location.href = 'dashboard-comprador.html';
+                } else {
+                    const data = await response.json();
+                    alert(data.erro || 'Erro ao alterar senha');
+                }
+            } catch (error) {
+                console.error('Erro ao alterar senha:', error);
+                alert('Erro ao alterar senha. Tente novamente.');
+            }
+        }
+
+        function fecharModal() {
+            document.getElementById('modalAlterarSenha').style.display = 'none';
         }
 
         function mostrarErro(mensagem) {
