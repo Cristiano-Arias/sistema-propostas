@@ -22,7 +22,19 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from flask_mail import Mail, Message
+import shutil
+from pathlib import Path
 
+# Configuração do caminho do banco de dados
+# No Render, use um diretório persistente
+if os.environ.get('RENDER'):
+    # No Render, use o diretório /opt/render/project/src
+    DB_PATH = '/opt/render/project/src/database.db'
+    BACKUP_PATH = '/opt/render/project/src/database_backup.db'
+else:
+    # Local development
+    DB_PATH = 'database.db'
+    BACKUP_PATH = 'database_backup.db'
 # Configuração do Flask
 app = Flask(__name__, static_folder='static')
 
@@ -54,10 +66,30 @@ CORS(app, origins=['*'])
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Função para fazer backup do banco
+def backup_database():
+    """Faz backup do banco de dados"""
+    try:
+        if os.path.exists(DB_PATH):
+            shutil.copy2(DB_PATH, BACKUP_PATH)
+            logger.info("Backup do banco de dados realizado")
+    except Exception as e:
+        logger.error(f"Erro ao fazer backup: {str(e)}")
+
+# Função para restaurar backup se necessário
+def restore_backup_if_needed():
+    """Restaura backup se o banco principal não existir"""
+    try:
+        if not os.path.exists(DB_PATH) and os.path.exists(BACKUP_PATH):
+            shutil.copy2(BACKUP_PATH, DB_PATH)
+            logger.info("Banco de dados restaurado do backup")
+    except Exception as e:
+        logger.error(f"Erro ao restaurar backup: {str(e)}")
+
 # Inicializar banco de dados SQLite
 def init_db():
     """Inicializa o banco de dados"""
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
     # Criar tabela de usuários
@@ -183,7 +215,9 @@ def init_db():
     logger.info("Banco de dados inicializado com sucesso")
 
 # Inicializar banco ao iniciar
+restore_backup_if_needed()
 init_db()
+verificar_e_corrigir_banco()
 
 # Adicionar campos extras ao banco
 def adicionar_campo_primeiro_acesso():
@@ -220,7 +254,7 @@ adicionar_campo_ultimo_login()
 
 def verificar_e_corrigir_banco():
     """Verifica e corrige a estrutura do banco de dados"""
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
     try:
@@ -331,7 +365,7 @@ def criar_email_boas_vindas(nome, email, senha_temp):
 # Helpers
 def get_db():
     """Obter conexão com o banco"""
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -1439,6 +1473,9 @@ def criar_usuario_admin():
             corpo_html=criar_email_boas_vindas(data['nome'], data['email'], senha_temp)
         )
         
+        # Fazer backup após criar usuário
+        backup_database()
+        
         return jsonify({
             'id': usuario_id,
             'message': 'Usuário criado com sucesso',
@@ -1449,6 +1486,20 @@ def criar_usuario_admin():
     except Exception as e:
         logger.error(f"Erro ao criar usuário: {str(e)}")
         return jsonify({'erro': 'Erro ao criar usuário'}), 500
+
+@app.route('/api/admin/backup', methods=['POST'])
+@require_auth
+def fazer_backup():
+    """Faz backup do banco de dados"""
+    try:
+        if request.perfil != 'admin_sistema':
+            return jsonify({'erro': 'Acesso negado'}), 403
+            
+        backup_database()
+        return jsonify({'message': 'Backup realizado com sucesso'}), 200
+    except Exception as e:
+        logger.error(f"Erro ao fazer backup: {str(e)}")
+        return jsonify({'erro': 'Erro ao fazer backup'}), 500
 
 @app.route('/api/fornecedores/pendentes', methods=['GET'])
 @require_auth
