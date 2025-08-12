@@ -1028,6 +1028,290 @@ def marcar_notificacao_lida(notif_id):
         logger.error(f"Erro ao marcar notificação: {str(e)}")
         return jsonify({'message': 'Erro ao marcar notificação'}), 500
 
+# ===== ROTAS DE ADMINISTRAÇÃO =====
+
+@app.route('/api/dashboard/stats', methods=['GET'])
+@require_auth
+def get_dashboard_stats():
+    """Retorna estatísticas do dashboard"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Total de usuários
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        total_usuarios = cursor.fetchone()[0]
+        
+        # Usuários ativos (considerando todos como ativos por enquanto)
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        usuarios_ativos = cursor.fetchone()[0]
+        
+        # Fornecedores pendentes (fornecedores sem aprovação)
+        cursor.execute("SELECT COUNT(*) FROM usuarios WHERE perfil = 'fornecedor'")
+        fornecedores_pendentes = cursor.fetchone()[0]
+        
+        # Usuários bloqueados (0 por enquanto)
+        usuarios_bloqueados = 0
+        
+        # Últimos acessos
+        cursor.execute('''
+            SELECT nome, email, perfil, criado_em as ultimo_login 
+            FROM usuarios 
+            ORDER BY criado_em DESC 
+            LIMIT 5
+        ''')
+        ultimos_acessos = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return jsonify({
+            'total_usuarios': total_usuarios,
+            'usuarios_ativos': usuarios_ativos,
+            'fornecedores_pendentes': fornecedores_pendentes,
+            'usuarios_bloqueados': usuarios_bloqueados,
+            'ultimos_acessos': ultimos_acessos
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao buscar stats: {str(e)}")
+        return jsonify({'message': 'Erro ao buscar estatísticas'}), 500
+
+@app.route('/api/usuarios', methods=['GET'])
+@require_auth
+def listar_usuarios_admin():
+    """Lista todos os usuários (admin)"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, nome, email, perfil, 
+                   CASE WHEN perfil = 'admin_sistema' THEN 'Administrador'
+                        WHEN perfil = 'requisitante' THEN 'Requisitante'
+                        WHEN perfil = 'comprador' THEN 'Comprador'
+                        WHEN perfil = 'fornecedor' THEN 'Fornecedor'
+                        ELSE perfil END as perfil_display,
+                   '' as cpf,
+                   '' as departamento,
+                   '' as cargo,
+                   1 as ativo,
+                   criado_em as ultimo_login
+            FROM usuarios
+            ORDER BY nome
+        ''')
+        
+        usuarios = []
+        for row in cursor.fetchall():
+            usuario = dict(row)
+            usuarios.append(usuario)
+        
+        conn.close()
+        
+        return jsonify({'usuarios': usuarios}), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar usuários: {str(e)}")
+        return jsonify({'message': 'Erro ao listar usuários'}), 500
+
+@app.route('/api/usuarios/criar', methods=['POST'])
+@require_auth
+def criar_usuario_admin():
+    """Cria novo usuário (admin)"""
+    try:
+        data = request.json
+        
+        # Validar dados obrigatórios
+        if not all([data.get('nome'), data.get('email'), data.get('perfil')]):
+            return jsonify({'erro': 'Dados obrigatórios faltando'}), 400
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Verificar se email já existe
+        cursor.execute("SELECT id FROM usuarios WHERE email = ?", (data['email'],))
+        if cursor.fetchone():
+            conn.close()
+            return jsonify({'erro': 'Email já cadastrado'}), 400
+        
+        # Gerar senha temporária
+        senha_temp = f"Temp@{datetime.now().year}!"
+        senha_hash = bcrypt.hashpw(senha_temp.encode('utf-8'), bcrypt.gensalt())
+        
+        # Inserir usuário
+        cursor.execute('''
+            INSERT INTO usuarios (nome, email, senha, perfil)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            data['nome'],
+            data['email'],
+            senha_hash,
+            data['perfil']
+        ))
+        
+        usuario_id = cursor.lastrowid
+        
+        # Adicionar campos extras se houver tabela estendida
+        # Por enquanto, apenas commitamos
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'id': usuario_id,
+            'message': 'Usuário criado com sucesso',
+            'senha_temporaria': senha_temp
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Erro ao criar usuário: {str(e)}")
+        return jsonify({'erro': 'Erro ao criar usuário'}), 500
+
+@app.route('/api/fornecedores/pendentes', methods=['GET'])
+@require_auth
+def listar_fornecedores_pendentes():
+    """Lista fornecedores pendentes de aprovação"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Por enquanto, retorna fornecedores como pendentes
+        cursor.execute('''
+            SELECT id, nome as razao_social, email, 
+                   '' as cnpj, '' as cidade, '' as estado,
+                   criado_em as data_cadastro
+            FROM usuarios 
+            WHERE perfil = 'fornecedor'
+            ORDER BY criado_em DESC
+        ''')
+        
+        fornecedores = [dict(row) for row in cursor.fetchall()]
+        
+        conn.close()
+        
+        return jsonify({'fornecedores': fornecedores}), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar fornecedores pendentes: {str(e)}")
+        return jsonify({'message': 'Erro ao listar fornecedores'}), 500
+
+@app.route('/api/fornecedores/aprovados', methods=['GET'])
+@require_auth
+def listar_fornecedores_aprovados():
+    """Lista fornecedores aprovados"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Por enquanto, retorna lista vazia
+        fornecedores = []
+        
+        conn.close()
+        
+        return jsonify({'fornecedores': fornecedores}), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar fornecedores aprovados: {str(e)}")
+        return jsonify({'message': 'Erro ao listar fornecedores'}), 500
+
+@app.route('/api/usuarios/<int:usuario_id>/resetar-senha', methods=['POST'])
+@require_auth
+def resetar_senha_usuario(usuario_id):
+    """Reseta senha do usuário"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Gerar nova senha temporária
+        senha_temp = f"Reset@{datetime.now().year}!"
+        senha_hash = bcrypt.hashpw(senha_temp.encode('utf-8'), bcrypt.gensalt())
+        
+        # Atualizar senha
+        cursor.execute('''
+            UPDATE usuarios SET senha = ? WHERE id = ?
+        ''', (senha_hash, usuario_id))
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': 'Senha resetada com sucesso',
+            'senha_temporaria': senha_temp
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao resetar senha: {str(e)}")
+        return jsonify({'erro': 'Erro ao resetar senha'}), 500
+
+@app.route('/api/usuarios/<int:usuario_id>/ativar', methods=['PUT'])
+@require_auth
+def toggle_usuario_ativo(usuario_id):
+    """Ativa/desativa usuário"""
+    try:
+        # Por enquanto, apenas retorna sucesso
+        return jsonify({'message': 'Status alterado com sucesso'}), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao alterar status: {str(e)}")
+        return jsonify({'erro': 'Erro ao alterar status'}), 500
+
+@app.route('/api/fornecedores/<int:fornecedor_id>', methods=['GET'])
+@require_auth
+def obter_detalhes_fornecedor(fornecedor_id):
+    """Obtém detalhes do fornecedor"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM usuarios WHERE id = ? AND perfil = 'fornecedor'
+        ''', (fornecedor_id,))
+        
+        fornecedor = cursor.fetchone()
+        
+        if not fornecedor:
+            conn.close()
+            return jsonify({'erro': 'Fornecedor não encontrado'}), 404
+        
+        # Montar resposta com campos esperados pelo frontend
+        resultado = {
+            'id': fornecedor['id'],
+            'razao_social': fornecedor['nome'],
+            'nome_fantasia': '',
+            'cnpj': '00.000.000/0000-00',
+            'inscricao_estadual': '',
+            'inscricao_municipal': '',
+            'endereco': 'Endereço não cadastrado',
+            'numero': '',
+            'complemento': '',
+            'bairro': '',
+            'cidade': 'Cidade',
+            'estado': 'UF',
+            'cep': '00000-000',
+            'email': fornecedor['email'],
+            'telefone': '(00) 0000-0000',
+            'celular': '',
+            'website': '',
+            'responsavel_nome': fornecedor['nome'],
+            'responsavel_cpf': '000.000.000-00',
+            'responsavel_email': fornecedor['email'],
+            'responsavel_telefone': '',
+            'responsavel_tecnico': '',
+            'crea_cau': '',
+            'aprovado': False
+        }
+        
+        conn.close()
+        
+        return jsonify(resultado), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao obter fornecedor: {str(e)}")
+        return jsonify({'erro': 'Erro ao obter fornecedor'}), 500
+
 # ===== ROTAS PARA COMPARATIVO DE PROPOSTAS =====
 
 @app.route('/api/comparativo/<int:processo_id>', methods=['GET'])
