@@ -299,9 +299,10 @@ def login():
     """Login de usuário"""
     try:
         data = request.json
-        logger.info(f"Tentativa de login: {email}")
         email = data.get('email')
         senha = data.get('senha')
+
+        logger.info(f"Tentativa de login: {email}")
         
         if not email or not senha:
             return jsonify({'message': 'Email e senha são obrigatórios'}), 400
