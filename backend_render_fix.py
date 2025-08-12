@@ -21,6 +21,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
+from flask_mail import Mail, Message
 
 # Configuração do Flask
 app = Flask(__name__, static_folder='static')
@@ -29,6 +30,16 @@ app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+# Configuração do Flask Mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
+
+# Inicializar Flask-Mail
+mail = Mail(app)
 
 # Criar pasta de uploads se não existir
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -173,6 +184,57 @@ def init_db():
 
 # Inicializar banco ao iniciar
 init_db()
+# Funções de E-mail
+def enviar_email(destinatario, assunto, corpo_html):
+    """Envia e-mail usando Flask-Mail"""
+    try:
+        msg = Message(
+            subject=assunto,
+            recipients=[destinatario],
+            html=corpo_html
+        )
+        mail.send(msg)
+        logger.info(f"Email enviado para {destinatario}")
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao enviar email: {str(e)}")
+        return False
+
+def criar_email_boas_vindas(nome, email, senha_temp):
+    """Cria HTML do e-mail de boas-vindas"""
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background-color: #2c3e50; color: white; padding: 20px; text-align: center; }}
+            .content {{ background-color: #f4f4f4; padding: 20px; margin-top: 20px; }}
+            .credentials {{ background-color: #fff; padding: 15px; border-left: 4px solid #3498db; margin: 20px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Sistema de Gestão de Propostas</h1>
+            </div>
+            <div class="content">
+                <h2>Bem-vindo(a), {nome}!</h2>
+                <p>Sua conta foi criada com sucesso.</p>
+                <div class="credentials">
+                    <h3>Credenciais de acesso:</h3>
+                    <p><strong>E-mail:</strong> {email}</p>
+                    <p><strong>Senha:</strong> {senha_temp}</p>
+                </div>
+                <p><strong>Importante:</strong> Altere sua senha no primeiro acesso.</p>
+                <p>Acesse o sistema em: https://portal-proposta.onrender.com</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return html
 
 # Helpers
 def get_db():
@@ -1156,6 +1218,13 @@ def criar_usuario_admin():
         conn.commit()
         conn.close()
         
+        # Enviar e-mail com as credenciais
+        email_enviado = enviar_email(
+            destinatario=data['email'],
+            assunto='Bem-vindo ao Sistema de Gestão de Propostas',
+            corpo_html=criar_email_boas_vindas(data['nome'], data['email'], senha_temp)
+        )
+        
         return jsonify({
             'id': usuario_id,
             'message': 'Usuário criado com sucesso',
@@ -1235,7 +1304,32 @@ def resetar_senha_usuario(usuario_id):
             return jsonify({'erro': 'Usuário não encontrado'}), 404
         
         conn.commit()
+        
+        # Buscar email do usuário
+        cursor.execute('SELECT email, nome FROM usuarios WHERE id = ?', (usuario_id,))
+        usuario = cursor.fetchone()
         conn.close()
+        
+        # Enviar e-mail com a nova senha
+        if usuario:
+            html_reset = f"""
+            <!DOCTYPE html>
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+                <h2>Senha Resetada</h2>
+                <p>Olá {usuario['nome']},</p>
+                <p>Sua senha foi resetada com sucesso.</p>
+                <p><strong>Nova senha:</strong> {senha_temp}</p>
+                <p>Por favor, altere esta senha no próximo acesso.</p>
+            </body>
+            </html>
+            """
+            
+            enviar_email(
+                destinatario=usuario['email'],
+                assunto='Senha Resetada - Sistema de Propostas',
+                corpo_html=html_reset
+            )
         
         return jsonify({
             'message': 'Senha resetada com sucesso',
