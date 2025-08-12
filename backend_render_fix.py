@@ -156,6 +156,7 @@ def init_db():
             ('Requisitante Teste', 'requisitante@empresa.com', 'req123', 'requisitante'),
             ('Comprador Teste', 'comprador@empresa.com', 'comp123', 'comprador'),
             ('Fornecedor Teste', 'fornecedor@empresa.com', 'forn123', 'fornecedor')
+            ('Administrador do Sistema', 'admin@sistema.com', 'Admin@2025!', 'admin_sistema')
         ]
         
         for nome, email, senha, perfil in usuarios_teste:
