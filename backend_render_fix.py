@@ -215,43 +215,8 @@ def init_db():
     logger.info("Banco de dados inicializado com sucesso")
 
 # Inicializar banco ao iniciar
-restore_backup_if_needed()
 init_db()
-verificar_e_corrigir_banco()
-
-# Adicionar campos extras ao banco
-def adicionar_campo_primeiro_acesso():
-    """Adiciona campo primeiro_acesso se não existir"""
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute('ALTER TABLE usuarios ADD COLUMN primeiro_acesso INTEGER DEFAULT 1')
-        conn.commit()
-        logger.info("Campo primeiro_acesso adicionado")
-    except:
-        pass  # Campo já existe
-    
-    conn.close()
-
-def adicionar_campo_ultimo_login():
-    """Adiciona campo ultimo_login se não existir"""
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute('ALTER TABLE usuarios ADD COLUMN ultimo_login TIMESTAMP')
-        conn.commit()
-        logger.info("Campo ultimo_login adicionado")
-    except:
-        pass  # Campo já existe
-    
-    conn.close()
-
-# Chamar as funções para adicionar campos
-adicionar_campo_primeiro_acesso()
-adicionar_campo_ultimo_login()
-
+# AQUI DEVE ESTAR A DEFINIÇÃO DA FUNÇÃO
 def verificar_e_corrigir_banco():
     """Verifica e corrige a estrutura do banco de dados"""
     conn = sqlite3.connect(DB_PATH)
@@ -306,9 +271,9 @@ def verificar_e_corrigir_banco():
     finally:
         conn.close()
 
-# CHAME esta função logo após init_db()
-init_db()
-verificar_e_corrigir_banco()  # Adicione esta linha
+# AGORA SIM PODE CHAMAR A FUNÇÃO
+restore_backup_if_needed()
+verificar_e_corrigir_banco()
 
 # Funções de E-mail
 def enviar_email(destinatario, assunto, corpo_html):
