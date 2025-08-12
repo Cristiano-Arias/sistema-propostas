@@ -155,7 +155,7 @@ def init_db():
         usuarios_teste = [
             ('Requisitante Teste', 'requisitante@empresa.com', 'req123', 'requisitante'),
             ('Comprador Teste', 'comprador@empresa.com', 'comp123', 'comprador'),
-            ('Fornecedor Teste', 'fornecedor@empresa.com', 'forn123', 'fornecedor')
+            ('Fornecedor Teste', 'fornecedor@empresa.com', 'forn123', 'fornecedor'),
             ('Administrador do Sistema', 'admin@sistema.com', 'Admin@2025!', 'admin_sistema')
         ]
         
