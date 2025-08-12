@@ -395,7 +395,7 @@
                 
                 if (response.ok) {
                     alert('Senha alterada com sucesso!');
-                    window.location.href = 'dashboard-comprador.html';
+                    window.location.href = 'dashboard-comprador-funcional.html';
                 } else {
                     const data = await response.json();
                     alert(data.erro || 'Erro ao alterar senha');
