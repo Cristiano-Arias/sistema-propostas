@@ -353,7 +353,7 @@
                     } else {
                         mostrarSucesso('Login realizado com sucesso! Redirecionando...');
                         setTimeout(() => {
-                            window.location.href = 'dashboard-requisitante.html';
+                            window.location.href = 'dashboard-requisitante-funcional.html';
                         }, 1500);
                     }
                 } else {
@@ -395,7 +395,7 @@
                 
                 if (response.ok) {
                     alert('Senha alterada com sucesso!');
-                    window.location.href = 'dashboard-requisitante.html';
+                    window.location.href = 'dashboard-requisitante-funcional.html';
                 } else {
                     const data = await response.json();
                     alert(data.erro || 'Erro ao alterar senha');
