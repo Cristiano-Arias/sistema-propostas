@@ -105,9 +105,9 @@
 
         .access-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 30px;
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -167,6 +167,18 @@
             color: #667eea;
         }
 
+        .access-card.fornecedor i {
+            color: #667eea;
+        }
+
+        .access-card.admin::before {
+            background: #e74c3c;
+        }
+
+        .access-card.admin i {
+            color: #e74c3c;
+        }
+        
         .access-card h3 {
             font-size: 28px;
             margin-bottom: 15px;
@@ -255,6 +267,12 @@
                     <i class="fas fa-industry"></i>
                     <h3>Portal do Fornecedor</h3>
                     <p>Participar de processos licitatórios e enviar propostas</p>
+                </a>
+
+                <a href="static/login-admin.html" class="access-card admin">
+                    <i class="fas fa-user-shield"></i>
+                    <h3>Administração do Sistema</h3>
+                    <p>Gerenciar usuários, permissões e configurações do sistema</p>
                 </a>
             </div>
         </div>
