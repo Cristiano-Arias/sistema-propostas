@@ -318,9 +318,25 @@ def login():
             return jsonify({'message': 'Usuário não encontrado'}), 404
         
         # Verificar senha
-        if not bcrypt.checkpw(senha.encode('utf-8'), usuario['senha']):
+        try:
+            # Garantir que a senha do banco está em bytes
+            if isinstance(usuario['senha'], str):
+                senha_hash = usuario['senha'].encode('utf-8')
+            else:
+                senha_hash = usuario['senha']
+            
+            # Verificar a senha
+            senha_correta = bcrypt.checkpw(senha.encode('utf-8'), senha_hash)
+            
+            if not senha_correta:
+                conn.close()
+                logger.warning(f"Senha incorreta para: {email}")
+                return jsonify({'message': 'Email ou senha incorretos'}), 401
+                
+        except Exception as e:
+            logger.error(f"Erro ao verificar senha: {str(e)}")
             conn.close()
-            return jsonify({'message': 'Senha incorreta'}), 401
+            return jsonify({'message': 'Erro ao verificar credenciais'}), 500
         
         # Gerar token
         token = gerar_token(usuario['id'], usuario['perfil'])
