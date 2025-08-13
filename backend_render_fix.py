@@ -1055,59 +1055,66 @@ def internal_error(error):
 
 # Inicialização
 if __name__ == '__main__':
+    """
+    Rotina de inicialização do servidor. Aqui são executadas todas as
+    operações necessárias para garantir a persistência e integridade do
+    banco de dados antes de iniciar o serviço Flask. Em execução local
+    ou no Render, o banco principal é restaurado (se necessário),
+    inicializado (criando tabelas e usuários padrão) e iniciada a
+    rotina de backup automático. Também é verificada a existência do
+    usuário administrador para que o sistema esteja pronto para uso.
+    """
+
+    # Restaurar banco a partir do backup, se necessário, e inicializar
+    restore_backup_if_needed()
+    init_db()
+
+    # Função para verificar e corrigir banco
+    def verificar_e_corrigir_banco():
+        """Verifica e corrige a estrutura do banco de dados"""
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        try:
+            # Verificar se o usuário admin existe
+            cursor.execute("SELECT * FROM usuarios WHERE email = 'admin@sistema.com'")
+            admin = cursor.fetchone()
+            if not admin:
+                logger.info("Criando usuário admin padrão...")
+                senha_hash = bcrypt.hashpw('Admin@2025!'.encode('utf-8'), bcrypt.gensalt())
+                cursor.execute('''
+                    INSERT INTO usuarios (nome, email, senha, perfil)
+                    VALUES (?, ?, ?, ?)
+                ''', ('Administrador do Sistema', 'admin@sistema.com', senha_hash, 'admin_sistema'))
+                conn.commit()
+                logger.info("Usuário admin criado com sucesso!")
+            else:
+                logger.info("Usuário admin já existe")
+            # Listar estrutura atual da tabela para debug
+            cursor.execute("PRAGMA table_info(usuarios)")
+            colunas = cursor.fetchall()
+            logger.info("Estrutura atual da tabela usuarios:")
+            for col in colunas:
+                logger.info(f"  - {col[1]} ({col[2]})")
+        except Exception as e:
+            logger.error(f"Erro ao verificar banco: {str(e)}")
+        finally:
+            conn.close()
+
+    # Chamar verificação de banco
+    verificar_e_corrigir_banco()
+
+    # Iniciar backup automático
+    iniciar_backup_automatico()
+
+    # Obter configuração de porta e modo debug
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('DEBUG', 'True').lower() == 'true'
-    
     logger.info(f"Iniciando servidor na porta {port}")
     logger.info(f"Debug mode: {debug}")
     logger.info(f"Banco de dados: {DB_PATH}")
     logger.info(f"Diretório de uploads: {UPLOAD_DIR}")
-    
+    # Iniciar servidor Flask
     app.run(host='0.0.0.0', port=port, debug=debug)
-
-# Inicializar banco ao iniciar
-restore_backup_if_needed()
-init_db()
-
-# Iniciar backup automático
-iniciar_backup_automatico()
-
-# Função para verificar e corrigir banco
-def verificar_e_corrigir_banco():
-    """Verifica e corrige a estrutura do banco de dados"""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    try:
-        # Verificar se o usuário admin existe
-        cursor.execute("SELECT * FROM usuarios WHERE email = 'admin@sistema.com'")
-        admin = cursor.fetchone()
-        
-        if not admin:
-            logger.info("Criando usuário admin padrão...")
-            senha_hash = bcrypt.hashpw('Admin@2025!'.encode('utf-8'), bcrypt.gensalt())
-            cursor.execute('''
-                INSERT INTO usuarios (nome, email, senha, perfil)
-                VALUES (?, ?, ?, ?)
-            ''', ('Administrador do Sistema', 'admin@sistema.com', senha_hash, 'admin_sistema'))
-            conn.commit()
-            logger.info("Usuário admin criado com sucesso!")
-        else:
-            logger.info("Usuário admin já existe")
-        
-        # Listar estrutura atual da tabela para debug
-        cursor.execute("PRAGMA table_info(usuarios)")
-        colunas = cursor.fetchall()
-        logger.info("Estrutura atual da tabela usuarios:")
-        for col in colunas:
-            logger.info(f"  - {col[1]} ({col[2]})")
-        
-    except Exception as e:
-        logger.error(f"Erro ao verificar banco: {str(e)}")
-    finally:
-        conn.close()
-
-verificar_e_corrigir_banco()
 
 # Funções de E-mail
 def enviar_email(destinatario, assunto, corpo_html):
