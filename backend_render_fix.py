@@ -32,7 +32,7 @@ import time
 if os.environ.get('RENDER'):
     # Tentar múltiplos diretórios persistentes no Render
     POSSIBLE_DIRS = [
-    '/opt/render/persistent',
+    '/opt/render/persistent',        # disco persistente do Render (prioridade máxima)
     '/opt/render/project/src/data',
     '/tmp/persistent',
     '.'
