@@ -1108,40 +1108,41 @@ def internal_error(error):
     logger.error(f"Erro interno: {str(error)}")
     return jsonify({'message': 'Erro interno do servidor'}), 500
 
-# Inicialização
-if __name__ == '__main__':
-    """
-    Rotina de inicialização do servidor. São executadas as operações de
-    restauração de backup, criação de tabelas e verificação do usuário
-    administrador antes de iniciar o serviço Flask. Isso garante que
-    todas as estruturas do banco estejam preparadas ao iniciar o
-    servidor, tanto em ambiente de desenvolvimento quanto no Render.
-    """
 
+# ===== Inicialização do banco e serviços auxiliares =====
+#
+# O bloco abaixo é executado no momento em que este módulo é importado.
+# Ele garante que o diretório do banco exista, restaura o backup se
+# necessário, cria as tabelas padrão, corrige a estrutura do banco e
+# inicia a thread de backup automático. Colocar estas operações fora
+# do bloco `if __name__ == '__main__'` garante que elas sejam
+# executadas tanto quando o serviço é iniciado via `python
+# backend_render_fix.py` quanto quando é importado por um servidor
+# WSGI como o Gunicorn. Se ocorrer qualquer exceção durante essa
+# inicialização, o logger exibirá o erro no log da Render.
+
+try:
     # Criar diretório do banco de dados, se necessário
-    try:
-        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    except Exception:
-        pass
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+except Exception:
+    pass
 
-    # Restaurar banco a partir do backup, se necessário, e inicializar
+try:
     restore_backup_if_needed()
     init_db()
-
-    # Verificar e corrigir banco (usuário admin)
     verificar_e_corrigir_banco()
-
-    # Iniciar backup automático em segundo plano
     iniciar_backup_automatico()
+except Exception as init_exc:
+    logger.error(f"Erro na inicialização do banco ou backup: {init_exc}")
 
-    # Obter configuração de porta e modo debug
+# Inicialização do servidor Flask somente quando executado diretamente
+if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('DEBUG', 'True').lower() == 'true'
     logger.info(f"Iniciando servidor na porta {port}")
     logger.info(f"Debug mode: {debug}")
     logger.info(f"Banco de dados: {DB_PATH}")
     logger.info(f"Diretório de uploads: {UPLOAD_DIR}")
-    # Iniciar servidor Flask
     app.run(host='0.0.0.0', port=port, debug=debug)
 
 # Funções de E-mail
@@ -1199,123 +1200,94 @@ def criar_email_boas_vindas(nome, email, senha_temp):
 # Rotas de Autenticação
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    """Login de usuário com suporte a primeiro acesso e segurança aprimorada"""
-    try:
-        # Usar get_json com silent=True para evitar exceções caso o corpo
-        # não seja um JSON válido. Se nada for fornecido, usa dict vazio.
-        data = request.get_json(silent=True) or {}
-        email = data.get('email', '').strip().lower()
-        senha = data.get('senha', '')
+    """Efetua o login de um usuário.
 
-        # Log detalhado da tentativa de login
-        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR', 'unknown'))
-        logger.info(f"Tentativa de login: {email} de IP: {client_ip}")
-        
-        # Validações de entrada mais rigorosas
+    Esta versão é tolerante a esquemas de banco antigos que possam não ter
+    as colunas `ativo`, `primeiro_acesso` ou `ultimo_login`. Todos os
+    acessos a campos opcionais utilizam valores padrão para evitar
+    exceções. Mensagens de erro são retornadas com códigos de status
+    apropriados.
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        email = (data.get('email') or '').strip().lower()
+        senha = data.get('senha') or ''
+
+        # Validações mínimas
         if not email or not senha:
-            logger.warning(f"Login falhado - campos vazios: email={bool(email)}, senha={bool(senha)} - IP: {client_ip}")
             return jsonify({'erro': 'Email e senha são obrigatórios'}), 400
-        
         if len(email) < 5 or '@' not in email:
-            logger.warning(f"Login falhado - email inválido: {email} - IP: {client_ip}")
             return jsonify({'erro': 'Email inválido'}), 400
-            
         if len(senha) < 3:
-            logger.warning(f"Login falhado - senha muito curta para: {email} - IP: {client_ip}")
             return jsonify({'erro': 'Senha muito curta'}), 400
-        
+
         conn = get_db()
         cursor = conn.cursor()
-        
-        # Buscar usuário
-        cursor.execute('SELECT * FROM usuarios WHERE LOWER(email) = ?', (email,))
+        cursor.execute('SELECT * FROM usuarios WHERE lower(email) = ?', (email,))
         usuario = cursor.fetchone()
-        
         if not usuario:
             conn.close()
-            logger.warning(f"Usuário não encontrado: {email} - IP: {client_ip}")
             return jsonify({'erro': 'Email ou senha incorretos'}), 401
-        
-        # Verificar se usuário está ativo
-        if not (usuario['ativo'] if ('ativo' in usuario.keys()) else 1):
+
+        # Converter para dict para acesso seguro
+        usuario_dict = {k: usuario[k] for k in usuario.keys()}
+
+        # Verificar se está ativo (padrão ativo)
+        if usuario_dict.get('ativo', 1) in (0, '0'):
             conn.close()
-            logger.warning(f"Tentativa de login com usuário inativo: {email} - IP: {client_ip}")
             return jsonify({'erro': 'Usuário inativo. Contate o administrador.'}), 401
-        
-        # Verificar senha com logs detalhados
+
+        # Verificar senha
         try:
-            senha_db = usuario['senha']
-            logger.debug(f"Verificando senha para usuário: {email}")
-            
-            # Garantir que a senha do banco está em bytes
-            if isinstance(senha_db, str):
-                senha_hash = senha_db.encode('utf-8')
-            else:
-                senha_hash = senha_db
-            
-            # Verificação da senha
-            senha_correta = bcrypt.checkpw(senha.encode('utf-8'), senha_hash)
-            
-            if not senha_correta:
+            senha_db = usuario_dict.get('senha')
+            if senha_db is None:
                 conn.close()
-                logger.warning(f"Senha incorreta para: {email} - IP: {client_ip}")
+                return jsonify({'erro': 'Credenciais inválidas'}), 401
+            senha_hash = senha_db.encode('utf-8') if isinstance(senha_db, str) else senha_db
+            if not bcrypt.checkpw(senha.encode('utf-8'), senha_hash):
+                conn.close()
                 return jsonify({'erro': 'Email ou senha incorretos'}), 401
-            
-            logger.info(f"Senha verificada com sucesso para: {email}")
-                
         except Exception as e:
-            logger.error(f"Erro ao verificar senha para {email}: {str(e)} - IP: {client_ip}")
             conn.close()
+            logger.error(f"Erro ao verificar senha para {email}: {e}")
             return jsonify({'erro': 'Erro ao verificar credenciais'}), 500
-        
+
         # Gerar tokens
-        token = gerar_token(usuario['id'], usuario['perfil'])
-        refresh_token = gerar_refresh_token(usuario['id'])
-        
-        # Verificar primeiro acesso
-        primeiro_acesso = False
+        user_id = usuario_dict.get('id')
+        perfil = usuario_dict.get('perfil', 'usuario')
+        token = gerar_token(user_id, perfil)
+        refresh_token = gerar_refresh_token(user_id)
+        login_time = datetime.utcnow().isoformat()
+        primeiro_acesso = bool(usuario_dict.get('primeiro_acesso', 0))
+
+        # Atualizar último login e primeiro acesso, ignorando erros se colunas não existirem
         try:
-            primeiro_acesso = usuario['primeiro_acesso'] == 1
-        except (KeyError, IndexError):
-            if email == 'admin@sistema.com':
-                primeiro_acesso = True
-        
-        # Atualizar último login com tratamento de erro
-        try:
-            cursor.execute('''
-                UPDATE usuarios 
-                SET ultimo_login = CURRENT_TIMESTAMP 
-                WHERE id = ?
-            ''', (usuario['id'],))
+            cursor.execute('UPDATE usuarios SET ultimo_login = ?, primeiro_acesso = 0 WHERE id = ?',
+                           (login_time, user_id))
             conn.commit()
-            logger.debug(f"Último login atualizado para usuário: {email}")
         except Exception as e:
-            logger.warning(f"Erro ao atualizar último login para {email}: {str(e)}")
-        
-        conn.close()
-        
-        # Preparar resposta com informações de segurança
+            logger.warning(f"Erro ao atualizar campos de login para {email}: {e}")
+        finally:
+            conn.close()
+
+        usuario_resp = {
+            'id': user_id,
+            'nome': usuario_dict.get('nome'),
+            'email': usuario_dict.get('email'),
+            'perfil': perfil
+        }
         resposta = {
             'token': token,
             'access_token': token,
             'refresh_token': refresh_token,
-            'usuario': {
-                'id': usuario['id'],
-                'nome': usuario['nome'],
-                'email': usuario['email'],
-                'perfil': usuario['perfil']
-            },
+            'usuario': usuario_resp,
             'primeiro_acesso': primeiro_acesso,
-            'expires_in': 30 * 24 * 60 * 60,  # 30 dias em segundos
-            'login_time': datetime.utcnow().isoformat()
+            'expires_in': 30 * 24 * 60 * 60,
+            'login_time': login_time
         }
-        
-        logger.info(f"Login bem-sucedido para: {email} (perfil: {usuario['perfil']}) - IP: {client_ip}")
-        
         return jsonify(resposta), 200
-        
     except Exception as e:
-        logger.error(f"Erro no login: {str(e)}")
+        logger.error(f"Erro inesperado no login: {e}")
         return jsonify({'erro': 'Erro interno do servidor'}), 500
 
 @app.route('/api/auth/verify', methods=['GET'])
