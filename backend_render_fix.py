@@ -30,41 +30,50 @@ import time
 # Configuração do caminho do banco de dados
 # Configuração de persistência melhorada para Render
 if os.environ.get('RENDER'):
+    """
+    Quando executado no ambiente do Render, é importante persistir os
+    arquivos de banco de dados e uploads em um diretório que seja
+    preservado entre deploys e reinicializações. A lista
+    ``POSSIBLE_DIRS`` contém caminhos comumente disponíveis no Render.
+    O primeiro diretório no qual for possível escrever será utilizado
+    para armazenar ``database.db`` e ``database_backup.db``.
+    """
     # Tentar múltiplos diretórios persistentes no Render
     POSSIBLE_DIRS = [
-    '/opt/render/persistent',
-    '/opt/render/project/src/data',
-    '/tmp/persistent',
-    '.'
-]
-    
+        '/opt/render/persistent',
+        '/opt/render/project/src/data',
+        '/tmp/persistent',
+        '.'
+    ]
+
     PERSISTENT_DIR = None
     for dir_path in POSSIBLE_DIRS:
         try:
+            # certifique-se de que o diretório existe
             os.makedirs(dir_path, exist_ok=True)
-            # Testar se consegue escrever no diretório
+            # testar permissões de escrita
             test_file = os.path.join(dir_path, 'test_write.tmp')
             with open(test_file, 'w') as f:
                 f.write('test')
             os.remove(test_file)
             PERSISTENT_DIR = dir_path
             break
-        except:
+        except Exception:
             continue
-    
-    if not PERSISTENT_DIR:
-        PERSISTENT_DIR = '.'  # Fallback final
-    
-    DB_PATH = os.path.join(PERSISTENT_DIR, 'database.db')
-_garantir_pasta_e_schema(DB_PATH)
 
+    # Se nenhum diretório válido for encontrado, utilizar o diretório atual
+    if not PERSISTENT_DIR:
+        PERSISTENT_DIR = '.'
+
+    # Definição dos caminhos de banco e backup dentro do diretório persistente
+    DB_PATH = os.path.join(PERSISTENT_DIR, 'database.db')
     BACKUP_PATH = os.path.join(PERSISTENT_DIR, 'database_backup.db')
     UPLOAD_DIR = os.path.join(PERSISTENT_DIR, 'uploads')
-    
-    # Log do diretório escolhido
+
+    # Registrar no log qual diretório foi escolhido
     print(f"[RENDER] Usando diretório persistente: {PERSISTENT_DIR}")
 else:
-    # Local development
+    # Configurações para desenvolvimento local
     DB_PATH = 'database.db'
     BACKUP_PATH = 'database_backup.db'
     UPLOAD_DIR = 'uploads'
@@ -2400,6 +2409,114 @@ def toggle_usuario_ativo(usuario_id):
     except Exception as e:
         logger.error(f"Erro ao alterar status: {str(e)}")
         return jsonify({'erro': 'Erro ao alterar status'}), 500
+
+# ===========================================================================
+#   Rotas para visualização e edição de usuários
+# ===========================================================================
+
+@app.route('/api/usuarios/<int:usuario_id>', methods=['GET'])
+@require_auth
+def obter_usuario(usuario_id: int):
+    """
+    Retorna os dados detalhados de um usuário específico. Esta rota é
+    restrita aos administradores do sistema. Caso o usuário não exista,
+    retorna 404.
+    """
+    try:
+        # Apenas administradores podem visualizar usuários individualmente
+        if request.perfil != 'admin_sistema':
+            return jsonify({'erro': 'Acesso negado'}), 403
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, nome, email, cpf, perfil, departamento, cargo, telefone, ativo
+            FROM usuarios
+            WHERE id = ?
+        ''', (usuario_id,))
+        usuario = cursor.fetchone()
+        conn.close()
+        if not usuario:
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
+        return jsonify(dict(usuario)), 200
+    except Exception as e:
+        logger.error(f"Erro ao obter usuário: {str(e)}")
+        return jsonify({'erro': 'Erro ao obter usuário'}), 500
+
+
+@app.route('/api/usuarios/<int:usuario_id>', methods=['PUT'])
+@require_auth
+def atualizar_usuario(usuario_id: int):
+    """
+    Atualiza os dados de um usuário existente. Apenas administradores
+    (perfil 'admin_sistema') estão autorizados a realizar esta operação.
+    Campos permitidos para atualização: nome, email, cpf, perfil,
+    departamento, cargo e telefone. Caso algum campo seja inválido ou o
+    usuário não exista, retorna o erro correspondente.
+    """
+    try:
+        # Verificar permissão
+        if request.perfil != 'admin_sistema':
+            return jsonify({'erro': 'Acesso negado'}), 403
+
+        data = request.json or {}
+        # Validar presença de dados
+        if not data:
+            return jsonify({'erro': 'Nenhum dado fornecido'}), 400
+
+        allowed_fields = {
+            'nome', 'email', 'cpf', 'perfil', 'departamento', 'cargo', 'telefone'
+        }
+        update_fields = {k: v for k, v in data.items() if k in allowed_fields and v is not None}
+        if not update_fields:
+            return jsonify({'erro': 'Nenhum campo válido para atualização'}), 400
+
+        # Validar perfil, se fornecido
+        if 'perfil' in update_fields:
+            perfis_validos = ['requisitante', 'comprador', 'fornecedor', 'admin_sistema']
+            if update_fields['perfil'] not in perfis_validos:
+                return jsonify({'erro': 'Perfil inválido'}), 400
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Verificar se usuário existe
+        cursor.execute('SELECT id, email, cpf FROM usuarios WHERE id = ?', (usuario_id,))
+        usuario = cursor.fetchone()
+        if not usuario:
+            conn.close()
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
+
+        # Verificar e-mails duplicados
+        if 'email' in update_fields:
+            novo_email = update_fields['email'].strip().lower()
+            cursor.execute('SELECT id FROM usuarios WHERE lower(email) = ? AND id != ?', (novo_email, usuario_id))
+            if cursor.fetchone():
+                conn.close()
+                return jsonify({'erro': 'Email já cadastrado por outro usuário'}), 400
+            update_fields['email'] = novo_email
+
+        # Verificar CPF duplicado
+        if 'cpf' in update_fields and update_fields['cpf']:
+            novo_cpf = update_fields['cpf']
+            cursor.execute('SELECT id FROM usuarios WHERE cpf = ? AND id != ?', (novo_cpf, usuario_id))
+            if cursor.fetchone():
+                conn.close()
+                return jsonify({'erro': 'CPF já cadastrado por outro usuário'}), 400
+
+        # Montar consulta dinâmica de atualização
+        set_clause = ', '.join(f"{field} = ?" for field in update_fields.keys())
+        values = list(update_fields.values()) + [usuario_id]
+        sql = f"UPDATE usuarios SET {set_clause} WHERE id = ?"
+
+        cursor.execute(sql, values)
+        conn.commit()
+        conn.close()
+
+        return jsonify({'message': 'Usuário atualizado com sucesso'}), 200
+    except Exception as e:
+        logger.error(f"Erro ao atualizar usuário: {str(e)}")
+        return jsonify({'erro': 'Erro ao atualizar usuário'}), 500
 
 
 def _garantir_pasta_e_schema(db_path):
