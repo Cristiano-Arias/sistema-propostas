@@ -257,13 +257,9 @@ def init_db():
             ''', (nome, email, senha_hash, perfil))
         
         conn.commit()
-        conn.close()
-        
-        return jsonify({'message': 'Status alterado com sucesso'}), 200
-        
-    except Exception as e:
-        logger.error(f"Erro ao alterar status: {str(e)}")
-        return jsonify({'erro': 'Erro ao alterar status'}), 500
+    
+    conn.close()
+    logger.info("Banco de dados inicializado com sucesso")
 
 @app.route('/api/fornecedores/<int:fornecedor_id>', methods=['GET'])
 @require_auth
@@ -765,11 +761,7 @@ if __name__ == '__main__':
     logger.info(f"Banco de dados: {DB_PATH}")
     logger.info(f"Diretório de uploads: {UPLOAD_DIR}")
     
-    app.run(host='0.0.0.0', port=port, debug=debug)commit()
-        logger.info("Usuários de teste criados")
-    
-    conn.close()
-    logger.info("Banco de dados inicializado com sucesso")
+    app.run(host='0.0.0.0', port=port, debug=debug)
 
 # Inicializar banco ao iniciar
 restore_backup_if_needed()
@@ -939,32 +931,51 @@ def require_auth(f):
 # Rotas de Autenticação
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    """Login de usuário com suporte a primeiro acesso"""
+    """Login de usuário com suporte a primeiro acesso e segurança aprimorada"""
     try:
         data = request.json
-        email = data.get('email')
-        senha = data.get('senha')
+        email = data.get('email', '').strip().lower()
+        senha = data.get('senha', '')
 
-        logger.info(f"Tentativa de login: {email}")
+        # Log detalhado da tentativa de login
+        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR', 'unknown'))
+        logger.info(f"Tentativa de login: {email} de IP: {client_ip}")
         
+        # Validações de entrada mais rigorosas
         if not email or not senha:
+            logger.warning(f"Login falhado - campos vazios: email={bool(email)}, senha={bool(senha)} - IP: {client_ip}")
             return jsonify({'erro': 'Email e senha são obrigatórios'}), 400
+        
+        if len(email) < 5 or '@' not in email:
+            logger.warning(f"Login falhado - email inválido: {email} - IP: {client_ip}")
+            return jsonify({'erro': 'Email inválido'}), 400
+            
+        if len(senha) < 3:
+            logger.warning(f"Login falhado - senha muito curta para: {email} - IP: {client_ip}")
+            return jsonify({'erro': 'Senha muito curta'}), 400
         
         conn = get_db()
         cursor = conn.cursor()
         
         # Buscar usuário
-        cursor.execute('SELECT * FROM usuarios WHERE email = ?', (email,))
+        cursor.execute('SELECT * FROM usuarios WHERE LOWER(email) = ?', (email,))
         usuario = cursor.fetchone()
         
         if not usuario:
             conn.close()
-            logger.warning(f"Usuário não encontrado: {email}")
+            logger.warning(f"Usuário não encontrado: {email} - IP: {client_ip}")
             return jsonify({'erro': 'Email ou senha incorretos'}), 401
         
-        # Verificar senha
+        # Verificar se usuário está ativo
+        if not usuario.get('ativo', 1):
+            conn.close()
+            logger.warning(f"Tentativa de login com usuário inativo: {email} - IP: {client_ip}")
+            return jsonify({'erro': 'Usuário inativo. Contate o administrador.'}), 401
+        
+        # Verificar senha com logs detalhados
         try:
             senha_db = usuario['senha']
+            logger.debug(f"Verificando senha para usuário: {email}")
             
             # Garantir que a senha do banco está em bytes
             if isinstance(senha_db, str):
@@ -977,11 +988,13 @@ def login():
             
             if not senha_correta:
                 conn.close()
-                logger.warning(f"Senha incorreta para: {email}")
+                logger.warning(f"Senha incorreta para: {email} - IP: {client_ip}")
                 return jsonify({'erro': 'Email ou senha incorretos'}), 401
+            
+            logger.info(f"Senha verificada com sucesso para: {email}")
                 
         except Exception as e:
-            logger.error(f"Erro ao verificar senha: {str(e)}")
+            logger.error(f"Erro ao verificar senha para {email}: {str(e)} - IP: {client_ip}")
             conn.close()
             return jsonify({'erro': 'Erro ao verificar credenciais'}), 500
         
@@ -997,7 +1010,7 @@ def login():
             if email == 'admin@sistema.com':
                 primeiro_acesso = True
         
-        # Atualizar último login
+        # Atualizar último login com tratamento de erro
         try:
             cursor.execute('''
                 UPDATE usuarios 
@@ -1005,12 +1018,13 @@ def login():
                 WHERE id = ?
             ''', (usuario['id'],))
             conn.commit()
-        except:
-            pass
+            logger.debug(f"Último login atualizado para usuário: {email}")
+        except Exception as e:
+            logger.warning(f"Erro ao atualizar último login para {email}: {str(e)}")
         
         conn.close()
         
-        # Preparar resposta
+        # Preparar resposta com informações de segurança
         resposta = {
             'token': token,
             'access_token': token,
@@ -1022,10 +1036,11 @@ def login():
                 'perfil': usuario['perfil']
             },
             'primeiro_acesso': primeiro_acesso,
-            'expires_in': 30 * 24 * 60 * 60
+            'expires_in': 30 * 24 * 60 * 60,  # 30 dias em segundos
+            'login_time': datetime.utcnow().isoformat()
         }
         
-        logger.info(f"Login bem-sucedido para: {email} (perfil: {usuario['perfil']})")
+        logger.info(f"Login bem-sucedido para: {email} (perfil: {usuario['perfil']}) - IP: {client_ip}")
         
         return jsonify(resposta), 200
         
@@ -2153,4 +2168,11 @@ def toggle_usuario_ativo(usuario_id):
             UPDATE usuarios SET ativo = ? WHERE id = ?
         ''', (novo_status, usuario_id))
         
-        conn.
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'message': 'Status alterado com sucesso'}), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao alterar status: {str(e)}")
+        return jsonify({'erro': 'Erro ao alterar status'}), 500
