@@ -9,7 +9,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import Flask, request, jsonify, send_from_directory, session
+from flask import Flask, request, jsonify, send_from_directory, session, send_file
 from flask_cors import CORS
 import jwt
 import bcrypt
@@ -111,6 +111,17 @@ def restore_backup_if_needed():
     except Exception as e:
         logger.error(f"Erro ao restaurar backup: {str(e)}")
 
+# Helpers
+def get_db():
+    """Obter conexão com o banco"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def allowed_file(filename):
+    """Verifica se o arquivo é permitido"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 # Inicializar banco de dados SQLite
 def init_db():
     """Inicializa o banco de dados"""
@@ -125,7 +136,18 @@ def init_db():
             email TEXT UNIQUE NOT NULL,
             senha TEXT NOT NULL,
             perfil TEXT NOT NULL,
-            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            primeiro_acesso INTEGER DEFAULT 1,
+            ultimo_login TIMESTAMP,
+            cpf TEXT,
+            departamento TEXT,
+            cargo TEXT,
+            telefone TEXT,
+            ativo INTEGER DEFAULT 1,
+            cnpj TEXT,
+            endereco TEXT,
+            responsavel_tecnico TEXT,
+            crea TEXT
         )
     ''')
     
@@ -235,48 +257,8 @@ def init_db():
             ''', (nome, email, senha_hash, perfil))
         
         conn.commit()
-        
-        # Buscar email do usuário
-        cursor.execute('SELECT email, nome FROM usuarios WHERE id = ?', (usuario_id,))
-        usuario = cursor.fetchone()
         conn.close()
         
-        # Enviar e-mail com a nova senha
-        if usuario:
-            html_reset = f"""
-            <!DOCTYPE html>
-            <html>
-            <body style="font-family: Arial, sans-serif;">
-                <h2>Senha Resetada</h2>
-                <p>Olá {usuario['nome']},</p>
-                <p>Sua senha foi resetada com sucesso.</p>
-                <p><strong>Nova senha:</strong> {senha_temp}</p>
-                <p>Por favor, altere esta senha no próximo acesso.</p>
-            </body>
-            </html>
-            """
-            
-            enviar_email(
-                destinatario=usuario['email'],
-                assunto='Senha Resetada - Sistema de Propostas',
-                corpo_html=html_reset
-            )
-        
-        return jsonify({
-            'message': 'Senha resetada com sucesso',
-            'senha_temporaria': senha_temp
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Erro ao resetar senha: {str(e)}")
-        return jsonify({'erro': 'Erro ao resetar senha'}), 500
-
-@app.route('/api/usuarios/<int:usuario_id>/ativar', methods=['PUT'])
-@require_auth
-def toggle_usuario_ativo(usuario_id):
-    """Ativa/desativa usuário"""
-    try:
-        # Por enquanto, apenas retorna sucesso
         return jsonify({'message': 'Status alterado com sucesso'}), 200
         
     except Exception as e:
@@ -301,15 +283,14 @@ def obter_detalhes_fornecedor(fornecedor_id):
             conn.close()
             return jsonify({'erro': 'Fornecedor não encontrado'}), 404
         
-        # Montar resposta com campos esperados pelo frontend
         resultado = {
             'id': fornecedor['id'],
             'razao_social': fornecedor['nome'],
             'nome_fantasia': '',
-            'cnpj': '00.000.000/0000-00',
+            'cnpj': fornecedor['cnpj'] or '00.000.000/0000-00',
             'inscricao_estadual': '',
             'inscricao_municipal': '',
-            'endereco': 'Endereço não cadastrado',
+            'endereco': fornecedor['endereco'] or 'Endereço não cadastrado',
             'numero': '',
             'complemento': '',
             'bairro': '',
@@ -317,15 +298,15 @@ def obter_detalhes_fornecedor(fornecedor_id):
             'estado': 'UF',
             'cep': '00000-000',
             'email': fornecedor['email'],
-            'telefone': '(00) 0000-0000',
+            'telefone': fornecedor['telefone'] or '(00) 0000-0000',
             'celular': '',
             'website': '',
             'responsavel_nome': fornecedor['nome'],
-            'responsavel_cpf': '000.000.000-00',
+            'responsavel_cpf': fornecedor['cpf'] or '000.000.000-00',
             'responsavel_email': fornecedor['email'],
-            'responsavel_telefone': '',
-            'responsavel_tecnico': '',
-            'crea_cau': '',
+            'responsavel_telefone': fornecedor['telefone'] or '',
+            'responsavel_tecnico': fornecedor['responsavel_tecnico'] or '',
+            'crea_cau': fornecedor['crea'] or '',
             'aprovado': False
         }
         
@@ -350,7 +331,6 @@ def get_comparativo_propostas(processo_id):
         conn = get_db()
         cursor = conn.cursor()
         
-        # Buscar informações do processo
         cursor.execute('''
             SELECT p.*, tr.numero as tr_numero, tr.objeto
             FROM processos p
@@ -363,7 +343,6 @@ def get_comparativo_propostas(processo_id):
             conn.close()
             return jsonify({'message': 'Processo não encontrado'}), 404
         
-        # Buscar todas as propostas do processo
         cursor.execute('''
             SELECT p.*, u.nome as razao_social, u.email, u.telefone, u.endereco,
                    u.cnpj, u.responsavel_tecnico, u.crea
@@ -375,42 +354,31 @@ def get_comparativo_propostas(processo_id):
         
         propostas_raw = cursor.fetchall()
         
-        # Buscar dados detalhados de cada proposta
         propostas_formatadas = []
         for proposta in propostas_raw:
             proposta_dict = dict(proposta)
             
-            # Buscar dados cadastrais
             proposta_dict['dadosCadastrais'] = {
                 'razaoSocial': proposta['razao_social'],
                 'cnpj': proposta['cnpj'] or 'Não informado',
                 'endereco': proposta['endereco'] or 'Não informado',
-                'cidade': 'Não informado',  # Adicionar campo cidade se necessário
+                'cidade': 'Não informado',
                 'telefone': proposta['telefone'] or 'Não informado',
                 'email': proposta['email'],
                 'respTecnico': proposta['responsavel_tecnico'] or 'Não informado',
                 'crea': proposta['crea'] or 'Não informado'
             }
             
-            # Buscar proposta técnica
             proposta_dict['propostaTecnica'] = buscar_proposta_tecnica(cursor, proposta['id'])
-            
-            # Buscar tabelas técnicas
             proposta_dict['servicosTecnica'] = buscar_servicos_tecnica(cursor, proposta['id'])
             proposta_dict['maoObraTecnica'] = buscar_mao_obra_tecnica(cursor, proposta['id'])
             proposta_dict['materiaisTecnica'] = buscar_materiais_tecnica(cursor, proposta['id'])
             proposta_dict['equipamentosTecnica'] = buscar_equipamentos_tecnica(cursor, proposta['id'])
-            
-            # Buscar tabelas comerciais
             proposta_dict['servicosComercial'] = buscar_servicos_comercial(cursor, proposta['id'])
             proposta_dict['maoObraComercial'] = buscar_mao_obra_comercial(cursor, proposta['id'])
             proposta_dict['materiaisComercial'] = buscar_materiais_comercial(cursor, proposta['id'])
             proposta_dict['equipamentosComercial'] = buscar_equipamentos_comercial(cursor, proposta['id'])
-            
-            # Buscar BDI
             proposta_dict['bdi'] = buscar_bdi(cursor, proposta['id'])
-            
-            # Calcular resumo financeiro
             proposta_dict['resumoFinanceiro'] = calcular_resumo_financeiro(proposta_dict)
             
             propostas_formatadas.append(proposta_dict)
@@ -561,7 +529,6 @@ def buscar_bdi(cursor, proposta_id):
     
     bdi_items = cursor.fetchall()
     if not bdi_items:
-        # BDI padrão se não informado
         return [
             {'item': 'Administração Central', 'percentual': 0, 'valor': 0},
             {'item': 'Seguros e Garantias', 'percentual': 0, 'valor': 0},
@@ -576,7 +543,6 @@ def buscar_bdi(cursor, proposta_id):
 def calcular_resumo_financeiro(proposta_dict):
     """Calcula resumo financeiro da proposta"""
     try:
-        # Somar totais de cada categoria
         total_servicos = sum(item.get('total', 0) for item in proposta_dict.get('servicosComercial', []))
         total_mao_obra = sum(item.get('total', 0) for item in proposta_dict.get('maoObraComercial', []))
         total_materiais = sum(item.get('total', 0) for item in proposta_dict.get('materiaisComercial', []))
@@ -584,7 +550,6 @@ def calcular_resumo_financeiro(proposta_dict):
         
         custo_direto = total_servicos + total_mao_obra + total_materiais + total_equipamentos
         
-        # Somar BDI
         bdi_valor = sum(item.get('valor', 0) for item in proposta_dict.get('bdi', []))
         bdi_percentual = (bdi_valor / custo_direto * 100) if custo_direto > 0 else 0
         
@@ -657,7 +622,7 @@ def atualizar_schema_comparativo():
     cursor = conn.cursor()
     
     try:
-        # Tabela para proposta técnica
+        # Criar tabelas necessárias para o comparativo
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS proposta_tecnica (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -678,7 +643,6 @@ def atualizar_schema_comparativo():
             )
         ''')
         
-        # Tabela para serviços da proposta
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS servicos_proposta (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -692,7 +656,6 @@ def atualizar_schema_comparativo():
             )
         ''')
         
-        # Tabela para mão de obra da proposta
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS mao_obra_proposta (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -707,7 +670,6 @@ def atualizar_schema_comparativo():
             )
         ''')
         
-        # Tabela para materiais da proposta
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS materiais_proposta (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -722,7 +684,6 @@ def atualizar_schema_comparativo():
             )
         ''')
         
-        # Tabela para equipamentos da proposta
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS equipamentos_proposta (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -738,7 +699,6 @@ def atualizar_schema_comparativo():
             )
         ''')
         
-        # Tabela para BDI da proposta
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS bdi_proposta (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -751,32 +711,6 @@ def atualizar_schema_comparativo():
             )
         ''')
         
-        # Adicionar campos extras na tabela usuarios para dados cadastrais
-        try:
-            cursor.execute('ALTER TABLE usuarios ADD COLUMN cnpj TEXT')
-        except:
-            pass  # Campo já existe
-            
-        try:
-            cursor.execute('ALTER TABLE usuarios ADD COLUMN endereco TEXT')
-        except:
-            pass
-            
-        try:
-            cursor.execute('ALTER TABLE usuarios ADD COLUMN telefone TEXT')
-        except:
-            pass
-            
-        try:
-            cursor.execute('ALTER TABLE usuarios ADD COLUMN responsavel_tecnico TEXT')
-        except:
-            pass
-            
-        try:
-            cursor.execute('ALTER TABLE usuarios ADD COLUMN crea TEXT')
-        except:
-            pass
-        
         conn.commit()
         logger.info("Schema do comparativo atualizado com sucesso")
         
@@ -786,6 +720,7 @@ def atualizar_schema_comparativo():
     finally:
         conn.close()
 
+# Chamar atualização do schema
 atualizar_schema_comparativo()
 
 # Rotas de arquivos estáticos
@@ -801,6 +736,12 @@ def serve_static(path):
         return send_from_directory('static', path)
     else:
         return send_from_directory('static', 'index.html')
+
+# Health check
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint"""
+    return jsonify({'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()}), 200
 
 # Tratamento de erros
 @app.errorhandler(404)
@@ -824,7 +765,9 @@ if __name__ == '__main__':
     logger.info(f"Banco de dados: {DB_PATH}")
     logger.info(f"Diretório de uploads: {UPLOAD_DIR}")
     
-    app.run(host='0.0.0.0', port=port, debug=debug)logger.info("Usuários de teste criados")
+    app.run(host='0.0.0.0', port=port, debug=debug)commit()
+        logger.info("Usuários de teste criados")
+    
     conn.close()
     logger.info("Banco de dados inicializado com sucesso")
 
@@ -832,7 +775,7 @@ if __name__ == '__main__':
 restore_backup_if_needed()
 init_db()
 
-# AQUI DEVE ESTAR A DEFINIÇÃO DA FUNÇÃO
+# Função para verificar e corrigir banco
 def verificar_e_corrigir_banco():
     """Verifica e corrige a estrutura do banco de dados"""
     conn = sqlite3.connect(DB_PATH)
@@ -855,26 +798,6 @@ def verificar_e_corrigir_banco():
         else:
             logger.info("Usuário admin já existe")
         
-        # Tentar adicionar campos que podem estar faltando
-        campos_para_adicionar = [
-            ('primeiro_acesso', 'INTEGER DEFAULT 1'),
-            ('ultimo_login', 'TIMESTAMP'),
-            ('cpf', 'TEXT'),
-            ('departamento', 'TEXT'),
-            ('cargo', 'TEXT'),
-            ('telefone', 'TEXT'),
-            ('ativo', 'INTEGER DEFAULT 1')
-        ]
-        
-        for campo, tipo in campos_para_adicionar:
-            try:
-                cursor.execute(f'ALTER TABLE usuarios ADD COLUMN {campo} {tipo}')
-                conn.commit()
-                logger.info(f"Campo {campo} adicionado à tabela usuarios")
-            except:
-                # Campo já existe
-                pass
-        
         # Listar estrutura atual da tabela para debug
         cursor.execute("PRAGMA table_info(usuarios)")
         colunas = cursor.fetchall()
@@ -887,7 +810,6 @@ def verificar_e_corrigir_banco():
     finally:
         conn.close()
 
-# AGORA SIM PODE CHAMAR A FUNÇÃO
 verificar_e_corrigir_banco()
 
 # Funções de E-mail
@@ -942,17 +864,7 @@ def criar_email_boas_vindas(nome, email, senha_temp):
     """
     return html
 
-# Helpers
-def get_db():
-    """Obter conexão com o banco"""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def allowed_file(filename):
-    """Verifica se o arquivo é permitido"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
+# Funções de Token JWT
 def gerar_token(usuario_id, perfil):
     """Gera token JWT com expiração estendida"""
     payload = {
@@ -1052,7 +964,6 @@ def login():
         
         # Verificar senha
         try:
-            # Acessar senha usando índice ou chave
             senha_db = usuario['senha']
             
             # Garantir que a senha do banco está em bytes
@@ -1078,17 +989,15 @@ def login():
         token = gerar_token(usuario['id'], usuario['perfil'])
         refresh_token = gerar_refresh_token(usuario['id'])
         
-        # Verificar primeiro acesso - usar try/except pois campo pode não existir
+        # Verificar primeiro acesso
         primeiro_acesso = False
         try:
-            # Tentar acessar o campo primeiro_acesso
             primeiro_acesso = usuario['primeiro_acesso'] == 1
         except (KeyError, IndexError):
-            # Campo não existe, considerar como primeiro acesso para admin@sistema.com
             if email == 'admin@sistema.com':
                 primeiro_acesso = True
         
-        # Atualizar último login se o campo existir
+        # Atualizar último login
         try:
             cursor.execute('''
                 UPDATE usuarios 
@@ -1097,7 +1006,6 @@ def login():
             ''', (usuario['id'],))
             conn.commit()
         except:
-            # Campo pode não existir, ignorar
             pass
         
         conn.close()
@@ -1105,7 +1013,7 @@ def login():
         # Preparar resposta
         resposta = {
             'token': token,
-            'access_token': token,  # Para compatibilidade com frontend
+            'access_token': token,
             'refresh_token': refresh_token,
             'usuario': {
                 'id': usuario['id'],
@@ -1114,10 +1022,9 @@ def login():
                 'perfil': usuario['perfil']
             },
             'primeiro_acesso': primeiro_acesso,
-            'expires_in': 30 * 24 * 60 * 60  # 30 dias em segundos
+            'expires_in': 30 * 24 * 60 * 60
         }
         
-        # Log de sucesso
         logger.info(f"Login bem-sucedido para: {email} (perfil: {usuario['perfil']})")
         
         return jsonify(resposta), 200
@@ -1160,7 +1067,6 @@ def refresh_token():
         if not payload:
             return jsonify({'erro': 'Refresh token inválido ou expirado'}), 401
         
-        # Buscar usuário
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute('SELECT id, nome, email, perfil FROM usuarios WHERE id = ?', 
@@ -1171,7 +1077,6 @@ def refresh_token():
         if not usuario:
             return jsonify({'erro': 'Usuário não encontrado'}), 404
         
-        # Gerar novo token de acesso
         novo_token = gerar_token(usuario['id'], usuario['perfil'])
         
         return jsonify({
@@ -1197,14 +1102,12 @@ def alterar_senha():
         if not senha_atual or not senha_nova:
             return jsonify({'erro': 'Senhas atual e nova são obrigatórias'}), 400
         
-        # Validar senha nova
         if len(senha_nova) < 8:
             return jsonify({'erro': 'A senha deve ter no mínimo 8 caracteres'}), 400
         
         conn = get_db()
         cursor = conn.cursor()
         
-        # Buscar usuário
         cursor.execute('SELECT * FROM usuarios WHERE id = ?', (request.usuario_id,))
         usuario = cursor.fetchone()
         
@@ -1218,7 +1121,6 @@ def alterar_senha():
         else:
             senha_hash = usuario['senha']
         
-        # Para senhas temporárias durante testes
         if senha_atual == 'Temp@2025!' and usuario['email'] in ['requisitante@empresa.com', 'comprador@empresa.com']:
             senha_correta = True
         else:
@@ -1231,7 +1133,7 @@ def alterar_senha():
         # Gerar hash da nova senha
         nova_senha_hash = bcrypt.hashpw(senha_nova.encode('utf-8'), bcrypt.gensalt())
         
-        # Atualizar senha e marcar que não é mais primeiro acesso
+        # Atualizar senha
         cursor.execute('''
             UPDATE usuarios 
             SET senha = ?, primeiro_acesso = 0 
@@ -1266,7 +1168,7 @@ def listar_trs():
                 WHERE tr.usuario_id = ?
                 ORDER BY tr.criado_em DESC
             ''', (request.usuario_id,))
-        else:  # comprador vê todos
+        else:
             cursor.execute('''
                 SELECT tr.*, u.nome as usuario_nome 
                 FROM termos_referencia tr
@@ -1618,7 +1520,6 @@ def listar_processos():
                 ORDER BY p.criado_em DESC
             ''')
         elif request.perfil == 'fornecedor':
-            # Fornecedor vê apenas processos para os quais foi convidado
             cursor.execute('''
                 SELECT DISTINCT p.*, tr.numero as tr_numero, u.nome as criador_nome
                 FROM processos p
@@ -1734,7 +1635,6 @@ def convidar_fornecedores(processo_id):
         conn = get_db()
         cursor = conn.cursor()
         
-        # Verificar se processo existe
         cursor.execute('SELECT numero FROM processos WHERE id = ?', (processo_id,))
         processo = cursor.fetchone()
         
@@ -1742,14 +1642,12 @@ def convidar_fornecedores(processo_id):
             conn.close()
             return jsonify({'message': 'Processo não encontrado'}), 404
         
-        # Inserir convites
         for fornecedor_id in fornecedores_ids:
             cursor.execute('''
                 INSERT INTO convites_processo (processo_id, fornecedor_id)
                 VALUES (?, ?)
             ''', (processo_id, fornecedor_id))
             
-            # Notificar fornecedor
             cursor.execute('''
                 INSERT INTO notificacoes (usuario_id, titulo, mensagem)
                 VALUES (?, ?, ?)
@@ -1850,7 +1748,6 @@ def criar_proposta():
         conn = get_db()
         cursor = conn.cursor()
         
-        # Verificar se foi convidado para o processo
         cursor.execute('''
             SELECT COUNT(*) FROM convites_processo
             WHERE processo_id = ? AND fornecedor_id = ?
@@ -1876,7 +1773,6 @@ def criar_proposta():
         proposta_id = cursor.lastrowid
         conn.commit()
         
-        # Notificar comprador
         cursor.execute('''
             SELECT criado_por, numero FROM processos WHERE id = ?
         ''', (data.get('processo_id'),))
@@ -1990,22 +1886,17 @@ def get_dashboard_stats():
         conn = get_db()
         cursor = conn.cursor()
         
-        # Total de usuários
         cursor.execute("SELECT COUNT(*) FROM usuarios")
         total_usuarios = cursor.fetchone()[0]
         
-        # Usuários ativos (considerando todos como ativos por enquanto)
         cursor.execute("SELECT COUNT(*) FROM usuarios")
         usuarios_ativos = cursor.fetchone()[0]
         
-        # Fornecedores pendentes (fornecedores sem aprovação)
         cursor.execute("SELECT COUNT(*) FROM usuarios WHERE perfil = 'fornecedor'")
         fornecedores_pendentes = cursor.fetchone()[0]
         
-        # Usuários bloqueados (0 por enquanto)
         usuarios_bloqueados = 0
         
-        # Últimos acessos
         cursor.execute('''
             SELECT nome, email, perfil, criado_em as ultimo_login 
             FROM usuarios 
@@ -2043,10 +1934,7 @@ def listar_usuarios_admin():
                         WHEN perfil = 'comprador' THEN 'Comprador'
                         WHEN perfil = 'fornecedor' THEN 'Fornecedor'
                         ELSE perfil END as perfil_display,
-                   '' as cpf,
-                   '' as departamento,
-                   '' as cargo,
-                   1 as ativo,
+                   cpf, departamento, cargo, ativo,
                    criado_em as ultimo_login
             FROM usuarios
             ORDER BY nome
@@ -2070,17 +1958,14 @@ def listar_usuarios_admin():
 def criar_usuario_admin():
     """Cria novo usuário (admin)"""
     try:
-        # Verificar se é admin
         if request.perfil != 'admin_sistema':
             return jsonify({'erro': 'Acesso negado'}), 403
             
         data = request.json
         
-        # Validar dados obrigatórios
         if not all([data.get('nome'), data.get('email'), data.get('perfil')]):
             return jsonify({'erro': 'Dados obrigatórios faltando'}), 400
         
-        # Validar perfil
         perfis_validos = ['requisitante', 'comprador', 'fornecedor', 'admin_sistema']
         if data['perfil'] not in perfis_validos:
             return jsonify({'erro': 'Perfil inválido'}), 400
@@ -2088,46 +1973,46 @@ def criar_usuario_admin():
         conn = get_db()
         cursor = conn.cursor()
         
-        # Verificar se email já existe
         cursor.execute("SELECT id FROM usuarios WHERE email = ?", (data['email'],))
         if cursor.fetchone():
             conn.close()
             return jsonify({'erro': 'Email já cadastrado'}), 400
         
-        # Gerar senha temporária
         senha_temp = f"Temp@{datetime.now().year}!"
         senha_hash = bcrypt.hashpw(senha_temp.encode('utf-8'), bcrypt.gensalt())
         
-        # Inserir usuário com primeiro_acesso = 1
         cursor.execute('''
-            INSERT INTO usuarios (nome, email, senha, perfil, primeiro_acesso)
-            VALUES (?, ?, ?, ?, 1)
+            INSERT INTO usuarios (nome, email, senha, perfil, primeiro_acesso,
+                                cpf, departamento, cargo, telefone)
+            VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)
         ''', (
             data['nome'],
             data['email'],
             senha_hash,
-            data['perfil']
+            data['perfil'],
+            data.get('cpf'),
+            data.get('departamento'),
+            data.get('cargo'),
+            data.get('telefone')
         ))
         
         usuario_id = cursor.lastrowid
         conn.commit()
         conn.close()
         
-        # Enviar e-mail com as credenciais
         email_enviado = enviar_email(
             destinatario=data['email'],
             assunto='Bem-vindo ao Sistema de Gestão de Propostas',
             corpo_html=criar_email_boas_vindas(data['nome'], data['email'], senha_temp)
         )
         
-        # Fazer backup após criar usuário
         backup_database()
         
         return jsonify({
             'id': usuario_id,
             'message': 'Usuário criado com sucesso',
             'email_enviado': email_enviado,
-            'senha_temporaria': senha_temp  # Apenas para debug, remover em produção
+            'senha_temporaria': senha_temp
         }), 201
         
     except Exception as e:
@@ -2156,10 +2041,9 @@ def listar_fornecedores_pendentes():
         conn = get_db()
         cursor = conn.cursor()
         
-        # Por enquanto, retorna fornecedores como pendentes
         cursor.execute('''
             SELECT id, nome as razao_social, email, 
-                   '' as cnpj, '' as cidade, '' as estado,
+                   cnpj, '' as cidade, '' as estado,
                    criado_em as data_cadastro
             FROM usuarios 
             WHERE perfil = 'fornecedor'
@@ -2184,7 +2068,6 @@ def listar_fornecedores_aprovados():
         conn = get_db()
         cursor = conn.cursor()
         
-        # Por enquanto, retorna lista vazia
         fornecedores = []
         
         conn.close()
@@ -2203,13 +2086,11 @@ def resetar_senha_usuario(usuario_id):
         conn = get_db()
         cursor = conn.cursor()
         
-        # Gerar nova senha temporária
         senha_temp = f"Reset@{datetime.now().year}!"
         senha_hash = bcrypt.hashpw(senha_temp.encode('utf-8'), bcrypt.gensalt())
         
-        # Atualizar senha
         cursor.execute('''
-            UPDATE usuarios SET senha = ? WHERE id = ?
+            UPDATE usuarios SET senha = ?, primeiro_acesso = 1 WHERE id = ?
         ''', (senha_hash, usuario_id))
         
         if cursor.rowcount == 0:
@@ -2217,3 +2098,59 @@ def resetar_senha_usuario(usuario_id):
             return jsonify({'erro': 'Usuário não encontrado'}), 404
         
         conn.commit()
+        
+        cursor.execute('SELECT email, nome FROM usuarios WHERE id = ?', (usuario_id,))
+        usuario = cursor.fetchone()
+        conn.close()
+        
+        if usuario:
+            html_reset = f"""
+            <!DOCTYPE html>
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+                <h2>Senha Resetada</h2>
+                <p>Olá {usuario['nome']},</p>
+                <p>Sua senha foi resetada com sucesso.</p>
+                <p><strong>Nova senha:</strong> {senha_temp}</p>
+                <p>Por favor, altere esta senha no próximo acesso.</p>
+            </body>
+            </html>
+            """
+            
+            enviar_email(
+                destinatario=usuario['email'],
+                assunto='Senha Resetada - Sistema de Propostas',
+                corpo_html=html_reset
+            )
+        
+        return jsonify({
+            'message': 'Senha resetada com sucesso',
+            'senha_temporaria': senha_temp
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao resetar senha: {str(e)}")
+        return jsonify({'erro': 'Erro ao resetar senha'}), 500
+
+@app.route('/api/usuarios/<int:usuario_id>/ativar', methods=['PUT'])
+@require_auth
+def toggle_usuario_ativo(usuario_id):
+    """Ativa/desativa usuário"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT ativo FROM usuarios WHERE id = ?', (usuario_id,))
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            conn.close()
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
+            
+        novo_status = 0 if usuario['ativo'] == 1 else 1
+        
+        cursor.execute('''
+            UPDATE usuarios SET ativo = ? WHERE id = ?
+        ''', (novo_status, usuario_id))
+        
+        conn.
