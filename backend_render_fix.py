@@ -491,7 +491,13 @@ def debug_persistencia():
 # (Movidas para antes das rotas para resolver NameError)
 
 def gerar_token(usuario_id, perfil):
-    """Gera token JWT com expiração estendida"""
+    """Gera token JWT com expiração estendida.
+
+    A função garante que o valor retornado seja sempre uma string
+    compatível com JSON. Algumas versões de PyJWT podem retornar
+    bytes; nesse caso decodificamos para UTF-8. O token carrega
+    informações do usuário e expira em 30 dias.
+    """
     payload = {
         'usuario_id': usuario_id,
         'perfil': perfil,
@@ -499,10 +505,17 @@ def gerar_token(usuario_id, perfil):
         'iat': datetime.utcnow()  # Issued at
     }
     secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-    return jwt.encode(payload, secret_key, algorithm='HS256')
+    token = jwt.encode(payload, secret_key, algorithm='HS256')
+    # Garantir que seja string
+    if isinstance(token, bytes):
+        token = token.decode('utf-8')
+    return token
 
 def gerar_refresh_token(usuario_id):
-    """Gera refresh token com validade de 90 dias"""
+    """Gera refresh token com validade de 90 dias.
+
+    Retorna uma string mesmo que a biblioteca JWT retorne bytes.
+    """
     payload = {
         'usuario_id': usuario_id,
         'type': 'refresh',
@@ -510,7 +523,10 @@ def gerar_refresh_token(usuario_id):
         'iat': datetime.utcnow()
     }
     secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-    return jwt.encode(payload, secret_key, algorithm='HS256')
+    refresh = jwt.encode(payload, secret_key, algorithm='HS256')
+    if isinstance(refresh, bytes):
+        refresh = refresh.decode('utf-8')
+    return refresh
 
 def verificar_token(token):
     """Verifica e decodifica token JWT"""
@@ -1173,7 +1189,9 @@ def criar_email_boas_vindas(nome, email, senha_temp):
 def login():
     """Login de usuário com suporte a primeiro acesso e segurança aprimorada"""
     try:
-        data = request.json
+        # Usar get_json com silent=True para evitar exceções caso o corpo
+        # não seja um JSON válido. Se nada for fornecido, usa dict vazio.
+        data = request.get_json(silent=True) or {}
         email = data.get('email', '').strip().lower()
         senha = data.get('senha', '')
 
