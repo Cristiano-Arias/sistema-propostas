@@ -596,6 +596,81 @@
                     </button>
                 </div>
             </div>
+    </div>
+    </div>
+
+    <!-- Modal Editar Usuário -->
+    <div class="modal fade" id="modalEditarUsuario" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-edit"></i> Editar Usuário
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditarUsuario">
+                        <div class="form-section">
+                            <h6>Dados Pessoais</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nome Completo *</label>
+                                    <input type="text" class="form-control" id="edit-nome" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">CPF *</label>
+                                    <input type="text" class="form-control" id="edit-cpf" required placeholder="000.000.000-00" maxlength="14">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <h6>Dados de Acesso</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">E-mail *</label>
+                                    <input type="email" class="form-control" id="edit-email" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Perfil *</label>
+                                    <select class="form-control" id="edit-perfil" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="requisitante">Requisitante</option>
+                                        <option value="comprador">Comprador</option>
+                                        <option value="fornecedor">Fornecedor</option>
+                                        <option value="admin_sistema">Administrador</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <h6>Dados Organizacionais</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Departamento *</label>
+                                    <input type="text" class="form-control" id="edit-departamento" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Cargo</label>
+                                    <input type="text" class="form-control" id="edit-cargo">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Telefone</label>
+                                    <input type="text" class="form-control" id="edit-telefone" placeholder="(00) 00000-0000">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarEdicao()">
+                        <i class="fas fa-save"></i> Salvar Alterações
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -948,6 +1023,77 @@
             }
         }
 
+        // Variável global para armazenar o ID do usuário que está sendo editado
+        let usuarioEditandoId = null;
+
+        // Abrir modal para editar usuário
+        async function editarUsuario(usuarioId) {
+            usuarioEditandoId = usuarioId;
+            try {
+                const response = await fetch(`${API_BASE}/usuarios/${usuarioId}`, {
+                    headers: getHeaders()
+                });
+                if (response.ok) {
+                    const usuario = await response.json();
+                    // Preencher campos do modal com os dados retornados
+                    document.getElementById('edit-nome').value = usuario.nome || '';
+                    document.getElementById('edit-cpf').value = usuario.cpf || '';
+                    document.getElementById('edit-email').value = usuario.email || '';
+                    document.getElementById('edit-perfil').value = usuario.perfil || '';
+                    document.getElementById('edit-departamento').value = usuario.departamento || '';
+                    document.getElementById('edit-cargo').value = usuario.cargo || '';
+                    document.getElementById('edit-telefone').value = usuario.telefone || '';
+                    // Exibir modal
+                    new bootstrap.Modal(document.getElementById('modalEditarUsuario')).show();
+                } else {
+                    alert('Erro ao obter detalhes do usuário');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar usuário:', error);
+                alert('Erro ao carregar usuário');
+            }
+        }
+
+        // Salvar alterações do usuário
+        async function salvarEdicao() {
+            if (!usuarioEditandoId) {
+                alert('Usuário inválido');
+                return;
+            }
+            const dados = {
+                nome: document.getElementById('edit-nome').value,
+                cpf: document.getElementById('edit-cpf').value,
+                email: document.getElementById('edit-email').value,
+                perfil: document.getElementById('edit-perfil').value,
+                departamento: document.getElementById('edit-departamento').value,
+                cargo: document.getElementById('edit-cargo').value,
+                telefone: document.getElementById('edit-telefone').value
+            };
+            // Validação básica
+            if (!dados.nome || !dados.cpf || !dados.email || !dados.perfil || !dados.departamento) {
+                alert('Por favor, preencha todos os campos obrigatórios');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE}/usuarios/${usuarioEditandoId}`, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify(dados)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    // Esconder modal e recarregar lista
+                    bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario')).hide();
+                    carregarUsuarios();
+                } else {
+                    alert(result.erro || 'Erro ao atualizar usuário');
+                }
+            } catch (error) {
+                console.error('Erro ao salvar alterações:', error);
+                alert('Erro ao salvar alterações do usuário');
+            }
+        }
+
         // Ver detalhes fornecedor
         async function verDetalhesFornecedor(fornecedorId) {
             try {
@@ -1225,6 +1371,35 @@
         });
 
         document.getElementById('telefone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            if (value.length > 6) {
+                value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            } else if (value.length > 2) {
+                value = value.replace(/(\d{2})(\d+)/, '($1) $2');
+            }
+            
+            e.target.value = value;
+        });
+
+        // Máscaras para os campos de edição
+        document.getElementById('edit-cpf').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+
+            if (value.length > 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            } else if (value.length > 6) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})/, '$1.$2.$3');
+            } else if (value.length > 3) {
+                value = value.replace(/(\d{3})(\d{3})/, '$1.$2');
+            }
+
+            e.target.value = value;
+        });
+
+        document.getElementById('edit-telefone').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length > 11) value = value.slice(0, 11);
             
