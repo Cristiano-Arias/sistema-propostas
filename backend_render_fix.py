@@ -28,14 +28,39 @@ import threading
 import time
 
 # Configuração do caminho do banco de dados
-# No Render, use um diretório persistente
+# Configuração de persistência melhorada para Render
 if os.environ.get('RENDER'):
-    # No Render, use o diretório /opt/render com volume persistente
-    PERSISTENT_DIR = '/opt/render/persistent'
-    os.makedirs(PERSISTENT_DIR, exist_ok=True)
+    # Tentar múltiplos diretórios persistentes no Render
+    POSSIBLE_DIRS = [
+        '/opt/render/project/src/data',  # Diretório do projeto
+        '/tmp/persistent',               # Diretório temporário
+        '/opt/render/persistent',        # Diretório original
+        '.'                             # Diretório atual como fallback
+    ]
+    
+    PERSISTENT_DIR = None
+    for dir_path in POSSIBLE_DIRS:
+        try:
+            os.makedirs(dir_path, exist_ok=True)
+            # Testar se consegue escrever no diretório
+            test_file = os.path.join(dir_path, 'test_write.tmp')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            PERSISTENT_DIR = dir_path
+            break
+        except:
+            continue
+    
+    if not PERSISTENT_DIR:
+        PERSISTENT_DIR = '.'  # Fallback final
+    
     DB_PATH = os.path.join(PERSISTENT_DIR, 'database.db')
     BACKUP_PATH = os.path.join(PERSISTENT_DIR, 'database_backup.db')
     UPLOAD_DIR = os.path.join(PERSISTENT_DIR, 'uploads')
+    
+    # Log do diretório escolhido
+    print(f"[RENDER] Usando diretório persistente: {PERSISTENT_DIR}")
 else:
     # Local development
     DB_PATH = 'database.db'
@@ -76,38 +101,93 @@ logger = logging.getLogger(__name__)
 
 # Função para fazer backup do banco
 def backup_database():
-    """Faz backup do banco de dados"""
+    """Faz backup do banco de dados com verificação de integridade"""
     try:
         if os.path.exists(DB_PATH):
-            shutil.copy2(DB_PATH, BACKUP_PATH)
-            logger.info("Backup do banco de dados realizado")
+            # Verificar se o banco principal está íntegro
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM usuarios")
+                count = cursor.fetchone()[0]
+                conn.close()
+                
+                if count > 0:
+                    # Fazer backup apenas se há dados
+                    shutil.copy2(DB_PATH, BACKUP_PATH)
+                    logger.info(f"Backup do banco realizado: {count} usuários")
+                else:
+                    logger.warning("Banco principal vazio, backup não realizado")
+            except Exception as e:
+                logger.error(f"Erro ao verificar integridade do banco: {str(e)}")
+        else:
+            logger.warning("Banco principal não existe, backup não realizado")
     except Exception as e:
         logger.error(f"Erro ao fazer backup: {str(e)}")
 
-# Sistema de backup automático
 def backup_automatico():
-    """Executa backup automático a cada 6 horas"""
+    """Faz backup automático a cada 30 minutos"""
     while True:
-        time.sleep(6 * 60 * 60)  # 6 horas
         try:
+            time.sleep(1800)  # 30 minutos
             backup_database()
-            logger.info("Backup automático realizado com sucesso")
         except Exception as e:
             logger.error(f"Erro no backup automático: {str(e)}")
 
-# Iniciar thread de backup automático
-if os.environ.get('RENDER'):
-    backup_thread = threading.Thread(target=backup_automatico, daemon=True)
-    backup_thread.start()
-    logger.info("Sistema de backup automático iniciado")
+def iniciar_backup_automatico():
+    """Inicia thread de backup automático"""
+    try:
+        backup_thread = threading.Thread(target=backup_automatico, daemon=True)
+        backup_thread.start()
+        logger.info("Backup automático iniciado (a cada 30 minutos)")
+    except Exception as e:
+        logger.error(f"Erro ao iniciar backup automático: {str(e)}")
 
 # Função para restaurar backup se necessário
 def restore_backup_if_needed():
-    """Restaura backup se o banco principal não existir"""
+    """Restaura backup se o banco principal não existir ou estiver corrompido"""
     try:
-        if not os.path.exists(DB_PATH) and os.path.exists(BACKUP_PATH):
-            shutil.copy2(BACKUP_PATH, DB_PATH)
-            logger.info("Banco de dados restaurado do backup")
+        banco_principal_ok = False
+        
+        # Verificar se banco principal existe e está íntegro
+        if os.path.exists(DB_PATH):
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM usuarios")
+                count = cursor.fetchone()[0]
+                conn.close()
+                
+                if count > 0:
+                    banco_principal_ok = True
+                    logger.info(f"Banco principal OK: {count} usuários")
+                else:
+                    logger.warning("Banco principal vazio")
+            except Exception as e:
+                logger.error(f"Banco principal corrompido: {str(e)}")
+        else:
+            logger.warning("Banco principal não existe")
+        
+        # Restaurar backup se necessário
+        if not banco_principal_ok and os.path.exists(BACKUP_PATH):
+            try:
+                # Verificar integridade do backup
+                conn = sqlite3.connect(BACKUP_PATH)
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM usuarios")
+                backup_count = cursor.fetchone()[0]
+                conn.close()
+                
+                if backup_count > 0:
+                    shutil.copy2(BACKUP_PATH, DB_PATH)
+                    logger.info(f"Banco restaurado do backup: {backup_count} usuários")
+                else:
+                    logger.warning("Backup também está vazio")
+            except Exception as e:
+                logger.error(f"Erro ao verificar backup: {str(e)}")
+        elif not banco_principal_ok:
+            logger.warning("Nenhum backup disponível para restaurar")
+            
     except Exception as e:
         logger.error(f"Erro ao restaurar backup: {str(e)}")
 
@@ -241,7 +321,17 @@ def init_db():
     
     # Criar usuários de teste se não existirem
     cursor.execute("SELECT COUNT(*) FROM usuarios")
-    if cursor.fetchone()[0] == 0:
+    total_usuarios = cursor.fetchone()[0]
+    
+    # Verificar se usuário admin existe
+    cursor.execute("SELECT COUNT(*) FROM usuarios WHERE email = 'admin@sistema.com'")
+    admin_existe = cursor.fetchone()[0] > 0
+    
+    logger.info(f"Inicialização do banco: {total_usuarios} usuários encontrados, admin existe: {admin_existe}")
+    
+    if total_usuarios == 0 or not admin_existe:
+        logger.info("Criando usuários de teste...")
+        
         usuarios_teste = [
             ('Requisitante Teste', 'requisitante@empresa.com', 'req123', 'requisitante'),
             ('Comprador Teste', 'comprador@empresa.com', 'comp123', 'comprador'),
@@ -250,89 +340,136 @@ def init_db():
         ]
         
         for nome, email, senha, perfil in usuarios_teste:
-            senha_hash = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt())
-            cursor.execute('''
-                INSERT INTO usuarios (nome, email, senha, perfil)
-                VALUES (?, ?, ?, ?)
-            ''', (nome, email, senha_hash, perfil))
+            # Verificar se usuário já existe
+            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE email = ?", (email,))
+            if cursor.fetchone()[0] == 0:
+                try:
+                    senha_hash = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt())
+                    cursor.execute('''
+                        INSERT INTO usuarios (nome, email, senha, perfil)
+                        VALUES (?, ?, ?, ?)
+                    ''', (nome, email, senha_hash, perfil))
+                    logger.info(f"Usuário criado: {email}")
+                except Exception as e:
+                    logger.error(f"Erro ao criar usuário {email}: {str(e)}")
+            else:
+                logger.info(f"Usuário já existe: {email}")
         
         conn.commit()
+        logger.info("Usuários de teste criados/verificados com sucesso")
+        
+        # Fazer backup após criar usuários
+        try:
+            backup_database()
+            logger.info("Backup realizado após criação de usuários")
+        except Exception as e:
+            logger.error(f"Erro ao fazer backup: {str(e)}")
+    else:
+        logger.info("Usuários já existem no banco de dados")
+    
+    # Verificar integridade final
+    cursor.execute("SELECT COUNT(*) FROM usuarios")
+    total_final = cursor.fetchone()[0]
+    logger.info(f"Inicialização concluída: {total_final} usuários no banco")
     
     conn.close()
     logger.info("Banco de dados inicializado com sucesso")
 
-# ===== FUNÇÕES DE AUTENTICAÇÃO E TOKEN =====
+# ===== ROTAS DE DEBUG E MONITORAMENTO =====
 
-def gerar_token(usuario_id, perfil):
-    """Gera token JWT com expiração estendida"""
-    payload = {
-        'usuario_id': usuario_id,
-        'perfil': perfil,
-        'exp': datetime.utcnow() + timedelta(days=30),  # 30 dias de validade
-        'iat': datetime.utcnow()  # Issued at
-    }
-    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-    return jwt.encode(payload, secret_key, algorithm='HS256')
-
-def gerar_refresh_token(usuario_id):
-    """Gera refresh token com validade de 90 dias"""
-    payload = {
-        'usuario_id': usuario_id,
-        'type': 'refresh',
-        'exp': datetime.utcnow() + timedelta(days=90),
-        'iat': datetime.utcnow()
-    }
-    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-    return jwt.encode(payload, secret_key, algorithm='HS256')
-
-def verificar_token(token):
-    """Verifica e decodifica token JWT"""
+@app.route('/api/debug/admin', methods=['GET'])
+def debug_admin():
+    """Rota de debug para verificar usuário admin"""
     try:
-        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
-        return payload
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
-
-def verificar_refresh_token(token):
-    """Verifica e decodifica refresh token"""
-    try:
-        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
-        if payload.get('type') != 'refresh':
-            return None
-        return payload
-    except:
-        return None
-
-# Decorator para rotas protegidas
-def require_auth(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        token = None
-        auth_header = request.headers.get('Authorization')
+        conn = get_db()
+        cursor = conn.cursor()
         
-        if auth_header:
+        cursor.execute("SELECT id, nome, email, perfil, ativo FROM usuarios WHERE email = 'admin@sistema.com'")
+        admin = cursor.fetchone()
+        
+        if admin:
+            result = {
+                'admin_existe': True,
+                'admin_data': {
+                    'id': admin['id'],
+                    'nome': admin['nome'],
+                    'email': admin['email'],
+                    'perfil': admin['perfil'],
+                    'ativo': admin['ativo']
+                }
+            }
+        else:
+            result = {'admin_existe': False}
+        
+        cursor.execute("SELECT COUNT(*) as total FROM usuarios")
+        total = cursor.fetchone()
+        result['total_usuarios'] = total['total']
+        
+        conn.close()
+        return jsonify(result), 200
+        
+    except Exception as e:
+        logger.error(f"Erro no debug admin: {str(e)}")
+        return jsonify({'erro': str(e)}), 500
+
+@app.route('/api/debug/persistencia', methods=['GET'])
+def debug_persistencia():
+    """Rota de debug para verificar status da persistência"""
+    try:
+        result = {
+            'banco_principal': {
+                'existe': os.path.exists(DB_PATH),
+                'caminho': DB_PATH,
+                'tamanho': os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
+            },
+            'backup': {
+                'existe': os.path.exists(BACKUP_PATH),
+                'caminho': BACKUP_PATH,
+                'tamanho': os.path.getsize(BACKUP_PATH) if os.path.exists(BACKUP_PATH) else 0
+            },
+            'diretorio_persistente': PERSISTENT_DIR if 'PERSISTENT_DIR' in globals() else 'N/A'
+        }
+        
+        # Verificar integridade do banco principal
+        if os.path.exists(DB_PATH):
             try:
-                token = auth_header.split(' ')[1]
-            except IndexError:
-                return jsonify({'message': 'Token inválido'}), 401
+                conn = get_db()
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) as total FROM usuarios")
+                total = cursor.fetchone()
+                result['banco_principal']['usuarios'] = total['total']
+                
+                cursor.execute("SELECT email FROM usuarios LIMIT 5")
+                usuarios = [row['email'] for row in cursor.fetchall()]
+                result['banco_principal']['usuarios_exemplo'] = usuarios
+                
+                conn.close()
+                result['banco_principal']['status'] = 'OK'
+            except Exception as e:
+                result['banco_principal']['status'] = f'ERRO: {str(e)}'
+        else:
+            result['banco_principal']['status'] = 'NÃO EXISTE'
         
-        if not token:
-            return jsonify({'message': 'Token ausente'}), 401
+        # Verificar integridade do backup
+        if os.path.exists(BACKUP_PATH):
+            try:
+                conn = sqlite3.connect(BACKUP_PATH)
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) as total FROM usuarios")
+                total = cursor.fetchone()
+                result['backup']['usuarios'] = total[0]
+                conn.close()
+                result['backup']['status'] = 'OK'
+            except Exception as e:
+                result['backup']['status'] = f'ERRO: {str(e)}'
+        else:
+            result['backup']['status'] = 'NÃO EXISTE'
         
-        payload = verificar_token(token)
-        if not payload:
-            return jsonify({'message': 'Token inválido ou expirado'}), 401
+        return jsonify(result), 200
         
-        request.usuario_id = payload['usuario_id']
-        request.perfil = payload['perfil']
-        
-        return f(*args, **kwargs)
-    
-    return decorated_function
+    except Exception as e:
+        logger.error(f"Erro no debug persistência: {str(e)}")
+        return jsonify({'erro': str(e)}), 500
 
 # ===== ROTAS DA API =====
 
@@ -842,6 +979,9 @@ if __name__ == '__main__':
 restore_backup_if_needed()
 init_db()
 
+# Iniciar backup automático
+iniciar_backup_automatico()
+
 # Função para verificar e corrigir banco
 def verificar_e_corrigir_banco():
     """Verifica e corrige a estrutura do banco de dados"""
@@ -931,6 +1071,78 @@ def criar_email_boas_vindas(nome, email, senha_temp):
     """
     return html
 
+# Funções de Token JWT
+def gerar_token(usuario_id, perfil):
+    """Gera token JWT com expiração estendida"""
+    payload = {
+        'usuario_id': usuario_id,
+        'perfil': perfil,
+        'exp': datetime.utcnow() + timedelta(days=30),  # 30 dias de validade
+        'iat': datetime.utcnow()  # Issued at
+    }
+    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+    return jwt.encode(payload, secret_key, algorithm='HS256')
+
+def gerar_refresh_token(usuario_id):
+    """Gera refresh token com validade de 90 dias"""
+    payload = {
+        'usuario_id': usuario_id,
+        'type': 'refresh',
+        'exp': datetime.utcnow() + timedelta(days=90),
+        'iat': datetime.utcnow()
+    }
+    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+    return jwt.encode(payload, secret_key, algorithm='HS256')
+
+def verificar_token(token):
+    """Verifica e decodifica token JWT"""
+    try:
+        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+def verificar_refresh_token(token):
+    """Verifica e decodifica refresh token"""
+    try:
+        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+        if payload.get('type') != 'refresh':
+            return None
+        return payload
+    except:
+        return None
+
+# Decorator para rotas protegidas
+def require_auth(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = None
+        auth_header = request.headers.get('Authorization')
+        
+        if auth_header:
+            try:
+                token = auth_header.split(' ')[1]
+            except IndexError:
+                return jsonify({'message': 'Token inválido'}), 401
+        
+        if not token:
+            return jsonify({'message': 'Token ausente'}), 401
+        
+        payload = verificar_token(token)
+        if not payload:
+            return jsonify({'message': 'Token inválido ou expirado'}), 401
+        
+        request.usuario_id = payload['usuario_id']
+        request.perfil = payload['perfil']
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
 # Rotas de Autenticação
 @app.route('/api/auth/login', methods=['POST'])
 def login():
@@ -970,12 +1182,7 @@ def login():
             return jsonify({'erro': 'Email ou senha incorretos'}), 401
         
         # Verificar se usuário está ativo
-        try:
-            ativo = usuario['ativo'] if 'ativo' in usuario.keys() else 1
-        except (KeyError, TypeError):
-            ativo = 1
-            
-        if not ativo:
+        if not usuario.get('ativo', 1):
             conn.close()
             logger.warning(f"Tentativa de login com usuário inativo: {email} - IP: {client_ip}")
             return jsonify({'erro': 'Usuário inativo. Contate o administrador.'}), 401
