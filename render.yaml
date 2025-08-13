@@ -55,7 +55,7 @@ services:
     autoDeploy: true
     
     # Health check
-    healthCheckPath: /api/auth/verify
+    healthCheckPath: /api/debug/persistencia
     
     # IMPORTANTE: Disco persistente para SQLite e uploads
     disk:
