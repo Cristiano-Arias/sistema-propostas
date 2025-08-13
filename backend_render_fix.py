@@ -28,7 +28,6 @@ e ``/api/auth/refresh``. Proteja chamadas posteriores com o
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_migrate import Migrate
 from flask_jwt_extended import (
     jwt_required, create_access_token, create_refresh_token,
     get_jwt_identity, get_jwt
@@ -61,7 +60,6 @@ app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=7)
 
 # Inicializa extensões
 db.init_app(app)
-migrate = Migrate(app, db)
 jwt = auth.init_jwt(app)
 
 # Configurar logging
@@ -288,4 +286,4 @@ def desativar_usuario(usuario_id):
 
 if __name__ == '__main__':
     # Apenas roda o servidor se executado diretamente
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))    
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
