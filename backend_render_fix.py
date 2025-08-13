@@ -32,7 +32,7 @@ import time
 if os.environ.get('RENDER'):
     # Tentar múltiplos diretórios persistentes no Render
     POSSIBLE_DIRS = [
-    '/opt/render/persistent',        # disco persistente do Render (prioridade máxima)
+    '/opt/render/persistent',
     '/opt/render/project/src/data',
     '/tmp/persistent',
     '.'
@@ -56,6 +56,8 @@ if os.environ.get('RENDER'):
         PERSISTENT_DIR = '.'  # Fallback final
     
     DB_PATH = os.path.join(PERSISTENT_DIR, 'database.db')
+_garantir_pasta_e_schema(DB_PATH)
+
     BACKUP_PATH = os.path.join(PERSISTENT_DIR, 'database_backup.db')
     UPLOAD_DIR = os.path.join(PERSISTENT_DIR, 'uploads')
     
@@ -376,6 +378,11 @@ def init_db():
     logger.info("Banco de dados inicializado com sucesso")
 
 # ===== ROTAS DE DEBUG E MONITORAMENTO =====
+
+@app.get('/healthz')
+def healthz():
+    return 'ok', 200
+
 
 @app.route('/api/debug/admin', methods=['GET'])
 def debug_admin():
@@ -2393,3 +2400,23 @@ def toggle_usuario_ativo(usuario_id):
     except Exception as e:
         logger.error(f"Erro ao alterar status: {str(e)}")
         return jsonify({'erro': 'Erro ao alterar status'}), 500
+
+
+def _garantir_pasta_e_schema(db_path):
+    import os, sqlite3
+    if db_path:
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT,
+            email TEXT UNIQUE,
+            senha BLOB,
+            perfil TEXT,
+            ativo INTEGER DEFAULT 1
+        )
+    ''')
+    conn.commit()
+    conn.close()
