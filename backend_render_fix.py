@@ -261,6 +261,81 @@ def init_db():
     conn.close()
     logger.info("Banco de dados inicializado com sucesso")
 
+# ===== FUNÇÕES DE AUTENTICAÇÃO E TOKEN =====
+
+def gerar_token(usuario_id, perfil):
+    """Gera token JWT com expiração estendida"""
+    payload = {
+        'usuario_id': usuario_id,
+        'perfil': perfil,
+        'exp': datetime.utcnow() + timedelta(days=30),  # 30 dias de validade
+        'iat': datetime.utcnow()  # Issued at
+    }
+    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+    return jwt.encode(payload, secret_key, algorithm='HS256')
+
+def gerar_refresh_token(usuario_id):
+    """Gera refresh token com validade de 90 dias"""
+    payload = {
+        'usuario_id': usuario_id,
+        'type': 'refresh',
+        'exp': datetime.utcnow() + timedelta(days=90),
+        'iat': datetime.utcnow()
+    }
+    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+    return jwt.encode(payload, secret_key, algorithm='HS256')
+
+def verificar_token(token):
+    """Verifica e decodifica token JWT"""
+    try:
+        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+def verificar_refresh_token(token):
+    """Verifica e decodifica refresh token"""
+    try:
+        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+        if payload.get('type') != 'refresh':
+            return None
+        return payload
+    except:
+        return None
+
+# Decorator para rotas protegidas
+def require_auth(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = None
+        auth_header = request.headers.get('Authorization')
+        
+        if auth_header:
+            try:
+                token = auth_header.split(' ')[1]
+            except IndexError:
+                return jsonify({'message': 'Token inválido'}), 401
+        
+        if not token:
+            return jsonify({'message': 'Token ausente'}), 401
+        
+        payload = verificar_token(token)
+        if not payload:
+            return jsonify({'message': 'Token inválido ou expirado'}), 401
+        
+        request.usuario_id = payload['usuario_id']
+        request.perfil = payload['perfil']
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
+# ===== ROTAS DA API =====
+
 @app.route('/api/fornecedores/<int:fornecedor_id>', methods=['GET'])
 @require_auth
 def obter_detalhes_fornecedor(fornecedor_id):
@@ -855,78 +930,6 @@ def criar_email_boas_vindas(nome, email, senha_temp):
     </html>
     """
     return html
-
-# Funções de Token JWT
-def gerar_token(usuario_id, perfil):
-    """Gera token JWT com expiração estendida"""
-    payload = {
-        'usuario_id': usuario_id,
-        'perfil': perfil,
-        'exp': datetime.utcnow() + timedelta(days=30),  # 30 dias de validade
-        'iat': datetime.utcnow()  # Issued at
-    }
-    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-    return jwt.encode(payload, secret_key, algorithm='HS256')
-
-def gerar_refresh_token(usuario_id):
-    """Gera refresh token com validade de 90 dias"""
-    payload = {
-        'usuario_id': usuario_id,
-        'type': 'refresh',
-        'exp': datetime.utcnow() + timedelta(days=90),
-        'iat': datetime.utcnow()
-    }
-    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-    return jwt.encode(payload, secret_key, algorithm='HS256')
-
-def verificar_token(token):
-    """Verifica e decodifica token JWT"""
-    try:
-        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
-        return payload
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
-
-def verificar_refresh_token(token):
-    """Verifica e decodifica refresh token"""
-    try:
-        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
-        if payload.get('type') != 'refresh':
-            return None
-        return payload
-    except:
-        return None
-
-# Decorator para rotas protegidas
-def require_auth(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        token = None
-        auth_header = request.headers.get('Authorization')
-        
-        if auth_header:
-            try:
-                token = auth_header.split(' ')[1]
-            except IndexError:
-                return jsonify({'message': 'Token inválido'}), 401
-        
-        if not token:
-            return jsonify({'message': 'Token ausente'}), 401
-        
-        payload = verificar_token(token)
-        if not payload:
-            return jsonify({'message': 'Token inválido ou expirado'}), 401
-        
-        request.usuario_id = payload['usuario_id']
-        request.perfil = payload['perfil']
-        
-        return f(*args, **kwargs)
-    
-    return decorated_function
 
 # Rotas de Autenticação
 @app.route('/api/auth/login', methods=['POST'])
