@@ -241,7 +241,15 @@ def init_db():
     
     # Criar usuários de teste se não existirem
     cursor.execute("SELECT COUNT(*) FROM usuarios")
-    if cursor.fetchone()[0] == 0:
+    total_usuarios = cursor.fetchone()[0]
+    
+    # Verificar se usuário admin existe
+    cursor.execute("SELECT COUNT(*) FROM usuarios WHERE email = 'admin@sistema.com'")
+    admin_existe = cursor.fetchone()[0] > 0
+    
+    if total_usuarios == 0 or not admin_existe:
+        logger.info("Criando usuários de teste...")
+        
         usuarios_teste = [
             ('Requisitante Teste', 'requisitante@empresa.com', 'req123', 'requisitante'),
             ('Comprador Teste', 'comprador@empresa.com', 'comp123', 'comprador'),
@@ -250,91 +258,26 @@ def init_db():
         ]
         
         for nome, email, senha, perfil in usuarios_teste:
-            senha_hash = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt())
-            cursor.execute('''
-                INSERT INTO usuarios (nome, email, senha, perfil)
-                VALUES (?, ?, ?, ?)
-            ''', (nome, email, senha_hash, perfil))
+            # Verificar se usuário já existe
+            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE email = ?", (email,))
+            if cursor.fetchone()[0] == 0:
+                try:
+                    senha_hash = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt())
+                    cursor.execute('''
+                        INSERT INTO usuarios (nome, email, senha, perfil)
+                        VALUES (?, ?, ?, ?)
+                    ''', (nome, email, senha_hash, perfil))
+                    logger.info(f"Usuário criado: {email}")
+                except Exception as e:
+                    logger.error(f"Erro ao criar usuário {email}: {str(e)}")
         
         conn.commit()
+        logger.info("Usuários de teste criados/verificados com sucesso")
+    else:
+        logger.info("Usuários já existem no banco de dados")
     
     conn.close()
     logger.info("Banco de dados inicializado com sucesso")
-
-# ===== FUNÇÕES DE AUTENTICAÇÃO E TOKEN =====
-
-def gerar_token(usuario_id, perfil):
-    """Gera token JWT com expiração estendida"""
-    payload = {
-        'usuario_id': usuario_id,
-        'perfil': perfil,
-        'exp': datetime.utcnow() + timedelta(days=30),  # 30 dias de validade
-        'iat': datetime.utcnow()  # Issued at
-    }
-    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-    return jwt.encode(payload, secret_key, algorithm='HS256')
-
-def gerar_refresh_token(usuario_id):
-    """Gera refresh token com validade de 90 dias"""
-    payload = {
-        'usuario_id': usuario_id,
-        'type': 'refresh',
-        'exp': datetime.utcnow() + timedelta(days=90),
-        'iat': datetime.utcnow()
-    }
-    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-    return jwt.encode(payload, secret_key, algorithm='HS256')
-
-def verificar_token(token):
-    """Verifica e decodifica token JWT"""
-    try:
-        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
-        return payload
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
-
-def verificar_refresh_token(token):
-    """Verifica e decodifica refresh token"""
-    try:
-        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
-        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
-        if payload.get('type') != 'refresh':
-            return None
-        return payload
-    except:
-        return None
-
-# Decorator para rotas protegidas
-def require_auth(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        token = None
-        auth_header = request.headers.get('Authorization')
-        
-        if auth_header:
-            try:
-                token = auth_header.split(' ')[1]
-            except IndexError:
-                return jsonify({'message': 'Token inválido'}), 401
-        
-        if not token:
-            return jsonify({'message': 'Token ausente'}), 401
-        
-        payload = verificar_token(token)
-        if not payload:
-            return jsonify({'message': 'Token inválido ou expirado'}), 401
-        
-        request.usuario_id = payload['usuario_id']
-        request.perfil = payload['perfil']
-        
-        return f(*args, **kwargs)
-    
-    return decorated_function
-
-# ===== ROTAS DA API =====
 
 @app.route('/api/fornecedores/<int:fornecedor_id>', methods=['GET'])
 @require_auth
@@ -931,6 +874,117 @@ def criar_email_boas_vindas(nome, email, senha_temp):
     """
     return html
 
+# Funções de Token JWT
+def gerar_token(usuario_id, perfil):
+    """Gera token JWT com expiração estendida"""
+    payload = {
+        'usuario_id': usuario_id,
+        'perfil': perfil,
+        'exp': datetime.utcnow() + timedelta(days=30),  # 30 dias de validade
+        'iat': datetime.utcnow()  # Issued at
+    }
+    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+    return jwt.encode(payload, secret_key, algorithm='HS256')
+
+def gerar_refresh_token(usuario_id):
+    """Gera refresh token com validade de 90 dias"""
+    payload = {
+        'usuario_id': usuario_id,
+        'type': 'refresh',
+        'exp': datetime.utcnow() + timedelta(days=90),
+        'iat': datetime.utcnow()
+    }
+    secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+    return jwt.encode(payload, secret_key, algorithm='HS256')
+
+def verificar_token(token):
+    """Verifica e decodifica token JWT"""
+    try:
+        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+def verificar_refresh_token(token):
+    """Verifica e decodifica refresh token"""
+    try:
+        secret_key = os.environ.get('JWT_SECRET_KEY', app.config['SECRET_KEY'])
+        payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+        if payload.get('type') != 'refresh':
+            return None
+        return payload
+    except:
+        return None
+
+# Decorator para rotas protegidas
+def require_auth(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = None
+        auth_header = request.headers.get('Authorization')
+        
+        if auth_header:
+            try:
+                token = auth_header.split(' ')[1]
+            except IndexError:
+                return jsonify({'message': 'Token inválido'}), 401
+        
+        if not token:
+            return jsonify({'message': 'Token ausente'}), 401
+        
+        payload = verificar_token(token)
+        if not payload:
+            return jsonify({'message': 'Token inválido ou expirado'}), 401
+        
+        request.usuario_id = payload['usuario_id']
+        request.perfil = payload['perfil']
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
+# ===== ROTA DE DEBUG =====
+
+@app.route('/api/debug/admin', methods=['GET'])
+def debug_admin():
+    """Rota de debug para verificar usuário admin"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT id, nome, email, perfil, ativo FROM usuarios WHERE email = 'admin@sistema.com'")
+        admin = cursor.fetchone()
+        
+        if admin:
+            result = {
+                'admin_existe': True,
+                'admin_data': {
+                    'id': admin['id'],
+                    'nome': admin['nome'],
+                    'email': admin['email'],
+                    'perfil': admin['perfil'],
+                    'ativo': admin['ativo']
+                }
+            }
+        else:
+            result = {'admin_existe': False}
+        
+        cursor.execute("SELECT COUNT(*) as total FROM usuarios")
+        total = cursor.fetchone()
+        result['total_usuarios'] = total['total']
+        
+        conn.close()
+        return jsonify(result), 200
+        
+    except Exception as e:
+        logger.error(f"Erro no debug admin: {str(e)}")
+        return jsonify({'erro': str(e)}), 500
+
+# ===== ROTAS DA API =====
+
 # Rotas de Autenticação
 @app.route('/api/auth/login', methods=['POST'])
 def login():
@@ -978,7 +1032,8 @@ def login():
         # Verificar senha com logs detalhados
         try:
             senha_db = usuario['senha']
-            logger.debug(f"Verificando senha para usuário: {email}")
+            logger.info(f"Verificando senha para usuário: {email}")
+            logger.debug(f"Tipo da senha no banco: {type(senha_db)}")
             
             # Garantir que a senha do banco está em bytes
             if isinstance(senha_db, str):
@@ -986,8 +1041,16 @@ def login():
             else:
                 senha_hash = senha_db
             
+            logger.debug(f"Hash da senha preparado para verificação")
+            
             # Verificação da senha
-            senha_correta = bcrypt.checkpw(senha.encode('utf-8'), senha_hash)
+            try:
+                senha_correta = bcrypt.checkpw(senha.encode('utf-8'), senha_hash)
+                logger.debug(f"Resultado da verificação de senha: {senha_correta}")
+            except Exception as bcrypt_error:
+                logger.error(f"Erro específico do bcrypt para {email}: {str(bcrypt_error)}")
+                conn.close()
+                return jsonify({'erro': 'Erro na verificação de credenciais'}), 500
             
             if not senha_correta:
                 conn.close()
@@ -997,7 +1060,8 @@ def login():
             logger.info(f"Senha verificada com sucesso para: {email}")
                 
         except Exception as e:
-            logger.error(f"Erro ao verificar senha para {email}: {str(e)} - IP: {client_ip}")
+            logger.error(f"Erro geral ao verificar senha para {email}: {str(e)} - IP: {client_ip}")
+            logger.error(f"Tipo do erro: {type(e).__name__}")
             conn.close()
             return jsonify({'erro': 'Erro ao verificar credenciais'}), 500
         
