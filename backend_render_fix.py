@@ -154,6 +154,45 @@ def iniciar_backup_automatico():
     except Exception as e:
         logger.error(f"Erro ao iniciar backup automático: {str(e)}")
 
+# Função para verificar e corrigir banco
+def verificar_e_corrigir_banco():
+    """
+    Verifica se o usuário administrador existe e corrige a estrutura da tabela
+    `usuarios` se necessário. Caso o usuário admin não exista, ele será
+    criado com uma senha padrão. Esta função também imprime a estrutura
+    atual da tabela para fins de depuração.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        # Verificar se o usuário admin existe
+        cursor.execute("SELECT * FROM usuarios WHERE email = 'admin@sistema.com'")
+        admin = cursor.fetchone()
+        if not admin:
+            logger.info("Criando usuário admin padrão...")
+            senha_hash = bcrypt.hashpw('Admin@2025!'.encode('utf-8'), bcrypt.gensalt())
+            cursor.execute('''
+                INSERT INTO usuarios (nome, email, senha, perfil)
+                VALUES (?, ?, ?, ?)
+            ''', ('Administrador do Sistema', 'admin@sistema.com', senha_hash, 'admin_sistema'))
+            conn.commit()
+            logger.info("Usuário admin criado com sucesso!")
+        else:
+            logger.info("Usuário admin já existe")
+        # Listar estrutura atual da tabela para depuração
+        cursor.execute("PRAGMA table_info(usuarios)")
+        colunas = cursor.fetchall()
+        logger.info("Estrutura atual da tabela usuarios:")
+        for col in colunas:
+            logger.info(f"  - {col[1]} ({col[2]})")
+    except Exception as e:
+        logger.error(f"Erro ao verificar banco: {str(e)}")
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
 # Função para restaurar backup se necessário
 def restore_backup_if_needed():
     """Restaura backup se o banco principal não existir ou estiver corrompido"""
@@ -1072,54 +1111,27 @@ def internal_error(error):
 # Inicialização
 if __name__ == '__main__':
     """
-    Rotina de inicialização do servidor. Aqui são executadas todas as
-    operações necessárias para garantir a persistência e integridade do
-    banco de dados antes de iniciar o serviço Flask. Em execução local
-    ou no Render, o banco principal é restaurado (se necessário),
-    inicializado (criando tabelas e usuários padrão) e iniciada a
-    rotina de backup automático. Também é verificada a existência do
-    usuário administrador para que o sistema esteja pronto para uso.
+    Rotina de inicialização do servidor. São executadas as operações de
+    restauração de backup, criação de tabelas e verificação do usuário
+    administrador antes de iniciar o serviço Flask. Isso garante que
+    todas as estruturas do banco estejam preparadas ao iniciar o
+    servidor, tanto em ambiente de desenvolvimento quanto no Render.
     """
+
+    # Criar diretório do banco de dados, se necessário
+    try:
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    except Exception:
+        pass
 
     # Restaurar banco a partir do backup, se necessário, e inicializar
     restore_backup_if_needed()
     init_db()
 
-    # Função para verificar e corrigir banco
-    def verificar_e_corrigir_banco():
-        """Verifica e corrige a estrutura do banco de dados"""
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        try:
-            # Verificar se o usuário admin existe
-            cursor.execute("SELECT * FROM usuarios WHERE email = 'admin@sistema.com'")
-            admin = cursor.fetchone()
-            if not admin:
-                logger.info("Criando usuário admin padrão...")
-                senha_hash = bcrypt.hashpw('Admin@2025!'.encode('utf-8'), bcrypt.gensalt())
-                cursor.execute('''
-                    INSERT INTO usuarios (nome, email, senha, perfil)
-                    VALUES (?, ?, ?, ?)
-                ''', ('Administrador do Sistema', 'admin@sistema.com', senha_hash, 'admin_sistema'))
-                conn.commit()
-                logger.info("Usuário admin criado com sucesso!")
-            else:
-                logger.info("Usuário admin já existe")
-            # Listar estrutura atual da tabela para debug
-            cursor.execute("PRAGMA table_info(usuarios)")
-            colunas = cursor.fetchall()
-            logger.info("Estrutura atual da tabela usuarios:")
-            for col in colunas:
-                logger.info(f"  - {col[1]} ({col[2]})")
-        except Exception as e:
-            logger.error(f"Erro ao verificar banco: {str(e)}")
-        finally:
-            conn.close()
-
-    # Chamar verificação de banco
+    # Verificar e corrigir banco (usuário admin)
     verificar_e_corrigir_banco()
 
-    # Iniciar backup automático
+    # Iniciar backup automático em segundo plano
     iniciar_backup_automatico()
 
     # Obter configuração de porta e modo debug
