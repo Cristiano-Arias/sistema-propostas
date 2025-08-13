@@ -5,6 +5,10 @@
 Flask==2.3.3
 Flask-CORS==4.0.0
 
+# Extensões Flask
+Flask-SQLAlchemy==3.0.5
+Flask-JWT-Extended==4.6.0
+
 # Autenticação e Segurança
 PyJWT==2.8.0
 bcrypt==4.0.1
