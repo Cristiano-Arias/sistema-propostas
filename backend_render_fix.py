@@ -32,11 +32,11 @@ import time
 if os.environ.get('RENDER'):
     # Tentar múltiplos diretórios persistentes no Render
     POSSIBLE_DIRS = [
-        '/opt/render/project/src/data',  # Diretório do projeto
-        '/tmp/persistent',               # Diretório temporário
-        '/opt/render/persistent',        # Diretório original
-        '.'                             # Diretório atual como fallback
-    ]
+    '/opt/render/persistent',
+    '/opt/render/project/src/data',
+    '/tmp/persistent',
+    '.'
+]
     
     PERSISTENT_DIR = None
     for dir_path in POSSIBLE_DIRS:
@@ -1184,7 +1184,7 @@ def login():
             return jsonify({'erro': 'Email ou senha incorretos'}), 401
         
         # Verificar se usuário está ativo
-        if not usuario.get('ativo', 1):
+        if not (usuario['ativo'] if ('ativo' in usuario.keys()) else 1):
             conn.close()
             logger.warning(f"Tentativa de login com usuário inativo: {email} - IP: {client_ip}")
             return jsonify({'erro': 'Usuário inativo. Contate o administrador.'}), 401
