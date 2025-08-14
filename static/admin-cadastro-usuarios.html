@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Usuários</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .message {
+            margin-bottom: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            font-size: 14px;
+        }
+        .message.success {
+            background: #e6ffed;
+            color: #2d662d;
+            border: 1px solid #b3e6c5;
+        }
+        .message.error {
+            background: #ffe6e6;
+            color: #a33d3d;
+            border: 1px solid #f5b5b5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastro de Usuários</h1>
+        <div id="msg" class="message"></div>
+        <form id="cadastroForm">
+            <div class="form-group">
+                <label for="nome">Nome Completo</label>
+                <input type="text" id="nome" required placeholder="Digite o nome completo">
+            </div>
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" required placeholder="email@empresa.com">
+            </div>
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" required placeholder="Digite uma senha provisória">
+            </div>
+            <div class="form-group">
+                <label for="perfil">Perfil</label>
+                <select id="perfil" required>
+                    <option value="">Selecione um perfil</option>
+                    <option value="requisitante">Requisitante</option>
+                    <option value="comprador">Comprador</option>
+                    <option value="fornecedor">Fornecedor</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">Criar Usuário</button>
+        </form>
+    </div>
+    <script src="js/auth.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verifica se o usuário está logado
+        if (!Auth.isAuthenticated()) {
+            alert('Você precisa estar logado para acessar esta página.');
+            window.location.href = 'login-unificado.html';
+            return;
+        }
+        // Verifica permissão (apenas compradores ou administradores)
+        const usuario = Auth.getUsuario();
+        if (!usuario || (usuario.perfil !== 'comprador' && usuario.perfil !== 'admin')) {
+            alert('Acesso negado. Somente compradores ou administradores podem criar usuários.');
+            window.location.href = 'index.html';
+            return;
+        }
+        const form = document.getElementById('cadastroForm');
+        const msgDiv = document.getElementById('msg');
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            msgDiv.style.display = 'none';
+            const nome = document.getElementById('nome').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value;
+            const perfil = document.getElementById('perfil').value;
+            if (!nome || !email || !senha || !perfil) {
+                showMessage('Preencha todos os campos.', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/api/usuarios', {
+                    method: 'POST',
+                    headers: Auth.getHeaders(),
+                    body: JSON.stringify({ nome, email, senha, perfil })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage('Usuário criado com sucesso!', 'success');
+                    form.reset();
+                } else {
+                    showMessage(data.message || 'Erro ao criar usuário', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro de conexão com o servidor.', 'error');
+            }
+        });
+        function showMessage(text, type) {
+            msgDiv.textContent = text;
+            msgDiv.className = 'message ' + type;
+            msgDiv.style.display = 'block';
+        }
+    });
+    </script>
+</body>
+</html>
