@@ -1,74 +1,151 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login Unificado</title>
-  <style>
-    :root{--bg1:#185a9d;--bg2:#43cea2;--card:rgba(255,255,255,.06);--b:rgba(255,255,255,.12);--txt:#F4F6F8;--muted:#c8d0d8;}
-    *{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--txt);
-      background:linear-gradient(135deg,var(--bg1),var(--bg2)) fixed;display:flex;align-items:center;justify-content:center;padding:24px}
-    .wrap{width:100%;max-width:420px}
-    .card{background:var(--card);border:1px solid var(--b);backdrop-filter:blur(8px);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}
-    .hd{padding:18px 22px;border-bottom:1px solid var(--b);display:flex;gap:12px;align-items:center}
-    .hd h1{font-size:18px;margin:0}
-    .bd{padding:22px}
-    label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
-    input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--b);background:rgba(0,0,0,.15);color:var(--txt)}
-    .actions{display:flex;gap:12px;justify-content:flex-end;margin-top:18px}
-    button{padding:12px 18px;border-radius:12px;border:1px solid var(--b);background:#179E7A;color:white;font-weight:600;cursor:pointer;width:100%}
-    .msg{margin-top:10px;font-size:13px}
-    .err{color:#ffb3b3}.ok{color:#6ae0a7}
-  </style>
   <script>
-    async function doLogin(e){
+    function normalizePerfil(raw) {
+      if (!raw) return "";
+      const p = String(raw).trim().toLowerCase();
+      const map = {
+        "comprador": "comprador",
+        "buyer": "comprador",
+        "requisitante": "requisitante",
+        "requester": "requisitante",
+        "fornecedor": "fornecedor",
+        "supplier": "fornecedor",
+        "admin": "admin",
+        "administrator": "admin",
+      };
+      return map[p] || "";
+    }
+
+    function guessPerfilFromEmail(email) {
+      const e = (email || "").toLowerCase();
+      if (e.includes("fornecedor") || e.startsWith("fornecedor_"))
+        return "fornecedor";
+      if (e.includes("comprador")) return "comprador";
+      if (e.includes("requisitante")) return "requisitante";
+      return "";
+    }
+
+    function setMsg(t, err) {
+      const m = document.getElementById("msg");
+      m.textContent = t;
+      m.className = "msg " + (err ? "err" : "ok");
+    }
+
+    async function doLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const senha = document.getElementById('senha').value;
-      try{
-        const res = await fetch('/api/auth/login', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ email, senha })
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value;
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, senha }),
         });
-        const data = await res.json().catch(()=>({}));
-        if(res.ok){
-          const { access_token, token, perfil, nome } = data;
-          localStorage.setItem('access_token', access_token || token || '');
-          localStorage.setItem('perfil', perfil||'');
-          localStorage.setItem('nome', nome||'');
-          const map = {
-            'requisitante':'/static/dashboard-requisitante-integrado.html',
-            'comprador':'/static/dashboard-comprador-funcional.html',
-            'fornecedor':'/static/portal-propostas-novo.html',
-            'admin':'/static/dashboard-comprador-funcional.html'
-          };
-          location.href = map[perfil] || '/static/index.html';
-        }else{
-          setMsg(data.erro || data.message || 'Falha no login', true);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setMsg(data.erro || data.message || "Falha no login", true);
+          return;
         }
-      }catch(err){
-        setMsg('Erro de rede. Tente novamente.', true);
+        const token = data.access_token || data.token || "";
+        let perfil = normalizePerfil(
+          data.perfil ||
+            data.role ||
+            data.tipo ||
+            data.user_type ||
+            data.perfil_usuario ||
+            data.userRole
+        );
+        if (!perfil) {
+          perfil = guessPerfilFromEmail(email);
+        }
+        if (!perfil) {
+          setMsg(
+            "Login efetuado, mas o servidor não informou o perfil do usuário.",
+            true
+          );
+          return;
+        }
+        localStorage.setItem("access_token", token);
+        localStorage.setItem("perfil", perfil);
+        localStorage.setItem("nome", data.nome || "");
+
+        const map = {
+          requisitante: "/static/dashboard-requisitante-integrado.html",
+          comprador: "/static/dashboard-comprador-funcional.html",
+          fornecedor: "/static/portal-propostas-novo.html",
+          admin: "/static/dashboard-comprador-funcional.html",
+        };
+        const to = map[perfil];
+        if (!to) {
+          setMsg("Perfil não reconhecido: " + perfil, true);
+          return;
+        }
+        location.href = to;
+      } catch (err) {
+        setMsg("Erro de rede. Tente novamente.", true);
       }
     }
-    function setMsg(t,err){ const m=document.getElementById('msg'); m.textContent=t; m.className='msg '+(err?'err':'ok'); }
   </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .login-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+    }
+    .login-container h2 {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .login-container input {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0 15px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .login-container button {
+      width: 100%;
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .msg.err {
+      color: red;
+      font-size: 0.9em;
+    }
+    .msg.ok {
+      color: green;
+      font-size: 0.9em;
+    }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="hd"><h1>Acesso ao Sistema</h1></div>
-      <div class="bd">
-        <form onsubmit="doLogin(event)">
-          <label>E-mail / Usuário</label>
-          <input id="email" required placeholder="email@empresa.com">
-          <label style="margin-top:12px">Senha</label>
-          <input id="senha" type="password" required>
-          <div class="actions"><button type="submit">Entrar</button></div>
-          <div id="msg" class="msg"></div>
-        </form>
-      </div>
-    </div>
+  <div class="login-container">
+    <h2>Login</h2>
+    <form onsubmit="doLogin(event)">
+      <input id="email" type="email" placeholder="E-mail" required />
+      <input id="senha" type="password" placeholder="Senha" required />
+      <button type="submit">Entrar</button>
+      <div id="msg" class="msg"></div>
+    </form>
   </div>
 </body>
 </html>
