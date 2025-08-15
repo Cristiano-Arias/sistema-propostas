@@ -108,7 +108,11 @@ def init_admin_routes(app):
                 return jsonify({'success': False, 'message': 'Credenciais inválidas ou usuário não é admin'}), 401
             
             # Verificar senha
-            if bcrypt.checkpw(senha.encode('utf-8'), usuario['senha']):
+            senha_hash = usuario['senha']
+            if isinstance(senha_hash, str):
+                senha_hash = senha_hash.encode('utf-8')
+            
+            if bcrypt.checkpw(senha.encode('utf-8'), senha_hash):
                 # Gerar token JWT
                 payload = {
                     'usuario_id': usuario['id'],
