@@ -1,17 +1,21 @@
 services:
   - type: web
-    name: sistema-gestao-propostas
+    name: Portal-Proposta
     env: python
+    plan: starter
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn backend_corrigido:app
-    plan: free
+    preDeployCommand: flask db upgrade
+    startCommand: gunicorn backend_render_fix:app
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
+      - key: FLASK_APP
+        value: backend_render_fix.py
       - key: FLASK_ENV
         value: production
       - key: SECRET_KEY
-        generateValue: true
+        value: portal-proposta-secret-2024-change-in-production
       - key: JWT_SECRET_KEY
-        generateValue: true
+        value: portal-proposta-jwt-2024-change-in-production
+      - key: DATABASE_URL
+        # Cole aqui o External Database URL do seu banco (ou deixe vazio e preencha no Dashboard)
+        value: ""
     staticPublishPath: ./static
