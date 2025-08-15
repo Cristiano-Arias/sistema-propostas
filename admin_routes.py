@@ -427,7 +427,7 @@ def criar_admin_inicial():
         
         if result['count'] == 0:
             # Criar admin padrão
-            senha_hash = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt())
+            senha_hash = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             cursor.execute('''
                 INSERT INTO usuarios (nome, email, senha, perfil)
                 VALUES (%s, %s, %s, %s)
