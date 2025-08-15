@@ -10,7 +10,7 @@ import psycopg2
 import psycopg2.extras
 import bcrypt
 import logging
-from datetime import datetime
+from datetime import import datetime
 from flask import request, jsonify, session
 import jwt
 from functools import wraps
@@ -22,27 +22,27 @@ def get_db_config():
     """Retorna configuração do banco PostgreSQL"""
     if os.environ.get('DATABASE_URL'):
         return os.environ.get('DATABASE_URL')
-    
-    return {
-        'host': os.environ.get('DB_HOST', 'localhost'),
-        'database': os.environ.get('DB_NAME', 'sistema_compras'),
-        'user': os.environ.get('DB_USER', 'postgres'),
-        'password': os.environ.get('DB_PASSWORD', 'postgres'),
-        'port': os.environ.get('DB_PORT', '5432')
-    }
+    else:
+        return {
+            'host': os.environ.get('DB_HOST', 'localhost'),
+            'database': os.environ.get('DB_NAME', 'sistema_compras'),
+            'user': os.environ.get('DB_USER', 'postgres'),
+            'password': os.environ.get('DB_PASSWORD', 'postgres'),
+            'port': os.environ.get('DB_PORT', '5432')
+        }
 
 def get_db():
     """Conecta ao banco PostgreSQL"""
     try:
         db_config = get_db_config()
-        
         if isinstance(db_config, str):
-            conn = psycopg2.connect(db_config)
+            conn = psycopg2.connect(db_config, cursor_factory=psycopg2.extras.RealDictCursor)
         else:
-            conn = psycopg2.connect(**db_config)
+            conn = psycopg2.connect(**db_config, cursor_factory=psycopg2.extras.RealDictCursor)
         
         conn.autocommit = False
         return conn
+        
     except Exception as e:
         logger.error(f"Erro ao conectar ao banco: {e}")
         raise
@@ -54,25 +54,25 @@ def init_admin_routes(app):
         """Decorator para verificar se usuário é admin"""
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            auth_header = request.headers.get('Authorization')
-            if not auth_header:
-                return jsonify({'success': False, 'message': 'Token não fornecido'}), 401
-            
             try:
-                token = auth_header.split(' ')[1]  # Bearer TOKEN
-                payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+                auth_header = request.headers.get('Authorization')
+                if not auth_header:
+                    return jsonify({'success': False, 'message': 'Token não fornecido'}), 401
                 
-                # Verificar se é admin
-                if payload.get('perfil') != 'admin':
-                    return jsonify({'success': False, 'message': 'Acesso negado - Admin necessário'}), 403
-                
-                request.current_user = payload
-                return f(*args, **kwargs)
-                
-            except jwt.ExpiredSignatureError:
-                return jsonify({'success': False, 'message': 'Token expirado'}), 401
-            except jwt.InvalidTokenError:
-                return jsonify({'success': False, 'message': 'Token inválido'}), 401
+                try:
+                    token = auth_header.split(' ')[1]  # Bearer TOKEN
+                    payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+                    
+                    # Verificar se é admin
+                    if payload.get('perfil') != 'admin':
+                        return jsonify({'success': False, 'message': 'Acesso negado - Admin necessário'}), 403
+                    
+                    request.current_user = payload
+                    return f(*args, **kwargs)
+                    
+                except jwt.InvalidTokenError:
+                    return jsonify({'success': False, 'message': 'Token inválido'}), 401
+                    
             except Exception as e:
                 logger.error(f"Erro na verificação de admin: {e}")
                 return jsonify({'success': False, 'message': 'Erro de autenticação'}), 401
@@ -95,9 +95,9 @@ def init_admin_routes(app):
             
             # Buscar usuário admin
             cursor.execute('''
-                SELECT id, nome, email, senha, perfil 
-                FROM usuarios 
-                WHERE email = %s AND perfil = 'admin'
+                SELECT id, nome, email, senha, perfil
+                FROM usuarios
+                WHERE email = %s AND perfil = %s
             ''', (email,))
             
             usuario = cursor.fetchone()
@@ -110,17 +110,20 @@ def init_admin_routes(app):
             if bcrypt.checkpw(senha.encode('utf-8'), usuario['senha']):
                 # Gerar token JWT
                 payload = {
-                    'usuario_id': usuario['id'],
+                    'user_id': usuario['id'],
                     'nome': usuario['nome'],
                     'email': usuario['email'],
-                    'perfil': usuario['perfil'],
-                    'exp': datetime.utcnow().timestamp() + (8 * 3600)  # 8 horas
+                    'perfil': usuario['perfil']
                 }
+                
                 token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+                
+                # Log da ação
+                logger.info(f"Login admin realizado: {usuario['nome']} ({usuario['email']})")
                 
                 return jsonify({
                     'success': True,
-                    'message': 'Login admin realizado com sucesso',
+                    'message': 'Login realizado com sucesso',
                     'token': token,
                     'usuario': {
                         'id': usuario['id'],
@@ -139,34 +142,32 @@ def init_admin_routes(app):
     @app.route('/api/admin/usuarios', methods=['GET'])
     @admin_required
     def listar_usuarios():
-        """Listar todos os usuários do sistema"""
+        """Listar todos os usuários"""
         try:
             conn = get_db()
             cursor = conn.cursor()
             
             cursor.execute('''
-                SELECT id, nome, email, perfil, criado_em
+                SELECT id, nome, email, perfil, created_at
                 FROM usuarios
-                ORDER BY criado_em DESC
+                ORDER BY created_at DESC
             ''')
             
-            usuarios = []
-            for row in cursor.fetchall():
-                usuarios.append({
-                    'id': row['id'],
-                    'nome': row['nome'],
-                    'email': row['email'],
-                    'perfil': row['perfil'],
-                    'criado_em': row['criado_em']
-                })
-            
+            usuarios = cursor.fetchall()
             conn.close()
             
-            return jsonify({
-                'success': True,
-                'usuarios': usuarios,
-                'total': len(usuarios)
-            })
+            # Converter para lista de dicionários
+            usuarios_list = []
+            for usuario in usuarios:
+                usuarios_list.append({
+                    'id': usuario['id'],
+                    'nome': usuario['nome'],
+                    'email': usuario['email'],
+                    'perfil': usuario['perfil'],
+                    'created_at': usuario['created_at'].strftime('%d/%m/%Y %H:%M') if usuario['created_at'] else ''
+                })
+            
+            return jsonify({'success': True, 'usuarios': usuarios_list})
             
         except Exception as e:
             logger.error(f"Erro ao listar usuários: {e}")
@@ -178,22 +179,13 @@ def init_admin_routes(app):
         """Criar novo usuário"""
         try:
             data = request.get_json()
+            nome = data.get('nome')
+            email = data.get('email')
+            senha = data.get('senha')
+            perfil = data.get('perfil')
             
-            # Validar dados obrigatórios
-            campos_obrigatorios = ['nome', 'email', 'senha', 'perfil']
-            for campo in campos_obrigatorios:
-                if not data.get(campo):
-                    return jsonify({'success': False, 'message': f'{campo} é obrigatório'}), 400
-            
-            nome = data['nome']
-            email = data['email']
-            senha = data['senha']
-            perfil = data['perfil']
-            
-            # Validar perfil
-            perfis_validos = ['admin', 'comprador', 'requisitante', 'fornecedor']
-            if perfil not in perfis_validos:
-                return jsonify({'success': False, 'message': 'Perfil inválido'}), 400
+            if not all([nome, email, senha, perfil]):
+                return jsonify({'success': False, 'message': 'Todos os campos são obrigatórios'}), 400
             
             conn = get_db()
             cursor = conn.cursor()
@@ -223,12 +215,7 @@ def init_admin_routes(app):
             return jsonify({
                 'success': True,
                 'message': 'Usuário criado com sucesso',
-                'usuario': {
-                    'id': usuario_id,
-                    'nome': nome,
-                    'email': email,
-                    'perfil': perfil
-                }
+                'usuario_id': usuario_id
             })
             
         except Exception as e:
@@ -241,45 +228,40 @@ def init_admin_routes(app):
         """Editar usuário existente"""
         try:
             data = request.get_json()
+            nome = data.get('nome')
+            email = data.get('email')
+            senha = data.get('senha')
+            perfil = data.get('perfil')
+            
+            if not all([nome, email, perfil]):
+                return jsonify({'success': False, 'message': 'Nome, email e perfil são obrigatórios'}), 400
             
             conn = get_db()
             cursor = conn.cursor()
             
             # Verificar se usuário existe
-            cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
-            usuario_atual = cursor.fetchone()
-            
-            if not usuario_atual:
+            cursor.execute("SELECT * FROM usuarios WHERE id = %s", (usuario_id,))
+            if not cursor.fetchone():
                 conn.close()
                 return jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404
             
-            # Campos que podem ser atualizados
-            nome = data.get('nome', usuario_atual['nome'])
-            email = data.get('email', usuario_atual['email'])
-            perfil = data.get('perfil', usuario_atual['perfil'])
-            
-            # Validar perfil se fornecido
-            if perfil not in ['admin', 'comprador', 'requisitante', 'fornecedor']:
-                conn.close()
-                return jsonify({'success': False, 'message': 'Perfil inválido'}), 400
-            
-            # Verificar se email já existe (exceto para o próprio usuário)
-            cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+            # Verificar se email já existe em outro usuário
+            cursor.execute("SELECT * FROM usuarios WHERE email = %s AND id != %s", (email, usuario_id))
             if cursor.fetchone():
                 conn.close()
-                return jsonify({'success': False, 'message': 'Email já cadastrado'}), 400
+                return jsonify({'success': False, 'message': 'Email já cadastrado para outro usuário'}), 400
             
             # Atualizar usuário
-            if data.get('senha'):
-                # Se nova senha fornecida, criptografar
-                senha_hash = bcrypt.hashpw(data['senha'].encode('utf-8'), bcrypt.gensalt())
+            if senha:
+                # Se senha foi fornecida, criptografar e atualizar
+                senha_hash = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt())
                 cursor.execute('''
                     UPDATE usuarios 
                     SET nome = %s, email = %s, senha = %s, perfil = %s
                     WHERE id = %s
                 ''', (nome, email, senha_hash, perfil, usuario_id))
             else:
-                # Manter senha atual
+                # Se senha não foi fornecida, manter a atual
                 cursor.execute('''
                     UPDATE usuarios 
                     SET nome = %s, email = %s, perfil = %s
@@ -292,58 +274,45 @@ def init_admin_routes(app):
             # Log da ação
             logger.info(f"Usuário editado pelo admin {request.current_user['nome']}: {nome} ({email})")
             
-            return jsonify({
-                'success': True,
-                'message': 'Usuário atualizado com sucesso',
-                'usuario': {
-                    'id': usuario_id,
-                    'nome': nome,
-                    'email': email,
-                    'perfil': perfil
-                }
-            })
+            return jsonify({'success': True, 'message': 'Usuário atualizado com sucesso'})
             
         except Exception as e:
             logger.error(f"Erro ao editar usuário: {e}")
-            return jsonify({'success': False, 'message': 'Erro ao atualizar usuário'}), 500
+            return jsonify({'success': False, 'message': 'Erro ao editar usuário'}), 500
     
     @app.route('/api/admin/usuarios/<int:usuario_id>', methods=['DELETE'])
     @admin_required
-    def deletar_usuario(usuario_id):
-        """Deletar usuário"""
+    def excluir_usuario(usuario_id):
+        """Excluir usuário"""
         try:
             conn = get_db()
             cursor = conn.cursor()
             
             # Verificar se usuário existe
-            cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+            cursor.execute("SELECT nome, email FROM usuarios WHERE id = %s", (usuario_id,))
             usuario = cursor.fetchone()
-            
             if not usuario:
                 conn.close()
                 return jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404
             
-            # Não permitir deletar o próprio usuário admin
-            if usuario_id == request.current_user['usuario_id']:
+            # Não permitir excluir o próprio usuário
+            if usuario_id == request.current_user['user_id']:
                 conn.close()
-                return jsonify({'success': False, 'message': 'Não é possível deletar seu próprio usuário'}), 400
+                return jsonify({'success': False, 'message': 'Não é possível excluir seu próprio usuário'}), 400
             
-            # Deletar usuário
-            cursor.execute('DELETE FROM usuarios WHERE id = %s', (usuario_id,))
+            # Excluir usuário
+            cursor.execute("DELETE FROM usuarios WHERE id = %s", (usuario_id,))
             conn.commit()
             conn.close()
             
             # Log da ação
-            logger.info(f"Usuário deletado pelo admin {request.current_user['nome']}: {usuario['nome']} ({usuario['email']})")
+            logger.info(f"Usuário excluído pelo admin {request.current_user['nome']}: {usuario['nome']} ({usuario['email']})")
             
-            return jsonify({
-                'success': True,
-                'message': 'Usuário deletado com sucesso'
-            })
+            return jsonify({'success': True, 'message': 'Usuário excluído com sucesso'})
             
         except Exception as e:
-            logger.error(f"Erro ao deletar usuário: {e}")
-            return jsonify({'success': False, 'message': 'Erro ao deletar usuário'}), 500
+            logger.error(f"Erro ao excluir usuário: {e}")
+            return jsonify({'success': False, 'message': 'Erro ao excluir usuário'}), 500
     
     @app.route('/api/admin/stats', methods=['GET'])
     @admin_required
@@ -359,35 +328,22 @@ def init_admin_routes(app):
                 FROM usuarios
                 GROUP BY perfil
             ''')
-            usuarios_por_perfil = {row['perfil']: row['total'] for row in cursor.fetchall()}
             
-            # Contar TRs por status
-            cursor.execute('''
-                SELECT status, COUNT(*) as total
-                FROM termos_referencia
-                GROUP BY status
-            ''')
-            trs_por_status = {row['status']: row['total'] for row in cursor.fetchall()}
+            stats_perfil = {}
+            for row in cursor.fetchall():
+                stats_perfil[row['perfil']] = row['total']
             
-            # Contar processos por status
-            cursor.execute('''
-                SELECT status, COUNT(*) as total
-                FROM processos
-                GROUP BY status
-            ''')
-            processos_por_status = {row['status']: row['total'] for row in cursor.fetchall()}
+            # Total de usuários
+            cursor.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cursor.fetchone()['total']
             
             conn.close()
             
             return jsonify({
                 'success': True,
                 'stats': {
-                    'usuarios_por_perfil': usuarios_por_perfil,
-                    'trs_por_status': trs_por_status,
-                    'processos_por_status': processos_por_status,
-                    'total_usuarios': sum(usuarios_por_perfil.values()),
-                    'total_trs': sum(trs_por_status.values()),
-                    'total_processos': sum(processos_por_status.values())
+                    'total_usuarios': total_usuarios,
+                    'por_perfil': stats_perfil
                 }
             })
             
@@ -420,4 +376,3 @@ def criar_admin_inicial():
         
     except Exception as e:
         logger.error(f"Erro ao criar admin inicial: {e}")
-
