@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Acesso - Fornecedores</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .portal-container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .portal-info {
+            flex: 1;
+            color: white;
+            text-align: center;
+        }
+
+        .portal-info .logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .portal-info h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .portal-info p {
+            font-size: 16px;
+            line-height: 1.6;
+            opacity: 0.9;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #3c3;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+        }
+
+        .demo-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .demo-toggle {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .demo-toggle:hover {
+            text-decoration: underline;
+        }
+
+        .demo-credentials {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .demo-credentials h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .credential-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .credential-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .integration-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4fd;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #0066cc;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .portal-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .portal-info h1 {
+                font-size: 24px;
+            }
+
+            .portal-info .logo {
+                font-size: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-container">
+        <div class="portal-info">
+            <div class="logo">🏢</div>
+            <h1>Portal do Fornecedor</h1>
+            <p>Acesse sua área exclusiva para participar de processos licitatórios. Envie propostas, acompanhe resultados e mantenha seus dados atualizados.</p>
+        </div>
+
+        <div class="login-container">
+            <h2>Acesso ao Sistema</h2>
+
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login">Login</label>
+                    <input type="text" id="login" placeholder="Digite seu login" required>
+                </div>
+                <div class="form-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="login-btn">Entrar no Sistema</button>
+            </form>
+
+            <div class="demo-section">
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                    Não possui acesso? Entre em contato com o setor de licitações.
+                </p>
+                <a href="#" class="demo-toggle" onclick="toggleDemo()">Ver credenciais de demonstração</a>
+                <a href="#" class="demo-toggle" onclick="toggleDemo()" id="hide-demo" style="display: none;">Ocultar</a>
+            </div>
+
+            <div id="demo-credentials" class="demo-credentials">
+                <h3>🔑 Credenciais de Demonstração</h3>
+                
+                <div class="credential-item">
+                    <strong>Empresa:</strong> Alpha Tecnologia Ltda<br>
+                    <strong>Login:</strong> fornecedor_33000144<br>
+                    <strong>Senha:</strong> Alpha123
+                </div>
+                
+                <div class="credential-item">
+                    <strong>Empresa:</strong> Beta Solutions S.A.<br>
+                    <strong>Login:</strong> fornecedor_44000155<br>
+                    <strong>Senha:</strong> Beta456
+                </div>
+                
+                <div class="credential-item">
+                    <strong>Empresa:</strong> Gamma Tech Inovação<br>
+                    <strong>Login:</strong> fornecedor_55000166<br>
+                    <strong>Senha:</strong> Gamma789
+                </div>
+
+                <button onclick="copyCredentials()" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                    Copiar
+                </button>
+            </div>
+
+            <div class="integration-info">
+                <strong>🔗 Sistema Integrado</strong><br>
+                Este portal agora aceita credenciais geradas automaticamente pelo módulo comprador.<br>
+                <strong>Formato:</strong> E-mail + Senha padrão (123456)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Credenciais de demonstração (sistema original)
+        const credenciaisDemo = [
+            {
+                empresa: 'Alpha Tecnologia Ltda',
+                login: 'fornecedor_33000144',
+                senha: 'Alpha123',
+                cnpj: '12.345.678/0001-90',
+                email: 'alpha@tecnologia.com'
+            },
+            {
+                empresa: 'Beta Solutions S.A.',
+                login: 'fornecedor_44000155',
+                senha: 'Beta456',
+                cnpj: '98.765.432/0001-10',
+                email: 'beta@solutions.com'
+            },
+            {
+                empresa: 'Gamma Tech Inovação',
+                login: 'fornecedor_55000166',
+                senha: 'Gamma789',
+                cnpj: '11.222.333/0001-44',
+                email: 'gamma@tech.com'
+            }
+        ];
+
+        // Sistema de dados local
+        const SistemaLocal = {
+            carregar(chave, padrao = null) {
+                try {
+                    const dados = localStorage.getItem(chave);
+                    return dados ? JSON.parse(dados) : padrao;
+                } catch (error) {
+                    console.error('Erro ao carregar dados:', error);
+                    return padrao;
+                }
+            },
+
+            salvar(chave, dados) {
+                try {
+                    localStorage.setItem(chave, JSON.stringify(dados));
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao salvar dados:', error);
+                    return false;
+                }
+            }
+        };
+
+        // Função de login integrada
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const login = document.getElementById('login').value.trim();
+            const senha = document.getElementById('senha').value.trim();
+            
+            if (!login || !senha) {
+                mostrarErro('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            // Tentar autenticação
+            const resultado = autenticarFornecedor(login, senha);
+            
+            if (resultado.sucesso) {
+                mostrarSucesso('Login realizado com sucesso! Redirecionando...');
+                
+                // Salvar dados do fornecedor logado
+                localStorage.setItem('fornecedor_logado', JSON.stringify(resultado.fornecedor));
+                
+                // Redirecionar após 1 segundo
+                setTimeout(() => {
+                    // Tentar redirecionar para o dashboard do fornecedor
+                    const dashboardUrl = '/static/dashboard-fornecedor-funcional.html';
+                    window.location.href = dashboardUrl;
+                }, 1000);
+                
+            } else {
+                mostrarErro(resultado.mensagem);
+            }
+        });
+
+        function autenticarFornecedor(login, senha) {
+            console.log('Tentativa de login:', { login, senha });
+
+            // 1. Verificar credenciais de demonstração (sistema original)
+            const credencialDemo = credenciaisDemo.find(c => 
+                c.login === login && c.senha === senha
+            );
+            
+            if (credencialDemo) {
+                console.log('Login com credencial de demonstração:', credencialDemo.empresa);
+                return {
+                    sucesso: true,
+                    fornecedor: {
+                        id: credencialDemo.login,
+                        razaoSocial: credencialDemo.empresa,
+                        cnpj: credencialDemo.cnpj,
+                        email: credencialDemo.email,
+                        login: credencialDemo.login,
+                        tipo: 'demo'
+                    }
+                };
+            }
+
+            // 2. Verificar credenciais geradas pelo módulo comprador
+            const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
+            console.log('Usuários fornecedores encontrados:', usuariosFornecedores);
+            
+            // Verificar por e-mail + senha padrão
+            const fornecedorPorEmail = usuariosFornecedores.find(f => 
+                f.email === login && f.senha === senha
+            );
+            
+            if (fornecedorPorEmail) {
+                console.log('Login com credencial do módulo comprador (e-mail):', fornecedorPorEmail.razaoSocial);
+                return {
+                    sucesso: true,
+                    fornecedor: {
+                        id: fornecedorPorEmail.id,
+                        razaoSocial: fornecedorPorEmail.razaoSocial,
+                        cnpj: fornecedorPorEmail.cnpj,
+                        email: fornecedorPorEmail.email,
+                        tipo: 'comprador'
+                    }
+                };
+            }
+
+            // 3. Verificar por CNPJ (sem formatação) + senha padrão
+            const cnpjLimpo = login.replace(/\D/g, ''); // Remove formatação
+            const fornecedorPorCNPJ = usuariosFornecedores.find(f => {
+                const cnpjFornecedor = f.cnpj.replace(/\D/g, '');
+                return cnpjFornecedor === cnpjLimpo && f.senha === senha;
+            });
+            
+            if (fornecedorPorCNPJ) {
+                console.log('Login com credencial do módulo comprador (CNPJ):', fornecedorPorCNPJ.razaoSocial);
+                return {
+                    sucesso: true,
+                    fornecedor: {
+                        id: fornecedorPorCNPJ.id,
+                        razaoSocial: fornecedorPorCNPJ.razaoSocial,
+                        cnpj: fornecedorPorCNPJ.cnpj,
+                        email: fornecedorPorCNPJ.email,
+                        tipo: 'comprador'
+                    }
+                };
+            }
+
+            // 4. Verificar se é tentativa com e-mail mas senha incorreta
+            const fornecedorExiste = usuariosFornecedores.find(f => f.email === login);
+            if (fornecedorExiste) {
+                console.log('E-mail encontrado mas senha incorreta');
+                return {
+                    sucesso: false,
+                    mensagem: 'Senha incorreta. A senha padrão para fornecedores cadastrados pelo setor de compras é: 123456'
+                };
+            }
+
+            // 5. Login não encontrado
+            console.log('Credenciais não encontradas');
+            return {
+                sucesso: false,
+                mensagem: 'Login ou senha incorretos. Verifique suas credenciais e tente novamente.'
+            };
+        }
+
+        function mostrarErro(mensagem) {
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            
+            successDiv.style.display = 'none';
+            errorDiv.textContent = mensagem;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function mostrarSucesso(mensagem) {
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            
+            errorDiv.style.display = 'none';
+            successDiv.textContent = mensagem;
+            successDiv.style.display = 'block';
+        }
+
+        function toggleDemo() {
+            const demoDiv = document.getElementById('demo-credentials');
+            const hideLink = document.getElementById('hide-demo');
+            const showLink = document.querySelector('.demo-toggle:not(#hide-demo)');
+            
+            if (demoDiv.style.display === 'none' || demoDiv.style.display === '') {
+                demoDiv.style.display = 'block';
+                hideLink.style.display = 'inline';
+                showLink.style.display = 'none';
+            } else {
+                demoDiv.style.display = 'none';
+                hideLink.style.display = 'none';
+                showLink.style.display = 'inline';
+            }
+        }
+
+        function copyCredentials() {
+            const text = `Alpha Tecnologia: fornecedor_33000144 / Alpha123
+Beta Solutions: fornecedor_44000155 / Beta456
+Gamma Tech: fornecedor_55000166 / Gamma789`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Credenciais copiadas para a área de transferência!');
+            }).catch(() => {
+                alert('Erro ao copiar credenciais.');
+            });
+        }
+
+        // Verificar se há dados do módulo comprador ao carregar a página
+        window.addEventListener('load', function() {
+            const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
+            
+            if (usuariosFornecedores.length > 0) {
+                console.log(`Sistema integrado: ${usuariosFornecedores.length} fornecedor(es) cadastrado(s) pelo módulo comprador`);
+                
+                // Mostrar informação de integração
+                const infoDiv = document.querySelector('.integration-info');
+                infoDiv.innerHTML = `
+                    <strong>🔗 Sistema Integrado Ativo</strong><br>
+                    ${usuariosFornecedores.length} fornecedor(es) cadastrado(s) pelo módulo comprador.<br>
+                    <strong>Login:</strong> E-mail cadastrado | <strong>Senha:</strong> 123456
+                `;
+                infoDiv.style.background = '#e8f5e8';
+                infoDiv.style.color = '#2d5a2d';
+            } else {
+                console.log('Nenhum fornecedor cadastrado pelo módulo comprador encontrado');
+            }
+        });
+
+        console.log('Sistema de autenticação integrado carregado!');
+    </script>
+</body>
+</html>

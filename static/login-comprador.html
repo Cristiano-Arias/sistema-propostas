@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Comprador - Sistema de Gestão de Propostas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo i {
+            font-size: 64px;
+            color: #11998e;
+            margin-bottom: 15px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #11998e;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message, .success-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #363;
+            border: 1px solid #cfc;
+        }
+
+        .credenciais-demo {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .demo-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #11998e;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-building"></i>
+            <h1>Portal do Comprador</h1>
+            <p>Acesse sua área para gerenciar processos licitatórios</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <div class="form-group">
+                <label for="login">Login</label>
+                <input type="text" id="login" name="login" required placeholder="Digite seu login">
+            </div>
+
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senha" required placeholder="Digite sua senha">
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                Entrar no Sistema
+            </button>
+        </form>
+
+        <div class="credenciais-demo">
+            <h4>🔑 Credenciais de Demonstração</h4>
+            <div class="demo-item">
+                <div style="font-weight: 600; color: #6c757d; margin-bottom: 5px;">Administrador:</div>
+                <div style="color: #495057;">Login: comprador_admin</div>
+                <div style="color: #495057;">Senha: Comp2025!</div>
+            </div>
+            <div class="demo-item">
+                <div style="font-weight: 600; color: #6c757d; margin-bottom: 5px;">Usuário:</div>
+                <div style="color: #495057;">Login: comprador_user</div>
+                <div style="color: #495057;">Senha: User123</div>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="../index.html">← Voltar ao Sistema Principal</a>
+        </div>
+    </div>
+
+    <script>
+        // Credenciais válidas para o sistema
+        const credenciaisValidas = [
+            { login: 'comprador_admin', senha: 'Comp2025!', nome: 'Administrador Comprador', perfil: 'admin' },
+            { login: 'comprador_user', senha: 'User123', nome: 'Usuário Comprador', perfil: 'user' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                realizarLogin();
+            });
+        });
+
+        function realizarLogin() {
+            const login = document.getElementById('login').value.trim();
+            const senha = document.getElementById('senha').value.trim();
+            
+            if (!login || !senha) {
+                mostrarErro('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            // Verificar credenciais
+            const credencial = credenciaisValidas.find(c => c.login === login && c.senha === senha);
+            
+            if (credencial) {
+                // Salvar dados do usuário logado
+                const usuarioLogado = {
+                    login: credencial.login,
+                    nome: credencial.nome,
+                    perfil: credencial.perfil,
+                    dataLogin: new Date().toISOString()
+                };
+                
+                localStorage.setItem('comprador_logado', JSON.stringify(usuarioLogado));
+                
+                mostrarSucesso('Login realizado com sucesso! Redirecionando...');
+                
+                // Redirecionar para o dashboard correto que existe no servidor
+                setTimeout(() => {
+                    window.location.href = 'dashboard-comprador-funcional.html';
+                }, 1500);
+            } else {
+                mostrarErro('Login ou senha incorretos.');
+            }
+        }
+
+        function mostrarErro(mensagem) {
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            
+            errorDiv.textContent = mensagem;
+            errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function mostrarSucesso(mensagem) {
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            
+            successDiv.textContent = mensagem;
+            successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
