@@ -109,10 +109,12 @@ def init_admin_routes(app):
             
             # Verificar senha
             senha_hash = usuario['senha']
-            if isinstance(senha_hash, str):
-                senha_hash = senha_hash.encode('utf-8')
+            # Se a senha está como string, usar diretamente
+            # Se está como bytes, converter para string
+            if isinstance(senha_hash, bytes):
+                senha_hash = senha_hash.decode('utf-8')
             
-            if bcrypt.checkpw(senha.encode('utf-8'), senha_hash):
+            if bcrypt.checkpw(senha.encode('utf-8'), senha_hash.encode('utf-8')):
                 # Gerar token JWT
                 payload = {
                     'usuario_id': usuario['id'],
@@ -427,7 +429,7 @@ def criar_admin_inicial():
         
         if result['count'] == 0:
             # Criar admin padrão
-            senha_hash = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            senha_hash = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'))
             cursor.execute('''
                 INSERT INTO usuarios (nome, email, senha, perfil)
                 VALUES (%s, %s, %s, %s)
