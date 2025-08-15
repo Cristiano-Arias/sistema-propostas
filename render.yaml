@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: sistema-gestao-propostas
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT backend_render_fix:app
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sistema-compras-db
+          property: connectionString
+    staticPublishPath: ./static
+
+databases:
+  - name: sistema-compras-db
+    databaseName: sistema_compras
+    user: sistema_user
+    plan: free

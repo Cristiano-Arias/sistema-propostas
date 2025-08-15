@@ -1,0 +1,10 @@
+INFO:__main__:Banco de dados inicializado com sucesso
+INFO:admin_routes:Rotas de administração inicializadas com sucesso
+INFO:admin_routes:Usuário admin inicial criado: admin@sistema.com / admin123
+INFO:__main__:Schema do comparativo atualizado com sucesso
+INFO:__main__:Iniciando servidor na porta 5000
+INFO:__main__:Debug mode: True
+ * Serving Flask app 'backend_render_fix'
+ * Debug mode: on
+Address already in use
+Port 5000 is in use by another program. Either identify and stop that program, or start the server with a different port.
