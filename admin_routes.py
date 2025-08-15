@@ -10,7 +10,7 @@ import psycopg2
 import psycopg2.extras
 import bcrypt
 import logging
-from datetime import import datetime
+from datetime import datetime
 from flask import request, jsonify, session
 import jwt
 from functools import wraps
