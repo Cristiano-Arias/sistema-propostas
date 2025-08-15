@@ -1,3 +1,0 @@
-git add migrations
-git commit -m "Add initial migrations"
-git push
