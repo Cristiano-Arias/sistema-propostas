@@ -43,7 +43,6 @@ def create_app():
     def health():
         return {"status": "ok"}, 200
 
-    @app.before_first_request
     def bootstrap_admin():
         email = os.environ.get("FIRST_ADMIN_EMAIL")
         name = os.environ.get("FIRST_ADMIN_NAME")
@@ -51,12 +50,15 @@ def create_app():
         if not (email and name and password):
             return
         from .models import User
-        with app.app_context():
-            if User.query.count() == 0 and "@" in email:
-                u = User(email=email.lower(), name=name, role="ADMIN", active=True)
-                u.set_password(password)
-                db.session.add(u)
-                db.session.commit()
+        if User.query.count() == 0 and "@" in email:
+            u = User(email=email.lower(), name=name, role="ADMIN", active=True)
+            u.set_password(password)
+            db.session.add(u)
+            db.session.commit()
+
+    # Flask 3.x removeu before_first_request – execute o bootstrap na criação da app.
+    with app.app_context():
+        bootstrap_admin()
 
     @app.errorhandler(400)
     @app.errorhandler(422)
