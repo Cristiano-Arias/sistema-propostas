@@ -87,19 +87,10 @@
 <script>
 let token = null;
 
-function api(path, opts={}){
-  opts.headers = Object.assign(
-    {'Content-Type':'application/json'},
-    opts.headers||{}
-  );
-  if(token) opts.headers['Authorization'] = 'Bearer '+token;
+function api(path, opts = {}) {
+  opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
   return fetch(path, opts);
-}
-
-function setAuthedUI(enabled){
-  document.getElementById('btnCriar').disabled = !enabled;
-  document.getElementById('btnListar').disabled = !enabled;
-  document.getElementById('btnReset').disabled = !enabled;
 }
 
 document.getElementById('btnLogin').onclick = async () => {
@@ -107,58 +98,86 @@ document.getElementById('btnLogin').onclick = async () => {
   const senha = document.getElementById('adm_senha').value;
   const s = document.getElementById('loginStatus');
   s.textContent = '...';
-  try{
-    const r = await api('/auth/login', {method:'POST', body:JSON.stringify({email, senha})});
-    const data = await r.json();
-    if(!r.ok){ s.innerHTML = '<span class="err">'+(data.erro||data.message||'Falha no login')+'</span>'; return; }
+  try {
+    const res  = await fetch('/auth/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, senha })
+    });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) {
+      s.textContent = `Erro ${res.status}: ${(data.erro||data.message||'falha no login')}`;
+      token = null;
+      return;
+    }
     token = data.access_token;
-    s.innerHTML = '<span class="ok">Logado. Perfil: '+(data.perfil||'ADMIN')+'</span>';
-    setAuthedUI(true);
-  }catch(e){ s.innerHTML = '<span class="err">'+e+'</span>'; }
+    s.textContent = `Logado. Perfil: ${data.perfil || 'ADMIN'}`;
+    // libera os botões protegidos
+    document.getElementById('btnCriar').disabled  = false;
+    document.getElementById('btnListar').disabled = false;
+    document.getElementById('btnReset').disabled  = false;
+  } catch (e) {
+    s.textContent = String(e);
+  }
 };
 
 document.getElementById('btnCriar').onclick = async () => {
-  const nome  = document.getElementById('u_nome').value.trim();
-  const email = document.getElementById('u_email').value.trim();
-  const perfil= document.getElementById('u_perfil').value;
-  const senha = document.getElementById('u_senha').value;
   const out = document.getElementById('criarMsg');
+  if (!token) { out.textContent = 'Faça login como ADMIN.'; return; }
+
+  const body = {
+    nome:  document.getElementById('u_nome').value.trim(),
+    email: document.getElementById('u_email').value.trim(),
+    perfil:document.getElementById('u_perfil').value,
+    senha: document.getElementById('u_senha').value
+  };
+
   out.textContent = '...';
-  try{
-    const r = await api('/admin/usuarios', {method:'POST', body:JSON.stringify({nome,email,perfil,senha})});
-    const data = await r.json();
-    if(!r.ok){ out.innerHTML = '<span class="err">'+(data.erro||data.message)+'</span>'; return; }
-    out.innerHTML = '<span class="ok">Usuário criado. ID '+data.id+'</span>';
-  }catch(e){ out.innerHTML = '<span class="err">'+e+'</span>'; }
+  try {
+    const res  = await api('/admin/usuarios', { method:'POST', body: JSON.stringify(body) });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) {
+      out.textContent = `Erro ${res.status}: ${(data.erro||data.message||'não processado')}`;
+      return;
+    }
+    out.textContent = `Usuário criado${data.id ? ` (ID ${data.id})` : ''}.`;
+  } catch (e) {
+    out.textContent = String(e);
+  }
 };
 
 document.getElementById('btnListar').onclick = async () => {
-  const q = document.getElementById('q').value.trim();
-  const url = q ? '/admin/usuarios?q='+encodeURIComponent(q) : '/admin/usuarios';
   const pre = document.getElementById('lista');
+  const q   = document.getElementById('q').value.trim();
   pre.textContent = '...';
-  try{
-    const r = await api(url);
-    const data = await r.json();
-    if(!r.ok){ pre.textContent = (data.erro||data.message); return; }
-    pre.textContent = JSON.stringify(data,null,2);
-  }catch(e){ pre.textContent = String(e); }
+  try {
+    const url = q ? `/admin/usuarios?q=${encodeURIComponent(q)}` : '/admin/usuarios';
+    const res  = await api(url);
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) { pre.textContent = `Erro ${res.status}: ${(data.erro||data.message||'não processado')}`; return; }
+    pre.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    pre.textContent = String(e);
+  }
 };
 
 document.getElementById('btnReset').onclick = async () => {
-  const id = document.getElementById('r_id').value.trim();
-  const nova_senha = document.getElementById('r_senha').value;
   const out = document.getElementById('resetMsg');
+  const id  = document.getElementById('r_id').value.trim();
+  const nova_senha = document.getElementById('r_senha').value;
   out.textContent = '...';
-  try{
-    const r = await api('/admin/usuarios/'+id+'/reset', {method:'POST', body:JSON.stringify({nova_senha})});
-    const data = await r.json();
-    if(!r.ok){ out.innerHTML = '<span class="err">'+(data.erro||data.message)+'</span>'; return; }
-    out.innerHTML = '<span class="ok">Senha atualizada</span>';
-  }catch(e){ out.innerHTML = '<span class="err">'+e+'</span>'; }
+  try {
+    const res  = await api(`/admin/usuarios/${id}/reset`, {
+      method:'POST',
+      body: JSON.stringify({ nova_senha })
+    });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) { out.textContent = `Erro ${res.status}: ${(data.erro||data.message||'não processado')}`; return; }
+    out.textContent = 'Senha atualizada.';
+  } catch (e) {
+    out.textContent = String(e);
+  }
 };
-
-setAuthedUI(false);
 </script>
 </body>
 </html>
