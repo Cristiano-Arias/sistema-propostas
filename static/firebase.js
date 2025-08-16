@@ -1,24 +1,39 @@
-// static/firebase.js  (JS puro, sem <script> dentro)
-
-// SDKs via CDN (modo simples p/ site estático)
+// static/firebase.js - Configuração Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth }       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore }  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// COLE AQUI o seu firebaseConfig exatamente como o console mostrou
+// Suas credenciais do Firebase (baseado nas imagens)
 const firebaseConfig = {
-  // apiKey: "...",
-  // authDomain: "...",
-  // projectId: "...",
-  // storageBucket: "...",
-  // messagingSenderId: "...",
-  // appId: "...",
-  // measurementId: "..." // (se existir)
+  apiKey: "AIzaSyCqF366Ft7RkzHYaZb77HboNO3BPbmCjT8",
+  authDomain: "portal-de-proposta.firebaseapp.com",
+  projectId: "portal-de-proposta",
+  storageBucket: "portal-de-proposta.appspot.com",
+  messagingSenderId: "321036073908",
+  appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
 };
 
-const app  = initializeApp(firebaseConfig);
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db   = getFirestore(app);
+const db = getFirestore(app);
 
-// expõe para outros scripts
+// Exportar para uso global
 window.__firebase = { app, auth, db };
+
+// Funções de autenticação
+export { 
+  auth, 
+  db, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs
+};
