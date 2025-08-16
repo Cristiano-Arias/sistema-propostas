@@ -1,23 +1,21 @@
 services:
   - type: web
-    name: sistema-propostas
+    name: portal-proposta
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn backend_render_fix:app
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: sistema-propostas-db
+          name: portal-proposta-db
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: JWT_SECRET_KEY
         generateValue: true
-      - key: FIREBASE_CREDENTIALS
-        sync: false
 
 databases:
-  - name: sistema-propostas-db
-    databaseName: sistema_propostas
-    user: sistema_propostas_user
+  - name: portal-proposta-db
+    databaseName: portal_propostas
+    user: portal_user
     plan: free
