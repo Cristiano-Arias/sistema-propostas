@@ -54,12 +54,10 @@ def create_app():
     # ------------------ Rotas estáticas ------------------
     from flask import redirect, url_for  # adicione este import no topo
 
-from flask import redirect, url_for  # adicione este import no topo
-
-@app.route("/")
-def index_root():
-    # usa a rota estática nativa do Flask
-    return redirect(url_for("static", filename="index.html"), code=302)
+    @app.route("/")
+    def index_root():
+        # usa a rota estática nativa do Flask
+        return redirect(url_for("static", filename="index.html"), code=302)
 
     # ------------------ Auth ------------------
     @app.post("/auth/login")
