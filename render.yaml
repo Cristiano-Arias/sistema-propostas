@@ -1,25 +1,23 @@
 services:
   - type: web
-    name: portal-proposta
-    env: python
-    plan: starter
+    name: sistema-propostas
+    runtime: python
     buildCommand: pip install -r requirements.txt
-    preDeployCommand: >
-      bash -lc 'if [ ! -d migrations ]; then
-        flask --app backend_render_fix.py db init &&
-        flask --app backend_render_fix.py db migrate -m "init";
-      fi;
-      flask --app backend_render_fix.py db upgrade'
     startCommand: gunicorn backend_render_fix:app
     envVars:
       - key: DATABASE_URL
-        sync: false    # preencha no Dashboard
+        fromDatabase:
+          name: sistema-propostas-db
+          property: connectionString
       - key: SECRET_KEY
-        value: portal-proposta-secret-2024-change-in-production
+        generateValue: true
       - key: JWT_SECRET_KEY
-        value: portal-proposta-jwt-2024-change-in-production
-      - key: FLASK_APP
-        value: backend_render_fix.py
-      - key: FLASK_ENV
-        value: production
-    staticPublishPath: ./static
+        generateValue: true
+      - key: FIREBASE_CREDENTIALS
+        sync: false
+
+databases:
+  - name: sistema-propostas-db
+    databaseName: sistema_propostas
+    user: sistema_propostas_user
+    plan: free
