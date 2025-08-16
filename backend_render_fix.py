@@ -1,4 +1,4 @@
-# backend_render_fix.py - Backend corrigido para Render
+# backend_render_fix.py - Backend com migração automática
 import os
 import json
 import logging
@@ -8,6 +8,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import text
 
 # Configuração de logs
 logging.basicConfig(level=logging.INFO)
@@ -32,7 +33,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
-# Firebase é opcional - não falhar se não estiver configurado
+# Firebase é opcional
 firestore_db = None
 firebase_auth = None
 
@@ -40,7 +41,6 @@ try:
     import firebase_admin
     from firebase_admin import credentials, firestore, auth as fb_auth
     
-    # Tentar carregar credenciais do Firebase
     firebase_creds = os.environ.get('FIREBASE_CREDENTIALS')
     if firebase_creds:
         try:
@@ -70,7 +70,7 @@ class Usuario(db.Model):
     ativo = db.Column(db.Boolean, default=True)
     firebase_uid = db.Column(db.String(128), unique=True, nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow)
 
 class TermoReferencia(db.Model):
     __tablename__ = 'termos_referencia'
@@ -108,13 +108,59 @@ class Proposta(db.Model):
     data_envio = db.Column(db.DateTime, default=datetime.utcnow)
     observacoes = db.Column(db.Text, nullable=True)
 
-# Criar tabelas
+# Função para migrar banco existente
+def migrar_banco():
+    """Adiciona colunas faltantes ao banco existente"""
+    with app.app_context():
+        try:
+            # Verificar e adicionar colunas faltantes na tabela usuarios
+            with db.engine.connect() as conn:
+                # Verificar se a coluna firebase_uid existe
+                result = conn.execute(text("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name='usuarios' AND column_name='firebase_uid'
+                """))
+                
+                if not result.fetchone():
+                    logger.info("Adicionando coluna firebase_uid...")
+                    conn.execute(text("""
+                        ALTER TABLE usuarios 
+                        ADD COLUMN IF NOT EXISTS firebase_uid VARCHAR(128) UNIQUE
+                    """))
+                    conn.commit()
+                    logger.info("Coluna firebase_uid adicionada com sucesso")
+                
+                # Verificar se a coluna atualizado_em existe
+                result = conn.execute(text("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name='usuarios' AND column_name='atualizado_em'
+                """))
+                
+                if not result.fetchone():
+                    logger.info("Adicionando coluna atualizado_em...")
+                    conn.execute(text("""
+                        ALTER TABLE usuarios 
+                        ADD COLUMN IF NOT EXISTS atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    """))
+                    conn.commit()
+                    logger.info("Coluna atualizado_em adicionada com sucesso")
+                    
+        except Exception as e:
+            logger.warning(f"Erro ao migrar banco (pode ser ignorado se for SQLite): {e}")
+
+# Criar/Migrar tabelas
 with app.app_context():
     try:
+        # Tentar migrar primeiro (para bancos existentes)
+        migrar_banco()
+        
+        # Criar tabelas que não existem
         db.create_all()
-        logger.info("Tabelas do banco de dados criadas/verificadas")
+        logger.info("Tabelas do banco de dados criadas/verificadas com sucesso")
     except Exception as e:
-        logger.error(f"Erro ao criar tabelas: {e}")
+        logger.error(f"Erro ao criar/migrar tabelas: {e}")
 
 # Rotas de autenticação
 @app.route('/auth/login', methods=['POST'])
@@ -127,34 +173,53 @@ def login():
         if not email or not senha:
             return jsonify({'erro': 'Email e senha são obrigatórios'}), 400
         
-        # Verificar no banco local
-        usuario = Usuario.query.filter_by(email=email).first()
+        # Busca simplificada para evitar erro com colunas faltantes
+        try:
+            usuario = Usuario.query.filter_by(email=email).first()
+        except Exception as e:
+            logger.error(f"Erro ao buscar usuário: {e}")
+            # Fallback: busca direta via SQL
+            with db.engine.connect() as conn:
+                result = conn.execute(text("""
+                    SELECT id, email, senha_hash, nome, perfil, ativo 
+                    FROM usuarios 
+                    WHERE email = :email
+                """), {"email": email})
+                row = result.fetchone()
+                
+                if row and check_password_hash(row[2], senha):
+                    access_token = create_access_token(
+                        identity=str(row[0]),
+                        additional_claims={
+                            'perfil': row[4],
+                            'email': row[1],
+                            'nome': row[3]
+                        }
+                    )
+                    
+                    return jsonify({
+                        'access_token': access_token,
+                        'perfil': row[4],
+                        'nome': row[3],
+                        'email': row[1]
+                    }), 200
+                else:
+                    return jsonify({'erro': 'Credenciais inválidas'}), 401
         
         if usuario and check_password_hash(usuario.senha_hash, senha):
-            # Sincronizar com Firebase se disponível e necessário
-            if firestore_db and firebase_auth and not usuario.firebase_uid:
+            # Sincronizar com Firebase se disponível
+            if firestore_db and firebase_auth:
                 try:
-                    # Tentar criar usuário no Firebase
-                    firebase_user = firebase_auth.create_user(
-                        email=email,
-                        password=senha,
-                        display_name=usuario.nome
-                    )
-                    usuario.firebase_uid = firebase_user.uid
-                    
-                    # Criar documento no Firestore
-                    firestore_db.collection('usuarios').document(firebase_user.uid).set({
-                        'email': email,
-                        'nome': usuario.nome,
-                        'perfil': usuario.perfil,
-                        'ativo': usuario.ativo,
-                        'criadoEm': datetime.utcnow().isoformat()
-                    })
-                    
-                    db.session.commit()
-                    logger.info(f"Usuário {email} sincronizado com Firebase")
+                    if not usuario.firebase_uid:
+                        firebase_user = firebase_auth.create_user(
+                            email=email,
+                            password=senha,
+                            display_name=usuario.nome
+                        )
+                        usuario.firebase_uid = firebase_user.uid
+                        db.session.commit()
                 except Exception as e:
-                    logger.warning(f"Não foi possível sincronizar com Firebase: {e}")
+                    logger.warning(f"Sync Firebase falhou: {e}")
             
             # Criar token JWT
             access_token = create_access_token(
@@ -188,49 +253,40 @@ def register():
         nome = data.get('nome')
         perfil = data.get('perfil', 'requisitante')
         
-        # Validações
         if not all([email, senha, nome]):
             return jsonify({'erro': 'Todos os campos são obrigatórios'}), 400
         
-        if Usuario.query.filter_by(email=email).first():
+        # Verificar se já existe
+        existing = db.session.execute(
+            text("SELECT id FROM usuarios WHERE email = :email"),
+            {"email": email}
+        ).fetchone()
+        
+        if existing:
             return jsonify({'erro': 'Email já cadastrado'}), 409
         
-        # Criar usuário no banco local
-        novo_usuario = Usuario(
-            email=email,
-            senha_hash=generate_password_hash(senha),
-            nome=nome,
-            perfil=perfil
+        # Inserir diretamente via SQL para evitar problemas com colunas
+        result = db.session.execute(
+            text("""
+                INSERT INTO usuarios (email, senha_hash, nome, perfil, ativo, criado_em)
+                VALUES (:email, :senha_hash, :nome, :perfil, :ativo, :criado_em)
+                RETURNING id
+            """),
+            {
+                "email": email,
+                "senha_hash": generate_password_hash(senha),
+                "nome": nome,
+                "perfil": perfil,
+                "ativo": True,
+                "criado_em": datetime.utcnow()
+            }
         )
-        
-        # Tentar criar no Firebase se disponível
-        if firestore_db and firebase_auth:
-            try:
-                firebase_user = firebase_auth.create_user(
-                    email=email,
-                    password=senha,
-                    display_name=nome
-                )
-                novo_usuario.firebase_uid = firebase_user.uid
-                
-                # Criar documento no Firestore
-                firestore_db.collection('usuarios').document(firebase_user.uid).set({
-                    'email': email,
-                    'nome': nome,
-                    'perfil': perfil,
-                    'ativo': True,
-                    'criadoEm': datetime.utcnow().isoformat()
-                })
-                logger.info(f"Usuário {email} criado no Firebase")
-            except Exception as e:
-                logger.warning(f"Usuário criado localmente mas não no Firebase: {e}")
-        
-        db.session.add(novo_usuario)
         db.session.commit()
+        user_id = result.fetchone()[0]
         
         return jsonify({
             'mensagem': 'Usuário criado com sucesso',
-            'id': novo_usuario.id
+            'id': user_id
         }), 201
         
     except Exception as e:
@@ -244,77 +300,78 @@ def register():
 def gerenciar_usuarios():
     try:
         current_user_id = get_jwt_identity()
-        usuario = Usuario.query.get(int(current_user_id))
         
-        if not usuario or usuario.perfil != 'ADMIN':
+        # Verificar se é admin
+        result = db.session.execute(
+            text("SELECT perfil FROM usuarios WHERE id = :id"),
+            {"id": int(current_user_id)}
+        ).fetchone()
+        
+        if not result or result[0] != 'ADMIN':
             return jsonify({'erro': 'Acesso negado'}), 403
         
         if request.method == 'GET':
-            # Buscar com filtro opcional
             q = request.args.get('q', '')
-            query = Usuario.query
             
             if q:
-                query = query.filter(
-                    db.or_(
-                        Usuario.nome.ilike(f'%{q}%'),
-                        Usuario.email.ilike(f'%{q}%')
-                    )
-                )
+                usuarios = db.session.execute(
+                    text("""
+                        SELECT id, email, nome, perfil, ativo, criado_em 
+                        FROM usuarios 
+                        WHERE nome ILIKE :q OR email ILIKE :q
+                    """),
+                    {"q": f"%{q}%"}
+                ).fetchall()
+            else:
+                usuarios = db.session.execute(
+                    text("SELECT id, email, nome, perfil, ativo, criado_em FROM usuarios")
+                ).fetchall()
             
-            usuarios = query.all()
             return jsonify([{
-                'id': u.id,
-                'email': u.email,
-                'nome': u.nome,
-                'perfil': u.perfil,
-                'ativo': u.ativo,
-                'criado_em': u.criado_em.isoformat() if u.criado_em else None
+                'id': u[0],
+                'email': u[1],
+                'nome': u[2],
+                'perfil': u[3],
+                'ativo': u[4],
+                'criado_em': u[5].isoformat() if u[5] else None
             } for u in usuarios]), 200
         
         elif request.method == 'POST':
             data = request.get_json()
             
-            # Validar dados
             if not all([data.get('email'), data.get('senha'), data.get('nome')]):
                 return jsonify({'erro': 'Campos obrigatórios faltando'}), 400
             
             # Verificar se email já existe
-            if Usuario.query.filter_by(email=data.get('email')).first():
+            existing = db.session.execute(
+                text("SELECT id FROM usuarios WHERE email = :email"),
+                {"email": data.get('email')}
+            ).fetchone()
+            
+            if existing:
                 return jsonify({'erro': 'Email já cadastrado'}), 409
             
-            novo_usuario = Usuario(
-                email=data.get('email'),
-                senha_hash=generate_password_hash(data.get('senha')),
-                nome=data.get('nome'),
-                perfil=data.get('perfil', 'requisitante')
+            # Inserir novo usuário
+            result = db.session.execute(
+                text("""
+                    INSERT INTO usuarios (email, senha_hash, nome, perfil, ativo, criado_em)
+                    VALUES (:email, :senha_hash, :nome, :perfil, :ativo, :criado_em)
+                    RETURNING id
+                """),
+                {
+                    "email": data.get('email'),
+                    "senha_hash": generate_password_hash(data.get('senha')),
+                    "nome": data.get('nome'),
+                    "perfil": data.get('perfil', 'requisitante'),
+                    "ativo": True,
+                    "criado_em": datetime.utcnow()
+                }
             )
-            
-            # Sincronizar com Firebase se disponível
-            if firestore_db and firebase_auth:
-                try:
-                    firebase_user = firebase_auth.create_user(
-                        email=data.get('email'),
-                        password=data.get('senha'),
-                        display_name=data.get('nome')
-                    )
-                    novo_usuario.firebase_uid = firebase_user.uid
-                    
-                    firestore_db.collection('usuarios').document(firebase_user.uid).set({
-                        'email': data.get('email'),
-                        'nome': data.get('nome'),
-                        'perfil': data.get('perfil'),
-                        'ativo': True,
-                        'criadoEm': datetime.utcnow().isoformat()
-                    })
-                except Exception as e:
-                    logger.warning(f"Firebase sync failed: {e}")
-            
-            db.session.add(novo_usuario)
             db.session.commit()
+            user_id = result.fetchone()[0]
             
             return jsonify({
-                'id': novo_usuario.id,
+                'id': user_id,
                 'mensagem': 'Usuário criado com sucesso'
             }), 201
             
@@ -328,9 +385,14 @@ def gerenciar_usuarios():
 def reset_senha(user_id):
     try:
         current_user_id = get_jwt_identity()
-        admin = Usuario.query.get(int(current_user_id))
         
-        if not admin or admin.perfil != 'ADMIN':
+        # Verificar se é admin
+        result = db.session.execute(
+            text("SELECT perfil FROM usuarios WHERE id = :id"),
+            {"id": int(current_user_id)}
+        ).fetchone()
+        
+        if not result or result[0] != 'ADMIN':
             return jsonify({'erro': 'Acesso negado'}), 403
         
         data = request.get_json()
@@ -339,23 +401,18 @@ def reset_senha(user_id):
         if not nova_senha:
             return jsonify({'erro': 'Nova senha é obrigatória'}), 400
         
-        usuario = Usuario.query.get(user_id)
-        if not usuario:
-            return jsonify({'erro': 'Usuário não encontrado'}), 404
-        
-        usuario.senha_hash = generate_password_hash(nova_senha)
-        usuario.atualizado_em = datetime.utcnow()
-        
-        # Atualizar no Firebase se disponível
-        if firestore_db and firebase_auth and usuario.firebase_uid:
-            try:
-                firebase_auth.update_user(
-                    usuario.firebase_uid,
-                    password=nova_senha
-                )
-            except Exception as e:
-                logger.warning(f"Não foi possível atualizar senha no Firebase: {e}")
-        
+        # Atualizar senha
+        db.session.execute(
+            text("""
+                UPDATE usuarios 
+                SET senha_hash = :senha_hash
+                WHERE id = :id
+            """),
+            {
+                "senha_hash": generate_password_hash(nova_senha),
+                "id": user_id
+            }
+        )
         db.session.commit()
         
         return jsonify({'mensagem': 'Senha atualizada com sucesso'}), 200
@@ -365,132 +422,107 @@ def reset_senha(user_id):
         db.session.rollback()
         return jsonify({'erro': str(e)}), 500
 
-# Rotas de API para Termos de Referência
+# Rotas de API
 @app.route('/api/termos-referencia', methods=['GET', 'POST'])
 @jwt_required()
 def termos_referencia():
-    try:
-        if request.method == 'GET':
-            termos = TermoReferencia.query.all()
-            return jsonify([{
-                'id': tr.id,
-                'numero_tr': tr.numero_tr,
-                'titulo': tr.titulo,
-                'descricao': tr.descricao,
-                'status': tr.status,
-                'data_criacao': tr.data_criacao.isoformat() if tr.data_criacao else None,
-                'valor_estimado': tr.valor_estimado,
-                'prazo_entrega': tr.prazo_entrega
-            } for tr in termos]), 200
+    if request.method == 'GET':
+        termos = TermoReferencia.query.all()
+        return jsonify([{
+            'id': tr.id,
+            'numero_tr': tr.numero_tr,
+            'titulo': tr.titulo,
+            'descricao': tr.descricao,
+            'status': tr.status,
+            'data_criacao': tr.data_criacao.isoformat() if tr.data_criacao else None
+        } for tr in termos]), 200
+    
+    elif request.method == 'POST':
+        data = request.get_json()
+        current_user = get_jwt_identity()
         
-        elif request.method == 'POST':
-            data = request.get_json()
-            current_user = get_jwt_identity()
-            
-            novo_tr = TermoReferencia(
-                numero_tr=f"TR-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                titulo=data.get('titulo'),
-                descricao=data.get('descricao'),
-                requisitante_id=int(current_user),
-                valor_estimado=data.get('valor_estimado'),
-                prazo_entrega=data.get('prazo_entrega')
-            )
-            
-            db.session.add(novo_tr)
-            db.session.commit()
-            
-            return jsonify({
-                'id': novo_tr.id,
-                'numero_tr': novo_tr.numero_tr,
-                'mensagem': 'Termo de Referência criado com sucesso'
-            }), 201
-            
-    except Exception as e:
-        logger.error(f"Erro em termos_referencia: {e}")
-        db.session.rollback()
-        return jsonify({'erro': str(e)}), 500
+        novo_tr = TermoReferencia(
+            numero_tr=f"TR-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            titulo=data.get('titulo'),
+            descricao=data.get('descricao'),
+            requisitante_id=int(current_user),
+            valor_estimado=data.get('valor_estimado'),
+            prazo_entrega=data.get('prazo_entrega')
+        )
+        
+        db.session.add(novo_tr)
+        db.session.commit()
+        
+        return jsonify({
+            'id': novo_tr.id,
+            'numero_tr': novo_tr.numero_tr
+        }), 201
 
-# Rotas de API para Processos
 @app.route('/api/processos', methods=['GET', 'POST'])
 @jwt_required()
 def processos():
-    try:
-        if request.method == 'GET':
-            processos = Processo.query.all()
-            return jsonify([{
-                'id': p.id,
-                'numero_processo': p.numero_processo,
-                'status': p.status,
-                'modalidade': p.modalidade,
-                'data_abertura': p.data_abertura.isoformat() if p.data_abertura else None
-            } for p in processos]), 200
+    if request.method == 'GET':
+        processos = Processo.query.all()
+        return jsonify([{
+            'id': p.id,
+            'numero_processo': p.numero_processo,
+            'status': p.status,
+            'modalidade': p.modalidade,
+            'data_abertura': p.data_abertura.isoformat() if p.data_abertura else None
+        } for p in processos]), 200
+    
+    elif request.method == 'POST':
+        data = request.get_json()
+        current_user = get_jwt_identity()
         
-        elif request.method == 'POST':
-            data = request.get_json()
-            current_user = get_jwt_identity()
-            
-            novo_processo = Processo(
-                numero_processo=f"PROC-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                tr_id=data.get('tr_id'),
-                comprador_id=int(current_user),
-                modalidade=data.get('modalidade', 'Pregão Eletrônico')
-            )
-            
-            db.session.add(novo_processo)
-            db.session.commit()
-            
-            return jsonify({
-                'id': novo_processo.id,
-                'numero_processo': novo_processo.numero_processo,
-                'mensagem': 'Processo criado com sucesso'
-            }), 201
-            
-    except Exception as e:
-        logger.error(f"Erro em processos: {e}")
-        db.session.rollback()
-        return jsonify({'erro': str(e)}), 500
+        novo_processo = Processo(
+            numero_processo=f"PROC-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            tr_id=data.get('tr_id'),
+            comprador_id=int(current_user),
+            modalidade=data.get('modalidade', 'Pregão Eletrônico')
+        )
+        
+        db.session.add(novo_processo)
+        db.session.commit()
+        
+        return jsonify({
+            'id': novo_processo.id,
+            'numero_processo': novo_processo.numero_processo
+        }), 201
 
-# Rotas de API para Propostas
 @app.route('/api/propostas', methods=['GET', 'POST'])
 @jwt_required()
 def propostas():
-    try:
-        if request.method == 'GET':
-            propostas = Proposta.query.all()
-            return jsonify([{
-                'id': p.id,
-                'processo_id': p.processo_id,
-                'valor': p.valor,
-                'prazo_entrega': p.prazo_entrega,
-                'status': p.status,
-                'data_envio': p.data_envio.isoformat() if p.data_envio else None
-            } for p in propostas]), 200
+    if request.method == 'GET':
+        propostas = Proposta.query.all()
+        return jsonify([{
+            'id': p.id,
+            'processo_id': p.processo_id,
+            'valor': p.valor,
+            'prazo_entrega': p.prazo_entrega,
+            'status': p.status,
+            'data_envio': p.data_envio.isoformat() if p.data_envio else None
+        } for p in propostas]), 200
+    
+    elif request.method == 'POST':
+        data = request.get_json()
+        current_user = get_jwt_identity()
         
-        elif request.method == 'POST':
-            data = request.get_json()
-            current_user = get_jwt_identity()
-            
-            nova_proposta = Proposta(
-                processo_id=data.get('processo_id'),
-                fornecedor_id=int(current_user),
-                valor=data.get('valor'),
-                prazo_entrega=data.get('prazo_entrega'),
-                observacoes=data.get('observacoes')
-            )
-            
-            db.session.add(nova_proposta)
-            db.session.commit()
-            
-            return jsonify({
-                'id': nova_proposta.id,
-                'status': nova_proposta.status,
-                'mensagem': 'Proposta enviada com sucesso'
-            }), 201
-            
-    except Exception as e:
-        logger.error(f"Erro em propostas: {e}")
-        db.session.rollback()
-        return jsonify({'erro': str(e)}), 500
+        nova_proposta = Proposta(
+            processo_id=data.get('processo_id'),
+            fornecedor_id=int(current_user),
+            valor=data.get('valor'),
+            prazo_entrega=data.get('prazo_entrega'),
+            observacoes=data.get('observacoes')
+        )
+        
+        db.session.add(nova_proposta)
+        db.session.commit()
+        
+        return jsonify({
+            'id': nova_proposta.id,
+            'status': nova_proposta.status
+        }), 201
 
 # Servir arquivos estáticos
 @app.route('/')
@@ -513,44 +545,34 @@ def health():
         'database': 'connected'
     }), 200
 
-# Criar usuário admin padrão se não existir
+# Criar usuário admin padrão
 def criar_admin_padrao():
     try:
         with app.app_context():
-            admin = Usuario.query.filter_by(email='admin@sistema.com').first()
-            if not admin:
-                admin = Usuario(
-                    email='admin@sistema.com',
-                    senha_hash=generate_password_hash('Admin@2025!'),
-                    nome='Administrador do Sistema',
-                    perfil='ADMIN',
-                    ativo=True
+            # Verificar se admin existe
+            result = db.session.execute(
+                text("SELECT id FROM usuarios WHERE email = :email"),
+                {"email": "admin@sistema.com"}
+            ).fetchone()
+            
+            if not result:
+                # Criar admin
+                db.session.execute(
+                    text("""
+                        INSERT INTO usuarios (email, senha_hash, nome, perfil, ativo, criado_em)
+                        VALUES (:email, :senha_hash, :nome, :perfil, :ativo, :criado_em)
+                    """),
+                    {
+                        "email": "admin@sistema.com",
+                        "senha_hash": generate_password_hash("Admin@2025!"),
+                        "nome": "Administrador do Sistema",
+                        "perfil": "ADMIN",
+                        "ativo": True,
+                        "criado_em": datetime.utcnow()
+                    }
                 )
-                db.session.add(admin)
                 db.session.commit()
                 logger.info("Usuário admin padrão criado: admin@sistema.com / Admin@2025!")
-                
-                # Tentar criar no Firebase também
-                if firestore_db and firebase_auth:
-                    try:
-                        firebase_user = firebase_auth.create_user(
-                            email='admin@sistema.com',
-                            password='Admin@2025!',
-                            display_name='Administrador do Sistema'
-                        )
-                        admin.firebase_uid = firebase_user.uid
-                        
-                        firestore_db.collection('usuarios').document(firebase_user.uid).set({
-                            'email': 'admin@sistema.com',
-                            'nome': 'Administrador do Sistema',
-                            'perfil': 'ADMIN',
-                            'ativo': True,
-                            'criadoEm': datetime.utcnow().isoformat()
-                        })
-                        db.session.commit()
-                        logger.info("Admin sincronizado com Firebase")
-                    except Exception as e:
-                        logger.warning(f"Admin criado localmente mas não no Firebase: {e}")
             else:
                 logger.info("Usuário admin já existe")
     except Exception as e:
