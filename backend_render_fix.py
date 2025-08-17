@@ -21,24 +21,25 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 db = None
 
 def initialize_firebase():
-    """Inicializa Firebase com fallback para diferentes ambientes"""
+    """Inicializa Firebase com credenciais do ambiente"""
     global db
     try:
-        # Tentar variável de ambiente primeiro (produção)
+        # Carregar credenciais do ambiente (obrigatório)
         firebase_creds = os.environ.get('FIREBASE_CREDENTIALS')
         if firebase_creds:
             logger.info("🔧 Carregando credenciais do ambiente...")
             cred_dict = json.loads(firebase_creds)
             cred = credentials.Certificate(cred_dict)
+            
+            firebase_admin.initialize_app(cred)
+            db = firestore.client()
+            logger.info("✅ Firebase inicializado com sucesso!")
+            return True
         else:
-            # Fallback para arquivo local (desenvolvimento)
-            logger.info("🔧 Tentando arquivo local...")
-            cred = credentials.Certificate('firebase-credentials.json')
-        
-        firebase_admin.initialize_app(cred)
-        db = firestore.client()
-        logger.info("✅ Firebase inicializado com sucesso!")
-        return True
+            logger.error("❌ FIREBASE_CREDENTIALS não configurado!")
+            db = None
+            return False
+            
     except Exception as e:
         logger.error(f"❌ Erro ao inicializar Firebase: {e}")
         db = None
