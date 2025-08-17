@@ -21,24 +21,69 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 db = None
 
 def initialize_firebase():
-    """Inicializa Firebase com credenciais do ambiente"""
+    """Inicializa Firebase com credenciais do ambiente - COM DEBUG"""
     global db
+    
+    # DEBUG - Listar todas as variáveis de ambiente relacionadas ao Firebase
+    print("🔍 DEBUG: Listando todas as variáveis de ambiente:")
+    firebase_vars = []
+    for key, value in os.environ.items():
+        if 'FIREBASE' in key.upper():
+            firebase_vars.append(f"   {key} = {value[:50]}...")  # Mostra só os primeiros 50 chars
+            print(f"   {key} = {value[:50]}...")
+    
+    if not firebase_vars:
+        print("   ❌ Nenhuma variável com 'FIREBASE' encontrada!")
+    
+    # DEBUG - Verificar especificamente FIREBASE_CREDENTIALS
+    firebase_creds = os.environ.get('FIREBASE_CREDENTIALS')
+    print(f"🔍 DEBUG: firebase_creds existe = {firebase_creds is not None}")
+    
+    if firebase_creds:
+        print(f"🔍 DEBUG: Tamanho do JSON = {len(firebase_creds)} caracteres")
+        print(f"🔍 DEBUG: Primeiros 100 chars = {firebase_creds[:100]}...")
+        print(f"🔍 DEBUG: Últimos 50 chars = ...{firebase_creds[-50:]}")
+    else:
+        print("🔍 DEBUG: FIREBASE_CREDENTIALS está None/vazio")
+    
     try:
-        # Carregar credenciais do ambiente (obrigatório)
-        firebase_creds = os.environ.get('FIREBASE_CREDENTIALS')
         if firebase_creds:
             logger.info("🔧 Carregando credenciais do ambiente...")
+            print("🔧 Tentando fazer parse do JSON...")
+            
             cred_dict = json.loads(firebase_creds)
+            print(f"🔧 JSON parseado com sucesso! Keys: {list(cred_dict.keys())}")
+            
             cred = credentials.Certificate(cred_dict)
+            print("🔧 Certificado criado com sucesso!")
             
             firebase_admin.initialize_app(cred)
+            print("🔧 Firebase app inicializado!")
+            
             db = firestore.client()
+            print("🔧 Firestore client criado!")
+            
             logger.info("✅ Firebase inicializado com sucesso!")
+            print("✅ Firebase inicializado com sucesso!")
             return True
         else:
             logger.error("❌ FIREBASE_CREDENTIALS não configurado!")
+            print("❌ FIREBASE_CREDENTIALS não configurado!")
             db = None
             return False
+            
+    except json.JSONDecodeError as e:
+        error_msg = f"❌ Erro ao fazer parse do JSON: {e}"
+        logger.error(error_msg)
+        print(error_msg)
+        db = None
+        return False
+    except Exception as e:
+        error_msg = f"❌ Erro ao inicializar Firebase: {e}"
+        logger.error(error_msg)
+        print(error_msg)
+        db = None
+        return False
             
     except Exception as e:
         logger.error(f"❌ Erro ao inicializar Firebase: {e}")
