@@ -426,6 +426,31 @@
             alert.style.display = 'none';
         }
         
+        function getCurrentUser() {
+            try {
+                const userData = localStorage.getItem('userData');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    console.log('✅ Usuário encontrado:', user);
+                    return user;
+                }
+                
+                const sessionData = sessionStorage.getItem('userData');
+                if (sessionData) {
+                    const user = JSON.parse(sessionData);
+                    console.log('✅ Usuário encontrado no sessionStorage:', user);
+                    return user;
+                }
+                
+                console.log('❌ Nenhum dado de usuário encontrado');
+                return null;
+                
+            } catch (error) {
+                console.error('❌ Erro ao obter dados do usuário:', error);
+                return null;
+            }
+        }
+        
         function redirectToDashboard() {
             const user = getCurrentUser();
             if (user) {
