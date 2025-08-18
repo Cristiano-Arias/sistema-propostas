@@ -1013,47 +1013,9 @@
     </div>
 
     <script>
-        // Sistema de dados local
-        const SistemaLocal = {
-            // Chaves para localStorage
-            CHAVES: {
-                TRS: 'sistema_trs',
-                USUARIO: 'sistema_usuario_logado',
-                ESTATISTICAS: 'sistema_estatisticas'
-            },
-
-            // Salvar dados
-            salvar(chave, dados) {
-                try {
-                    localStorage.setItem(chave, JSON.stringify(dados));
-                    return true;
-                } catch (error) {
-                    console.error('Erro ao salvar dados:', error);
-                    return false;
-                }
-            },
-
-            // Carregar dados
-            carregar(chave, padrao = null) {
-                try {
-                    const dados = localStorage.getItem(chave);
-                    return dados ? JSON.parse(dados) : padrao;
-                } catch (error) {
-                    console.error('Erro ao carregar dados:', error);
-                    return padrao;
-                }
-            },
-
-            // Gerar ID único
-            gerarId() {
-                return Date.now().toString(36) + Math.random().toString(36).substr(2);
-            },
-
-            // Obter usuário logado
-            obterUsuario() {
-                return this.carregar(this.CHAVES.USUARIO, { id: 1, nome: 'Admin', email: 'admin@sistema.com' });
-            }
-        };
+        // Importar SistemaFirebase
+        import SistemaFirebase from '/static/js/SistemaFirebase.js';
+        const SistemaLocal = SistemaFirebase;
 
         // Integração com outros módulos
         const IntegracaoModulos = {
@@ -2289,8 +2251,16 @@
             }
         }
 
-        // Event listener principal
-        document.addEventListener('DOMContentLoaded', function() {
+        / Event listener principal
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Migração automática de dados
+            if (localStorage.getItem('migrado_requisitante') !== 'true') {
+                console.log('🔄 Migrando dados do Dashboard Requisitante...');
+                await SistemaLocal.migrarDados();
+                localStorage.setItem('migrado_requisitante', 'true');
+                console.log('✅ Migração concluída!');
+            }
+            
             console.log('Sistema carregado!');
 
             // Navegação principal
@@ -2404,6 +2374,7 @@
         });
     </script>
 
+    <script type="module" src="/static/js/SistemaFirebase.js"></script>
     <script type="module" src="/static/firebase.js"></script>
     <script type="module" src="/static/auth.js"></script>
 
