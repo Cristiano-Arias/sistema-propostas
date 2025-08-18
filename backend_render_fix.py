@@ -136,7 +136,7 @@ def require_admin(f):
     @wraps(f)
     @require_auth
     def decorated_function(*args, **kwargs):
-        user_doc = db.collection('usuarios').document(request.user['uid']).get()
+        user_doc = db.collection('usuario').document(request.user['uid']).get()
         if not user_doc.exists or user_doc.to_dict().get('perfil') != 'ADMIN':
             return jsonify({'erro': 'Acesso negado'}), 403
         return f(*args, **kwargs)
@@ -164,7 +164,7 @@ def verify_token():
         email = decoded.get('email')
         
         # Buscar ou criar usuário no Firestore
-        user_doc = db.collection('usuarios').document(uid).get()
+        user_doc = db.collection('usuario').document(uid).get()
         
         if user_doc.exists:
             user_data = user_doc.to_dict()
@@ -177,7 +177,7 @@ def verify_token():
                 'ativo': True,
                 'criadoEm': firestore.SERVER_TIMESTAMP
             }
-            db.collection('usuarios').document(uid).set(user_data)
+            db.collection('usuario').document(uid).set(user_data)
             user_data['novo_usuario'] = True
         
         return jsonify({
@@ -202,7 +202,7 @@ def listar_usuarios():
     """Lista todos os usuários (apenas admin)"""
     try:
         usuarios = []
-        for doc in db.collection('usuarios').stream():
+        for doc in db.collection('usuario').stream():
             user_data = doc.to_dict()
             user_data['id'] = doc.id
             # Remover dados sensíveis
@@ -235,7 +235,7 @@ def criar_usuario():
         )
         
         # Criar no Firestore
-        db.collection('usuarios').document(new_user.uid).set({
+        db.collection('usuario').document(new_user.uid).set({
             'email': data['email'],
             'nome': data['nome'],
             'perfil': data.get('perfil', 'requisitante'),
