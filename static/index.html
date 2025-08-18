@@ -1,449 +1,187 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Propostas - Sistema Simplificado</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        .logo {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        
-        .logo h1 {
-            color: #333;
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .logo p {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #333;
-            font-weight: 500;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 0.75rem;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-bottom: 1rem;
-        }
-        
-        .btn:hover {
-            background: #5a6fd8;
-        }
-        
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        
-        .alert {
-            padding: 0.75rem;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .links {
-            text-align: center;
-            margin-top: 1rem;
-        }
-        
-        .links a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        
-        .links a:hover {
-            text-decoration: underline;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 1rem 0;
-        }
-        
-        .spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #667eea;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 0.5rem;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .hidden {
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Propostas - Sistema Simplificado</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height:100vh; display:flex; align-items:center; justify-content:center }
+    .container { background:#fff; padding:2rem; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,.1); width:100%; max-width:400px }
+    .logo { text-align:center; margin-bottom:2rem }
+    .logo h1 { color:#333; font-size:1.8rem; margin-bottom:.5rem }
+    .logo p { color:#666; font-size:.9rem }
+    .form-group { margin-bottom:1rem }
+    .form-group label { display:block; margin-bottom:.5rem; color:#333; font-weight:500 }
+    .form-group input { width:100%; padding:.75rem; border:1px solid #ddd; border-radius:5px; font-size:1rem; transition:border-color .3s }
+    .form-group input:focus { outline:none; border-color:#667eea }
+    .btn { width:100%; padding:.75rem; background:#667eea; color:#fff; border:none; border-radius:5px; font-size:1rem; cursor:pointer; transition:background .3s; margin-bottom:1rem }
+    .btn:hover { background:#5a6fd8 }
+    .btn:disabled { background:#ccc; cursor:not-allowed }
+    .alert { padding:.75rem; border-radius:5px; margin-bottom:1rem; display:none }
+    .alert-error { background:#f8d7da; color:#721c24; border:1px solid #f5c6cb }
+    .alert-success { background:#d4edda; color:#155724; border:1px solid #c3e6cb }
+    .links { text-align:center; margin-top:1rem }
+    .links a { color:#667eea; text-decoration:none; font-size:.9rem }
+    .links a:hover { text-decoration:underline }
+    .loading { display:none; text-align:center; margin:1rem 0 }
+    .spinner { border:2px solid #f3f3f3; border-top:2px solid #667eea; border-radius:50%; width:20px; height:20px; animation:spin 1s linear infinite; display:inline-block; margin-right:.5rem }
+    @keyframes spin { 0% { transform:rotate(0)} 100% { transform:rotate(360deg)} }
+    .hidden { display:none }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
-            <h1>🏢 Portal de Propostas</h1>
-            <p>Sistema Simplificado de Gestão</p>
-        </div>
-        
-        <div id="alert" class="alert"></div>
-        
-        <!-- Formulário de Login -->
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Senha:</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            
-            <button type="submit" class="btn" id="loginBtn">
-                <span id="loginText">Entrar</span>
-                <div id="loginLoading" class="loading">
-                    <span class="spinner"></span>Entrando...
-                </div>
-            </button>
-        </form>
-        
-        <!-- Formulário de Registro -->
-        <form id="registerForm" class="hidden">
-            <div class="form-group">
-                <label for="regName">Nome Completo:</label>
-                <input type="text" id="regName" name="name" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="regEmail">Email:</label>
-                <input type="email" id="regEmail" name="email" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="regPassword">Senha:</label>
-                <input type="password" id="regPassword" name="password" required minlength="6">
-            </div>
-            
-            <div class="form-group">
-                <label for="regConfirmPassword">Confirmar Senha:</label>
-                <input type="password" id="regConfirmPassword" name="confirmPassword" required minlength="6">
-            </div>
-            
-            <button type="submit" class="btn" id="registerBtn">
-                <span id="registerText">Registrar</span>
-                <div id="registerLoading" class="loading">
-                    <span class="spinner"></span>Registrando...
-                </div>
-            </button>
-        </form>
-        
-        <!-- Formulário de Reset de Senha -->
-        <form id="resetForm" class="hidden">
-            <div class="form-group">
-                <label for="resetEmail">Email para recuperação:</label>
-                <input type="email" id="resetEmail" name="email" required>
-            </div>
-            
-            <button type="submit" class="btn" id="resetBtn">
-                <span id="resetText">Enviar Link</span>
-                <div id="resetLoading" class="loading">
-                    <span class="spinner"></span>Enviando...
-                </div>
-            </button>
-        </form>
-        
-        <div class="links">
-            <a href="#" id="showRegister">Criar conta</a> |
-            <a href="#" id="showReset">Esqueci minha senha</a> |
-            <a href="#" id="showLogin" class="hidden">Voltar ao login</a>
-        </div>
+  <div class="container">
+    <div class="logo">
+      <h1>🏢 Portal de Propostas</h1>
+      <p>Sistema Simplificado de Gestão</p>
     </div>
 
-    <!-- Firebase -->
-    <script type="module">
-        import { 
-            login, 
-            register, 
-            resetPassword, 
-            isLoggedIn, 
-            getCurrentUser 
-        } from './firebase_simplificado.js';
-        
-        // Elementos DOM
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const resetForm = document.getElementById('resetForm');
-        const alert = document.getElementById('alert');
-        
-        // Links
-        const showRegisterLink = document.getElementById('showRegister');
-        const showResetLink = document.getElementById('showReset');
-        const showLoginLink = document.getElementById('showLogin');
-        
-        // Verificar se já está logado
-        if (isLoggedIn()) {
-            redirectToDashboard();
-        }
-        
-        // Event Listeners
-        loginForm.addEventListener('submit', handleLogin);
-        registerForm.addEventListener('submit', handleRegister);
-        resetForm.addEventListener('submit', handleReset);
-        
-        showRegisterLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showForm('register');
-        });
-        
-        showResetLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showForm('reset');
-        });
-        
-        showLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showForm('login');
-        });
-        
-        // Funções
-        async function handleLogin(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            setLoading('login', true);
-            hideAlert();
-            
-            try {
-                const result = await login(email, password);
-                
-                if (result.success) {
-                    showAlert('Login realizado com sucesso!', 'success');
-                    setTimeout(() => {
-                        redirectToDashboard();
-                    }, 1000);
-                } else {
-                    showAlert(result.error || 'Erro no login', 'error');
-                }
-            } catch (error) {
-                showAlert('Erro no login: ' + error.message, 'error');
-            } finally {
-                setLoading('login', false);
-            }
-        }
-        
-        async function handleRegister(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPassword').value;
-            const confirmPassword = document.getElementById('regConfirmPassword').value;
-            
-            if (password !== confirmPassword) {
-                showAlert('Senhas não coincidem', 'error');
-                return;
-            }
-            
-            setLoading('register', true);
-            hideAlert();
-            
-            try {
-                const result = await register(email, password, name);
-                
-                if (result.success) {
-                    showAlert('Conta criada com sucesso!', 'success');
-                    setTimeout(() => {
-                        redirectToDashboard();
-                    }, 1000);
-                } else {
-                    showAlert(result.error || 'Erro no registro', 'error');
-                }
-            } catch (error) {
-                showAlert('Erro no registro: ' + error.message, 'error');
-            } finally {
-                setLoading('register', false);
-            }
-        }
-        
-        async function handleReset(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('resetEmail').value;
-            
-            setLoading('reset', true);
-            hideAlert();
-            
-            try {
-                const result = await resetPassword(email);
-                
-                if (result.success) {
-                    showAlert('Link de recuperação enviado para seu email!', 'success');
-                    setTimeout(() => {
-                        showForm('login');
-                    }, 2000);
-                } else {
-                    showAlert(result.error || 'Erro ao enviar email', 'error');
-                }
-            } catch (error) {
-                showAlert('Erro: ' + error.message, 'error');
-            } finally {
-                setLoading('reset', false);
-            }
-        }
-        
-        function showForm(formType) {
-            // Esconder todos os formulários
-            loginForm.classList.add('hidden');
-            registerForm.classList.add('hidden');
-            resetForm.classList.add('hidden');
-            showLoginLink.classList.add('hidden');
-            
-            // Mostrar formulário solicitado
-            switch (formType) {
-                case 'register':
-                    registerForm.classList.remove('hidden');
-                    showLoginLink.classList.remove('hidden');
-                    break;
-                case 'reset':
-                    resetForm.classList.remove('hidden');
-                    showLoginLink.classList.remove('hidden');
-                    break;
-                default:
-                    loginForm.classList.remove('hidden');
-            }
-            
-            hideAlert();
-        }
-        
-        function setLoading(formType, loading) {
-            const btn = document.getElementById(formType + 'Btn');
-            const text = document.getElementById(formType + 'Text');
-            const loadingEl = document.getElementById(formType + 'Loading');
-            
-            if (loading) {
-                btn.disabled = true;
-                text.style.display = 'none';
-                loadingEl.style.display = 'inline-block';
-            } else {
-                btn.disabled = false;
-                text.style.display = 'inline';
-                loadingEl.style.display = 'none';
-            }
-        }
-        
-        function showAlert(message, type) {
-            alert.textContent = message;
-            alert.className = `alert alert-${type}`;
-            alert.style.display = 'block';
-        }
-        
-        function hideAlert() {
-            alert.style.display = 'none';
-        }
-        
-        function redirectToDashboard() {
-            const user = getCurrentUser();
-            if (user) {
-                switch (user.perfil) {
-                    case 'ADMIN':
-                        window.location.href = '/admin-usuarios.html';
-                        break;
-                    case 'comprador':
-                        window.location.href = '/dashboard-comprador-funcional.html';
-                        break;
-                    case 'fornecedor':
-                        window.location.href = '/dashboard-fornecedor-funcional.html';
-                        break;
-                    default:
-                        window.location.href = '/dashboard-requisitante-funcional.html';
-                }
-            }
-        }
-    </script>
+    <div id="alert" class="alert"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Senha:</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <button type="submit" class="btn" id="loginBtn">
+        <span id="loginText">Entrar</span>
+        <div id="loginLoading" class="loading"><span class="spinner"></span>Entrando...</div>
+      </button>
+    </form>
+
+    <form id="registerForm" class="hidden">
+      <div class="form-group">
+        <label for="regName">Nome Completo:</label>
+        <input type="text" id="regName" name="name" required>
+      </div>
+      <div class="form-group">
+        <label for="regEmail">Email:</label>
+        <input type="email" id="regEmail" name="email" required>
+      </div>
+      <div class="form-group">
+        <label for="regPassword">Senha:</label>
+        <input type="password" id="regPassword" name="password" required minlength="6">
+      </div>
+      <div class="form-group">
+        <label for="regConfirmPassword">Confirmar Senha:</label>
+        <input type="password" id="regConfirmPassword" name="confirmPassword" required minlength="6">
+      </div>
+      <button type="submit" class="btn" id="registerBtn">
+        <span id="registerText">Registrar</span>
+        <div id="registerLoading" class="loading"><span class="spinner"></span>Registrando...</div>
+      </button>
+    </form>
+
+    <form id="resetForm" class="hidden">
+      <div class="form-group">
+        <label for="resetEmail">Email para recuperação:</label>
+        <input type="email" id="resetEmail" name="email" required>
+      </div>
+      <button type="submit" class="btn" id="resetBtn">
+        <span id="resetText">Enviar Link</span>
+        <div id="resetLoading" class="loading"><span class="spinner"></span>Enviando...</div>
+      </button>
+    </form>
+
+    <div class="links">
+      <a href="#" id="showRegister">Criar conta</a> |
+      <a href="#" id="showReset">Esqueci minha senha</a> |
+      <a href="#" id="showLogin" class="hidden">Voltar ao login</a>
+    </div>
+  </div>
+
+  <script type="module" src="/static/firebase_simplificado.js"></script>
+
+  <script type="module">
+    import { login, register, resetPassword, isLoggedIn, getCurrentUser } from '/static/firebase_simplificado.js';
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const resetForm = document.getElementById('resetForm');
+    const alertBox = document.getElementById('alert');
+    const showRegisterLink = document.getElementById('showRegister');
+    const showResetLink = document.getElementById('showReset');
+    const showLoginLink = document.getElementById('showLogin');
+
+    if (isLoggedIn()) redirectToDashboard();
+    loginForm.addEventListener('submit', handleLogin);
+    registerForm.addEventListener('submit', handleRegister);
+    resetForm.addEventListener('submit', handleReset);
+    showRegisterLink.addEventListener('click', (e)=>{e.preventDefault(); showForm('register')});
+    showResetLink.addEventListener('click', (e)=>{e.preventDefault(); showForm('reset')});
+    showLoginLink.addEventListener('click', (e)=>{e.preventDefault(); showForm('login')});
+
+    async function handleLogin(e){
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      setLoading('login', true); hideAlert();
+      try {
+        const result = await login(email, password);
+        if (result.success){ showAlert('Login realizado com sucesso!', 'success'); setTimeout(redirectToDashboard, 800); }
+        else showAlert(result.error || 'Erro no login', 'error');
+      } catch(err){ showAlert('Erro no login: '+err.message, 'error'); }
+      finally { setLoading('login', false); }
+    }
+
+    async function handleRegister(e){
+      e.preventDefault();
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const confirmPassword = document.getElementById('regConfirmPassword').value;
+      if (password !== confirmPassword) return showAlert('Senhas não coincidem', 'error');
+      setLoading('register', true); hideAlert();
+      try {
+        const result = await register(email, password, name);
+        if (result.success){ showAlert('Conta criada!', 'success'); setTimeout(redirectToDashboard, 800); }
+        else showAlert(result.error || 'Erro no registro', 'error');
+      } catch(err){ showAlert('Erro no registro: '+err.message, 'error'); }
+      finally { setLoading('register', false); }
+    }
+
+    async function handleReset(e){
+      e.preventDefault();
+      const email = document.getElementById('resetEmail').value;
+      setLoading('reset', true); hideAlert();
+      try {
+        const result = await resetPassword(email);
+        if (result.success){ showAlert('Link enviado!', 'success'); setTimeout(()=>showForm('login'), 1200); }
+        else showAlert(result.error || 'Erro ao enviar email', 'error');
+      } catch(err){ showAlert('Erro: '+err.message, 'error'); }
+      finally { setLoading('reset', false); }
+    }
+
+    function showForm(type){
+      loginForm.classList.add('hidden');
+      registerForm.classList.add('hidden');
+      resetForm.classList.add('hidden');
+      showLoginLink.classList.add('hidden');
+      if (type==='register'){ registerForm.classList.remove('hidden'); showLoginLink.classList.remove('hidden'); }
+      else if (type==='reset'){ resetForm.classList.remove('hidden'); showLoginLink.classList.remove('hidden'); }
+      else { loginForm.classList.remove('hidden'); }
+      hideAlert();
+    }
+    function setLoading(form, loading){
+      const btn = document.getElementById(form+'Btn'); const text = document.getElementById(form+'Text'); const loadingEl = document.getElementById(form+'Loading');
+      if (loading){ btn.disabled=true; text.style.display='none'; loadingEl.style.display='inline-block'; }
+      else { btn.disabled=false; text.style.display='inline'; loadingEl.style.display='none'; }
+    }
+    function showAlert(msg, type){ alertBox.textContent=msg; alertBox.className=`alert alert-${type}`; alertBox.style.display='block'; }
+    function hideAlert(){ alertBox.style.display='none'; }
+    function redirectToDashboard(){
+      const user = getCurrentUser(); if (!user) return;
+      switch (user.perfil){
+        case 'ADMIN': window.location.href='/admin-usuarios.html'; break;
+        case 'comprador': window.location.href='/dashboard-comprador-funcional.html'; break;
+        case 'fornecedor': window.location.href='/dashboard-fornecedor-funcional.html'; break;
+        default: window.location.href='/dashboard-requisitante-funcional.html';
+      }
+    }
+  </script>
 </body>
 </html>
