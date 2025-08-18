@@ -3311,22 +3311,6 @@
             </div>`;
         }
         
-        // Função auxiliar para processar dados
-        function processarDadosParaTabela(propostas) {
-            const valores = propostas.map(p => p.resumoFinanceiro?.valorTotal || 0);
-            const menorValor = Math.min(...valores);
-            const maiorValor = Math.max(...valores);
-            const indiceMenorValor = valores.indexOf(menorValor);
-            const variacaoPercentual = ((maiorValor - menorValor) / menorValor * 100).toFixed(1);
-            
-            return {
-                menorValor,
-                maiorValor,
-                indiceMenorValor,
-                variacaoPercentual
-            };
-        }
-        
         // Função para salvar análise
         function salvarAnaliseIA(processoId, resultado) {
             const analises = SistemaLocal.carregar('analises_ia', []);
@@ -3500,7 +3484,6 @@
    </script>
    
    <script type="module" src="/static/firebase.js"></script>
-   <script type="module" src="/static/auth.js"></script>
 
 </body>
 </html>
