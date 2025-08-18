@@ -1047,24 +1047,23 @@
                 }
             },
 
-            // Salvar dados (localStorage + Firebase)
-            async salvar(chave, dados) {
+            // Salvar dados (localStorage + Firebase) - COMPATIBILIDADE SÍNCRONA
+            salvar(chave, dados) {
                 try {
                     // SEMPRE salvar no localStorage primeiro (imediato)
                     localStorage.setItem(chave, JSON.stringify(dados));
                     
-                    // Tentar salvar no Firebase (background)
+                    // Tentar salvar no Firebase (background) - sem await para manter compatibilidade
                     if (this.firebaseReady && this.db) {
-                        try {
-                            const docRef = doc(this.db, 'sistema_dados', chave);
-                            await setDoc(docRef, {
-                                dados: dados,
-                                timestamp: new Date().toISOString()
-                            });
+                        const docRef = doc(this.db, 'sistema_dados', chave);
+                        setDoc(docRef, {
+                            dados: dados,
+                            timestamp: new Date().toISOString()
+                        }).then(() => {
                             console.log(`✅ Dados salvos no Firebase: ${chave}`);
-                        } catch (firebaseError) {
+                        }).catch((firebaseError) => {
                             console.warn('⚠️ Erro ao salvar no Firebase:', firebaseError);
-                        }
+                        });
                     }
                     
                     return true;
@@ -1074,33 +1073,46 @@
                 }
             },
 
-            // Carregar dados (Firebase primeiro, depois localStorage)
-            async carregar(chave, padrao = null) {
+            // Carregar dados (localStorage primeiro, Firebase em background) - COMPATIBILIDADE SÍNCRONA
+            carregar(chave, padrao = null) {
                 try {
-                    // Tentar Firebase primeiro se disponível
-                    if (this.firebaseReady && this.db) {
-                        try {
-                            const docRef = doc(this.db, 'sistema_dados', chave);
-                            const docSnap = await getDoc(docRef);
-                            
-                            if (docSnap.exists()) {
-                                const dadosFirebase = docSnap.data().dados;
-                                // Sincronizar com localStorage
-                                localStorage.setItem(chave, JSON.stringify(dadosFirebase));
-                                console.log(`✅ Dados carregados do Firebase: ${chave}`);
-                                return dadosFirebase;
-                            }
-                        } catch (firebaseError) {
-                            console.warn('⚠️ Erro ao carregar do Firebase:', firebaseError);
-                        }
+                    // SEMPRE usar localStorage primeiro (compatibilidade)
+                    const dados = localStorage.getItem(chave);
+                    let dadosLocal = dados ? JSON.parse(dados) : padrao;
+                    
+                    // CORREÇÃO CRÍTICA: Garantir que arrays sempre retornam array
+                    const arrayKeys = [this.CHAVES.TRS, this.CHAVES.PROCESSOS, this.CHAVES.PROPOSTAS, this.CHAVES.PROPOSTAS_COMPLETAS];
+                    if (arrayKeys.includes(chave) && !Array.isArray(dadosLocal)) {
+                        console.warn(`${chave} não é array, inicializando como array vazio`);
+                        dadosLocal = [];
+                        // Salvar array vazio no localStorage
+                        localStorage.setItem(chave, JSON.stringify([]));
                     }
                     
-                    // Fallback para localStorage
-                    const dados = localStorage.getItem(chave);
-                    return dados ? JSON.parse(dados) : padrao;
+                    // Tentar sincronizar com Firebase em background (sem bloquear)
+                    if (this.firebaseReady && this.db) {
+                        const docRef = doc(this.db, 'sistema_dados', chave);
+                        getDoc(docRef).then((docSnap) => {
+                            if (docSnap.exists()) {
+                                const dadosFirebase = docSnap.data().dados;
+                                // Sincronizar com localStorage se dados do Firebase são mais recentes
+                                localStorage.setItem(chave, JSON.stringify(dadosFirebase));
+                                console.log(`✅ Dados sincronizados do Firebase: ${chave}`);
+                            }
+                        }).catch((firebaseError) => {
+                            console.warn('⚠️ Erro ao sincronizar do Firebase:', firebaseError);
+                        });
+                    }
+                    
+                    return dadosLocal;
                     
                 } catch (error) {
                     console.error('Erro ao carregar dados:', error);
+                    // CORREÇÃO: Se for chave de array e houver erro, retornar array vazio
+                    const arrayKeys = [this.CHAVES.TRS, this.CHAVES.PROCESSOS, this.CHAVES.PROPOSTAS, this.CHAVES.PROPOSTAS_COMPLETAS];
+                    if (arrayKeys.includes(chave)) {
+                        return [];
+                    }
                     return padrao;
                 }
             },
