@@ -28,12 +28,13 @@ class SistemaFirebase {
         try {
             // Configuração Firebase (usar a mesma do seu projeto)
             const firebaseConfig = {
-                apiKey: "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // Substitua pela sua
+                apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
                 authDomain: "portal-de-proposta.firebaseapp.com",
                 projectId: "portal-de-proposta",
-                storageBucket: "portal-de-proposta.appspot.com",
-                messagingSenderId: "123456789",
-                appId: "1:123456789:web:xxxxxxxxxxxxxxxxxx"
+                storageBucket: "portal-de-proposta.firebasestorage.app",
+                messagingSenderId: "321036073908",
+                appId: "1:321036073908:web:3149b9ea2cb77a704890e1",
+                measurementId: "G-CFFVQGM3EC"
             };
 
             const app = initializeApp(firebaseConfig);
