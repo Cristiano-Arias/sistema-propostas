@@ -3311,20 +3311,6 @@
             </div>`;
         }
         
-        // Função para salvar análise
-        function salvarAnaliseIA(processoId, resultado) {
-            const analises = SistemaLocal.carregar('analises_ia', []);
-            analises.push({
-                id: SistemaLocal.gerarId(),
-                processoId: processoId,
-                resultado: resultado,
-                dataAnalise: new Date().toISOString(),
-                analistaPor: SistemaLocal.obterUsuario().nome
-            });
-            SistemaLocal.salvar('analises_ia', analises);
-            alert('Análise salva com sucesso!');
-        }
-
         // Função para inicializar Azure IA
                 function inicializarAzureIA() {
                     // Configurar Azure AI antigo primeiro (sem barra final)
@@ -3457,7 +3443,15 @@
            // Garantir que a função carregarProcessos busque propostas corretas
            window.carregarProcessosCorrigido = carregarProcessos;
            
-           console.log('Correções aplicadas com sucesso!');
+           // CORREÇÃO CRÍTICA: Expor funções no escopo global para onclick
+           window.abrirComparativo = abrirComparativo;
+           window.mostrarPagina = mostrarPagina;
+           window.voltarSistema = voltarSistema;
+           window.logout = logout;
+           window.salvarAnaliseIA = salvarAnaliseIA;
+           window.inicializarAzureIA = inicializarAzureIA;
+           
+           console.log('✅ Correções aplicadas e funções expostas globalmente!');
        }
 
    
