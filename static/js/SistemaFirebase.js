@@ -1,9 +1,8 @@
-/**
- * SistemaFirebase.js
- * Sistema para substituir SistemaLocal usando Firebase Firestore
- * Mantém compatibilidade total com a API existente
- */
+// SistemaFirebase.js - Versão Corrigida
+// Substitui SistemaLocal com Firebase Firestore
 
+// Importações Firebase via CDN (sem erros de módulo)
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
 import { 
     getFirestore, 
     collection, 
@@ -11,257 +10,235 @@ import {
     setDoc, 
     getDoc, 
     getDocs, 
-    deleteDoc, 
     query, 
     where, 
-    orderBy 
-} from 'firebase/firestore';
+    orderBy, 
+    deleteDoc,
+    updateDoc 
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
-const SistemaFirebase = {
-    // Inicialização do Firestore
-    db: null,
-    
-    // Chaves mapeadas para coleções Firestore
-    CHAVES: {
-        TRS: 'termos_referencia',
-        PROCESSOS: 'processos',
-        PROPOSTAS_FORNECEDORES: 'propostas_fornecedores',
-        ANALISES_IA: 'analises_ia',
-        USUARIO: 'usuarios',
-        ESTATISTICAS: 'estatisticas',
-        FORNECEDOR_LOGADO: 'fornecedores_logados'
-    },
+class SistemaFirebase {
+    constructor() {
+        this.db = null;
+        this.inicializado = false;
+        this.init();
+    }
 
-    // Inicializar Firestore
-    init() {
-        if (!this.db) {
-            this.db = getFirestore();
-            console.log('✅ SistemaFirebase inicializado');
-        }
-        return this.db;
-    },
-
-    // Salvar dados no Firestore
-    async salvar(chave, dados, id = null) {
+    async init() {
         try {
-            this.init();
-            
-            // Se não forneceu ID, gerar um novo
-            if (!id) {
-                id = this.gerarId();
-            }
-            
-            // Adicionar metadados
-            const dadosCompletos = {
-                ...dados,
-                _metadata: {
-                    criadoEm: new Date().toISOString(),
-                    atualizadoEm: new Date().toISOString(),
-                    criadoPor: await this.obterUsuarioAtual()?.uid || 'sistema'
-                }
+            // Configuração Firebase (usar a mesma do seu projeto)
+            const firebaseConfig = {
+                apiKey: "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // Substitua pela sua
+                authDomain: "portal-de-proposta.firebaseapp.com",
+                projectId: "portal-de-proposta",
+                storageBucket: "portal-de-proposta.appspot.com",
+                messagingSenderId: "123456789",
+                appId: "1:123456789:web:xxxxxxxxxxxxxxxxxx"
             };
-            
-            const docRef = doc(this.db, chave, id);
-            await setDoc(docRef, dadosCompletos);
-            
-            console.log(`✅ Dados salvos em ${chave}/${id}`);
-            return { success: true, id };
-            
-        } catch (error) {
-            console.error('❌ Erro ao salvar dados:', error);
-            return { success: false, error: error.message };
-        }
-    },
 
-    // Carregar dados do Firestore
-    async carregar(chave, padrao = null, filtros = null) {
+            const app = initializeApp(firebaseConfig);
+            this.db = getFirestore(app);
+            this.inicializado = true;
+            console.log('✅ SistemaFirebase inicializado');
+        } catch (error) {
+            console.error('❌ Erro ao inicializar Firebase:', error);
+            // Fallback para localStorage se Firebase falhar
+            this.usarLocalStorage = true;
+        }
+    }
+
+    // Aguardar inicialização
+    async aguardarInicializacao() {
+        while (!this.inicializado && !this.usarLocalStorage) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    }
+
+    // Mapeamento de coleções
+    obterColecao(chave) {
+        const mapeamento = {
+            'sistema_trs': 'termos_referencia',
+            'processos_licitatorios': 'processos',
+            'propostas_fornecedores': 'propostas_fornecedores',
+            'propostas_completas': 'propostas_completas',
+            'analises_ia': 'analises_ia',
+            'notificacoes_comprador': 'notificacoes',
+            'sistema_estatisticas': 'estatisticas',
+            'sistema_usuario_logado': 'usuarios_sessao'
+        };
+        return mapeamento[chave] || chave;
+    }
+
+    // Salvar dados
+    async salvar(chave, dados) {
+        await this.aguardarInicializacao();
+        
         try {
-            this.init();
-            
-            // Se é uma busca com filtros
-            if (filtros) {
-                return await this.listar(chave, filtros);
+            if (this.usarLocalStorage) {
+                localStorage.setItem(chave, JSON.stringify(dados));
+                return true;
             }
+
+            const colecao = this.obterColecao(chave);
             
-            // Se é busca de um documento específico
-            if (typeof padrao === 'string') {
-                const docRef = doc(this.db, chave, padrao);
-                const docSnap = await getDoc(docRef);
-                
-                if (docSnap.exists()) {
-                    return { id: docSnap.id, ...docSnap.data() };
-                } else {
-                    return null;
+            if (Array.isArray(dados)) {
+                // Salvar array como documentos individuais
+                for (const item of dados) {
+                    const id = item.id || this.gerarId();
+                    await setDoc(doc(this.db, colecao, id), {
+                        ...item,
+                        id: id,
+                        timestamp: new Date().toISOString()
+                    });
                 }
-            }
-            
-            // Buscar todos os documentos da coleção
-            const colRef = collection(this.db, chave);
-            const snapshot = await getDocs(colRef);
-            
-            const dados = [];
-            snapshot.forEach(doc => {
-                dados.push({ id: doc.id, ...doc.data() });
-            });
-            
-            console.log(`✅ Carregados ${dados.length} documentos de ${chave}`);
-            return dados.length > 0 ? dados : padrao;
-            
-        } catch (error) {
-            console.error('❌ Erro ao carregar dados:', error);
-            return padrao;
-        }
-    },
-
-    // Listar documentos com filtros
-    async listar(chave, filtros = {}) {
-        try {
-            this.init();
-            
-            let q = collection(this.db, chave);
-            
-            // Aplicar filtros
-            if (filtros.where) {
-                filtros.where.forEach(filtro => {
-                    q = query(q, where(filtro.campo, filtro.operador, filtro.valor));
+            } else {
+                // Salvar objeto único
+                const id = dados.id || this.gerarId();
+                await setDoc(doc(this.db, colecao, id), {
+                    ...dados,
+                    id: id,
+                    timestamp: new Date().toISOString()
                 });
             }
             
-            // Aplicar ordenação
-            if (filtros.orderBy) {
-                q = query(q, orderBy(filtros.orderBy.campo, filtros.orderBy.direcao || 'asc'));
+            console.log(`✅ Dados salvos em ${colecao}`);
+            return true;
+        } catch (error) {
+            console.error('❌ Erro ao salvar:', error);
+            // Fallback para localStorage
+            localStorage.setItem(chave, JSON.stringify(dados));
+            return false;
+        }
+    }
+
+    // Carregar dados
+    async carregar(chave, padrao = null) {
+        await this.aguardarInicializacao();
+        
+        try {
+            if (this.usarLocalStorage) {
+                const dados = localStorage.getItem(chave);
+                return dados ? JSON.parse(dados) : padrao;
             }
+
+            const colecao = this.obterColecao(chave);
+            const querySnapshot = await getDocs(collection(this.db, colecao));
             
-            const snapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                return padrao;
+            }
+
             const dados = [];
-            
-            snapshot.forEach(doc => {
+            querySnapshot.forEach((doc) => {
                 dados.push({ id: doc.id, ...doc.data() });
             });
-            
-            return dados;
-            
-        } catch (error) {
-            console.error('❌ Erro ao listar dados:', error);
-            return [];
-        }
-    },
 
-    // Deletar documento
-    async deletar(chave, id) {
-        try {
-            this.init();
-            
-            const docRef = doc(this.db, chave, id);
-            await deleteDoc(docRef);
-            
-            console.log(`✅ Documento ${id} deletado de ${chave}`);
-            return { success: true };
-            
+            console.log(`✅ Dados carregados de ${colecao}: ${dados.length} itens`);
+            return dados.length === 1 ? dados[0] : dados;
         } catch (error) {
-            console.error('❌ Erro ao deletar documento:', error);
-            return { success: false, error: error.message };
+            console.error('❌ Erro ao carregar:', error);
+            // Fallback para localStorage
+            const dados = localStorage.getItem(chave);
+            return dados ? JSON.parse(dados) : padrao;
         }
-    },
+    }
 
-    // Gerar ID único (compatível com SistemaLocal)
+    // Gerar ID único
     gerarId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
-    },
+    }
 
-    // Obter usuário atual (compatível com SistemaLocal)
-    async obterUsuario() {
+    // Obter usuário logado
+    obterUsuario() {
         try {
-            // Tentar obter do Firebase Auth
-            const user = await this.obterUsuarioAtual();
-            if (user) {
-                return {
-                    id: user.uid,
-                    nome: user.displayName || user.email,
-                    email: user.email
-                };
-            }
-            
-            // Fallback para dados locais (compatibilidade)
+            // Tentar obter do localStorage primeiro (compatibilidade)
             const userData = localStorage.getItem('userData');
             if (userData) {
                 return JSON.parse(userData);
             }
             
-            // Usuário padrão (compatibilidade)
+            // Fallback padrão
             return { 
                 id: 1, 
                 nome: 'Admin', 
-                email: 'admin@sistema.com' 
+                email: 'admin@sistema.com',
+                perfil: 'admin'
             };
-            
         } catch (error) {
             console.error('❌ Erro ao obter usuário:', error);
-            return { id: 1, nome: 'Admin', email: 'admin@sistema.com' };
-        }
-    },
-
-    // Função auxiliar para obter usuário atual do Firebase Auth
-    async obterUsuarioAtual() {
-        try {
-            const { getAuth, onAuthStateChanged } = await import('firebase/auth');
-            const auth = getAuth();
-            
-            return new Promise((resolve) => {
-                const unsubscribe = onAuthStateChanged(auth, (user) => {
-                    unsubscribe();
-                    resolve(user);
-                });
-            });
-        } catch (error) {
-            console.error('❌ Erro ao obter usuário do Auth:', error);
-            return null;
-        }
-    },
-
-    // Migrar dados do localStorage para Firestore
-    async migrarDados() {
-        try {
-            console.log('🔄 Iniciando migração de dados...');
-            
-            const chavesParaMigrar = [
-                'sistema_trs',
-                'sistema_processos', 
-                'propostas_fornecedores',
-                'analises_ia'
-            ];
-            
-            for (const chave of chavesParaMigrar) {
-                const dadosLocais = localStorage.getItem(chave);
-                if (dadosLocais) {
-                    const dados = JSON.parse(dadosLocais);
-                    
-                    if (Array.isArray(dados)) {
-                        // Migrar array de documentos
-                        for (const item of dados) {
-                            await this.salvar(this.CHAVES[chave.toUpperCase()] || chave, item, item.id);
-                        }
-                    } else {
-                        // Migrar documento único
-                        await this.salvar(this.CHAVES[chave.toUpperCase()] || chave, dados);
-                    }
-                    
-                    console.log(`✅ Migrados dados de ${chave}`);
-                }
-            }
-            
-            console.log('✅ Migração concluída!');
-            return { success: true };
-            
-        } catch (error) {
-            console.error('❌ Erro na migração:', error);
-            return { success: false, error: error.message };
+            return { 
+                id: 1, 
+                nome: 'Admin', 
+                email: 'admin@sistema.com',
+                perfil: 'admin'
+            };
         }
     }
-};
 
-// Compatibilidade com SistemaLocal existente
-window.SistemaFirebase = SistemaFirebase;
+    // Migrar dados existentes do localStorage
+    async migrarDados() {
+        console.log('🔄 Iniciando migração de dados...');
+        
+        try {
+            const chaves = [
+                'sistema_trs',
+                'processos_licitatorios', 
+                'propostas_fornecedores',
+                'propostas_completas',
+                'analises_ia',
+                'notificacoes_comprador',
+                'sistema_estatisticas'
+            ];
 
-export default SistemaFirebase;
+            let migrados = 0;
+            
+            for (const chave of chaves) {
+                const dados = localStorage.getItem(chave);
+                if (dados) {
+                    try {
+                        const dadosParsed = JSON.parse(dados);
+                        if (dadosParsed && (Array.isArray(dadosParsed) ? dadosParsed.length > 0 : Object.keys(dadosParsed).length > 0)) {
+                            await this.salvar(chave, dadosParsed);
+                            migrados++;
+                            console.log(`✅ Migrado: ${chave}`);
+                        }
+                    } catch (error) {
+                        console.warn(`⚠️ Erro ao migrar ${chave}:`, error);
+                    }
+                }
+            }
 
+            console.log(`✅ Migração concluída! ${migrados} coleções migradas.`);
+            return { success: true, migrados };
+        } catch (error) {
+            console.error('❌ Erro na migração:', error);
+            return { success: false, error };
+        }
+    }
+
+    // Compatibilidade com SistemaLocal existente
+    get CHAVES() {
+        return {
+            TRS: 'sistema_trs',
+            NOTIFICACOES_COMPRADOR: 'notificacoes_comprador',
+            PROCESSOS: 'processos_licitatorios',
+            PROPOSTAS: 'propostas_fornecedores',
+            PROPOSTAS_COMPLETAS: 'propostas_completas',
+            USUARIO_COMPRADOR: 'comprador_user',
+            ANALISE_REQUISITANTE: 'analise_tecnica_requisitante',
+            ANALISES_IA: 'analises_ia',
+            USUARIO: 'sistema_usuario_logado',
+            ESTATISTICAS: 'sistema_estatisticas',
+            FORNECEDOR_LOGADO: 'fornecedor_logado',
+            FORNECEDORES_CADASTRADOS: 'fornecedores_cadastrados',
+            USUARIOS_FORNECEDORES: 'usuarios_fornecedores',
+            PROCESSOS_POR_FORNECEDOR: 'processos_por_fornecedor'
+        };
+    }
+}
+
+// Criar instância única
+const sistemaFirebase = new SistemaFirebase();
+
+// Exportar como default
+export default sistemaFirebase;
