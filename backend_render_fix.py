@@ -1,4 +1,4 @@
-# backend_simplificado.py - Versão otimizada e simplificada
+# backend_simplificado.py - Versão corrigida para buscar por email
 import os
 import json
 import logging
@@ -136,9 +136,19 @@ def require_admin(f):
     @wraps(f)
     @require_auth
     def decorated_function(*args, **kwargs):
-        user_doc = db.collection('usuário').document(request.user['uid']).get()
-        if not user_doc.exists or user_doc.to_dict().get('perfil') != 'ADMIN':
+        # Buscar usuário por email em vez de UID
+        email = request.user.get('email')
+        if not email:
+            return jsonify({'erro': 'Email não encontrado no token'}), 401
+            
+        users = db.collection('Usuario').where('email', '==', email).get()
+        if not users or len(users) == 0:
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
+            
+        user_data = users[0].to_dict()
+        if user_data.get('perfil') != 'ADMIN':
             return jsonify({'erro': 'Acesso negado'}), 403
+            
         return f(*args, **kwargs)
     
     return decorated_function
@@ -147,7 +157,7 @@ def require_admin(f):
 
 @app.route('/auth/verify', methods=['POST'])
 def verify_token():
-    """Verifica token e retorna/cria dados do usuário"""
+    """Verifica token e retorna/cria dados do usuário - VERSÃO CORRIGIDA"""
     if not db:
         return jsonify({'erro': 'Serviço indisponível'}), 503
     
@@ -163,13 +173,19 @@ def verify_token():
         uid = decoded['uid']
         email = decoded.get('email')
         
-        # Buscar ou criar usuário no Firestore
-        user_doc = db.collection('usuário').document(uid).get()
+        if not email:
+            return jsonify({'erro': 'Email não encontrado no token'}), 400
         
-        if user_doc.exists:
-            user_data = user_doc.to_dict()
+        # CORREÇÃO: Buscar usuário por EMAIL em vez de UID
+        users = db.collection('Usuario').where('email', '==', email).get()
+        
+        if users and len(users) > 0:
+            # Usuário encontrado - usar dados do Firestore
+            user_data = users[0].to_dict()
+            logger.info(f"✅ Usuário encontrado por email: {email}, perfil: {user_data.get('perfil')}")
         else:
-            # Criar novo usuário
+            # Usuário não encontrado - criar novo
+            logger.info(f"⚠️ Usuário não encontrado por email: {email}, criando novo...")
             user_data = {
                 'email': email,
                 'nome': decoded.get('name', email.split('@')[0] if email else 'Usuário'),
@@ -177,7 +193,8 @@ def verify_token():
                 'ativo': True,
                 'criadoEm': firestore.SERVER_TIMESTAMP
             }
-            db.collection('usuário').document(uid).set(user_data)
+            # Criar com UID como ID do documento
+            db.collection('Usuario').document(uid).set(user_data)
             user_data['novo_usuario'] = True
         
         return jsonify({
@@ -202,7 +219,7 @@ def listar_usuarios():
     """Lista todos os usuários (apenas admin)"""
     try:
         usuarios = []
-        for doc in db.collection('usuário').stream():
+        for doc in db.collection('Usuario').stream():
             user_data = doc.to_dict()
             user_data['id'] = doc.id
             # Remover dados sensíveis
@@ -234,8 +251,8 @@ def criar_usuario():
             display_name=data['nome']
         )
         
-        # Criar no Firestore
-        db.collection('usuário').document(new_user.uid).set({
+        # Criar no Firestore com UID como ID do documento
+        db.collection('Usuario').document(new_user.uid).set({
             'email': data['email'],
             'nome': data['nome'],
             'perfil': data.get('perfil', 'requisitante'),
