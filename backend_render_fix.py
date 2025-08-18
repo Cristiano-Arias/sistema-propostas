@@ -21,72 +21,88 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 db = None
 
 def initialize_firebase():
-    """Inicializa Firebase com credenciais do ambiente - COM DEBUG"""
+    """Inicializa Firebase com credenciais - múltiplas tentativas"""
     global db
     
-    # DEBUG - Listar todas as variáveis de ambiente relacionadas ao Firebase
-    print("🔍 DEBUG: Listando todas as variáveis de ambiente:")
-    firebase_vars = []
-    for key, value in os.environ.items():
-        if 'FIREBASE' in key.upper():
-            firebase_vars.append(f"   {key} = {value[:50]}...")  # Mostra só os primeiros 50 chars
-            print(f"   {key} = {value[:50]}...")
+    print("🔍 DEBUG: Iniciando busca por credenciais Firebase...")
     
-    if not firebase_vars:
-        print("   ❌ Nenhuma variável com 'FIREBASE' encontrada!")
+    cred_dict = None
     
-    # DEBUG - Verificar especificamente FIREBASE_CREDENTIALS
-    firebase_creds = os.environ.get('FIREBASE_CREDENTIALS')
-    print(f"🔍 DEBUG: firebase_creds existe = {firebase_creds is not None}")
+    # Tentativa 1: Arquivo credentials.json
+    if os.path.exists('credentials.json'):
+        print("📁 Encontrado: credentials.json")
+        try:
+            with open('credentials.json', 'r') as f:
+                cred_dict = json.load(f)
+            print("✅ Arquivo credentials.json carregado!")
+        except Exception as e:
+            print(f"❌ Erro ao ler credentials.json: {e}")
     
-    if firebase_creds:
-        print(f"🔍 DEBUG: Tamanho do JSON = {len(firebase_creds)} caracteres")
-        print(f"🔍 DEBUG: Primeiros 100 chars = {firebase_creds[:100]}...")
-        print(f"🔍 DEBUG: Últimos 50 chars = ...{firebase_creds[-50:]}")
-    else:
-        print("🔍 DEBUG: FIREBASE_CREDENTIALS está None/vazio")
+    # Tentativa 2: Secret Files do Render
+    elif os.path.exists('/etc/secrets/credentials.json'):
+        print("📁 Encontrado: /etc/secrets/credentials.json")
+        try:
+            with open('/etc/secrets/credentials.json', 'r') as f:
+                cred_dict = json.load(f)
+            print("✅ Secret File carregado!")
+        except Exception as e:
+            print(f"❌ Erro ao ler Secret File: {e}")
     
-    try:
-        if firebase_creds:
-            logger.info("🔧 Carregando credenciais do ambiente...")
-            print("🔧 Tentando fazer parse do JSON...")
-            
+    # Tentativa 3: Variável de ambiente FIREBASE_CREDENTIALS
+    elif os.environ.get('FIREBASE_CREDENTIALS'):
+        print("📦 Encontrado: FIREBASE_CREDENTIALS em variável de ambiente")
+        try:
+            firebase_creds = os.environ.get('FIREBASE_CREDENTIALS')
+            print(f"   Tamanho: {len(firebase_creds)} caracteres")
             cred_dict = json.loads(firebase_creds)
-            print(f"🔧 JSON parseado com sucesso! Keys: {list(cred_dict.keys())}")
+            print("✅ Variável de ambiente parseada!")
+        except Exception as e:
+            print(f"❌ Erro ao parsear variável: {e}")
+    
+    # Tentativa 4: Variável GOOGLE_APPLICATION_CREDENTIALS
+    elif os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
+        print("📦 Encontrado: GOOGLE_APPLICATION_CREDENTIALS")
+        try:
+            path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+            with open(path, 'r') as f:
+                cred_dict = json.load(f)
+            print("✅ GOOGLE_APPLICATION_CREDENTIALS carregado!")
+        except Exception as e:
+            print(f"❌ Erro: {e}")
+    
+    # Se encontrou credenciais, inicializar Firebase
+    if cred_dict:
+        try:
+            print(f"🔧 Inicializando Firebase com project_id: {cred_dict.get('project_id')}")
             
             cred = credentials.Certificate(cred_dict)
-            print("🔧 Certificado criado com sucesso!")
-            
             firebase_admin.initialize_app(cred)
-            print("🔧 Firebase app inicializado!")
-            
             db = firestore.client()
-            print("🔧 Firestore client criado!")
             
             logger.info("✅ Firebase inicializado com sucesso!")
             print("✅ Firebase inicializado com sucesso!")
+            
+            # Testar conexão
+            test_collection = db.collection('_test').limit(1).get()
+            print("✅ Conexão com Firestore verificada!")
+            
             return True
-        else:
-            logger.error("❌ FIREBASE_CREDENTIALS não configurado!")
-            print("❌ FIREBASE_CREDENTIALS não configurado!")
+            
+        except Exception as e:
+            error_msg = f"❌ Erro ao inicializar Firebase: {e}"
+            logger.error(error_msg)
+            print(error_msg)
             db = None
             return False
-            
-    except json.JSONDecodeError as e:
-        error_msg = f"❌ Erro ao fazer parse do JSON: {e}"
-        logger.error(error_msg)
-        print(error_msg)
-        db = None
-        return False
-    except Exception as e:
-        error_msg = f"❌ Erro ao inicializar Firebase: {e}"
-        logger.error(error_msg)
-        print(error_msg)
-        db = None
-        return False
-            
-    except Exception as e:
-        logger.error(f"❌ Erro ao inicializar Firebase: {e}")
+    else:
+        print("❌ NENHUMA credencial encontrada!")
+        print("   Tentativas falhadas:")
+        print("   - credentials.json")
+        print("   - /etc/secrets/credentials.json") 
+        print("   - FIREBASE_CREDENTIALS (env)")
+        print("   - GOOGLE_APPLICATION_CREDENTIALS (env)")
+        
+        logger.error("❌ Nenhuma credencial Firebase encontrada!")
         db = None
         return False
 
