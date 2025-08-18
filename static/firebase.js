@@ -11,17 +11,17 @@ import {
 
 // Configuração Firebase (suas credenciais)
 const firebaseConfig = {
-    apiKey: "AIzaSyCqF366Ft7RkzHYaZb77HboNO3BPbmCjT8",
+    apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
     authDomain: "portal-de-proposta.firebaseapp.com",
     projectId: "portal-de-proposta",
     storageBucket: "portal-de-proposta.firebasestorage.app",
     messagingSenderId: "321036073908",
     appId: "1:321036073908:web:3149b9ea2cb77a704890e1",
-    measurementId: "G-CFFVQ3MSEC"
+    measurementId: "G-CFFVQGM3EC"
 };
-// Inicializar Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const analytics = getAnalytics(app);
 
 // Estado global do usuário
 let currentUser = null;
