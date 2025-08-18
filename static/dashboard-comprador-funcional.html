@@ -996,52 +996,9 @@
     </div>
 
     <script>
-        // Sistema de dados local
-        const SistemaLocal = {
-            // Chaves para localStorage
-            CHAVES: {
-                TRS: 'sistema_trs',
-                NOTIFICACOES_COMPRADOR: 'notificacoes_comprador',
-                PROCESSOS: 'processos_licitatorios',
-                PROPOSTAS: 'propostas_fornecedores',
-                PROPOSTAS_COMPLETAS: 'propostas_completas',
-                USUARIO_COMPRADOR: 'comprador_user',
-                ANALISE_REQUISITANTE: 'analise_tecnica_requisitante',
-                ANALISES_IA: 'analises_ia'
-            },
-
-            // Salvar dados
-            salvar(chave, dados) {
-                try {
-                    localStorage.setItem(chave, JSON.stringify(dados));
-                    return true;
-                } catch (error) {
-                    console.error('Erro ao salvar dados:', error);
-                    return false;
-                }
-            },
-
-            // Carregar dados
-            carregar(chave, padrao = null) {
-                try {
-                    const dados = localStorage.getItem(chave);
-                    return dados ? JSON.parse(dados) : padrao;
-                } catch (error) {
-                    console.error('Erro ao carregar dados:', error);
-                    return padrao;
-                }
-            },
-
-            // Gerar ID único
-            gerarId() {
-                return Date.now().toString(36) + Math.random().toString(36).substr(2);
-            },
-
-            // Obter usuário logado
-            obterUsuario() {
-                return this.carregar(this.CHAVES.USUARIO_COMPRADOR, { id: 1, nome: 'Comprador', email: 'comprador@sistema.com' });
-            }
-        };
+         <script type="module">
+        // Importar SistemaFirebase
+        import SistemaFirebase from '/static/js/SistemaFirebase.js';
 
         // Configurações de status
         const StatusTR = {
@@ -3304,7 +3261,17 @@
    }
         
         // Event listeners
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Migrar dados existentes (executar apenas uma vez)
+            if (localStorage.getItem('migrado_comprador') !== 'true') {
+                console.log('🔄 Migrando dados do Dashboard Comprador...');
+                const resultado = await SistemaLocal.migrarDados();
+                if (resultado.success) {
+                    localStorage.setItem('migrado_comprador', 'true');
+                    console.log('✅ Migração do Dashboard Comprador concluída!');
+                }
+            }
+            
             // Inicializar Azure AI
             inicializarAzureIA();
             
@@ -3411,8 +3378,8 @@
        }, 1000);
    </script>
    
+   <script type="module" src="/static/js/SistemaFirebase.js"></script>
    <script type="module" src="/static/firebase.js"></script>
-   <script type="module" src="/static/auth.js"></script>
 
 </body>
 </html>
