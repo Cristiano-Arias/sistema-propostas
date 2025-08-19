@@ -632,13 +632,119 @@
         ✅ Salvamento automático realizado
     </div>
 
+    <!-- Firebase Integration -->
+    <script type="module" src="/static/firebase.js"></script>
+
     <script>
         // Variáveis globais
         let autoSaveTimer;
         let formData = {};
         
+        // ===== SISTEMA FIREBASE + LOCALSTORAGE =====
+        const SistemaLocal = {
+            // Chaves compatíveis com sistema existente
+            CHAVES: {
+                TRS: 'termos_referencia',
+                NOTIFICACOES_COMPRADOR: 'notificacoes_comprador',
+                NOTIFICACOES_REQUISITANTE: 'notificacoes_requisitante'
+            },
+
+            db: null,
+            firebaseReady: false,
+
+            async inicializarFirebase() {
+                try {
+                    // Importar Firebase diretamente
+                    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                    const { getFirestore } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+                    // Usar credenciais corretas do servidor
+                    const config = {
+                        apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+                        authDomain: "portal-de-proposta.firebaseapp.com",
+                        projectId: "portal-de-proposta",
+                        storageBucket: "portal-de-proposta.firebasestorage.app",
+                        messagingSenderId: "321036073908",
+                        appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+                    };
+
+                    const app = initializeApp(config);
+                    this.db = getFirestore(app);
+                    this.firebaseReady = true;
+                    
+                    console.log('✅ Firebase inicializado para Criar TR');
+                    
+                } catch (error) {
+                    console.warn('⚠️ Firebase não disponível, usando apenas localStorage:', error);
+                    this.firebaseReady = false;
+                }
+            },
+
+            // Salvar dados (localStorage + Firebase)
+            salvar(chave, dados) {
+                try {
+                    // SEMPRE salvar no localStorage primeiro
+                    localStorage.setItem(chave, JSON.stringify(dados));
+                    
+                    // Tentar sincronizar com Firebase em background
+                    if (this.firebaseReady && this.db) {
+                        this.sincronizarFirebase(chave, dados).catch(error => {
+                            console.warn('⚠️ Erro ao sincronizar com Firebase:', error);
+                        });
+                    }
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao salvar dados:', error);
+                    return false;
+                }
+            },
+
+            // Carregar dados
+            carregar(chave, padrao = null) {
+                try {
+                    const dados = localStorage.getItem(chave);
+                    let dadosLocal = dados ? JSON.parse(dados) : padrao;
+                    
+                    // Garantir que arrays sempre retornam array
+                    const arrayKeys = [this.CHAVES.TRS, this.CHAVES.NOTIFICACOES_COMPRADOR, this.CHAVES.NOTIFICACOES_REQUISITANTE];
+                    if (arrayKeys.includes(chave) && !Array.isArray(dadosLocal)) {
+                        dadosLocal = [];
+                        localStorage.setItem(chave, JSON.stringify([]));
+                    }
+                    
+                    return dadosLocal;
+                } catch (error) {
+                    console.error('Erro ao carregar dados:', error);
+                    return Array.isArray(padrao) ? [] : padrao;
+                }
+            },
+
+            // Sincronizar com Firebase (background)
+            async sincronizarFirebase(chave, dados) {
+                if (!this.firebaseReady || !this.db) return;
+                
+                try {
+                    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    await setDoc(doc(this.db, 'sistema_dados', chave), {
+                        dados: dados,
+                        timestamp: new Date().toISOString(),
+                        modulo: 'requisitante'
+                    });
+                    console.log(`✅ Dados salvos no Firebase: ${chave}`);
+                } catch (error) {
+                    console.warn(`⚠️ Erro ao salvar no Firebase (${chave}):`, error);
+                }
+            }
+        };
+        
         // Inicialização
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Inicializando Criar TR...');
+            
+            // Inicializar Firebase
+            await SistemaLocal.inicializarFirebase();
+            
             initializeForm();
             setupEventListeners();
             loadDraftIfExists();
@@ -993,17 +1099,17 @@
             data.status = 'PENDENTE_APROVACAO';
             data.dataEnvio = new Date().toISOString();
 
-            // Salvar TR no localStorage
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            // Salvar TR usando sistema unificado
+            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             trs.push(data);
-            localStorage.setItem('termos_referencia', JSON.stringify(trs));
+            SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs);
 
             // Limpar rascunhos
             localStorage.removeItem('tr_rascunho');
             localStorage.removeItem('tr_autosave');
 
-            // Notificar comprador
-            const notificacoes = JSON.parse(localStorage.getItem('notificacoes_comprador') || '[]');
+            // Notificar comprador com sistema unificado
+            const notificacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.NOTIFICACOES_COMPRADOR, []);
             notificacoes.push({
                 id: Date.now(),
                 tipo: 'TR_PENDENTE',
@@ -1013,8 +1119,11 @@
                 lida: false,
                 tr_id: data.numeroTR
             });
-            localStorage.setItem('notificacoes_comprador', JSON.stringify(notificacoes));
+            SistemaLocal.salvar(SistemaLocal.CHAVES.NOTIFICACOES_COMPRADOR, notificacoes);
 
+            console.log('✅ TR enviado para aprovação:', data.numeroTR);
+            console.log('📢 Notificação enviada para Comprador');
+            
             alert('TR enviado para aprovação com sucesso!');
             window.location.href = 'dashboard-requisitante-integrado.html';
         }
@@ -1071,4 +1180,3 @@
 
 </body>
 </html>
-
