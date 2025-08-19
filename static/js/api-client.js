@@ -216,6 +216,18 @@ class ApiClient {
         return false;
     }
 
+    async getTRsPendentes() {
+        // 1) Tenta no backend (se existir endpoint)
+        const response = await this.request('/trs?status=PENDENTE_APROVACAO');
+        if (response && response.success && Array.isArray(response.trs)) {
+            return response.trs;
+        }
+    
+        // 2) Fallback local: filtra o armazenamento "oficial"
+        const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+        return trs.filter(t => t.status === 'PENDENTE_APROVACAO');
+    }
+    
     // ========================================
     // PROCESSOS
     // ========================================
