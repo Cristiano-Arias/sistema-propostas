@@ -3337,9 +3337,6 @@
                     }, 100);
                 }
        
-        // Aplicar correções ao carregar
-         aplicarCorrecoesModuloComprador();
-        
         function abrirComparativo() {
        // Verificar se há processos com propostas no localStorage
        const processos = JSON.parse(localStorage.getItem('processos_licitatorios') || '[]');
@@ -3451,8 +3448,32 @@
            window.salvarAnaliseIA = salvarAnaliseIA;
            window.inicializarAzureIA = inicializarAzureIA;
            
-           console.log('✅ Correções aplicadas e funções expostas globalmente!');
+           // Funções específicas do módulo comprador
+           window.selecionarTRParaProcesso = selecionarTRParaProcesso;
+           window.downloadTR = downloadTR;
+           window.marcarComoLida = marcarComoLida;
+           window.voltarEtapaAnterior = voltarEtapaAnterior;
+           window.prosseguirParaConfirmacao = prosseguirParaConfirmacao;
+           window.adicionarFornecedorExistente = adicionarFornecedorExistente;
+           window.removerFornecedor = removerFornecedor;
+           window.criarProcessoFinal = criarProcessoFinal;
+           window.mostrarTabTR = mostrarTabTR;
+           window.visualizarProcesso = visualizarProcesso;
+           window.gerenciarFornecedores = gerenciarFornecedores;
+           window.finalizarProcessoLicitatorio = finalizarProcessoLicitatorio;
+           window.executarAnaliseIA = executarAnaliseIA;
+           window.mostrarDetalheProposta = mostrarDetalheProposta;
+           window.downloadProposta = downloadProposta;
+           window.downloadAnexo = downloadAnexo;
+           window.enviarPropostaTecnicaRequisitante = enviarPropostaTecnicaRequisitante;
+           window.mostrarAdicionarFornecedor = mostrarAdicionarFornecedor;
+           window.removerFornecedorProcesso = removerFornecedorProcesso;
+           
+           console.log('✅ Correções aplicadas e TODAS as funções expostas globalmente!');
        }
+
+       // CHAMADA FINAL: Aplicar correções após todas as funções serem definidas
+       aplicarCorrecoesModuloComprador();
 
    
        
