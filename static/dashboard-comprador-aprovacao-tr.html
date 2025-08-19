@@ -577,6 +577,9 @@
         </div>
     </div>
 
+    <!-- Firebase Integration -->
+    <script type="module" src="/static/firebase.js"></script>
+    
     <script>
         let currentTR = null;
         let trsData = [];
@@ -1060,29 +1063,35 @@
                 PROPOSTAS: 'propostas_fornecedores'
             },
 
-            // Configuração Firebase
-            firebaseConfig: {
-                apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
-                authDomain: "portal-de-proposta.firebaseapp.com",
-                projectId: "portal-de-proposta",
-                storageBucket: "portal-de-proposta.firebasestorage.app",
-                messagingSenderId: "321036073908",
-                appId: "1:321036073908:web:3149b9ea2cb77a704890e1",
-                measurementId: "G-CFFVQGM3EC"
-            },
-
-            // Inicialização Firebase
+            // Firebase será inicializado pelo arquivo /static/firebase.js
             db: null,
             firebaseReady: false,
 
             async inicializarFirebase() {
                 try {
-                    // Importar Firebase
+                    // Usar Firebase já inicializado pelo arquivo centralizado
+                    if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+                        this.db = window.firebase.firestore();
+                        this.firebaseReady = true;
+                        console.log('✅ Firebase inicializado para Comprador');
+                        return;
+                    }
+
+                    // Fallback: Importar Firebase se não estiver disponível
                     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-                    const { getFirestore, doc, setDoc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                    
-                    // Inicializar Firebase
-                    const app = initializeApp(this.firebaseConfig);
+                    const { getFirestore } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+                    // Usar configuração do arquivo centralizado
+                    const config = window.firebaseConfig || {
+                        apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+                        authDomain: "portal-de-proposta.firebaseapp.com",
+                        projectId: "portal-de-proposta",
+                        storageBucket: "portal-de-proposta.firebasestorage.app",
+                        messagingSenderId: "321036073908",
+                        appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+                    };
+
+                    const app = initializeApp(config);
                     this.db = getFirestore(app);
                     this.firebaseReady = true;
                     
