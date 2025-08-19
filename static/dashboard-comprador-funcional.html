@@ -1023,12 +1023,24 @@
             CHAVES: {
                 TRS: 'sistema_trs',
                 NOTIFICACOES_COMPRADOR: 'notificacoes_comprador',
-                PROCESSOS: 'processos_licitatorios',
-                PROPOSTAS: 'propostas_fornecedores',
-                PROPOSTAS_COMPLETAS: 'propostas_completas',
+                
+                // ✅ CHAVES PADRONIZADAS (mantendo compatibilidade com dados existentes)
+                PROCESSOS: 'sistema_processos',
+                FORNECEDORES: 'sistema_fornecedores',
+                USUARIOS_FORNECEDORES: 'sistema_usuarios_fornecedores',
+                PROPOSTAS: 'sistema_propostas',
+                PROPOSTAS_COMPLETAS: 'sistema_propostas_completas',
+                VINCULACOES_FORNECEDORES: 'sistema_vinculacoes_fornecedores',
+                
                 USUARIO_COMPRADOR: 'comprador_user',
                 ANALISE_REQUISITANTE: 'analise_tecnica_requisitante',
-                ANALISES_IA: 'analises_ia'
+                ANALISES_IA: 'sistema_analises_ia',
+                
+                // ✅ COMPATIBILIDADE: Manter chaves antigas para migração gradual
+                PROCESSOS_ANTIGO: 'processos_licitatorios',
+                PROPOSTAS_ANTIGO: 'propostas_fornecedores',
+                FORNECEDORES_ANTIGO: 'fornecedores_cadastrados',
+                USUARIOS_FORNECEDORES_ANTIGO: 'usuarios_fornecedores'
             },
 
             // Inicialização Firebase
@@ -1081,7 +1093,16 @@
                     let dadosLocal = dados ? JSON.parse(dados) : padrao;
                     
                     // CORREÇÃO CRÍTICA: Garantir que arrays sempre retornam array
-                    const arrayKeys = [this.CHAVES.TRS, this.CHAVES.PROCESSOS, this.CHAVES.PROPOSTAS, this.CHAVES.PROPOSTAS_COMPLETAS];
+                    const arrayKeys = [
+                        this.CHAVES.TRS, 
+                        this.CHAVES.PROCESSOS, 
+                        this.CHAVES.FORNECEDORES, 
+                        this.CHAVES.USUARIOS_FORNECEDORES,
+                        this.CHAVES.PROPOSTAS, 
+                        this.CHAVES.PROPOSTAS_COMPLETAS, 
+                        this.CHAVES.VINCULACOES_FORNECEDORES,
+                        this.CHAVES.ANALISES_IA
+                    ];
                     if (arrayKeys.includes(chave) && !Array.isArray(dadosLocal)) {
                         console.warn(`${chave} não é array, inicializando como array vazio`);
                         dadosLocal = [];
@@ -1109,7 +1130,17 @@
                 } catch (error) {
                     console.error('Erro ao carregar dados:', error);
                     // CORREÇÃO: Se for chave de array e houver erro, retornar array vazio
-                    const arrayKeys = [this.CHAVES.TRS, this.CHAVES.PROCESSOS, this.CHAVES.PROPOSTAS, this.CHAVES.PROPOSTAS_COMPLETAS];
+                    // CORREÇÃO CRÍTICA: Garantir que arrays sempre retornam array
+                    const arrayKeys = [
+                        this.CHAVES.TRS, 
+                        this.CHAVES.PROCESSOS, 
+                        this.CHAVES.FORNECEDORES, 
+                        this.CHAVES.USUARIOS_FORNECEDORES,
+                        this.CHAVES.PROPOSTAS, 
+                        this.CHAVES.PROPOSTAS_COMPLETAS, 
+                        this.CHAVES.VINCULACOES_FORNECEDORES,
+                        this.CHAVES.ANALISES_IA
+                    ];
                     if (arrayKeys.includes(chave)) {
                         return [];
                     }
@@ -1224,7 +1255,7 @@
             if (confirm('Deseja realmente sair do sistema?')) {
                 localStorage.removeItem(SistemaLocal.CHAVES.USUARIO_COMPRADOR);
                 alert('Logout realizado com sucesso!');
-                // window.location.href = '/';
+                window.location.href = '/';
             }
         }
 
@@ -1569,8 +1600,19 @@
             const container = document.getElementById('trs-aprovados-list');
             if (!container) return;
         
-            // Buscar fornecedores já cadastrados
-            const fornecedoresCadastrados = SistemaLocal.carregar('fornecedores_cadastrados', []);
+            // ✅ CORREÇÃO: Buscar fornecedores com fallback automático (nova → antiga)
+            const fornecedoresCadastrados = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES, []);
+            
+            // Fallback para chave antiga se nova estiver vazia
+            if (fornecedoresCadastrados.length === 0) {
+                const fornecedoresAntigos = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES_ANTIGO, []);
+                if (fornecedoresAntigos.length > 0) {
+                    // Migrar automaticamente para nova chave
+                    SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDORES, fornecedoresAntigos);
+                    console.log('🔄 Fornecedores migrados automaticamente para nova chave');
+                    return fornecedoresAntigos;
+                }
+            }
             
             // Filtrar apenas fornecedores ativos que não foram adicionados ainda
             const fornecedoresDisponiveis = fornecedoresCadastrados.filter(f => 
@@ -1663,7 +1705,14 @@
 
         // Nova função para adicionar fornecedor já cadastrado
         function adicionarFornecedorExistente(fornecedorId) {
-            const fornecedoresCadastrados = SistemaLocal.carregar('fornecedores_cadastrados', []);
+            // ✅ CORREÇÃO: Buscar fornecedores com fallback automático
+            let fornecedoresCadastrados = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES, []);
+            
+            // Fallback para chave antiga se nova estiver vazia
+            if (fornecedoresCadastrados.length === 0) {
+                fornecedoresCadastrados = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES_ANTIGO, []);
+            }
+            
             const fornecedor = fornecedoresCadastrados.find(f => f.id === fornecedorId);
             
             if (!fornecedor) {
@@ -1711,8 +1760,14 @@
                 return;
             }
 
-            // Verificar se fornecedor já existe no sistema (CNPJ único global)
-            const fornecedoresCadastrados = SistemaLocal.carregar('fornecedores_cadastrados', []);
+            // ✅ CORREÇÃO: Verificar se fornecedor já existe no sistema (CNPJ único global)
+            let fornecedoresCadastrados = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES, []);
+            
+            // Fallback para chave antiga se nova estiver vazia
+            if (fornecedoresCadastrados.length === 0) {
+                fornecedoresCadastrados = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES_ANTIGO, []);
+            }
+            
             let fornecedorExistente = null;
             
             if (Array.isArray(fornecedoresCadastrados)) {
@@ -1753,12 +1808,16 @@
                     status: 'ativo'
                 };
 
-                // Salvar novo fornecedor no sistema global
+                // ✅ CORREÇÃO: Salvar novo fornecedor usando CHAVES (com migração automática)
                 const novosFornecedores = Array.isArray(fornecedoresCadastrados) ? fornecedoresCadastrados : [];
                 novosFornecedores.push(fornecedor);
-                SistemaLocal.salvar('fornecedores_cadastrados', novosFornecedores);
+                
+                // Salvar na nova chave (Firebase)
+                SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDORES, novosFornecedores);
+                // Manter compatibilidade com chave antiga (localStorage)
+                SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDORES_ANTIGO, novosFornecedores);
 
-                // Salvar credenciais para login
+                // ✅ CORREÇÃO: Salvar credenciais usando CHAVES (com migração automática)
                 const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
                 const novosUsuarios = Array.isArray(usuariosFornecedores) ? usuariosFornecedores : [];
                 novosUsuarios.push({
@@ -1771,7 +1830,11 @@
                     ativo: true,
                     dataCadastro: new Date().toISOString()
                 });
-                SistemaLocal.salvar('usuarios_fornecedores', novosUsuarios);
+                
+                // Salvar na nova chave (Firebase)
+                SistemaLocal.salvar(SistemaLocal.CHAVES.USUARIOS_FORNECEDORES, novosUsuarios);
+                // Manter compatibilidade com chave antiga (localStorage)
+                SistemaLocal.salvar(SistemaLocal.CHAVES.USUARIOS_FORNECEDORES_ANTIGO, novosUsuarios);
 
                 alert(`Novo fornecedor cadastrado!\n\nDados de acesso criados:\nUsuário: ${usuario}\nSenha: ${senha}\n\nEsses dados serão enviados por e-mail para: ${email}`);
             }
