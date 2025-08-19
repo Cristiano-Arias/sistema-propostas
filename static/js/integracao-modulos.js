@@ -68,7 +68,7 @@ function enviarTRParaComprador(tr) {
     let trsRequisitante = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
     const index = trsRequisitante.findIndex(t => t.id === tr.id);
     if (index !== -1) {
-        trsRequisitante[index].status = 'ENVIADO_APROVACAO';
+        trsRequisitante[index].status = 'PENDENTE_APROVACAO';
         localStorage.setItem('termos_referencia', JSON.stringify(trsRequisitante));
     }
     
@@ -479,5 +479,6 @@ window.IntegracaoModulos = {
     mostrarConfirmacao,
     mostrarErro
 };
+
 
 console.log('✅ Sistema de integração carregado com sucesso!');
