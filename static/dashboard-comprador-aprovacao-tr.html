@@ -588,8 +588,8 @@
         });
 
         function loadTRs() {
-            // Carregar TRs do localStorage
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
+            // Usar sistema unificado em vez de localStorage direto
+            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             trsData = trs;
             
             renderTRList();
@@ -864,17 +864,11 @@
             currentTR.dataAprovacao = new Date().toISOString();
             currentTR.aprovadoPor = 'Comprador'; // Em um sistema real, seria o usuário logado
 
-            // Salvar no localStorage
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const index = trs.findIndex(tr => tr.numeroTR === currentTR.numeroTR);
-            if (index !== -1) {
-                trs[index] = currentTR;
-                localStorage.setItem('termos_referencia', JSON.stringify(trs));
-            }
+            // Salvar no sistema unificado
+            salvarTRAprovado(currentTR);
 
-            // Notificar requisitante
-            const notificacoes = JSON.parse(localStorage.getItem('notificacoes_requisitante') || '[]');
-            notificacoes.push({
+            // Notificar requisitante usando sistema unificado
+            salvarNotificacao({
                 id: Date.now(),
                 tipo: 'TR_APROVADO',
                 titulo: 'TR Aprovado',
@@ -883,7 +877,6 @@
                 lida: false,
                 tr_id: currentTR.numeroTR
             });
-            localStorage.setItem('notificacoes_requisitante', JSON.stringify(notificacoes));
 
             alert('TR aprovado com sucesso!');
             closeModal();
@@ -910,13 +903,8 @@
             currentTR.dataReprovacao = new Date().toISOString();
             currentTR.reprovadoPor = 'Comprador'; // Em um sistema real, seria o usuário logado
 
-            // Salvar no localStorage
-            const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-            const index = trs.findIndex(tr => tr.numeroTR === currentTR.numeroTR);
-            if (index !== -1) {
-                trs[index] = currentTR;
-                localStorage.setItem('termos_referencia', JSON.stringify(trs));
-            }
+            // Salvar no sistema unificado
+            salvarTRAprovado(currentTR);
 
             // Notificar requisitante
             const notificacoes = JSON.parse(localStorage.getItem('notificacoes_requisitante') || '[]');
@@ -1059,6 +1047,211 @@
         <script src="js/api-client.js"></script>
         <script src="js/integration.js"></script>
         <script src="js/integracao-modulos.js"></script>
+
+        // ===== SISTEMA DE DADOS COM FIREBASE + LOCALSTORAGE =====
+        const SistemaLocal = {
+            // Chaves compatíveis com sistema existente
+            CHAVES: {
+                TRS: 'termos_referencia',  // ← Mantém compatibilidade
+                NOTIFICACOES: 'notificacoes_comprador',
+                PROCESSOS: 'processos_licitatorios',
+                FORNECEDORES: 'fornecedores_cadastrados',
+                USUARIOS_FORNECEDORES: 'usuarios_fornecedores',
+                PROPOSTAS: 'propostas_fornecedores'
+            },
+
+            // Configuração Firebase
+            firebaseConfig: {
+                apiKey: "SUA-API-KEY-AQUI",
+                authDomain: "seu-projeto.firebaseapp.com",
+                projectId: "seu-projeto-id",
+                storageBucket: "seu-projeto.appspot.com",
+                messagingSenderId: "123456789",
+                appId: "sua-app-id"
+            },
+
+            // Inicialização Firebase
+            db: null,
+            firebaseReady: false,
+
+            async inicializarFirebase() {
+                try {
+                    // Importar Firebase
+                    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                    const { getFirestore, doc, setDoc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    
+                    // Inicializar Firebase
+                    const app = initializeApp(this.firebaseConfig);
+                    this.db = getFirestore(app);
+                    this.firebaseReady = true;
+                    
+                    console.log('✅ Firebase inicializado para Comprador');
+                    
+                } catch (error) {
+                    console.warn('⚠️ Firebase não disponível, usando apenas localStorage:', error);
+                    this.firebaseReady = false;
+                }
+            },
+
+            // Salvar dados (localStorage + Firebase)
+            salvar(chave, dados) {
+                try {
+                    // SEMPRE salvar no localStorage primeiro (compatibilidade)
+                    localStorage.setItem(chave, JSON.stringify(dados));
+                    
+                    // Tentar sincronizar com Firebase em background
+                    if (this.firebaseReady && this.db) {
+                        this.sincronizarFirebase(chave, dados).catch(error => {
+                            console.warn('⚠️ Erro ao sincronizar com Firebase:', error);
+                        });
+                    }
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao salvar dados:', error);
+                    return false;
+                }
+            },
+
+            // Carregar dados (localStorage primeiro, Firebase em background)
+            carregar(chave, padrao = null) {
+                try {
+                    // SEMPRE usar localStorage primeiro (compatibilidade)
+                    const dados = localStorage.getItem(chave);
+                    let dadosLocal = dados ? JSON.parse(dados) : padrao;
+                    
+                    // CORREÇÃO CRÍTICA: Garantir que arrays sempre retornam array
+                    const arrayKeys = [this.CHAVES.TRS, this.CHAVES.NOTIFICACOES, this.CHAVES.PROCESSOS, this.CHAVES.FORNECEDORES, this.CHAVES.USUARIOS_FORNECEDORES, this.CHAVES.PROPOSTAS];
+                    if (arrayKeys.includes(chave) && !Array.isArray(dadosLocal)) {
+                        console.warn(`${chave} não é array, inicializando como array vazio`);
+                        dadosLocal = [];
+                        localStorage.setItem(chave, JSON.stringify([]));
+                    }
+                    
+                    // Tentar sincronizar com Firebase em background (sem bloquear)
+                    if (this.firebaseReady && this.db) {
+                        this.carregarFirebase(chave).then(dadosFirebase => {
+                            if (dadosFirebase && JSON.stringify(dadosFirebase) !== JSON.stringify(dadosLocal)) {
+                                localStorage.setItem(chave, JSON.stringify(dadosFirebase));
+                                console.log(`🔄 Dados atualizados do Firebase: ${chave}`);
+                                
+                                // Recarregar interface se necessário
+                                if (chave === this.CHAVES.TRS) {
+                                    loadTRs();
+                                }
+                            }
+                        }).catch(error => {
+                            console.warn('⚠️ Erro ao sincronizar do Firebase:', error);
+                        });
+                    }
+                    
+                    return dadosLocal;
+                    
+                } catch (error) {
+                    console.error('Erro ao carregar dados:', error);
+                    // CORREÇÃO: Se for chave de array e houver erro, retornar array vazio
+                    const arrayKeys = [this.CHAVES.TRS, this.CHAVES.NOTIFICACOES, this.CHAVES.PROCESSOS, this.CHAVES.FORNECEDORES, this.CHAVES.USUARIOS_FORNECEDORES, this.CHAVES.PROPOSTAS];
+                    if (arrayKeys.includes(chave)) {
+                        return [];
+                    }
+                    return padrao;
+                }
+            },
+
+            // Sincronizar com Firebase (background)
+            async sincronizarFirebase(chave, dados) {
+                if (!this.firebaseReady || !this.db) return;
+                
+                try {
+                    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    await setDoc(doc(this.db, 'sistema_dados', chave), {
+                        dados: dados,
+                        timestamp: new Date().toISOString(),
+                        modulo: 'comprador'
+                    });
+                    console.log(`✅ Dados salvos no Firebase: ${chave}`);
+                } catch (error) {
+                    console.warn(`⚠️ Erro ao salvar no Firebase (${chave}):`, error);
+                }
+            },
+
+            // Carregar do Firebase (background)
+            async carregarFirebase(chave) {
+                if (!this.firebaseReady || !this.db) return null;
+                
+                try {
+                    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    const docRef = doc(this.db, 'sistema_dados', chave);
+                    const docSnap = await getDoc(docRef);
+                    
+                    if (docSnap.exists()) {
+                        return docSnap.data().dados;
+                    }
+                    return null;
+                } catch (error) {
+                    console.warn(`⚠️ Erro ao carregar do Firebase (${chave}):`, error);
+                    return null;
+                }
+            }
+        };
+
+        // ===== SUBSTITUIR FUNÇÕES EXISTENTES PARA USAR SISTEMA UNIFICADO =====
+        
+        // Substituir função loadTRs existente
+        function loadTRs() {
+            // Usar sistema unificado em vez de localStorage direto
+            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+            trsData = trs;
+            
+            renderTRList();
+            updateNotificationBadge();
+        }
+
+        // Função para salvar TR aprovado (substituir localStorage direto)
+        function salvarTRAprovado(tr) {
+            try {
+                // Carregar TRs usando sistema unificado
+                const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+                const index = trs.findIndex(item => item.numeroTR === tr.numeroTR);
+                
+                if (index !== -1) {
+                    trs[index] = tr;
+                    // Usar sistema unificado para salvar
+                    SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs);
+                    console.log('✅ TR aprovado salvo:', tr.numeroTR);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao salvar TR aprovado:', error);
+            }
+        }
+
+        // Função para salvar notificação (substituir localStorage direto)
+        function salvarNotificacao(notificacao) {
+            try {
+                const notificacoes = SistemaLocal.carregar('notificacoes_requisitante', []);
+                notificacoes.push(notificacao);
+                SistemaLocal.salvar('notificacoes_requisitante', notificacoes);
+                console.log('📢 Notificação salva para requisitante');
+                
+            } catch (error) {
+                console.warn('⚠️ Erro ao salvar notificação:', error);
+            }
+        }
+
+        // Inicializar sistema ao carregar página
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Inicializando Dashboard Comprador...');
+            
+            // Inicializar Firebase
+            await SistemaLocal.inicializarFirebase();
+            
+            // Carregar dados existentes
+            loadTRs();
+            updateStats();
+            
+            console.log('✅ Dashboard Comprador inicializado com Firebase!');
+        });
 
     <script type="module" src="/static/firebase.js"></script>
     <script type="module" src="/static/auth.js"></script>
