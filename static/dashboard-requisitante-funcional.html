@@ -1026,13 +1026,12 @@
 
         // Configuração Firebase (SUBSTITUA PELAS SUAS CREDENCIAIS)
         const firebaseConfig = {
-            apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
-            authDomain: "portal-de-proposta.firebaseapp.com",
-            projectId: "portal-de-proposta",
-            storageBucket: "portal-de-proposta.firebasestorage.app",
-            messagingSenderId: "321036073908",
-            appId: "1:321036073908:web:3149b9ea2cb77a704890e1",
-            measurementId: "G-CFFVQGM3EC"
+            apiKey: "SUA-API-KEY-AQUI",
+            authDomain: "seu-projeto.firebaseapp.com",
+            projectId: "seu-projeto-id",
+            storageBucket: "seu-projeto.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "sua-app-id"
         };
 
         // Sistema de dados com Firebase + localStorage
@@ -1041,7 +1040,17 @@
             CHAVES: {
                 TRS: 'sistema_trs',
                 USUARIO: 'sistema_usuario_logado',
-                ESTATISTICAS: 'sistema_estatisticas'
+                ESTATISTICAS: 'sistema_estatisticas',
+                
+                // ✅ NOVAS CHAVES para sincronização completa (mantendo compatibilidade)
+                PROCESSOS: 'sistema_processos',
+                FORNECEDORES: 'sistema_fornecedores',
+                USUARIOS_FORNECEDORES: 'sistema_usuarios_fornecedores',
+                PROPOSTAS: 'sistema_propostas',
+                PROPOSTAS_COMPLETAS: 'sistema_propostas_completas',
+                VINCULACOES_FORNECEDORES: 'sistema_vinculacoes_fornecedores',
+                NOTIFICACOES_COMPRADOR: 'notificacoes_comprador',
+                ANALISES_IA: 'sistema_analises_ia'
             },
 
             // Inicialização Firebase
@@ -1093,9 +1102,19 @@
                     const dados = localStorage.getItem(chave);
                     let dadosLocal = dados ? JSON.parse(dados) : padrao;
                     
-                    // CORREÇÃO CRÍTICA: Garantir que TRS sempre retorna array
-                    if (chave === this.CHAVES.TRS && !Array.isArray(dadosLocal)) {
-                        console.warn('TRs não é array, inicializando como array vazio');
+                    // CORREÇÃO CRÍTICA: Garantir que arrays sempre retornam array
+                    const arrayKeys = [
+                        this.CHAVES.TRS, 
+                        this.CHAVES.PROCESSOS, 
+                        this.CHAVES.FORNECEDORES, 
+                        this.CHAVES.USUARIOS_FORNECEDORES,
+                        this.CHAVES.PROPOSTAS, 
+                        this.CHAVES.PROPOSTAS_COMPLETAS, 
+                        this.CHAVES.VINCULACOES_FORNECEDORES,
+                        this.CHAVES.ANALISES_IA
+                    ];
+                    if (arrayKeys.includes(chave) && !Array.isArray(dadosLocal)) {
+                        console.warn(`${chave} não é array, inicializando como array vazio`);
                         dadosLocal = [];
                         // Salvar array vazio no localStorage
                         localStorage.setItem(chave, JSON.stringify([]));
@@ -1120,8 +1139,18 @@
                     
                 } catch (error) {
                     console.error('Erro ao carregar dados:', error);
-                    // CORREÇÃO: Se for TRS e houver erro, retornar array vazio
-                    if (chave === this.CHAVES.TRS) {
+                    // CORREÇÃO: Se for chave de array e houver erro, retornar array vazio
+                    const arrayKeys = [
+                        this.CHAVES.TRS, 
+                        this.CHAVES.PROCESSOS, 
+                        this.CHAVES.FORNECEDORES, 
+                        this.CHAVES.USUARIOS_FORNECEDORES,
+                        this.CHAVES.PROPOSTAS, 
+                        this.CHAVES.PROPOSTAS_COMPLETAS, 
+                        this.CHAVES.VINCULACOES_FORNECEDORES,
+                        this.CHAVES.ANALISES_IA
+                    ];
+                    if (arrayKeys.includes(chave)) {
                         return [];
                     }
                     return padrao;
