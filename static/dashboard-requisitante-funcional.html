@@ -1501,6 +1501,7 @@
             trs.push(novoTR);
             
             if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
+                IntegracaoModulos.enviarTRParaComprador(novoTR);
                 return { sucesso: true, id: novoTR.id };
             } else {
                 return { sucesso: false, erro: 'Erro ao salvar no localStorage' };
