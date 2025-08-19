@@ -1024,22 +1024,21 @@
             getDocs 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Configuração Firebase (SUBSTITUA PELAS SUAS CREDENCIAIS)
+        // Configuração Firebase (credenciais corretas do servidor)
         const firebaseConfig = {
             apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
             authDomain: "portal-de-proposta.firebaseapp.com",
             projectId: "portal-de-proposta",
             storageBucket: "portal-de-proposta.firebasestorage.app",
             messagingSenderId: "321036073908",
-            appId: "1:321036073908:web:3149b9ea2cb77a704890e1",
-            measurementId: "G-CFFVQGM3EC"
+            appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
         };
 
         // Sistema de dados com Firebase + localStorage
         const SistemaLocal = {
             // Chaves para localStorage
             CHAVES: {
-                TRS: 'sistema_trs',
+                TRS: 'termos_referencia',  // ← Compatível com módulo comprador
                 USUARIO: 'sistema_usuario_logado',
                 ESTATISTICAS: 'sistema_estatisticas',
                 
@@ -1177,13 +1176,13 @@
             enviarTRParaComprador: function(tr) {
                 try {
                     // Atualizar status do TR
-                    const trs = JSON.parse(localStorage.getItem('sistema_trs') || '[]');
+                    const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
                     const trIndex = trs.findIndex(t => t.id === tr.id);
                     
                     if (trIndex !== -1) {
                         trs[trIndex].status = 'enviado';
                         trs[trIndex].dataEnvioAprovacao = new Date().toISOString();
-                        localStorage.setItem('sistema_trs', JSON.stringify(trs));
+                        localStorage.setItem('termos_referencia', JSON.stringify(trs));
                         
                         // Adicionar notificação para o comprador
                         const notificacoes = JSON.parse(localStorage.getItem('notificacoes_comprador') || '[]');
