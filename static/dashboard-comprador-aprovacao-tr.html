@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprovação de TRs - Sistema de Gestão de Propostas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .logo h2 {
+            color: #27ae60;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+
+        .menu-section {
+            margin-bottom: 25px;
+        }
+
+        .menu-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .menu-item:hover {
+            background: #e8f5e8;
+            color: #27ae60;
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: #27ae60;
+            color: white;
+        }
+
+        .notification-badge {
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 10px;
+            margin-left: auto;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .stats-summary {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: #f8f9fa;
+            border-radius: 20px;
+        }
+
+        .stat-item.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .stat-item.approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .stat-item.rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .tr-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .tr-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            background: #fafafa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tr-card:hover {
+            border-color: #27ae60;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .tr-card.selected {
+            border-color: #27ae60;
+            background: #f0f8f0;
+        }
+
+        .tr-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .tr-number {
+            font-size: 18px;
+            font-weight: 600;
+            color: #27ae60;
+        }
+
+        .tr-date {
+            font-size: 12px;
+            color: #666;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .tr-status {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .tr-status.pendente {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .tr-object {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .tr-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .tr-detail {
+            font-size: 14px;
+        }
+
+        .tr-detail-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .tr-detail-value {
+            color: #333;
+            margin-top: 2px;
+        }
+
+        .tr-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-view {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: #545b62;
+        }
+
+        .btn-approve {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-approve:hover {
+            background: #218838;
+        }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-reject:hover {
+            background: #c82333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            margin: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 5px;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .tr-preview {
+            line-height: 1.6;
+        }
+
+        .preview-section {
+            margin-bottom: 25px;
+        }
+
+        .preview-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #27ae60;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .preview-content {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .preview-field {
+            margin-bottom: 15px;
+        }
+
+        .preview-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .preview-value {
+            color: #555;
+            white-space: pre-wrap;
+        }
+
+        .decision-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #27ae60;
+        }
+
+        .decision-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .btn-large {
+            padding: 12px 30px;
+            font-size: 16px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .tr-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .tr-actions {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 200px;
+            }
+            
+            .stats-summary {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <span style="font-size: 24px;">👨‍💼</span>
+            <div>
+                <h2>Portal do Comprador</h2>
+                <small style="color: #666;">Sistema de Gestão de Propostas</small>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">Principal</div>
+            <button class="menu-item" onclick="navigateTo('dashboard')">
+                📊 Dashboard
+            </button>
+            <button class="menu-item active" onclick="navigateTo('aprovacao-tr')">
+                📋 Aprovação de TRs
+                <span class="notification-badge" id="trPendenteBadge">0</span>
+            </button>
+            <button class="menu-item" onclick="navigateTo('criar-processo')">
+                🏗️ Criar Processo
+            </button>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">Propostas</div>
+            <button class="menu-item" onclick="navigateTo('propostas')">
+                📄 Propostas Recebidas
+            </button>
+            <button class="menu-item" onclick="navigateTo('analise-comparativa')">
+                📊 Análise Comparativa
+            </button>
+            <button class="menu-item" onclick="navigateTo('relatorios')">
+                📈 Relatórios
+            </button>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">Sistema</div>
+            <button class="menu-item" onclick="navigateTo('sair')">
+                🚪 Sair
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="content-card">
+            <div class="header">
+                <h1>
+                    📋 Aprovação de Termos de Referência
+                </h1>
+                <div class="stats-summary">
+                    <div class="stat-item pending">
+                        <span>⏳</span>
+                        <span id="pendingCount">0</span> Pendentes
+                    </div>
+                    <div class="stat-item approved">
+                        <span>✅</span>
+                        <span id="approvedCount">0</span> Aprovados
+                    </div>
+                    <div class="stat-item rejected">
+                        <span>❌</span>
+                        <span id="rejectedCount">0</span> Reprovados
+                    </div>
+                </div>
+            </div>
+
+            <div id="trListContainer" class="tr-list">
+                <!-- TRs serão carregados aqui -->
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">📋</div>
+                <h3>Nenhum TR para Aprovação</h3>
+                <p>Não há termos de referência pendentes de aprovação no momento.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Visualização/Aprovação -->
+    <div id="trModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Análise de Termo de Referência</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+
+            <div id="trPreview" class="tr-preview">
+                <!-- Conteúdo do TR será carregado aqui -->
+            </div>
+
+            <div class="decision-form">
+                <h3 style="margin-bottom: 20px; color: #27ae60;">💬 Parecer do Comprador</h3>
+                
+                <div class="form-group">
+                    <label for="parecerComprador">Comentários e Observações:</label>
+                    <textarea id="parecerComprador" placeholder="Digite seus comentários sobre o TR, sugestões de melhorias, adequação legal, viabilidade técnica..."></textarea>
+                </div>
+
+                <div class="decision-buttons">
+                    <button class="btn btn-reject btn-large" onclick="reprovarTR()">
+                        ❌ Reprovar TR
+                    </button>
+                    <button class="btn btn-approve btn-large" onclick="aprovarTR()">
+                        ✅ Aprovar TR
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Integration -->
+    <script type="module" src="/static/firebase.js"></script>
+    
+    <script>
+        let currentTR = null;
+        let trsData = [];
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTRs();
+            updateStats();
+        });
+
+        function loadTRs() {
+            // Usar sistema unificado em vez de localStorage direto
+            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+            trsData = trs;
+            
+            renderTRList();
+            updateNotificationBadge();
+        }
+
+        function renderTRList() {
+            const container = document.getElementById('trListContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (trsData.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+            
+            container.innerHTML = trsData.map(tr => `
+                <div class="tr-card" onclick="selectTR('${tr.numeroTR}')">
+                    <div class="tr-header">
+                        <div class="tr-number">${tr.numeroTR}</div>
+                        <div class="tr-date">${formatDate(tr.dataCreacao)}</div>
+                        <div class="tr-status ${tr.status?.toLowerCase() || 'pendente'}">
+                            ${getStatusText(tr.status)}
+                        </div>
+                    </div>
+                    
+                    <div class="tr-object">${tr.objeto}</div>
+                    
+                    <div class="tr-details">
+                        <div class="tr-detail">
+                            <div class="tr-detail-label">Local:</div>
+                            <div class="tr-detail-value">${tr.local}</div>
+                        </div>
+                        <div class="tr-detail">
+                            <div class="tr-detail-label">Prazo:</div>
+                            <div class="tr-detail-value">${tr.prazoExecucao} dias</div>
+                        </div>
+                        <div class="tr-detail">
+                            <div class="tr-detail-label">Valor Estimado:</div>
+                            <div class="tr-detail-value">${tr.valorEstimado ? 'R$ ' + parseFloat(tr.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : 'Não informado'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tr-actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-view" onclick="viewTR('${tr.numeroTR}')">
+                            👁️ Visualizar
+                        </button>
+                        ${tr.status === 'PENDENTE_APROVACAO' ? `
+                            <button class="btn btn-approve" onclick="quickApprove('${tr.numeroTR}')">
+                                ✅ Aprovar
+                            </button>
+                            <button class="btn btn-reject" onclick="quickReject('${tr.numeroTR}')">
+                                ❌ Reprovar
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectTR(numeroTR) {
+            // Remover seleção anterior
+            document.querySelectorAll('.tr-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Adicionar seleção atual
+            event.currentTarget.classList.add('selected');
+            currentTR = trsData.find(tr => tr.numeroTR === numeroTR);
+        }
+
+        function viewTR(numeroTR) {
+            const tr = trsData.find(t => t.numeroTR === numeroTR);
+            if (!tr) return;
+
+            currentTR = tr;
+            document.getElementById('modalTitle').textContent = `Análise de TR - ${tr.numeroTR}`;
+            
+            // Renderizar preview do TR
+            document.getElementById('trPreview').innerHTML = generateTRPreview(tr);
+            
+            // Limpar formulário de parecer
+            document.getElementById('parecerComprador').value = tr.parecerComprador || '';
+            
+            // Mostrar modal
+            document.getElementById('trModal').classList.add('show');
+        }
+
+        function generateTRPreview(tr) {
+            return `
+                <div class="preview-section">
+                    <div class="preview-title">🏷️ Identificação</div>
+                    <div class="preview-content">
+                        <div class="preview-field">
+                            <div class="preview-label">Número do TR:</div>
+                            <div class="preview-value">${tr.numeroTR}</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Data de Criação:</div>
+                            <div class="preview-value">${formatDate(tr.dataCreacao)}</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Objeto:</div>
+                            <div class="preview-value">${tr.objeto}</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Local:</div>
+                            <div class="preview-value">${tr.local}</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Descrição do Objeto:</div>
+                            <div class="preview-value">${tr.descricaoObjeto}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-title">🔧 Especificações Técnicas</div>
+                    <div class="preview-content">
+                        <div class="preview-field">
+                            <div class="preview-label">Especificações Técnicas Mínimas:</div>
+                            <div class="preview-value">${tr.especificacoesTecnicas}</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Requisitos Funcionais:</div>
+                            <div class="preview-value">${tr.requisitosFuncionais}</div>
+                        </div>
+                        ${tr.requisitosNaoFuncionais ? `
+                        <div class="preview-field">
+                            <div class="preview-label">Requisitos Não Funcionais:</div>
+                            <div class="preview-value">${tr.requisitosNaoFuncionais}</div>
+                        </div>
+                        ` : ''}
+                        <div class="preview-field">
+                            <div class="preview-label">Critérios de Aceitação:</div>
+                            <div class="preview-value">${tr.criteriosAceitacao}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-title">📊 Critérios de Avaliação</div>
+                    <div class="preview-content">
+                        <div class="preview-field">
+                            <div class="preview-label">Peso Técnico:</div>
+                            <div class="preview-value">${tr.pesoTecnico}%</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Peso Comercial:</div>
+                            <div class="preview-value">${tr.pesoComercial}%</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Critérios de Julgamento:</div>
+                            <div class="preview-value">${tr.criteriosJulgamento}</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Documentação Exigida:</div>
+                            <div class="preview-value">${tr.documentacaoExigida}</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Qualificação Técnica:</div>
+                            <div class="preview-value">${tr.qualificacaoTecnica}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-title">⏰ Prazos e Condições</div>
+                    <div class="preview-content">
+                        <div class="preview-field">
+                            <div class="preview-label">Prazo de Execução:</div>
+                            <div class="preview-value">${tr.prazoExecucao} dias</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Local de Entrega:</div>
+                            <div class="preview-value">${tr.localEntrega}</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="preview-label">Condições de Pagamento:</div>
+                            <div class="preview-value">${tr.condicoesPagamento}</div>
+                        </div>
+                        ${tr.garantiasExigidas ? `
+                        <div class="preview-field">
+                            <div class="preview-label">Garantias Exigidas:</div>
+                            <div class="preview-value">${tr.garantiasExigidas}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-title">📎 Informações Complementares</div>
+                    <div class="preview-content">
+                        ${tr.valorEstimado ? `
+                        <div class="preview-field">
+                            <div class="preview-label">Valor Estimado:</div>
+                            <div class="preview-value">R$ ${parseFloat(tr.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                        </div>
+                        ` : ''}
+                        <div class="preview-field">
+                            <div class="preview-label">Fonte Pagadora:</div>
+                            <div class="preview-value">${tr.fontePagadora}</div>
+                        </div>
+                        ${tr.observacoesGerais ? `
+                        <div class="preview-field">
+                            <div class="preview-label">Observações Gerais:</div>
+                            <div class="preview-value">${tr.observacoesGerais}</div>
+                        </div>
+                        ` : ''}
+                        <div class="preview-field">
+                            <div class="preview-label">Justificativa da Contratação:</div>
+                            <div class="preview-value">${tr.justificativa}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeModal() {
+            document.getElementById('trModal').classList.remove('show');
+            currentTR = null;
+        }
+
+        // SUBSTITUIR TODA A FUNÇÃO POR:
+        function aprovarTR() {
+            if (!currentTR) return;
+
+            const parecer = document.getElementById('parecerComprador').value.trim();
+            if (!parecer) {
+                alert('Por favor, adicione um comentário sobre a aprovação do TR.');
+                return;
+            }
+
+            if (!confirm('Tem certeza que deseja APROVAR este TR? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            // Usar a nova função de integração
+            const tr = IntegracaoModulos.aprovarTRComprador(currentTR.id, parecer);
+    
+            if (tr) {
+                alert('TR aprovado com sucesso!');
+        
+                if (confirm('Deseja criar um processo de compra agora?')) {
+                    // Salvar TR aprovado no sessionStorage para usar na criação do processo
+                    sessionStorage.setItem('tr_para_processo', JSON.stringify(tr));
+                    window.location.href = 'dashboard-comprador-criar-processo.html';
+                } else {
+                    closeModal();
+                    loadTRs();
+                    updateStats();
+                }
+            }
+        }
+
+            const parecer = document.getElementById('parecerComprador').value.trim();
+            if (!parecer) {
+                alert('Por favor, adicione um comentário sobre a aprovação do TR.');
+                return;
+            }
+
+            if (!confirm('Tem certeza que deseja APROVAR este TR? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            // Atualizar TR
+            currentTR.status = 'APROVADO';
+            currentTR.parecerComprador = parecer;
+            currentTR.dataAprovacao = new Date().toISOString();
+            currentTR.aprovadoPor = 'Comprador'; // Em um sistema real, seria o usuário logado
+
+            // Salvar no sistema unificado
+            salvarTRAprovado(currentTR);
+
+            // Notificar requisitante usando sistema unificado
+            salvarNotificacao({
+                id: Date.now(),
+                tipo: 'TR_APROVADO',
+                titulo: 'TR Aprovado',
+                mensagem: `TR ${currentTR.numeroTR} foi aprovado pelo comprador`,
+                data: new Date().toISOString(),
+                lida: false,
+                tr_id: currentTR.numeroTR
+            });
+
+            alert('TR aprovado com sucesso!');
+            closeModal();
+            loadTRs();
+            updateStats();
+        }
+
+        function reprovarTR() {
+            if (!currentTR) return;
+
+            const parecer = document.getElementById('parecerComprador').value.trim();
+            if (!parecer) {
+                alert('Por favor, adicione comentários explicando os motivos da reprovação.');
+                return;
+            }
+
+            if (!confirm('Tem certeza que deseja REPROVAR este TR? O requisitante precisará fazer correções.')) {
+                return;
+            }
+
+            // Atualizar TR
+            currentTR.status = 'REPROVADO';
+            currentTR.parecerComprador = parecer;
+            currentTR.dataReprovacao = new Date().toISOString();
+            currentTR.reprovadoPor = 'Comprador'; // Em um sistema real, seria o usuário logado
+
+            // Salvar no sistema unificado
+            salvarTRAprovado(currentTR);
+
+            // Notificar requisitante
+            const notificacoes = JSON.parse(localStorage.getItem('notificacoes_requisitante') || '[]');
+            notificacoes.push({
+                id: Date.now(),
+                tipo: 'TR_REPROVADO',
+                titulo: 'TR Reprovado',
+                mensagem: `TR ${currentTR.numeroTR} foi reprovado pelo comprador`,
+                data: new Date().toISOString(),
+                lida: false,
+                tr_id: currentTR.numeroTR
+            });
+            localStorage.setItem('notificacoes_requisitante', JSON.stringify(notificacoes));
+
+            alert('TR reprovado. O requisitante foi notificado para fazer as correções necessárias.');
+            closeModal();
+            loadTRs();
+            updateStats();
+        }
+
+        function quickApprove(numeroTR) {
+            const tr = trsData.find(t => t.numeroTR === numeroTR);
+            if (!tr) return;
+
+            const parecer = prompt('Adicione um comentário sobre a aprovação:');
+            if (!parecer) return;
+
+            currentTR = tr;
+            document.getElementById('parecerComprador').value = parecer;
+            aprovarTR();
+        }
+
+        function quickReject(numeroTR) {
+            const tr = trsData.find(t => t.numeroTR === numeroTR);
+            if (!tr) return;
+
+            const parecer = prompt('Explique os motivos da reprovação:');
+            if (!parecer) return;
+
+            currentTR = tr;
+            document.getElementById('parecerComprador').value = parecer;
+            reprovarTR();
+        }
+
+        function updateStats() {
+            const pending = trsData.filter(tr => tr.status === 'PENDENTE_APROVACAO').length;
+            const approved = trsData.filter(tr => tr.status === 'APROVADO').length;
+            const rejected = trsData.filter(tr => tr.status === 'REPROVADO').length;
+
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('approvedCount').textContent = approved;
+            document.getElementById('rejectedCount').textContent = rejected;
+        }
+
+        function updateNotificationBadge() {
+            const pending = trsData.filter(tr => tr.status === 'PENDENTE_APROVACAO').length;
+            const badge = document.getElementById('trPendenteBadge');
+            badge.textContent = pending;
+            badge.style.display = pending > 0 ? 'block' : 'none';
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('pt-BR');
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'PENDENTE_APROVACAO': return 'Pendente';
+                case 'APROVADO': return 'Aprovado';
+                case 'REPROVADO': return 'Reprovado';
+                default: return 'Pendente';
+            }
+        }
+
+        function navigateTo(page) {
+            switch(page) {
+                case 'dashboard':
+                    window.location.href = 'dashboard-comprador-integrado.html';
+                    break;
+                case 'aprovacao-tr':
+                    // Já estamos na página
+                    break;
+                case 'criar-processo':
+                    window.location.href = 'dashboard-comprador-criar-processo.html';
+                    break;
+                case 'propostas':
+                    window.location.href = 'dashboard-comprador-integrado.html';
+                    break;
+                case 'analise-comparativa':
+                    window.location.href = 'dashboard-comprador-comparativo.html';
+                    break;
+                case 'relatorios':
+                    window.location.href = 'dashboard-comprador-integrado.html';
+                    break;
+                case 'sair':
+                    if (confirm('Deseja realmente sair?')) {
+                        window.location.href = '../index.html';
+                    }
+                    break;
+            }
+        }
+
+        // Fechar modal ao clicar fora
+        document.getElementById('trModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Atalhos de teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Função para voltar ao sistema principal
+        function voltarSistema() {
+            window.location.href = '/';
+        }
+
+        // Função para logout do sistema
+        function logout() {
+            if (confirm('Deseja realmente sair do sistema?')) {
+                localStorage.clear();
+                window.location.href = '/';
+            }
+        }
+    </script>
+
+         function logout() {
+            if (confirm('Deseja sair do sistema?')) {
+                localStorage.removeItem('user_session');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+        <!-- Scripts de Integração - Adicionar APÓS os scripts existentes -->
+        <script src="js/auth.js"></script>
+        <script src="js/api-client.js"></script>
+        <script src="js/integration.js"></script>
+        <script src="js/integracao-modulos.js"></script>
+
+        // ===== SISTEMA DE DADOS COM FIREBASE + LOCALSTORAGE =====
+        const SistemaLocal = {
+            // Chaves compatíveis com sistema existente
+            CHAVES: {
+                TRS: 'termos_referencia',  // ← Mantém compatibilidade
+                NOTIFICACOES: 'notificacoes_comprador',
+                PROCESSOS: 'processos_licitatorios',
+                FORNECEDORES: 'fornecedores_cadastrados',
+                USUARIOS_FORNECEDORES: 'usuarios_fornecedores',
+                PROPOSTAS: 'propostas_fornecedores'
+            },
+
+            // Firebase será inicializado pelo arquivo /static/firebase.js
+            db: null,
+            firebaseReady: false,
+
+            async inicializarFirebase() {
+                try {
+                    // Usar Firebase já inicializado pelo arquivo centralizado
+                    if (window.firebase && window.firebase.apps && window.firebase.apps.length > 0) {
+                        this.db = window.firebase.firestore();
+                        this.firebaseReady = true;
+                        console.log('✅ Firebase inicializado para Comprador');
+                        return;
+                    }
+
+                    // Fallback: Importar Firebase se não estiver disponível
+                    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                    const { getFirestore } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+                    // Usar configuração do arquivo centralizado
+                    const config = window.firebaseConfig || {
+                        apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+                        authDomain: "portal-de-proposta.firebaseapp.com",
+                        projectId: "portal-de-proposta",
+                        storageBucket: "portal-de-proposta.firebasestorage.app",
+                        messagingSenderId: "321036073908",
+                        appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+                    };
+
+                    const app = initializeApp(config);
+                    this.db = getFirestore(app);
+                    this.firebaseReady = true;
+                    
+                    console.log('✅ Firebase inicializado para Comprador');
+                    
+                } catch (error) {
+                    console.warn('⚠️ Firebase não disponível, usando apenas localStorage:', error);
+                    this.firebaseReady = false;
+                }
+            },
+
+            // Salvar dados (localStorage + Firebase)
+            salvar(chave, dados) {
+                try {
+                    // SEMPRE salvar no localStorage primeiro (compatibilidade)
+                    localStorage.setItem(chave, JSON.stringify(dados));
+                    
+                    // Tentar sincronizar com Firebase em background
+                    if (this.firebaseReady && this.db) {
+                        this.sincronizarFirebase(chave, dados).catch(error => {
+                            console.warn('⚠️ Erro ao sincronizar com Firebase:', error);
+                        });
+                    }
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao salvar dados:', error);
+                    return false;
+                }
+            },
+
+            // Carregar dados (localStorage primeiro, Firebase em background)
+            carregar(chave, padrao = null) {
+                try {
+                    // SEMPRE usar localStorage primeiro (compatibilidade)
+                    const dados = localStorage.getItem(chave);
+                    let dadosLocal = dados ? JSON.parse(dados) : padrao;
+                    
+                    // CORREÇÃO CRÍTICA: Garantir que arrays sempre retornam array
+                    const arrayKeys = [this.CHAVES.TRS, this.CHAVES.NOTIFICACOES, this.CHAVES.PROCESSOS, this.CHAVES.FORNECEDORES, this.CHAVES.USUARIOS_FORNECEDORES, this.CHAVES.PROPOSTAS];
+                    if (arrayKeys.includes(chave) && !Array.isArray(dadosLocal)) {
+                        console.warn(`${chave} não é array, inicializando como array vazio`);
+                        dadosLocal = [];
+                        localStorage.setItem(chave, JSON.stringify([]));
+                    }
+                    
+                    // Tentar sincronizar com Firebase em background (sem bloquear)
+                    if (this.firebaseReady && this.db) {
+                        this.carregarFirebase(chave).then(dadosFirebase => {
+                            if (dadosFirebase && JSON.stringify(dadosFirebase) !== JSON.stringify(dadosLocal)) {
+                                localStorage.setItem(chave, JSON.stringify(dadosFirebase));
+                                console.log(`🔄 Dados atualizados do Firebase: ${chave}`);
+                                
+                                // Recarregar interface se necessário
+                                if (chave === this.CHAVES.TRS) {
+                                    loadTRs();
+                                }
+                            }
+                        }).catch(error => {
+                            console.warn('⚠️ Erro ao sincronizar do Firebase:', error);
+                        });
+                    }
+                    
+                    return dadosLocal;
+                    
+                } catch (error) {
+                    console.error('Erro ao carregar dados:', error);
+                    // CORREÇÃO: Se for chave de array e houver erro, retornar array vazio
+                    const arrayKeys = [this.CHAVES.TRS, this.CHAVES.NOTIFICACOES, this.CHAVES.PROCESSOS, this.CHAVES.FORNECEDORES, this.CHAVES.USUARIOS_FORNECEDORES, this.CHAVES.PROPOSTAS];
+                    if (arrayKeys.includes(chave)) {
+                        return [];
+                    }
+                    return padrao;
+                }
+            },
+
+            // Sincronizar com Firebase (background)
+            async sincronizarFirebase(chave, dados) {
+                if (!this.firebaseReady || !this.db) return;
+                
+                try {
+                    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    await setDoc(doc(this.db, 'sistema_dados', chave), {
+                        dados: dados,
+                        timestamp: new Date().toISOString(),
+                        modulo: 'comprador'
+                    });
+                    console.log(`✅ Dados salvos no Firebase: ${chave}`);
+                } catch (error) {
+                    console.warn(`⚠️ Erro ao salvar no Firebase (${chave}):`, error);
+                }
+            },
+
+            // Carregar do Firebase (background)
+            async carregarFirebase(chave) {
+                if (!this.firebaseReady || !this.db) return null;
+                
+                try {
+                    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    const docRef = doc(this.db, 'sistema_dados', chave);
+                    const docSnap = await getDoc(docRef);
+                    
+                    if (docSnap.exists()) {
+                        return docSnap.data().dados;
+                    }
+                    return null;
+                } catch (error) {
+                    console.warn(`⚠️ Erro ao carregar do Firebase (${chave}):`, error);
+                    return null;
+                }
+            }
+        };
+
+        // ===== SUBSTITUIR FUNÇÕES EXISTENTES PARA USAR SISTEMA UNIFICADO =====
+        
+        // Substituir função loadTRs existente
+        function loadTRs() {
+            // Usar sistema unificado em vez de localStorage direto
+            const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+            trsData = trs;
+            
+            renderTRList();
+            updateNotificationBadge();
+        }
+
+        // Função para salvar TR aprovado (substituir localStorage direto)
+        function salvarTRAprovado(tr) {
+            try {
+                // Carregar TRs usando sistema unificado
+                const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+                const index = trs.findIndex(item => item.numeroTR === tr.numeroTR);
+                
+                if (index !== -1) {
+                    trs[index] = tr;
+                    // Usar sistema unificado para salvar
+                    SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs);
+                    console.log('✅ TR aprovado salvo:', tr.numeroTR);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao salvar TR aprovado:', error);
+            }
+        }
+
+        // Função para salvar notificação (substituir localStorage direto)
+        function salvarNotificacao(notificacao) {
+            try {
+                const notificacoes = SistemaLocal.carregar('notificacoes_requisitante', []);
+                notificacoes.push(notificacao);
+                SistemaLocal.salvar('notificacoes_requisitante', notificacoes);
+                console.log('📢 Notificação salva para requisitante');
+                
+            } catch (error) {
+                console.warn('⚠️ Erro ao salvar notificação:', error);
+            }
+        }
+
+        // Inicializar sistema ao carregar página
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Inicializando Dashboard Comprador...');
+            
+            // Inicializar Firebase
+            await SistemaLocal.inicializarFirebase();
+            
+            // Carregar dados existentes
+            loadTRs();
+            updateStats();
+            
+            console.log('✅ Dashboard Comprador inicializado com Firebase!');
+        });
+
+    <script type="module" src="/static/firebase.js"></script>
+    <script type="module" src="/static/auth.js"></script>
+
+</body>
+</html>
