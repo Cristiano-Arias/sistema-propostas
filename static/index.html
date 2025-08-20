@@ -453,8 +453,12 @@
         function redirectToDashboard() {
             const user = getCurrentUser();
             if (user) {
-                switch (user.perfil) {
+                // Verificar múltiplas propriedades possíveis de perfil
+                const perfil = user.perfil || user.tipo || user.role;
+                
+                switch (perfil) {
                     case 'ADMIN':
+                    case 'admin':
                         window.location.href = '/admin-usuarios.html';
                         break;
                     case 'comprador':
@@ -464,6 +468,7 @@
                         window.location.href = '/dashboard-fornecedor-funcional.html';
                         break;
                     default:
+                        // MANTER O COMPORTAMENTO ORIGINAL - requisitante por padrão
                         window.location.href = '/dashboard-requisitante-funcional.html';
                 }
             }
