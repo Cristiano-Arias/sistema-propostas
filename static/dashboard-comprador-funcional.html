@@ -1596,114 +1596,219 @@
             mostrarFormularioFornecedores();
         }
 
-        // Mostrar formulário de fornecedores com opção de selecionar cadastrados
-        function mostrarFormularioFornecedores() {
+        // Mostrar formulário de fornecedores com integração Firebase
+        async function mostrarFormularioFornecedores() {
             const container = document.getElementById('trs-aprovados-list');
             if (!container) return;
-        
-            // ✅ CORREÇÃO: Buscar fornecedores com fallback automático (nova → antiga)
-            const fornecedoresCadastrados = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES, []);
             
-            // Fallback para chave antiga se nova estiver vazia
-            if (fornecedoresCadastrados.length === 0) {
-                const fornecedoresAntigos = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES_ANTIGO, []);
-                if (fornecedoresAntigos.length > 0) {
-                    // Migrar automaticamente para nova chave
-                    SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDORES, fornecedoresAntigos);
-                    console.log('🔄 Fornecedores migrados automaticamente para nova chave');
-                    return fornecedoresAntigos;
-                }
-            }
-            
-            // Filtrar apenas fornecedores ativos que não foram adicionados ainda
-            const fornecedoresDisponiveis = fornecedoresCadastrados.filter(f => 
-                f.status === 'ativo' && 
-                !processoAtual.fornecedores.some(fp => fp.cnpj === f.cnpj)
-            );
-        
-            container.innerHTML = `
-                <div class="criar-processo-modal">
-                    <h4 style="margin-bottom: 20px; color: #333;">
-                        <i class="fas fa-users"></i> Convidar Fornecedores
-                    </h4>
-                    
-                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffeaa7;">
-                        <i class="fas fa-info-circle" style="color: #856404;"></i>
-                        <span style="color: #856404; margin-left: 8px;">
-                            Selecione fornecedores já cadastrados ou adicione novos fornecedores para convidar ao processo.
-                        </span>
-                    </div>
-        
-                    ${fornecedoresDisponiveis.length > 0 ? `
-                        <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h5 style="margin-bottom: 15px; color: #333;">
-                                <i class="fas fa-building"></i> Fornecedores Cadastrados Disponíveis
-                            </h5>
-                            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #c3e6cb; border-radius: 6px; background: white;">
-                                ${fornecedoresDisponiveis.map(fornecedor => `
-                                    <div style="padding: 12px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; hover: background: #f8f9fa;" 
-                                         onmouseover="this.style.backgroundColor='#f8f9fa'" 
-                                         onmouseout="this.style.backgroundColor='white'">
-                                        <div>
-                                            <strong style="color: #333;">${fornecedor.razaoSocial}</strong><br>
-                                            <small style="color: #666;">
-                                                CNPJ: ${fornecedor.cnpj} | E-mail: ${fornecedor.email}
-                                            </small>
+            try {
+                // ✅ NOVA INTEGRAÇÃO: Importar Firebase
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+                const { getFirestore, collection, getDocs, query, where } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                
+                // Configuração Firebase
+                const firebaseConfig = {
+                    apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+                    authDomain: "portal-de-proposta.firebaseapp.com",
+                    projectId: "portal-de-proposta",
+                    storageBucket: "portal-de-proposta.firebasestorage.app",
+                    messagingSenderId: "321036073908",
+                    appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+                };
+                
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                
+                // ✅ BUSCAR FORNECEDORES DO FIREBASE
+                const fornecedoresRef = collection(db, 'fornecedores');
+                const q = query(fornecedoresRef, where('status', '==', 'ativo'));
+                const querySnapshot = await getDocs(q);
+                
+                const fornecedoresCadastrados = [];
+                querySnapshot.forEach((doc) => {
+                    fornecedoresCadastrados.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                // Filtrar fornecedores não adicionados
+                const fornecedoresDisponiveis = fornecedoresCadastrados.filter(f => 
+                    !processoAtual.fornecedores.some(fp => fp.email === f.email)
+                );
+                
+                // ✅ INTERFACE ATUALIZADA
+                container.innerHTML = `
+                    <div class="criar-processo-modal">
+                        <h4 style="margin-bottom: 20px; color: #333;">
+                            <i class="fas fa-users"></i> Convidar Fornecedores
+                        </h4>
+                        
+                        <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bee5eb;">
+                            <i class="fas fa-info-circle" style="color: #0c5460;"></i>
+                            <span style="color: #0c5460; margin-left: 8px;">
+                                Apenas fornecedores cadastrados no Firebase podem ser convidados.
+                                <a href="cadastro-fornecedor.html" target="_blank" style="color: #0056b3;">Cadastrar novo fornecedor</a>
+                            </span>
+                        </div>
+                        
+                        ${fornecedoresDisponiveis.length > 0 ? `
+                            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                <h5 style="margin-bottom: 15px; color: #333;">
+                                    <i class="fas fa-building"></i> Fornecedores Disponíveis (${fornecedoresDisponiveis.length})
+                                </h5>
+                                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #c3e6cb; border-radius: 6px; background: white;">
+                                    ${fornecedoresDisponiveis.map(fornecedor => `
+                                        <div style="padding: 12px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <strong style="color: #333;">${fornecedor.razaoSocial}</strong><br>
+                                                <small style="color: #666;">
+                                                    CNPJ: ${formatarCNPJ(fornecedor.cnpj)} | E-mail: ${fornecedor.email}
+                                                </small>
+                                            </div>
+                                            <button type="button" class="btn btn-success btn-sm" 
+                                                    onclick="adicionarFornecedorFirebase('${fornecedor.id}')">
+                                                <i class="fas fa-plus"></i> Convidar
+                                            </button>
                                         </div>
-                                        <button type="button" class="btn btn-success btn-sm" onclick="adicionarFornecedorExistente('${fornecedor.id}')">
-                                            <i class="fas fa-plus"></i> Adicionar
-                                        </button>
-                                    </div>
-                                `).join('')}
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : `
+                            <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                <i class="fas fa-exclamation-triangle" style="color: #856404;"></i>
+                                <span style="color: #856404;">
+                                    Nenhum fornecedor cadastrado no sistema. 
+                                    <a href="cadastro-fornecedor.html" target="_blank" style="color: #856404; font-weight: bold;">
+                                        Clique aqui para cadastrar fornecedores
+                                    </a>
+                                </span>
+                            </div>
+                        `}
+                        
+                        <div id="lista-fornecedores">
+                            <h5 style="margin-bottom: 15px;">
+                                <i class="fas fa-check-circle"></i> Fornecedores Convidados (<span id="contador-fornecedores">${processoAtual.fornecedores.length}</span>)
+                            </h5>
+                            <div id="fornecedores-container" style="min-height: 100px; background: #f8f9fa; border-radius: 8px; padding: 15px;">
+                                ${processoAtual.fornecedores.length > 0 ? 
+                                    processoAtual.fornecedores.map((f, index) => `
+                                        <div style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px;">
+                                            <strong>${f.razaoSocial}</strong><br>
+                                            <small>CNPJ: ${formatarCNPJ(f.cnpj)} | E-mail: ${f.email}</small>
+                                            <button onclick="removerFornecedor(${index})" style="float: right; background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    `).join('') : 
+                                    '<p style="text-align: center; color: #666;">Nenhum fornecedor convidado ainda</p>'
+                                }
                             </div>
                         </div>
-                    ` : ''}
-        
-                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <h5 style="margin-bottom: 15px;">
-                            <i class="fas fa-user-plus"></i> Adicionar Novo Fornecedor
-                        </h5>
-                        <form id="form-adicionar-fornecedor">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                                <input type="text" id="razao-social" placeholder="Razão Social" required style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px;">
-                                <input type="text" id="cnpj" placeholder="CNPJ" required style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px;">
-                                <input type="email" id="email" placeholder="E-mail" required style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px;">
-                            </div>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-plus"></i> Adicionar Novo Fornecedor
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 30px;">
+                            <button type="button" class="btn btn-secondary" onclick="voltarEtapaAnterior()">
+                                <i class="fas fa-arrow-left"></i> Voltar
                             </button>
-                        </form>
-                    </div>
-        
-                    <div id="lista-fornecedores">
-                        <h5 style="margin-bottom: 15px;">
-                            <i class="fas fa-check-circle"></i> Fornecedores Convidados (<span id="contador-fornecedores">0</span>)
-                        </h5>
-                        <div id="fornecedores-container" style="min-height: 100px; background: #f8f9fa; border-radius: 8px; padding: 15px;">
-                            <p style="text-align: center; color: #666; margin: 0;">Nenhum fornecedor adicionado ainda</p>
+                            <button type="button" class="btn btn-primary" onclick="prosseguirParaConfirmacao()">
+                                <i class="fas fa-arrow-right"></i> Próximo: Confirmação
+                            </button>
                         </div>
                     </div>
-        
-                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 30px;">
-                        <button type="button" class="btn btn-secondary" onclick="voltarEtapaAnterior()">
-                            <i class="fas fa-arrow-left"></i> Voltar
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="prosseguirParaConfirmacao()">
-                            <i class="fas fa-arrow-right"></i> Próximo: Confirmação
-                        </button>
+                `;
+                
+            } catch (error) {
+                console.error('Erro ao buscar fornecedores do Firebase:', error);
+                
+                // Fallback se Firebase falhar
+                container.innerHTML = `
+                    <div class="criar-processo-modal">
+                        <div style="background: #f8d7da; padding: 20px; border-radius: 8px; text-align: center;">
+                            <i class="fas fa-exclamation-triangle" style="color: #721c24; font-size: 48px;"></i>
+                            <h4 style="color: #721c24; margin-top: 10px;">Erro ao conectar com Firebase</h4>
+                            <p style="color: #721c24;">Verifique sua conexão e configurações do Firebase.</p>
+                            <button class="btn btn-secondary" onclick="voltarEtapaAnterior()">
+                                <i class="fas fa-arrow-left"></i> Voltar
+                            </button>
+                        </div>
                     </div>
-                </div>
-            `;
-        
-            // Event listener para adicionar fornecedor
-            document.getElementById('form-adicionar-fornecedor').addEventListener('submit', function(e) {
-                e.preventDefault();
-                adicionarFornecedor();
-            });
-        
-            atualizarListaFornecedores();
+                `;
+            }
         }
 
+        // ✅ NOVA FUNÇÃO: Adicionar fornecedor do Firebase
+        async function adicionarFornecedorFirebase(fornecedorId) {
+            try {
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+                const { getFirestore, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                
+                const firebaseConfig = {
+                    apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+                    authDomain: "portal-de-proposta.firebaseapp.com",
+                    projectId: "portal-de-proposta",
+                    storageBucket: "portal-de-proposta.firebasestorage.app",
+                    messagingSenderId: "321036073908",
+                    appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+                };
+                
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                
+                // Buscar dados do fornecedor
+                const fornecedorRef = doc(db, 'fornecedores', fornecedorId);
+                const fornecedorSnap = await getDoc(fornecedorRef);
+                
+                if (fornecedorSnap.exists()) {
+                    const fornecedor = {
+                        id: fornecedorSnap.id,
+                        ...fornecedorSnap.data()
+                    };
+                    
+                    // Verificar se já foi adicionado
+                    if (processoAtual.fornecedores.some(f => f.cnpj === fornecedor.cnpj)) {
+                        alert('Este fornecedor já foi adicionado ao processo!');
+                        return;
+                    }
+                    
+                    // Adicionar ao processo
+                    processoAtual.fornecedores.push({
+                        id: fornecedor.id,
+                        razaoSocial: fornecedor.razaoSocial,
+                        cnpj: fornecedor.cnpj,
+                        email: fornecedor.email,
+                        dataConvite: new Date().toISOString()
+                    });
+                    
+                    // Atualizar interface
+                    mostrarFormularioFornecedores();
+                    
+                    // Feedback
+                    const sucessoDiv = document.createElement('div');
+                    sucessoDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 15px 20px; border-radius: 8px; z-index: 9999;';
+                    sucessoDiv.innerHTML = `<i class="fas fa-check"></i> ${fornecedor.razaoSocial} adicionado!`;
+                    document.body.appendChild(sucessoDiv);
+                    
+                    setTimeout(() => sucessoDiv.remove(), 3000);
+                }
+            } catch (error) {
+                console.error('Erro ao adicionar fornecedor:', error);
+                alert('Erro ao adicionar fornecedor. Tente novamente.');
+            }
+        }
+        
+        // ✅ NOVA FUNÇÃO: Formatar CNPJ para exibição
+        function formatarCNPJ(cnpj) {
+            // Remove formatação existente
+            cnpj = cnpj.replace(/\D/g, '');
+            
+            // Aplica formatação
+            if (cnpj.length === 14) {
+                return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+            }
+            
+            return cnpj;
+        }
+        
         // Nova função para adicionar fornecedor já cadastrado
         function adicionarFornecedorExistente(fornecedorId) {
             // ✅ CORREÇÃO: Buscar fornecedores com fallback automático
