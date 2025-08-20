@@ -50,7 +50,23 @@ async function login(email, password) {
         });
         
         if (response.ok) {
-            const userData = await response.json();
+            let userData = await response.json();
+            
+            // CORREÇÃO: Se não tem perfil, verificar no Firestore
+            if (!userData.perfil) {
+                const { getFirestore, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                const db = getFirestore();
+                
+                // Verificar se é fornecedor
+                const fornecedorDoc = await getDoc(doc(db, 'fornecedores', user.uid));
+                if (fornecedorDoc.exists()) {
+                    userData.perfil = 'fornecedor';
+                    const dadosFornecedor = fornecedorDoc.data();
+                    userData.cnpj = dadosFornecedor.cnpj;
+                    userData.razaoSocial = dadosFornecedor.razaoSocial;
+                }
+            }
+            
             currentUser = userData;
             userToken = token;
             
