@@ -2493,8 +2493,62 @@
         }, 30000);
     </script>
     
-    <script type="module" src="/static/firebase.js"></script>
-    <script type="module" src="/static/auth.js"></script>
+    <!-- Scripts Firebase e Autenticação -->
+    <script type="module">
+        import firebaseAuth from '/static/js/auth-firebase.js';
+        
+        // Tornar disponível globalmente
+        window.firebaseAuth = firebaseAuth;
+        
+        // Atualizar função de login para usar Firebase
+        window.fazerLoginFirebase = async function(email, senha) {
+            try {
+                console.log('Tentando login via Firebase...');
+                const result = await firebaseAuth.login(email, senha);
+                
+                if (result.success) {
+                    console.log('Login Firebase bem-sucedido');
+                    // O redirecionamento será feito automaticamente pelo auth-firebase.js
+                    return true;
+                } else {
+                    console.error('Falha no login:', result.error);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Erro no login Firebase:', error);
+                return false;
+            }
+        };
+        
+        // Modificar o evento de submit do formulário
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('email').value;
+                    const senha = document.getElementById('senha').value;
+                    
+                    // Tentar primeiro com Firebase
+                    const firebaseSuccess = await window.fazerLoginFirebase(email, senha);
+                    
+                    if (!firebaseSuccess) {
+                        // Se falhar no Firebase, tentar login local
+                        if (!fazerLogin(email, senha)) {
+                            const errorDiv = document.getElementById('login-error');
+                            if (errorDiv) {
+                                errorDiv.style.display = 'block';
+                                setTimeout(() => {
+                                    errorDiv.style.display = 'none';
+                                }, 3000);
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
 
 </body>
 </html>
