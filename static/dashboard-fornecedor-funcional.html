@@ -730,7 +730,7 @@
                 PROCESSOS_POR_FORNECEDOR: 'processos_por_fornecedor',
                 PROPOSTAS_FORNECEDORES: 'propostas_fornecedores',
                 TRS: 'sistema_trs',
-                PROCESSOS: 'processos_licitatorios'
+                PROCESSOS: 'processos_compra'
             },
 
             // Salvar dados
@@ -883,11 +883,12 @@
 
         // Carregar processos
         function carregarProcessos() {
-            const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
+            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []); // CORRIGIDO
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
             
-            // Filtrar processos do fornecedor logado
-            const meusProcessos = vinculacoes.filter(v => v.fornecedorId === fornecedorLogado.id);
+            // Filtrar processos onde o fornecedor foi convidado (CORRIGIDO)
+            const meusProcessos = processos.filter(processo => 
+                processo.fornecedoresConvidados?.some(f => f.id === fornecedorLogado.id));
             
             const container = document.getElementById('processos-list');
             if (!container) return;
@@ -1066,16 +1067,22 @@
         
         // Visualizar TR completo
         function visualizarTR(processoId) {
-            // Buscar o processo
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
             const processo = processos.find(p => p.id === processoId);
             
-            if (!processo || !processo.trVinculado) {
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+
+            // Buscar TR aprovado vinculado ao processo (CORRIGIDO)
+            const trsAprovados = JSON.parse(localStorage.getItem('trs_aprovados') || '[]');
+            const tr = trsAprovados.find(t => t.id === processo.tr_id);
+
+            if (!tr) {
                 alert('TR não encontrado!');
                 return;
             }
-            
-            const tr = processo.trVinculado;
             
             // Criar modal com o TR completo
             const modal = document.createElement('div');
@@ -1387,12 +1394,19 @@
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
             const processo = processos.find(p => p.id === processoId);
             
-            if (!processo || !processo.trVinculado) {
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+
+            // Buscar TR aprovado vinculado ao processo (CORRIGIDO)
+            const trsAprovados = JSON.parse(localStorage.getItem('trs_aprovados') || '[]');
+            const tr = trsAprovados.find(t => t.id === processo.tr_id);
+
+            if (!tr) {
                 alert('TR não encontrado!');
                 return;
             }
-            
-            const tr = processo.trVinculado;
             
             // Gerar HTML do TR completo com TODOS os 26+ campos
             const conteudoHTML = `
