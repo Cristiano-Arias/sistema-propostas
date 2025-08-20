@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Fornecedor - Firebase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastro de Fornecedor via Firebase</h1>
+        
+        <div id="alert" class="alert"></div>
+        
+        <form id="formCadastro">
+            <div class="form-group">
+                <label>Razão Social *</label>
+                <input type="text" id="razaoSocial" required>
+            </div>
+            
+            <div class="form-group">
+                <label>CNPJ *</label>
+                <input type="text" id="cnpj" required placeholder="00.000.000/0000-00">
+            </div>
+            
+            <div class="form-group">
+                <label>E-mail *</label>
+                <input type="email" id="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Senha *</label>
+                <input type="password" id="senha" required placeholder="Mínimo 6 caracteres">
+            </div>
+            
+            <div class="form-group">
+                <label>Telefone</label>
+                <input type="tel" id="telefone" placeholder="(00) 00000-0000">
+            </div>
+            
+            <div class="form-group">
+                <label>Endereço</label>
+                <input type="text" id="endereco">
+            </div>
+            
+            <button type="submit">Cadastrar Fornecedor no Firebase</button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc,
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Configuração Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+            authDomain: "portal-de-proposta.firebaseapp.com",
+            projectId: "portal-de-proposta",
+            storageBucket: "portal-de-proposta.firebasestorage.app",
+            messagingSenderId: "321036073908",
+            appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Função para mostrar mensagens
+        function mostrarMensagem(tipo, mensagem) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${tipo}`;
+            alert.textContent = mensagem;
+            alert.style.display = 'block';
+            
+            if (tipo === 'success') {
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Cadastrar fornecedor
+        document.getElementById('formCadastro').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const dados = {
+                razaoSocial: document.getElementById('razaoSocial').value,
+                cnpj: document.getElementById('cnpj').value,
+                email: document.getElementById('email').value,
+                senha: document.getElementById('senha').value,
+                telefone: document.getElementById('telefone').value,
+                endereco: document.getElementById('endereco').value
+            };
+            
+            try {
+                // 1. Criar usuário no Firebase Auth
+                const userCredential = await createUserWithEmailAndPassword(
+                    auth, 
+                    dados.email, 
+                    dados.senha
+                );
+                
+                const user = userCredential.user;
+                console.log('✅ Usuário criado no Auth:', user.uid);
+                
+                // 2. Salvar dados no Firestore - Coleção Usuario
+                await setDoc(doc(db, 'Usuario', user.uid), {
+                    email: dados.email,
+                    nome: dados.razaoSocial,
+                    cnpj: dados.cnpj,
+                    telefone: dados.telefone,
+                    endereco: dados.endereco,
+                    perfil: 'fornecedor',  // IMPORTANTE: Define como fornecedor
+                    ativo: true,
+                    criadoEm: serverTimestamp(),
+                    uid: user.uid
+                });
+                
+                console.log('✅ Dados salvos em Usuario');
+                
+                // 3. Salvar também na coleção Fornecedores
+                await setDoc(doc(db, 'Fornecedores', user.uid), {
+                    razaoSocial: dados.razaoSocial,
+                    cnpj: dados.cnpj,
+                    email: dados.email,
+                    telefone: dados.telefone,
+                    endereco: dados.endereco,
+                    usuario: dados.email,  // Para compatibilidade
+                    senha: dados.senha,    // ATENÇÃO: Em produção, não salvar senha!
+                    status: 'ativo',
+                    processos: [],
+                    propostas: [],
+                    dataCadastro: serverTimestamp()
+                });
+                
+                console.log('✅ Dados salvos em Fornecedores');
+                
+                // 4. Também salvar no localStorage para compatibilidade
+                const fornecedoresLocal = JSON.parse(
+                    localStorage.getItem('sistema_fornecedores') || '[]'
+                );
+                
+                fornecedoresLocal.push({
+                    id: user.uid,
+                    razaoSocial: dados.razaoSocial,
+                    cnpj: dados.cnpj,
+                    email: dados.email,
+                    usuario: dados.email,
+                    senha: dados.senha,
+                    telefone: dados.telefone,
+                    endereco: dados.endereco,
+                    status: 'ativo',
+                    dataCadastro: new Date().toISOString()
+                });
+                
+                localStorage.setItem('sistema_fornecedores', JSON.stringify(fornecedoresLocal));
+                
+                // Salvar usuário para login
+                const usuariosLocal = JSON.parse(
+                    localStorage.getItem('sistema_usuarios_fornecedores') || '[]'
+                );
+                
+                usuariosLocal.push({
+                    id: user.uid,
+                    email: dados.email,
+                    senha: dados.senha,
+                    razaoSocial: dados.razaoSocial,
+                    cnpj: dados.cnpj,
+                    tipo: 'fornecedor',
+                    ativo: true,
+                    dataCadastro: new Date().toISOString()
+                });
+                
+                localStorage.setItem('sistema_usuarios_fornecedores', JSON.stringify(usuariosLocal));
+                
+                mostrarMensagem('success', `
+                    ✅ Fornecedor cadastrado com sucesso!
+                    
+                    DADOS DE ACESSO:
+                    Email: ${dados.email}
+                    Senha: ${dados.senha}
+                    
+                    O fornecedor pode fazer login em:
+                    - dashboard-fornecedor-funcional.html
+                `);
+                
+                // Limpar formulário
+                document.getElementById('formCadastro').reset();
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                
+                let mensagemErro = 'Erro ao cadastrar: ';
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    mensagemErro += 'Este e-mail já está cadastrado!';
+                } else if (error.code === 'auth/weak-password') {
+                    mensagemErro += 'Senha muito fraca (mínimo 6 caracteres)';
+                } else if (error.code === 'auth/invalid-email') {
+                    mensagemErro += 'E-mail inválido';
+                } else {
+                    mensagemErro += error.message;
+                }
+                
+                mostrarMensagem('error', mensagemErro);
+            }
+        });
+    </script>
+</body>
+</html>
