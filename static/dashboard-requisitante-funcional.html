@@ -1173,19 +1173,26 @@
 
         // Integração com outros módulos
         const IntegracaoModulos = {
-            enviarTRParaComprador: function(tr) {
-                try {
-                    // Atualizar status do TR
-                    const trs = JSON.parse(localStorage.getItem('termos_referencia') || '[]');
-                    const trIndex = trs.findIndex(t => t.id === tr.id);
+        enviarTRParaComprador: function(tr) {
+            try {
+                // USAR A CHAVE PADRONIZADA
+                const chaveTRS = SistemaLocal.CHAVES.TRS; // 'sistema_trs'
+                
+                // Buscar TRs com a chave correta
+                const trs = SistemaLocal.carregar(chaveTRS, []);
+                const trIndex = trs.findIndex(t => t.id === tr.id);
+                
+                if (trIndex !== -1) {
+                    // Atualizar status
+                    trs[trIndex].status = 'enviado';
+                    trs[trIndex].dataEnvioAprovacao = new Date().toISOString();
                     
-                    if (trIndex !== -1) {
-                        trs[trIndex].status = 'enviado';
-                        trs[trIndex].dataEnvioAprovacao = new Date().toISOString();
-                        localStorage.setItem('termos_referencia', JSON.stringify(trs));
-                        
+                    // Salvar com a chave correta
+                    const salvoComSucesso = SistemaLocal.salvar(chaveTRS, trs);
+                    
+                    if (salvoComSucesso) {
                         // Adicionar notificação para o comprador
-                        const notificacoes = JSON.parse(localStorage.getItem('notificacoes_comprador') || '[]');
+                        const notificacoes = SistemaLocal.carregar('notificacoes_comprador', []);
                         notificacoes.push({
                             id: Date.now().toString(),
                             tipo: 'novo_tr',
@@ -1195,17 +1202,19 @@
                             lida: false,
                             trId: tr.id
                         });
-                        localStorage.setItem('notificacoes_comprador', JSON.stringify(notificacoes));
+                        SistemaLocal.salvar('notificacoes_comprador', notificacoes);
                         
+                        console.log('✅ TR enviado com sucesso para comprador');
                         return true;
                     }
-                    return false;
-                } catch (error) {
-                    console.error('Erro ao enviar TR:', error);
-                    return false;
                 }
+                return false;
+            } catch (error) {
+                console.error('Erro ao enviar TR:', error);
+                return false;
             }
-        };
+        }
+    };
 
         // Mapeamento de status
         const StatusTR = {
