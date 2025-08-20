@@ -2544,5 +2544,24 @@
 
     <script type="module" src="/static/firebase.js"></script>
 
+<script>
+    // Verificar e migrar dados na primeira execução
+    (function() {
+        const chaveMigracao = 'migracao_trs_executada';
+        
+        if (!localStorage.getItem(chaveMigracao)) {
+            console.log('🔄 Executando migração única...');
+            
+            const trsAntigos = localStorage.getItem('termos_referencia');
+            if (trsAntigos) {
+                localStorage.setItem('sistema_trs', trsAntigos);
+                console.log('✅ TRs migrados para nova chave');
+            }
+            
+            localStorage.setItem(chaveMigracao, 'true');
+        }
+    })();
+</script>
+
 </body>
 </html>
