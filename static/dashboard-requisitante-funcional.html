@@ -2232,7 +2232,7 @@
 </script>
 
 
-<!-- wiring UI -->
+<!-- wiring UI (wrapped) -->
 <script>
 /* ======= WIRING DE EVENTOS DA UI (sidebar, cards, lista, formulário) ======= */
 (function initUI() {
@@ -2316,44 +2316,141 @@
 
 </script>
 <!-- scripts externos FORA do JS inline -->
-<!-- scripts externos FORA do JS inline -->
-<script type="module" src="/static/js/firebase.js"></script>
-<script type="module" src="/static/js/realtime-sync.js"></script>
 <script>
 (function () {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initUI);
-  } else {
-    initUI();
-  }
-  function $(sel){return document.querySelector(sel)}
-  function $all(sel){return Array.from(document.querySelectorAll(sel))}
-  function initUI(){
-    const PAGES=['dashboard','criar-tr','meus-trs','emitir-parecer'];
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
+  function $(s){return document.querySelector(s)}; function $all(s){return Array.from(document.querySelectorAll(s))};
+  function init(){
     ensureCss();
     bind('#btn-dashboard',()=>show('dashboard'));
     bind('#btn-criar-tr',()=>show('criar-tr'));
-    bind('#btn-meus-trs',()=>{show('meus-trs')});
+    bind('#btn-meus-trs',()=>{ show('meus-trs'); safeCall(window.carregarMeusTRs); });
     bind('#btn-emitir-parecer',()=>show('emitir-parecer'));
     bind('#card-criar-tr',()=>show('criar-tr'));
-    bind('#card-meus-trs',()=>show('meus-trs'));
+    bind('#card-meus-trs',()=>{ show('meus-trs'); safeCall(window.carregarMeusTRs); });
     bind('#card-emitir-parecer',()=>show('emitir-parecer'));
+    bind('#btn-voltar',()=>{ window.location.href='/'; });
+    bind('#btn-logout',()=>{
+      try { const ch=(window.SistemaLocal&&window.SistemaLocal.CHAVES)||{}; if(ch.USUARIO) localStorage.removeItem(ch.USUARIO); }catch(_){}
+      ['usuario_logado','sistema_usuario_logado','userData','userToken'].forEach(k=>localStorage.removeItem(k));
+      window.location.href='/';
+    });
+    const form=$('#tr-form');
+    if(form){
+      form.addEventListener('submit',(e)=>{
+        e.preventDefault();
+        const dados=(typeof window.coletarDadosFormulario==='function')?window.coletarDadosFormulario():coletarDadosFormularioFallback();
+        const salvar=(typeof window.salvarTR==='function')?window.salvarTR:salvarTRFallback;
+        const res=salvar(dados);
+        if(res&&res.sucesso){ try{form.reset();}catch(_){}
+          try{ alertSuccess('TR salvo com sucesso!'); }catch(_){}
+          show('meus-trs'); safeCall(window.carregarMeusTRs);
+        } else {
+          try{ alertError((res&&res.erro)||'Erro ao salvar TR'); }catch(_){ alert('Erro ao salvar TR'); }
+        }
+      });
+      const clearBtn=document.getElementById('btn-limpar-form');
+      clearBtn&&clearBtn.addEventListener('click',(e)=>{ e.preventDefault(); form.reset(); });
+    }
+    const lista=document.getElementById('tr-list');
+    lista&&lista.addEventListener('click',(ev)=>{
+      const btn=ev.target.closest('button[data-action]'); if(!btn) return;
+      const a=btn.dataset.action, id=btn.dataset.id;
+      try{
+        if(a==='visualizar') safeCall(()=>window.visualizarTR(id));
+        else if(a==='enviar'){ safeCall(()=>window.enviarTRParaCompras(id)); safeCall(window.carregarMeusTRs); }
+        else if(a==='download') safeCall(()=>window.downloadTR(id));
+      }catch(err){ console.error('Ação falhou',a,err); alert('Erro ao executar ação.'); }
+    });
+    exposeFallbacks();
     show('dashboard');
   }
-  function bind(sel,fn){const el=$(sel); if(el) el.addEventListener('click',e=>{e.preventDefault(); fn();});}
-  function show(pageId){
+  function bind(sel,fn){ const el=$(sel); if(el) el.addEventListener('click',e=>{ e.preventDefault(); fn(); }); }
+  function show(id){
     const map={'dashboard':'#btn-dashboard','criar-tr':'#btn-criar-tr','meus-trs':'#btn-meus-trs','emitir-parecer':'#btn-emitir-parecer'};
-    Object.values(map).forEach(s=>$(s)?.classList.remove('active'));
-    $(map[pageId])?.classList.add('active');
-    $all('.content-section').forEach(sec=>sec.classList.remove('active'));
-    const sec=document.getElementById(pageId); if(sec) sec.classList.add('active');
+    Object.values(map).forEach(s=>$(s)?.classList.remove('active')); $(map[id])?.classList.add('active');
+    $all('.content-section').forEach(sec=>sec.classList.remove('active')); const sec=document.getElementById(id); if(sec) sec.classList.add('active');
   }
-  function ensureCss(){
-    const style=document.createElement('style');
-    style.textContent='.content-section{display:none}.content-section.active{display:block}';
-    document.head.appendChild(style);
+  function ensureCss(){ const st=document.createElement('style'); st.textContent='.content-section{display:none}.content-section.active{display:block}'; document.head.appendChild(st); }
+  function safeCall(fn){ try{ return typeof fn==='function' && fn(); }catch(e){ console.warn(e); } }
+  function coletarDadosFormularioFallback(){
+    const get=(id)=>{ const el=document.getElementById(id); return el?el.value:''; };
+    const servicos=[]; $all('#tabela-servicos tbody tr').forEach((row,i)=>{
+      const desc=row.querySelector('input[name="servico_descricao[]"]')?.value||'';
+      const un=row.querySelector('select[name="servico_unidade[]"]')?.value||'';
+      const q=row.querySelector('input[name="servico_quantidade[]"]')?.value||'';
+      if(desc&&un&&q) servicos.push({ item:i+1, descricao:desc, unidade:un, quantidade:Number(q)||0 });
+    });
+    const matriz=[]; $all('#tabela-responsabilidades tbody tr').forEach((row,i)=>{
+      const item=row.querySelector('input[name="resp_item[]"]')?.value||'';
+      const resp=row.querySelector('input[name="resp_tipo_'+i+'"]:checked')?.value||'na';
+      if(item) matriz.push({ item, responsavel:resp });
+    });
+    return { titulo:get('tr-titulo'), modalidade:get('tr-modalidade'), objetivo:get('tr-objetivo'),
+      conformidade:get('tr-conformidade'), visitaLocal:get('tr-visita-local'), local:get('tr-local'),
+      escopo:get('tr-escopo'), situacaoAtual:get('tr-situacao-atual'), situacaoProposta:get('tr-situacao-proposta'),
+      especificacao:get('tr-especificacao'), premissas:get('tr-premissas'), planilhaQuantidade:get('tr-planilha-quantidade'),
+      servicos, escopoGeral:get('tr-escopo-geral'), prazos:get('tr-prazos'),
+      matrizResponsabilidade:matriz, mobilizacao:get('tr-mobilizacao'), canteiro:get('tr-canteiro'),
+      credenciamento:get('tr-credenciamento'), meioAmbiente:get('tr-meio-ambiente'), engenharia:get('tr-engenharia'),
+      aquisicoes:get('tr-aquisicoes'), planejamentoGestao:get('tr-planejamento-gestao'),
+      planejamentoExecutivo:get('tr-planejamento-executivo'), testes:get('tr-testes'),
+      encerramento:get('tr-encerramento'), cap:get('tr-cap'), caf:get('tr-caf'),
+      garantia:get('tr-garantia'), criterios:get('tr-criterios'), anexos:get('tr-anexos') };
+  }
+  function salvarTRFallback(dados){
+    const usuarioDefault={ id:1, nome:'Admin', email:'admin@sistema.com' };
+    let usuario=usuarioDefault; try{ if(window.SistemaLocal && typeof window.SistemaLocal.obterUsuario==='function'){ usuario = window.SistemaLocal.obterUsuario() || usuarioDefault; } }catch(_){}
+    const novo={ id:Date.now().toString(36)+Math.random().toString(36).slice(2),
+      numeroTR:'TR-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-6),
+      usuarioId:usuario.id, usuarioNome:usuario.nome, titulo:dados.titulo||'TR',
+      modalidade:dados.modalidade||'', objetivo:dados.objetivo||'', conformidade:dados.conformidade||'',
+      visitaLocal:dados.visitaLocal||'', local:dados.local||'', escopo:dados.escopo||'',
+      situacaoAtual:dados.situacaoAtual||'', situacaoProposta:dados.situacaoProposta||'',
+      especificacao:dados.especificacao||'', premissas:dados.premissas||'', planilhaQuantidade:dados.planilhaQuantidade||'',
+      servicos:dados.servicos||[], escopoGeral:dados.escopoGeral||'', prazo:dados.prazos||'',
+      prazoExecucao:dados.prazos||'', matrizResponsabilidade:dados.matrizResponsabilidade||[],
+      mobilizacao:dados.mobilizacao||'', canteiro:dados.canteiro||'', credenciamento:dados.credenciamento||'',
+      meioAmbiente:dados.meioAmbiente||'', engenharia:dados.engenharia||'', aquisicoes:dados.aquisicoes||'',
+      planejamentoGestao:dados.planejamentoGestao||'', planejamentoExecutivo:dados.planejamentoExecutivo||'',
+      testes:dados.testes||'', encerramento:dados.encerramento||'', cap:dados.cap||'',
+      caf:dados.caf||'', garantia:dados.garantia||'', criterios:dados.criterios||'',
+      anexos:dados.anexos||'', valorEstimado:0, status:'elaborado',
+      dataCriacao:new Date().toISOString(), dataAtualizacao:new Date().toISOString() };
+    try{ const KEY=(window.SistemaLocal&&window.SistemaLocal.CHAVES&&window.SistemaLocal.CHAVES.TRS)||'sistema_trs';
+      const arr=JSON.parse(localStorage.getItem(KEY)||'[]'); arr.push(novo); localStorage.setItem(KEY,JSON.stringify(arr));
+      return {sucesso:true, id:novo.id};
+    }catch(e){ console.error(e); return {sucesso:false, erro:'Falha ao salvar no localStorage'}; }
+  }
+  function exposeFallbacks(){
+    if(typeof window.adicionarServico!=='function'){
+      window.adicionarServico=function(){ const tbody=document.querySelector('#tabela-servicos tbody'); if(!tbody) return;
+        const i=tbody.rows.length; const tr=tbody.insertRow();
+        tr.innerHTML='<td>'+(i+1)+'</td><td><input type="text" name="servico_descricao[]" required></td>'+
+          '<td><select name="servico_unidade[]" required><option value="UN">UN</option><option value="M²">M²</option><option value="M³">M³</option>'+
+          '<option value="ML">ML</option><option value="KG">KG</option><option value="VB">VB</option></select></td>'+
+          '<td><input type="number" name="servico_quantidade[]" required min="1"></td>'+
+          '<td><button type="button" class="btn btn-danger btn-sm" onclick="removerServico(this)"><i class="fas fa-trash"></i></button></td>'; }; }
+    if(typeof window.removerServico!=='function'){
+      window.removerServico=function(btn){ const row=btn.closest('tr'); const tbody=row&&row.parentNode; if(!tbody) return;
+        if(tbody.rows.length>1){ row.remove(); Array.from(tbody.rows).forEach((r,idx)=>{ r.cells[0].textContent=(idx+1); }); }
+        else { alert('Deve haver pelo menos um serviço na tabela.'); } }; }
+    if(typeof window.adicionarResponsabilidade!=='function'){
+      window.adicionarResponsabilidade=function(){ const tbody=document.querySelector('#tabela-responsabilidades tbody'); if(!tbody) return;
+        const i=tbody.rows.length; const tr=tbody.insertRow();
+        tr.innerHTML='<td><input type="text" name="resp_item[]" required></td>'+
+          '<td style="text-align:center;"><input type="radio" name="resp_tipo_'+i+'" value="contratada"></td>'+
+          '<td style="text-align:center;"><input type="radio" name="resp_tipo_'+i+'" value="contratante"></td>'+
+          '<td style="text-align:center;"><input type="radio" name="resp_tipo_'+i+'" value="na" checked></td>'+
+          '<td><button type="button" class="btn btn-danger btn-sm" onclick="removerResponsabilidade(this)"><i class="fas fa-trash"></i></button></td>'; }; }
+    if(typeof window.removerResponsabilidade!=='function'){
+      window.removerResponsabilidade=function(btn){ const row=btn.closest('tr'); const tbody=row&&row.parentNode; if(!tbody) return;
+        if(tbody.rows.length>1) row.remove(); }; }
   }
 })();
 </script>
+<!-- scripts externos FORA do JS inline -->
+<script type="module" src="/static/js/firebase.js"></script>
+<script type="module" src="/static/js/realtime-sync.js"></script>
 </body>
 </html>
