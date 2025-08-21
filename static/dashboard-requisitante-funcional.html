@@ -2231,6 +2231,9 @@
         }  // fecha function downloadTR(id)
 </script>
 
+
+<!-- ======= WIRING DE EVENTOS DA UI (sidebar, cards, lista, formulário) ======= -->
+<script>
 /* ======= WIRING DE EVENTOS DA UI (sidebar, cards, lista, formulário) ======= */
 (function initUI() {
   const $ = (sel) => document.querySelector(sel);
@@ -2310,14 +2313,11 @@
   try { carregarEstatisticas(); } catch (_) {}
 })();
     
+
+</script>
+<!-- scripts externos FORA do JS inline -->
 <!-- scripts externos FORA do JS inline -->
 <script type="module" src="/static/js/firebase.js"></script>
 <script type="module" src="/static/js/realtime-sync.js"></script>
 </body>
 </html>
-
-                    
-            <script type="module" src="/static/js/firebase.js"></script>
-            <script type="module" src="/static/js/realtime-sync.js"></script>
-          </body>
-        </html>
