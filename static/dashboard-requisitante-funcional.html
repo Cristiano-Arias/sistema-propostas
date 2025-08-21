@@ -2452,5 +2452,266 @@
 <!-- scripts externos FORA do JS inline -->
 <script type="module" src="/static/js/firebase.js"></script>
 <script type="module" src="/static/js/realtime-sync.js"></script>
+
+<!-- ====== INÍCIO: PATCH DE INTEGRAÇÃO (Opção B) ====== -->
+<script type="module" src="./realtime-sync.js"></script>
+<script type="module">
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const auth = getAuth();
+
+function safe(el){ return document.getElementById(el); }
+function go(p){ if (window.mostrarPagina) { mostrarPagina(p); } }
+
+// Vínculos de navegação (botões laterais)
+document.addEventListener("DOMContentLoaded", () => {
+  const map = [
+    ["btn-dashboard","dashboard"],
+    ["btn-criar-tr","criar-tr"],
+    ["btn-meus-trs","meus-trs"],
+    ["btn-emitir-parecer","emitir-parecer"],
+  ];
+  for (const [btnId, page] of map) {
+    const btn = safe(btnId);
+    if (btn) btn.addEventListener("click", () => go(page));
+  }
+
+  // Cards
+  const cardCriar = document.getElementById("card-criar-tr");
+  if (cardCriar) cardCriar.addEventListener("click", () => go("criar-tr"));
+  const cardMeus = document.getElementById("card-meus-trs");
+  if (cardMeus) cardMeus.addEventListener("click", () => go("meus-trs"));
+  const cardParecer = document.getElementById("card-emitir-parecer");
+  if (cardParecer) cardParecer.addEventListener("click", () => go("emitir-parecer"));
+
+  // Voltar / Logout
+  const btnVoltar = safe("btn-voltar");
+  if (btnVoltar) btnVoltar.addEventListener("click", () => { window.location.href = "/"; });
+
+  const btnLogout = safe("btn-logout");
+  if (btnLogout) btnLogout.addEventListener("click", async () => {
+    if (!confirm("Deseja realmente sair do sistema?")) return;
+    try { if (auth.currentUser) await signOut(auth); } catch(e) { console.warn("signOut:", e?.code||e?.message||e); }
+    try { localStorage.clear(); } catch(_) {}
+    window.location.href = "/";
+  });
+
+  // Submit do formulário TR
+  const form = document.getElementById("tr-form");
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      try {
+        if (!window.coletarDadosFormulario || !window.SistemaLocal || !window.salvarTR) {
+          alert("Funções do formulário não estão carregadas.");
+          return;
+        }
+        const dados = coletarDadosFormulario();
+        // se estiver em modo edição
+        const editId = form.getAttribute("data-editing-id");
+        if (editId) {
+          const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+          const idx = trs.findIndex(t => t.id === editId);
+          if (idx !== -1) {
+            trs[idx] = { ...trs[idx], ...dados, dataAtualizacao: new Date().toISOString() };
+            SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs);
+            mostrarAlerta("success","TR atualizado com sucesso!");
+          } else {
+            mostrarAlerta("error","TR para edição não encontrado.");
+          }
+          form.removeAttribute("data-editing-id");
+          const btnSubmit = form.querySelector('button[type="submit"]');
+          if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-save"></i> 💾 Salvar TR';
+        } else {
+          const res = salvarTR(dados);
+          if (res?.sucesso) {
+            mostrarAlerta("success","TR salvo com sucesso!");
+            go("meus-trs");
+          } else {
+            mostrarAlerta("error", res?.erro || "Falha ao salvar TR");
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao salvar TR: " + (err?.message || err));
+      }
+    });
+  }
+
+  const btnLimpar = document.getElementById("btn-limpar-form");
+  if (btnLimpar && form) {
+    btnLimpar.addEventListener("click", () => {
+      form.reset();
+      form.removeAttribute("data-editing-id");
+      const btnSubmit = form.querySelector('button[type="submit"]');
+      if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-save"></i> 💾 Salvar TR';
+    });
+  }
+
+  // Delegação de cliques nos cards/ações de TRs
+  const list = document.getElementById("tr-list");
+  if (list) {
+    list.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button[data-action]") || ev.target.closest("[data-action='criar-primeiro-tr']");
+      if (!btn) return;
+      const action = btn.getAttribute("data-action");
+      const id = btn.getAttribute("data-id");
+
+      // Funções utilitárias do arquivo original (se existirem)
+      const loadTRs = () => SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+      const saveTRs = (trs) => SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs);
+
+      if (action === "criar-primeiro-tr") {
+        go("criar-tr");
+        return;
+      }
+      if (action === "visualizar" && window.visualizarTR) {
+        visualizarTR(id);
+        return;
+      }
+      if (action === "download" && window.downloadTR) {
+        downloadTR(id);
+        return;
+      }
+      if (action === "editar") {
+        const trs = loadTRs();
+        const tr = trs.find(t => t.id === id);
+        if (!tr) { alert("TR não encontrado."); return; }
+        go("criar-tr");
+        // Preencher campos básicos (somente os que existem no formulário)
+        const setV = (sel, val) => { const el = document.querySelector(sel); if (el) el.value = val || ""; };
+        setV("#tr-titulo", tr.titulo);
+        setV("#tr-modalidade", tr.modalidade);
+        setV("#tr-objetivo", tr.objetivo);
+        setV("#tr-conformidade", tr.conformidade);
+        setV("#tr-visita-local", tr.visitaLocal);
+        setV("#tr-local", tr.local);
+        setV("#tr-escopo", tr.escopo);
+        setV("#tr-situacao-atual", tr.situacaoAtual);
+        setV("#tr-situacao-proposta", tr.situacaoProposta);
+        setV("#tr-especificacao", tr.especificacao);
+        setV("#tr-premissas", tr.premissas);
+        setV("#tr-planilha-quantidade", tr.planilhaQuantidade);
+        setV("#tr-escopo-geral", tr.escopoGeral);
+        setV("#tr-prazos", tr.prazo || tr.prazos);
+        setV("#tr-mobilizacao", tr.mobilizacao);
+        setV("#tr-canteiro", tr.canteiro);
+        setV("#tr-credenciamento", tr.credenciamento);
+        setV("#tr-meio-ambiente", tr.meioAmbiente);
+        setV("#tr-engenharia", tr.engenharia);
+        setV("#tr-aquisicoes", tr.aquisicoes);
+        setV("#tr-planejamento-gestao", tr.planejamentoGestao);
+        setV("#tr-planejamento-executivo", tr.planejamentoExecutivo);
+        setV("#tr-testes", tr.testes);
+        setV("#tr-encerramento", tr.encerramento);
+        setV("#tr-cap", tr.cap);
+        setV("#tr-caf", tr.caf);
+        setV("#tr-garantia", tr.garantia);
+        setV("#tr-criterios", tr.criterios);
+        setV("#tr-anexos", tr.anexos);
+
+        // Tabela de serviços
+        const tbodyServ = document.querySelector("#tabela-servicos tbody");
+        if (tbodyServ) {
+          tbodyServ.innerHTML = "";
+          (tr.servicos || []).forEach((s, idx) => {
+            const row = tbodyServ.insertRow();
+            row.innerHTML = `
+              <td>${idx + 1}</td>
+              <td><input type="text" name="servico_descricao[]" required value="${s.descricao || ""}"></td>
+              <td>
+                <select name="servico_unidade[]" required>
+                  ${["UN","M²","M³","ML","KG","VB"].map(u => `<option value="${u}" ${u===s.unidade?"selected":""}>${u}</option>`).join("")}
+                </select>
+              </td>
+              <td><input type="number" name="servico_quantidade[]" required min="1" value="${s.quantidade || 1}"></td>
+              <td><button type="button" class="btn btn-danger btn-sm" onclick="removerServico(this)"><i class="fas fa-trash"></i></button></td>
+            `;
+          });
+          if ((tr.servicos || []).length === 0) {
+            const row = tbodyServ.insertRow();
+            row.innerHTML = `
+              <td>1</td>
+              <td><input type="text" name="servico_descricao[]" required></td>
+              <td>
+                <select name="servico_unidade[]" required>
+                  <option value="UN">UN</option><option value="M²">M²</option><option value="M³">M³</option><option value="ML">ML</option><option value="KG">KG</option><option value="VB">VB</option>
+                </select>
+              </td>
+              <td><input type="number" name="servico_quantidade[]" required min="1"></td>
+              <td><button type="button" class="btn btn-danger btn-sm" onclick="removerServico(this)"><i class="fas fa-trash"></i></button></td>
+            `;
+          }
+        }
+
+        // Matriz de responsabilidade
+        const tbodyResp = document.querySelector("#tabela-responsabilidades tbody");
+        if (tbodyResp) {
+          tbodyResp.innerHTML = "";
+          (tr.matrizResponsabilidade || []).forEach((m, idx) => {
+            const row = tbodyResp.insertRow();
+            row.innerHTML = `
+              <td><input type="text" name="resp_item[]" required value="${m.item || ""}"></td>
+              <td style="text-align:center;"><input type="radio" name="resp_tipo_${idx}" value="contratada" ${m.responsavel==="contratada"?"checked":""}></td>
+              <td style="text-align:center;"><input type="radio" name="resp_tipo_${idx}" value="contratante" ${m.responsavel==="contratante"?"checked":""}></td>
+              <td style="text-align:center;"><input type="radio" name="resp_tipo_${idx}" value="na" ${(!m.responsavel||m.responsavel==="na")?"checked":""}></td>
+              <td><button type="button" class="btn btn-danger btn-sm" onclick="removerResponsabilidade(this)"><i class="fas fa-trash"></i></button></td>
+            `;
+          });
+          if ((tr.matrizResponsabilidade || []).length === 0) {
+            const row = tbodyResp.insertRow();
+            row.innerHTML = `
+              <td><input type="text" name="resp_item[]" required></td>
+              <td style="text-align:center;"><input type="radio" name="resp_tipo_0" value="contratada"></td>
+              <td style="text-align:center;"><input type="radio" name="resp_tipo_0" value="contratante"></td>
+              <td style="text-align:center;"><input type="radio" name="resp_tipo_0" value="na" checked></td>
+              <td><button type="button" class="btn btn-danger btn-sm" onclick="removerResponsabilidade(this)"><i class="fas fa-trash"></i></button></td>
+            `;
+          }
+        }
+
+        form.setAttribute("data-editing-id", id);
+        const btnSubmit = form.querySelector('button[type="submit"]');
+        if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-save"></i> 💾 Atualizar TR';
+      }
+
+      if (action === "enviar") {
+        if (window.IntegracaoModulos?.enviarTRParaComprador) {
+          const trs = loadTRs();
+          const tr = trs.find(t => t.id === id);
+          if (!tr) { alert("TR não encontrado."); return; }
+          const ok = IntegracaoModulos.enviarTRParaComprador(tr);
+          if (ok) { alert("TR enviado para Compras."); location.reload(); }
+          else { alert("Falha ao enviar TR."); }
+        } else {
+          alert("Integração com Compras não está disponível nesta página.");
+        }
+      }
+
+      if (action === "excluir") {
+        if (!confirm("Deseja excluir este TR?")) return;
+        const trs = loadTRs().filter(t => t.id !== id);
+        saveTRs(trs);
+        location.reload();
+      }
+
+      if (action === "concluir") {
+        const trs = loadTRs();
+        const idx = trs.findIndex(t => t.id === id);
+        if (idx === -1) return;
+        trs[idx].status = "elaborado";
+        trs[idx].dataAtualizacao = new Date().toISOString();
+        saveTRs(trs);
+        location.reload();
+      }
+    });
+  }
+
+  // Carregar dashboard ao abrir (garante UI pronta)
+  if (typeof carregarEstatisticas === "function") carregarEstatisticas();
+});
+</script>
+<!-- ====== FIM: PATCH DE INTEGRAÇÃO (Opção B) ====== -->
+
 </body>
 </html>
