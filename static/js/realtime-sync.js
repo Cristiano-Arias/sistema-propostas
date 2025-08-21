@@ -1,37 +1,79 @@
-// static/js/realtime-sync.js - Sincronização localStorage <-> Firestore (não-invasiva)
-import { db } from './firebase.js';
-import { doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+// ================================
+// realtime-sync.js (patched)
+// ================================
 
-const COLLECTION = 'localstorage';
-const KEYS = ["admin_logado", "auth_token", "azure_ai_config", "comprador_logado", "convites_processo", "credenciais_fornecedores", "fornecedor_logado", "fornecedor_token", "fornecedores_cadastrados", "notificacoes_requisitante", "pareceres_requisitante", "pareceres_tecnicos", "processos", "processos_compra", "propostas_comparativo", "propostas_fornecedor", "propostas_fornecedor_", "propostas_fornecedores", "propostas_liberadas_parecer", "propostas_para_requisitante", "requisitante_logado", "sistema_analises_ia", "sistema_fornecedores", "sistema_processos", "sistema_propostas", "sistema_propostas_completas", "sistema_trs", "sistema_usuarios_fornecedores", "technical_analysis_draft", "technical_analysis_final", "termos_referencia", "tr_autosave", "tr_rascunho", "tr_rascunho_", "trs_aprovados", "trs_pendentes_aprovacao", "userData", "userToken", "usuario_logado"];
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { app } from "/static/firebase.js";
 
-let isApplyingRemote = false;
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-// Listener remoto -> local
-for (const key of KEYS) {
-  const ref = doc(db, COLLECTION, key);
-  onSnapshot(ref, (snap) => {
-    if (!snap.exists()) return;
-    const { value } = snap.data();
-    try {
-      isApplyingRemote = true;
-      localStorage.setItem(key, value);
-      window.dispatchEvent(new CustomEvent('ls:updated', { detail: { key, source: 'remote' } }));
-    } finally {
-      isApplyingRemote = false;
-    }
+let unsubscribes = [];
+
+/**
+ * Atacha listeners Firestore -> localStorage
+ */
+function attachListeners() {
+  const keys = ["requisicoes", "compras", "fornecedores", "sistema_dados"];
+  keys.forEach(key => {
+    const ref = doc(db, "localstorage", key);
+    const unsub = onSnapshot(
+      ref,
+      snap => {
+        if (snap.exists()) {
+          localStorage.setItem(key, snap.data().value);
+          console.log(`📥 Sync Firestore -> localStorage [${key}]`);
+        }
+      },
+      err => {
+        console.error("❌ Firestore listener error:", err);
+      }
+    );
+    unsubscribes.push(unsub);
   });
 }
 
-// Monkey-patch setItem para subir ao Firestore
-const _setItem = localStorage.setItem.bind(localStorage);
-localStorage.setItem = function(k, v) {
-  const result = _setItem(k, v);
-  if (!isApplyingRemote && KEYS.includes(k)) {
-    const ref = doc(db, COLLECTION, k);
-    setDoc(ref, { value: v, updatedAt: new Date().toISOString() }, { merge: true }).catch(console.error);
-  }
-  return result;
-};
+/**
+ * Remove listeners ativos
+ */
+function detachListeners() {
+  unsubscribes.forEach(u => u());
+  unsubscribes = [];
+}
 
-console.log('[realtime-sync] ativo para chaves:', KEYS);
+// ================================
+// Aguardar login antes de ligar sync
+// ================================
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    console.log("✅ Usuário autenticado, iniciando sync...");
+    attachListeners();
+    // Seed inicial
+    for (const key of ["requisicoes", "compras", "fornecedores", "sistema_dados"]) {
+      const ref = doc(db, "localstorage", key);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        localStorage.setItem(key, snap.data().value);
+      }
+    }
+  } else {
+    console.log("ℹ️ Usuário deslogado, removendo listeners...");
+    detachListeners();
+  }
+});
+
+// ================================
+// Monkey-patch localStorage.setItem
+// ================================
+const originalSetItem = localStorage.setItem;
+localStorage.setItem = function (key, value) {
+  originalSetItem.apply(this, [key, value]);
+  const user = auth.currentUser;
+  if (user) {
+    const ref = doc(db, "localstorage", key);
+    setDoc(ref, { value: value }, { merge: true })
+      .then(() => console.log(`📤 Sync localStorage -> Firestore [${key}]`))
+      .catch(err => console.error("❌ Firestore write error:", err));
+  }
+};
