@@ -2210,13 +2210,29 @@
                         <p>${tr.criterios}</p>
                     </div>
                     
-                    ${tr.anexos ? `
-                        <div class="section">
-                            <div class="section-title">26. ANEXOS</div>
-                            <p>${tr.anexos}</p>
-                        </div>
-                    ` : ''}
-                <script type="module" src="/static/js/firebase.js"></script>
+                                ${tr.anexos ? `
+                <div class="section">
+                    <div class="section-title">26. ANEXOS</div>
+                    <p>${tr.anexos}</p>
+                </div>
+            ` : ''}
+        </div>
+    </body>
+    </html>
+    `;
+
+    // Criar blob e fazer download
+    const blob = new Blob([conteudoHTML], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${tr.numeroTR}_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+<script type="module" src="/static/js/firebase.js"></script>
 <script type="module" src="/static/js/realtime-sync.js"></script>
 </body>
                 </html>
@@ -2343,7 +2359,7 @@
                                 <option value="VB" ${servico.unidade === 'VB' ? 'selected' : ''}>VB</option>
                             </select>
                         </td>
-                        <td><input type="number" name="servico_quantidade[]" value="${servico.quantidade}" required min="1"></td>
+                        <td><input type="number" name="servico_quantidade[]" value="${Number(servico.quantidade || 1)}" required min="1"></td>
                         <td>
                             <button type="button" class="btn btn-danger btn-sm" onclick="removerServico(this)">
                                 <i class="fas fa-trash"></i>
