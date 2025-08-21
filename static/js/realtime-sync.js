@@ -1,14 +1,31 @@
 // ================================
-// realtime-sync.js (patched - imports corrigidos)
+// realtime-sync.js (Option B - baseado no original do usuário)
+// Sincroniza chaves de localStorage com Firestore em /localstorage/{key}
+// Requer usuário autenticado (mesmo login entre módulos).
 // ================================
 
-import { app, db, auth } from "/static/js/firebase.js";
 import { doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-let unsubscribers = [];
+// ⚠️ Usa a MESMA config já presente nas páginas do sistema.
+// Caso a página já tenha inicializado o app, o Firebase reutiliza a instância automaticamente.
+const firebaseConfig = {
+  apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+  authDomain: "portal-de-proposta.firebaseapp.com",
+  projectId: "portal-de-proposta",
+  storageBucket: "portal-de-proposta.firebasestorage.app",
+  messagingSenderId: "321036073908",
+  appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+};
 
-// Chaves que o app sincroniza (mantidas)
+let app;
+try { app = initializeApp(firebaseConfig); } catch(_) { /* já inicializado */ }
+const db = getFirestore();
+const auth = getAuth();
+
+// Chaves sincronizadas (compatível com módulos existentes)
 const KEYS = [
   "admin_logado","auth_token","azure_ai_config","comprador_logado","convites_processo",
   "credenciais_fornecedores","fornecedor_logado","fornecedor_token","fornecedores_cadastrados",
@@ -20,6 +37,7 @@ const KEYS = [
   "tr_autosave","tr_rascunho","tr_rascunho_","trs_aprovados","trs_pendentes_aprovacao","userData","userToken","usuario_logado"
 ];
 
+let unsubscribers = [];
 let isApplyingRemote = false;
 
 function attachListeners() {
@@ -32,8 +50,8 @@ function attachListeners() {
       if (snap.exists()) {
         const { value } = snap.data() || {};
         if (typeof value !== "undefined") {
-          try { isApplyingRemote = true; localStorage.setItem(key, value); }
-          finally { isApplyingRemote = false; }
+          try { isApplyingRemote = True; } catch(_) {}
+          try { localStorage.setItem(key, value); } finally { isApplyingRemote = false; }
         }
       }
     }).catch((e) => console.warn("[realtime-sync] seed erro:", key, e.code || e.message));
@@ -41,8 +59,7 @@ function attachListeners() {
     const unsub = onSnapshot(ref, (snap) => {
       if (!snap.exists()) return;
       const { value } = snap.data() || {};
-      try { isApplyingRemote = true; localStorage.setItem(key, value); }
-      finally { isApplyingRemote = false; }
+      try { isApplyingRemote = true; localStorage.setItem(key, value); } finally { isApplyingRemote = false; }
     }, (err) => {
       console.warn("[realtime-sync] onSnapshot erro:", key, err.code || err.message);
     });
