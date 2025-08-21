@@ -2232,7 +2232,7 @@
 </script>
 
 
-<!-- ======= WIRING DE EVENTOS DA UI (sidebar, cards, lista, formulário) ======= -->
+<!-- wiring UI -->
 <script>
 /* ======= WIRING DE EVENTOS DA UI (sidebar, cards, lista, formulário) ======= */
 (function initUI() {
@@ -2319,5 +2319,41 @@
 <!-- scripts externos FORA do JS inline -->
 <script type="module" src="/static/js/firebase.js"></script>
 <script type="module" src="/static/js/realtime-sync.js"></script>
+<script>
+(function () {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initUI);
+  } else {
+    initUI();
+  }
+  function $(sel){return document.querySelector(sel)}
+  function $all(sel){return Array.from(document.querySelectorAll(sel))}
+  function initUI(){
+    const PAGES=['dashboard','criar-tr','meus-trs','emitir-parecer'];
+    ensureCss();
+    bind('#btn-dashboard',()=>show('dashboard'));
+    bind('#btn-criar-tr',()=>show('criar-tr'));
+    bind('#btn-meus-trs',()=>{show('meus-trs')});
+    bind('#btn-emitir-parecer',()=>show('emitir-parecer'));
+    bind('#card-criar-tr',()=>show('criar-tr'));
+    bind('#card-meus-trs',()=>show('meus-trs'));
+    bind('#card-emitir-parecer',()=>show('emitir-parecer'));
+    show('dashboard');
+  }
+  function bind(sel,fn){const el=$(sel); if(el) el.addEventListener('click',e=>{e.preventDefault(); fn();});}
+  function show(pageId){
+    const map={'dashboard':'#btn-dashboard','criar-tr':'#btn-criar-tr','meus-trs':'#btn-meus-trs','emitir-parecer':'#btn-emitir-parecer'};
+    Object.values(map).forEach(s=>$(s)?.classList.remove('active'));
+    $(map[pageId])?.classList.add('active');
+    $all('.content-section').forEach(sec=>sec.classList.remove('active'));
+    const sec=document.getElementById(pageId); if(sec) sec.classList.add('active');
+  }
+  function ensureCss(){
+    const style=document.createElement('style');
+    style.textContent='.content-section{display:none}.content-section.active{display:block}';
+    document.head.appendChild(style);
+  }
+})();
+</script>
 </body>
 </html>
