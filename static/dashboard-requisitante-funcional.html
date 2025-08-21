@@ -2211,14 +2211,31 @@
                     </div>
                     
                     ${tr.anexos ? `
-                        <div class="section">
-                            <div class="section-title">26. ANEXOS</div>
-                            <p>${tr.anexos}</p>
-                        </div>
-                    ` : ''}
+    <div class="section">
+        <div class="section-title">26. ANEXOS</div>
+        <p>${tr.anexos}</p>
+    </div>
+` : ''}
                 </div>
-                `;
-            </script>
+            `;
+            // Criar blob e fazer download do HTML gerado
+            const blob = new Blob([conteudoHTML], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${tr.numeroTR}_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }  // fecha function downloadTR(id)
+</script>
+
+<!-- scripts externos FORA do JS inline -->
+<script type="module" src="/static/js/firebase.js"></script>
+<script type="module" src="/static/js/realtime-sync.js"></script>
+</body>
+</html>
 
                     
             <script type="module" src="/static/js/firebase.js"></script>
