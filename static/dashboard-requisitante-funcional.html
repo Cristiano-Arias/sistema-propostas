@@ -2231,6 +2231,85 @@
         }  // fecha function downloadTR(id)
 </script>
 
+/* ======= WIRING DE EVENTOS DA UI (sidebar, cards, lista, formulário) ======= */
+(function initUI() {
+  const $ = (sel) => document.querySelector(sel);
+
+  // Navegação lateral
+  $('#btn-dashboard')?.addEventListener('click', () => mostrarPagina('dashboard'));
+  $('#btn-criar-tr')?.addEventListener('click', () => mostrarPagina('criar-tr'));
+  $('#btn-meus-trs')?.addEventListener('click', () => {
+    mostrarPagina('meus-trs');
+    carregarMeusTRs();
+  });
+  $('#btn-emitir-parecer')?.addEventListener('click', () => mostrarPagina('emitir-parecer'));
+
+  // Ações do cabeçalho SISTEMA
+  $('#btn-voltar')?.addEventListener('click', voltarSistema);
+  $('#btn-logout')?.addEventListener('click', logout);
+
+  // Cards do dashboard
+  $('#card-criar-tr')?.addEventListener('click', () => mostrarPagina('criar-tr'));
+  $('#card-meus-trs')?.addEventListener('click', () => {
+    mostrarPagina('meus-trs');
+    carregarMeusTRs();
+  });
+  $('#card-emitir-parecer')?.addEventListener('click', () => mostrarPagina('emitir-parecer'));
+
+  // Formulário de TR
+  const form = $('#tr-form');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const dados = coletarDadosFormulario();
+    const res = salvarTR(dados);
+    if (res?.sucesso) {
+      mostrarAlerta('success', 'TR salvo com sucesso!');
+      form.reset();
+      mostrarPagina('meus-trs');
+      carregarMeusTRs();
+    } else {
+      mostrarAlerta('error', res?.erro || 'Erro ao salvar TR');
+    }
+  });
+
+  $('#btn-limpar-form')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    form?.reset();
+  });
+
+  // Delegação de eventos para os botões renderizados dinamicamente em "Meus TRs"
+  const lista = document.getElementById('tr-list');
+  lista?.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-action]');
+    if (!btn) return;
+
+    const acao = btn.dataset.action;
+    const id = btn.dataset.id;
+
+    try {
+      if (acao === 'visualizar') {
+        visualizarTR(id);
+      } else if (acao === 'enviar') {
+        enviarTRParaCompras(id);
+        carregarMeusTRs();
+      } else if (acao === 'download') {
+        downloadTR(id);
+      } else if (acao === 'editar') {
+        // Se ainda não tiver implementado, ignore ou adicione quando existir
+        console.warn('Ação "editar" ainda não implementada para requisitante');
+      } else if (acao === 'excluir') {
+        console.warn('Ação "excluir" ainda não implementada para requisitante');
+      }
+    } catch (err) {
+      console.error('Erro ao executar ação:', acao, err);
+      alert('Ocorreu um erro ao executar a ação.');
+    }
+  });
+
+  // Atualiza métricas ao abrir o dashboard
+  try { carregarEstatisticas(); } catch (_) {}
+})();
+    
 <!-- scripts externos FORA do JS inline -->
 <script type="module" src="/static/js/firebase.js"></script>
 <script type="module" src="/static/js/realtime-sync.js"></script>
