@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin • Usuários</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css">
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:#f7f7fb;color:#222;padding:24px}
+  h1{margin:0 0 16px}
+  .card{background:#fff;border:1px solid #e8e8ef;border-radius:14px;padding:16px 18px;margin:14px 0;box-shadow:0 1px 1px rgba(0,0,0,.03)}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:8px}
+  label{font-size:.9rem;color:#444}
+  input,select{width:100%;padding:10px;border:1px solid #d7d7e0;border-radius:10px;background:#fff}
+  button{padding:10px 14px;border:0;border-radius:10px;background:#4f46e5;color:#fff;cursor:pointer}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  .ok{color:#0a7d2b}
+  .err{color:#b00020;white-space:pre-wrap}
+  pre{background:#0b1020;color:#e5e7eb;padding:12px;border-radius:10px;overflow:auto}
+  small{color:#666}
+</style>
+</head>
+<body>
+  <h1>Admin • Usuários</h1>
+
+  <!-- LOGIN ADMIN -->
+  <div class="card">
+    <h3>1) Login como ADMIN</h3>
+    <div class="row">
+      <div><label>E-mail ADMIN<br><input id="adm_email" placeholder="admin@dominio.com"></label></div>
+      <div><label>Senha ADMIN<br><input id="adm_senha" type="password" placeholder="••••••••"></label></div>
+    </div>
+    <div style="margin-top:10px">
+      <button id="btnLogin">Entrar</button>
+      <small id="loginStatus"></small>
+    </div>
+  </div>
+
+  <!-- CRIAR USUÁRIO -->
+  <div class="card">
+    <h3>2) Criar usuário</h3>
+    <div class="row">
+      <div><label>Nome<br><input id="u_nome" placeholder="Nome completo"></label></div>
+      <div><label>E-mail<br><input id="u_email" placeholder="email@exemplo.com"></label></div>
+      <div><label>Perfil<br>
+        <select id="u_perfil">
+          <option value="requisitante">requisitante</option>
+          <option value="comprador">comprador</option>
+          <option value="fornecedor">fornecedor</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+      </label></div>
+      <div><label>Senha temporária<br><input id="u_senha" type="password" placeholder="Tmp#2024!Aa"></label></div>
+    </div>
+    <div style="margin-top:10px">
+      <button id="btnCriar" disabled>Criar usuário</button>
+      <small>O usuário deverá trocar a senha no primeiro acesso.</small>
+      <div id="criarMsg"></div>
+    </div>
+  </div>
+
+  <!-- LISTAR / BUSCAR -->
+  <div class="card">
+    <h3>3) Listar / buscar usuários</h3>
+    <div class="row">
+      <div><label>Filtro (nome/e-mail)<br><input id="q" placeholder="ex.: fulano"></label></div>
+    </div>
+    <div style="margin-top:10px">
+      <button id="btnListar" disabled>Listar</button>
+    </div>
+    <pre id="lista"></pre>
+  </div>
+
+  <!-- RESET DE SENHA -->
+  <div class="card">
+    <h3>4) Resetar senha</h3>
+    <div class="row">
+      <div><label>ID do usuário<br><input id="r_id" placeholder="ex.: 12"></label></div>
+      <div><label>Nova senha<br><input id="r_senha" type="password" placeholder="Nova#Forte2024!"></label></div>
+    </div>
+    <div style="margin-top:10px">
+      <button id="btnReset" disabled>Resetar</button>
+      <div id="resetMsg"></div>
+    </div>
+  </div>
+
+<script>
+let token = null;
+
+function api(path, opts = {}) {
+  opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  return fetch(path, opts);
+}
+
+document.getElementById('btnLogin').onclick = async () => {
+  const email = document.getElementById('adm_email').value.trim();
+  const senha = document.getElementById('adm_senha').value;
+  const s = document.getElementById('loginStatus');
+  s.textContent = '...';
+  try {
+    const res  = await fetch('/auth/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, senha })
+    });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) {
+      s.textContent = `Erro ${res.status}: ${(data.erro||data.message||'falha no login')}`;
+      token = null;
+      return;
+    }
+    token = data.access_token;
+    s.textContent = `Logado. Perfil: ${data.perfil || 'ADMIN'}`;
+    // libera os botões protegidos
+    document.getElementById('btnCriar').disabled  = false;
+    document.getElementById('btnListar').disabled = false;
+    document.getElementById('btnReset').disabled  = false;
+  } catch (e) {
+    s.textContent = String(e);
+  }
+};
+
+document.getElementById('btnCriar').onclick = async () => {
+  const out = document.getElementById('criarMsg');
+  if (!token) { out.textContent = 'Faça login como ADMIN.'; return; }
+
+  const body = {
+    nome:  document.getElementById('u_nome').value.trim(),
+    email: document.getElementById('u_email').value.trim(),
+    perfil:document.getElementById('u_perfil').value,
+    senha: document.getElementById('u_senha').value
+  };
+
+  out.textContent = '...';
+  try {
+    const res  = await api('/admin/usuarios', { method:'POST', body: JSON.stringify(body) });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) {
+      out.textContent = `Erro ${res.status}: ${(data.erro||data.message||'não processado')}`;
+      return;
+    }
+    out.textContent = `Usuário criado${data.id ? ` (ID ${data.id})` : ''}.`;
+  } catch (e) {
+    out.textContent = String(e);
+  }
+};
+
+document.getElementById('btnListar').onclick = async () => {
+  const pre = document.getElementById('lista');
+  const q   = document.getElementById('q').value.trim();
+  pre.textContent = '...';
+  try {
+    const url = q ? `/admin/usuarios?q=${encodeURIComponent(q)}` : '/admin/usuarios';
+    const res  = await api(url);
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) { pre.textContent = `Erro ${res.status}: ${(data.erro||data.message||'não processado')}`; return; }
+    pre.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    pre.textContent = String(e);
+  }
+};
+
+document.getElementById('btnReset').onclick = async () => {
+  const out = document.getElementById('resetMsg');
+  const id  = document.getElementById('r_id').value.trim();
+  const nova_senha = document.getElementById('r_senha').value;
+  out.textContent = '...';
+  try {
+    const res  = await api(`/admin/usuarios/${id}/reset`, {
+      method:'POST',
+      body: JSON.stringify({ nova_senha })
+    });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) { out.textContent = `Erro ${res.status}: ${(data.erro||data.message||'não processado')}`; return; }
+    out.textContent = 'Senha atualizada.';
+  } catch (e) {
+    out.textContent = String(e);
+  }
+};
+</script>
+</body>
+</html>
