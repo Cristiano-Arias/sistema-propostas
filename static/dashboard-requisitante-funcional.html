@@ -1651,7 +1651,7 @@
             return botoes;
         };
 
-        // Visualizar TR
+        // Função COMPLETA para Visualizar TR
         window.visualizarTR = function(id) {
             const trs = window.SistemaLocal.carregar(window.SistemaLocal.CHAVES.TRS, []);
             const tr = trs.find(t => t.id === id);
@@ -1663,11 +1663,83 @@
             
             const config = window.StatusConfig[tr.status] || window.StatusConfig.elaborado;
             
-            // Modal de visualização
+            // Renderizar tabela de serviços
+            let tabelaServicos = '';
+            if (tr.servicos && tr.servicos.length > 0) {
+                tabelaServicos = `
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-list"></i> Tabela de Serviços</h5>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                <thead>
+                                    <tr style="background: #f8f9fa;">
+                                        <th style="padding: 10px; border: 1px solid #dee2e6;">Item</th>
+                                        <th style="padding: 10px; border: 1px solid #dee2e6;">Descrição</th>
+                                        <th style="padding: 10px; border: 1px solid #dee2e6;">Unidade</th>
+                                        <th style="padding: 10px; border: 1px solid #dee2e6;">Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.servicos.map(servico => `
+                                        <tr>
+                                            <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">${servico.item}</td>
+                                            <td style="padding: 10px; border: 1px solid #dee2e6;">${servico.descricao}</td>
+                                            <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">${servico.unidade}</td>
+                                            <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">${servico.quantidade}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+        
+            // Renderizar matriz de responsabilidade
+            let matrizResp = '';
+            if (tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0) {
+                matrizResp = `
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-tasks"></i> Matriz de Responsabilidade</h5>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                <thead>
+                                    <tr style="background: #f8f9fa;">
+                                        <th style="padding: 10px; border: 1px solid #dee2e6;">Item/Atividade</th>
+                                        <th style="padding: 10px; border: 1px solid #dee2e6;">Responsável</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tr.matrizResponsabilidade.map(item => `
+                                        <tr>
+                                            <td style="padding: 10px; border: 1px solid #dee2e6;">${item.item}</td>
+                                            <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
+                                                <span style="
+                                                    background: ${item.responsavel === 'contratada' ? '#28a745' : 
+                                                                item.responsavel === 'contratante' ? '#007bff' : '#6c757d'};
+                                                    color: white;
+                                                    padding: 4px 12px;
+                                                    border-radius: 12px;
+                                                    font-size: 12px;
+                                                ">
+                                                    ${item.responsavel === 'contratada' ? 'Contratada' : 
+                                                      item.responsavel === 'contratante' ? 'Contratante' : 'N/A'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Modal completo com TODOS os campos
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
             modal.innerHTML = `
-                <div class="modal-content" style="max-width: 1000px;">
+                <div class="modal-content" style="max-width: 1200px;">
                     <div class="modal-header">
                         <div>
                             <h3 style="margin: 0; color: #333;">${tr.numeroTR}</h3>
@@ -1677,15 +1749,16 @@
                         </div>
                         <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                     </div>
-                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                        <h4 style="color: #333; margin-bottom: 20px;">${tr.titulo}</h4>
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 30px;">
+                        <h4 style="color: #333; margin-bottom: 20px; font-size: 24px;">${tr.titulo}</h4>
                         
                         ${window.renderizarTimeline(tr.status)}
                         
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                        <!-- Informações Básicas -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0;">
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
                                 <strong style="color: #666;">Modalidade:</strong><br>
-                                ${tr.modalidade}
+                                ${tr.modalidade || 'Não especificado'}
                             </div>
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
                                 <strong style="color: #666;">Visita ao Local:</strong><br>
@@ -1697,14 +1770,243 @@
                             </div>
                         </div>
                         
+                        <!-- 1. Objetivo -->
                         <div style="margin-bottom: 20px;">
-                            <h5 style="color: #333; margin-bottom: 10px;">Objetivo</h5>
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-bullseye"></i> Objetivo</h5>
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                ${tr.objetivo}
+                                ${tr.objetivo || 'Não especificado'}
                             </div>
                         </div>
+                        
+                        <!-- 2. Conformidade -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-check-circle"></i> Conformidade ao Termo de Referência</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.conformidade || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 3. Local/Acesso -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-map-marker-alt"></i> Local/Acesso</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.local || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 4. Escopo Técnico -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-cogs"></i> Escopo Técnico</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.escopo || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 5. Situação Atual -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-info-circle"></i> Situação Atual</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.situacaoAtual || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 6. Situação Proposta -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-lightbulb"></i> Situação Proposta</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.situacaoProposta || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 7. Especificação Técnica -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-file-alt"></i> Especificação Técnica</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.especificacao || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 8. Premissas -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle"></i> Premissas, Requisitos e Restrições</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.premissas || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 9. Planilha de Quantidade -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-calculator"></i> Planilha de Quantidade</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.planilhaQuantidade || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- Tabela de Serviços -->
+                        ${tabelaServicos}
+                        
+                        <!-- 10. Escopo Geral -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-globe"></i> Escopo Geral</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.escopoGeral || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 11. Prazos -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-clock"></i> Prazos</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.prazo || tr.prazos || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- Matriz de Responsabilidade -->
+                        ${matrizResp}
+                        
+                        <!-- 12. Mobilização -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-hard-hat"></i> Mobilização, Segurança e Saúde do Trabalho</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.mobilizacao || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 13. Canteiro de Obras -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-tools"></i> Canteiro de Obras</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.canteiro || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        ${tr.credenciamento ? `
+                            <div style="margin-bottom: 20px;">
+                                <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-id-badge"></i> Credenciamento Aeroportuário</h5>
+                                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                    ${tr.credenciamento}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- 14. Meio Ambiente -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-leaf"></i> Meio Ambiente</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.meioAmbiente || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 15. Engenharia -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-drafting-compass"></i> Engenharia</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.engenharia || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 16. Aquisições -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-shopping-cart"></i> Aquisições</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.aquisicoes || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 17. Planejamento/Gestão de Contratos -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-file-contract"></i> Planejamento/Gestão de Contratos</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.planejamentoGestao || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 18. Planejamento Executivo -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-project-diagram"></i> Planejamento Executivo</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.planejamentoExecutivo || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 19. Testes -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-vial"></i> Testes, Comissionamento, Treinamento</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.testes || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 20. Encerramento -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-flag-checkered"></i> Ao Encerramento da Obra</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.encerramento || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 21. CAP -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-certificate"></i> Certificado de Aceitação Provisória (CAP)</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.cap || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 22. CAF -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-award"></i> Certificado de Aceitação Final (CAF)</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.caf || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 23. Garantia -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-shield-alt"></i> Garantia</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.garantia || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 24. Critérios de Avaliação -->
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-clipboard-check"></i> Critérios de Avaliação de Propostas</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                ${tr.criterios || 'Não especificado'}
+                            </div>
+                        </div>
+                        
+                        <!-- 25. Anexos -->
+                        ${tr.anexos ? `
+                            <div style="margin-bottom: 20px;">
+                                <h5 style="color: #333; margin-bottom: 10px;"><i class="fas fa-paperclip"></i> Anexos</h5>
+                                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                                    ${tr.anexos}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Parecer do Comprador (se houver) -->
+                        ${tr.parecerComprador ? `
+                            <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <strong style="color: #0c5460;"><i class="fas fa-comment"></i> Parecer do Comprador:</strong><br>
+                                ${tr.parecerComprador}
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Motivo da Reprovação (se houver) -->
+                        ${tr.motivoReprovacao ? `
+                            <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <strong style="color: #721c24;"><i class="fas fa-times-circle"></i> Motivo da Reprovação:</strong><br>
+                                ${tr.motivoReprovacao}
+                            </div>
+                        ` : ''}
                     </div>
                     <div class="modal-footer">
+                        <button class="btn btn-info" onclick="window.downloadTR('${tr.id}')" style="background: #17a2b8; color: white;">
+                            <i class="fas fa-download"></i> Download
+                        </button>
                         <button class="btn btn-secondary btn-fechar-modal">Fechar</button>
                     </div>
                 </div>
@@ -1715,9 +2017,16 @@
             modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
                 btn.addEventListener('click', () => modal.remove());
             });
+            
+            // Fechar ao clicar fora do modal
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
         };
-
-        // Download TR
+        
+        // Função COMPLETA para Download TR
         window.downloadTR = function(id) {
             const trs = window.SistemaLocal.carregar(window.SistemaLocal.CHAVES.TRS, []);
             const tr = trs.find(t => t.id === id);
@@ -1726,7 +2035,64 @@
                 alert('TR não encontrado!');
                 return;
             }
-
+        
+            // Renderizar tabelas HTML
+            let tabelaServicosHTML = '';
+            if (tr.servicos && tr.servicos.length > 0) {
+                tabelaServicosHTML = `
+                    <div class="section">
+                        <div class="section-title">TABELA DE SERVIÇOS</div>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 8px;">Item</th>
+                                    <th style="border: 1px solid #333; padding: 8px;">Descrição</th>
+                                    <th style="border: 1px solid #333; padding: 8px;">Unidade</th>
+                                    <th style="border: 1px solid #333; padding: 8px;">Quantidade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tr.servicos.map(s => `
+                                    <tr>
+                                        <td style="border: 1px solid #333; padding: 8px;">${s.item}</td>
+                                        <td style="border: 1px solid #333; padding: 8px;">${s.descricao}</td>
+                                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">${s.unidade}</td>
+                                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">${s.quantidade}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        
+            let matrizRespHTML = '';
+            if (tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0) {
+                matrizRespHTML = `
+                    <div class="section">
+                        <div class="section-title">MATRIZ DE RESPONSABILIDADE</div>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 8px;">Item/Atividade</th>
+                                    <th style="border: 1px solid #333; padding: 8px;">Contratada</th>
+                                    <th style="border: 1px solid #333; padding: 8px;">Contratante</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tr.matrizResponsabilidade.map(item => `
+                                    <tr>
+                                        <td style="border: 1px solid #333; padding: 8px;">${item.item}</td>
+                                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">${item.responsavel === 'contratada' ? '✓' : ''}</td>
+                                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">${item.responsavel === 'contratante' ? '✓' : ''}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        
             const conteudoHTML = `
                 <!DOCTYPE html>
                 <html>
@@ -1734,11 +2100,47 @@
                     <meta charset="UTF-8">
                     <title>${tr.numeroTR} - ${tr.titulo}</title>
                     <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-                        h1, h2, h3 { color: #333; }
-                        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-                        .section { margin-bottom: 30px; page-break-inside: avoid; }
-                        .section-title { background: #f0f0f0; padding: 10px; margin-bottom: 15px; font-weight: bold; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 40px; 
+                            line-height: 1.6; 
+                        }
+                        h1, h2, h3 { 
+                            color: #333; 
+                        }
+                        .header { 
+                            text-align: center; 
+                            margin-bottom: 40px; 
+                            border-bottom: 2px solid #333; 
+                            padding-bottom: 20px; 
+                        }
+                        .section { 
+                            margin-bottom: 30px; 
+                            page-break-inside: avoid; 
+                        }
+                        .section-title { 
+                            background: #f0f0f0; 
+                            padding: 10px; 
+                            margin-bottom: 15px; 
+                            font-weight: bold; 
+                            font-size: 14px;
+                        }
+                        .info-grid { 
+                            display: grid; 
+                            grid-template-columns: 1fr 1fr; 
+                            gap: 20px; 
+                            margin-bottom: 30px; 
+                        }
+                        .info-item { 
+                            padding: 10px; 
+                            background: #f9f9f9; 
+                        }
+                        @media print { 
+                            body { margin: 20px; } 
+                            .section { page-break-inside: avoid; }
+                        }
+                        table { margin-top: 10px; }
+                        p { text-align: justify; }
                     </style>
                 </head>
                 <body>
@@ -1748,20 +2150,178 @@
                         <p><strong>${tr.titulo}</strong></p>
                     </div>
                     
-                    <div class="section">
-                        <div class="section-title">1. OBJETIVO</div>
-                        <p>${tr.objetivo}</p>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <strong>Modalidade Sugerida:</strong> ${tr.modalidade || 'Não especificado'}
+                        </div>
+                        <div class="info-item">
+                            <strong>Visita ao Local:</strong> ${tr.visitaLocal || 'Não especificado'}
+                        </div>
+                        <div class="info-item">
+                            <strong>Data de Criação:</strong> ${new Date(tr.dataCriacao).toLocaleDateString('pt-BR')}
+                        </div>
+                        <div class="info-item">
+                            <strong>Responsável:</strong> ${tr.usuarioNome}
+                        </div>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">2. ESCOPO TÉCNICO</div>
-                        <p>${tr.escopo}</p>
+                        <div class="section-title">1. OBJETIVO</div>
+                        <p>${tr.objetivo || 'Não especificado'}</p>
                     </div>
+                    
+                    <div class="section">
+                        <div class="section-title">2. CONFORMIDADE AO TERMO DE REFERÊNCIA</div>
+                        <p>${tr.conformidade || 'Não especificado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">3. LOCAL/ACESSO</div>
+                        <p>${tr.local || 'Não especificado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">4. ESCOPO TÉCNICO</div>
+                        <p>${tr.escopo || 'Não especificado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">5. SITUAÇÃO ATUAL</div>
+                        <p>${tr.situacaoAtual || 'Não especificado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">6. SITUAÇÃO PROPOSTA</div>
+                        <p>${tr.situacaoProposta || 'Não especificado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">7. ESPECIFICAÇÃO TÉCNICA</div>
+                        <p>${tr.especificacao || 'Não especificado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">8. PREMISSAS, REQUISITOS E RESTRIÇÕES</div>
+                        <p>${tr.premissas || 'Não especificado'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">9. PLANILHA DE QUANTIDADE</div>
+                        <p>${tr.planilhaQuantidade || 'Conforme tabela de serviços'}</p>
+                    </div>
+                    
+                    ${tabelaServicosHTML}
+                    
+                    <div class="section">
+                        <div class="section-title">10. ESCOPO GERAL</div>
+                        <p>${tr.escopoGeral || 'Conforme detalhamento técnico'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">11. PRAZOS</div>
+                        <p>${tr.prazo || tr.prazos || 'A definir'}</p>
+                    </div>
+                    
+                    ${matrizRespHTML}
+                    
+                    <div class="section">
+                        <div class="section-title">12. MOBILIZAÇÃO, SEGURANÇA E SAÚDE DO TRABALHO</div>
+                        <p>${tr.mobilizacao || 'Conforme normas aplicáveis'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">13. CANTEIRO DE OBRAS</div>
+                        <p>${tr.canteiro || 'Conforme projeto'}</p>
+                    </div>
+                    
+                    ${tr.credenciamento ? `
+                        <div class="section">
+                            <div class="section-title">14. CREDENCIAMENTO AEROPORTUÁRIO</div>
+                            <p>${tr.credenciamento}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="section">
+                        <div class="section-title">15. MEIO AMBIENTE</div>
+                        <p>${tr.meioAmbiente || 'Conforme legislação ambiental'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">16. ENGENHARIA</div>
+                        <p>${tr.engenharia || 'Conforme especificações técnicas'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">17. AQUISIÇÕES</div>
+                        <p>${tr.aquisicoes || 'Conforme necessidade do projeto'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">18. PLANEJAMENTO/GESTÃO DE CONTRATOS</div>
+                        <p>${tr.planejamentoGestao || 'Conforme contrato'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">19. PLANEJAMENTO EXECUTIVO</div>
+                        <p>${tr.planejamentoExecutivo || 'A ser apresentado pela contratada'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">20. TESTES, COMISSIONAMENTO E TREINAMENTO</div>
+                        <p>${tr.testes || 'Conforme normas técnicas'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">21. AO ENCERRAMENTO DA OBRA</div>
+                        <p>${tr.encerramento || 'Conforme procedimentos padrão'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">22. CERTIFICADO DE ACEITAÇÃO PROVISÓRIA (CAP)</div>
+                        <p>${tr.cap || 'Emitido após conclusão dos serviços'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">23. CERTIFICADO DE ACEITAÇÃO FINAL (CAF)</div>
+                        <p>${tr.caf || 'Emitido após período de garantia'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">24. GARANTIA</div>
+                        <p>${tr.garantia || 'Conforme código civil e normas técnicas'}</p>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">25. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
+                        <p>${tr.criterios || 'Conforme edital'}</p>
+                    </div>
+                    
+                    ${tr.anexos ? `
+                        <div class="section">
+                            <div class="section-title">26. ANEXOS</div>
+                            <p>${tr.anexos}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${tr.parecerComprador ? `
+                        <div class="section" style="border: 2px solid #17a2b8; padding: 10px; margin-top: 30px;">
+                            <div class="section-title" style="background: #17a2b8; color: white;">PARECER DO COMPRADOR</div>
+                            <p>${tr.parecerComprador}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${tr.motivoReprovacao ? `
+                        <div class="section" style="border: 2px solid #dc3545; padding: 10px; margin-top: 30px;">
+                            <div class="section-title" style="background: #dc3545; color: white;">MOTIVO DA REPROVAÇÃO</div>
+                            <p>${tr.motivoReprovacao}</p>
+                        </div>
+                    ` : ''}
                 </body>
                 </html>
             `;
             
-            const blob = new Blob([conteudoHTML], { type: 'text/html' });
+            // Criar blob e fazer download
+            const blob = new Blob([conteudoHTML], { type: 'text/html;charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -1770,6 +2330,8 @@
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
+            
+            console.log('✅ Download do TR iniciado:', tr.numeroTR);
         };
 
         // Enviar TR para compras
