@@ -1664,43 +1664,27 @@
                             <i class="fas fa-user-plus"></i> Adicionar Novo Fornecedor
                         </h5>
                         
-                        <!-- NOVO: Opção de Cadastro Rápido -->
-                        <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #90caf9;">
-                            <h6 style="margin: 0 0 10px 0; color: #1565c0;">
-                                <i class="fas fa-rocket"></i> Cadastro Rápido Firebase (Novo!)
+                        <!-- Interface Simplificada - Apenas Cadastro Rápido -->
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <h6 style="margin: 0 0 15px 0; color: white; font-size: 16px;">
+                                <i class="fas fa-magic"></i> Cadastro Simplificado via Firebase
                             </h6>
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <input type="email" 
                                        id="email-rapido-firebase" 
-                                       placeholder="Digite apenas o e-mail do fornecedor" 
-                                       style="flex: 1; padding: 10px; border: 2px solid #90caf9; border-radius: 6px;">
+                                       placeholder="Digite o e-mail do fornecedor" 
+                                       style="flex: 1; padding: 12px; border: none; border-radius: 6px; font-size: 14px;">
                                 <button type="button" 
                                         onclick="cadastroRapidoFirebase()" 
                                         class="btn" 
-                                        style="background: #1565c0; color: white;">
-                                    <i class="fas fa-magic"></i> Cadastrar Rápido
+                                        style="background: white; color: #667eea; padding: 12px 24px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer;">
+                                    <i class="fas fa-plus"></i> Cadastrar Fornecedor
                                 </button>
                             </div>
-                            <small style="color: #666; display: block; margin-top: 5px;">
-                                ✨ Sistema criará usuário no Firebase automaticamente com senha temporária
+                            <small style="color: #f0f0f0; display: block; margin-top: 10px; font-size: 12px;">
+                                <i class="fas fa-info-circle"></i> O sistema criará automaticamente o usuário com senha temporária e enviará as credenciais por e-mail
                             </small>
                         </div>
-                        
-                        <div style="text-align: center; margin: 10px 0; color: #999; font-size: 12px;">
-                            ──────── OU use o cadastro completo ────────
-                        </div>
-                        
-                        <form id="form-adicionar-fornecedor">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                                <input type="text" id="razao-social" placeholder="Razão Social" required style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px;">
-                                <input type="text" id="cnpj" placeholder="CNPJ" required style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px;">
-                                <input type="email" id="email" placeholder="E-mail" required style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px;">
-                            </div>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-plus"></i> Adicionar Novo Fornecedor
-                            </button>
-                        </form>
-                    </div>
         
                     <div id="lista-fornecedores">
                         <h5 style="margin-bottom: 15px;">
@@ -1721,12 +1705,6 @@
                     </div>
                 </div>
             `;
-        
-            // Event listener para adicionar fornecedor
-            document.getElementById('form-adicionar-fornecedor').addEventListener('submit', function(e) {
-                e.preventDefault();
-                adicionarFornecedor();
-            });
         
             atualizarListaFornecedores();
         }
