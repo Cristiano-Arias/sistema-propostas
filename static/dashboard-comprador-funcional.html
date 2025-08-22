@@ -1663,6 +1663,33 @@
                         <h5 style="margin-bottom: 15px;">
                             <i class="fas fa-user-plus"></i> Adicionar Novo Fornecedor
                         </h5>
+                        
+                        <!-- NOVO: Opção de Cadastro Rápido -->
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #90caf9;">
+                            <h6 style="margin: 0 0 10px 0; color: #1565c0;">
+                                <i class="fas fa-rocket"></i> Cadastro Rápido Firebase (Novo!)
+                            </h6>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="email" 
+                                       id="email-rapido-firebase" 
+                                       placeholder="Digite apenas o e-mail do fornecedor" 
+                                       style="flex: 1; padding: 10px; border: 2px solid #90caf9; border-radius: 6px;">
+                                <button type="button" 
+                                        onclick="cadastroRapidoFirebase()" 
+                                        class="btn" 
+                                        style="background: #1565c0; color: white;">
+                                    <i class="fas fa-magic"></i> Cadastrar Rápido
+                                </button>
+                            </div>
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                ✨ Sistema criará usuário no Firebase automaticamente com senha temporária
+                            </small>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 10px 0; color: #999; font-size: 12px;">
+                            ──────── OU use o cadastro completo ────────
+                        </div>
+                        
                         <form id="form-adicionar-fornecedor">
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
                                 <input type="text" id="razao-social" placeholder="Razão Social" required style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px;">
@@ -1849,6 +1876,135 @@
             atualizarListaFornecedores();
         }
 
+        // NOVO: Cadastro Rápido via Firebase Auth
+        async function cadastroRapidoFirebase() {
+            const emailInput = document.getElementById('email-rapido-firebase');
+            const email = emailInput?.value?.trim();
+            
+            if (!email) {
+                alert('Por favor, digite o e-mail do fornecedor');
+                return;
+            }
+            
+            if (!email.includes('@') || !email.includes('.')) {
+                alert('Por favor, digite um e-mail válido');
+                return;
+            }
+            
+            try {
+                // Desabilitar botão durante processamento
+                const botao = event.target || document.querySelector('[onclick="cadastroRapidoFirebase()"]');
+                if (botao) {
+                    botao.disabled = true;
+                    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...';
+                }
+                
+                // Importar Firebase Auth
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+                const { getAuth, createUserWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+                
+                // Configuração Firebase (usar a mesma do sistema)
+                const firebaseConfig = {
+                    apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+                    authDomain: "portal-de-proposta.firebaseapp.com",
+                    projectId: "portal-de-proposta",
+                    storageBucket: "portal-de-proposta.firebasestorage.app",
+                    messagingSenderId: "321036073908",
+                    appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+                };
+                
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                
+                // Gerar senha temporária segura
+                const senhaTemp = 'Forn@' + Date.now().toString(36).toUpperCase();
+                
+                // Criar usuário no Firebase
+                const userCredential = await createUserWithEmailAndPassword(auth, email, senhaTemp);
+                const uid = userCredential.user.uid;
+                
+                // Criar dados do fornecedor compatível com sistema existente
+                const novoFornecedor = {
+                    id: uid,
+                    razaoSocial: 'Fornecedor - ' + email.split('@')[0],
+                    cnpj: 'Pendente cadastro',
+                    email: email,
+                    usuario: email,
+                    senha: senhaTemp,
+                    dataConvite: new Date().toISOString(),
+                    dataCadastro: new Date().toISOString(),
+                    status: 'ativo',
+                    cadastroViaFirebase: true
+                };
+                
+                // Adicionar ao processo atual (compatível com código existente)
+                if (window.processoAtual && window.processoAtual.fornecedores) {
+                    processoAtual.fornecedores.push(novoFornecedor);
+                }
+                
+                // Salvar no localStorage para compatibilidade
+                const fornecedoresExistentes = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES, []);
+                fornecedoresExistentes.push(novoFornecedor);
+                SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDORES, fornecedoresExistentes);
+                
+                // Salvar credenciais (compatível com sistema existente)
+                const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
+                usuariosFornecedores.push({
+                    id: uid,
+                    email: email,
+                    senha: senhaTemp,
+                    razaoSocial: novoFornecedor.razaoSocial,
+                    cnpj: novoFornecedor.cnpj,
+                    tipo: 'fornecedor',
+                    ativo: true,
+                    dataCadastro: new Date().toISOString()
+                });
+                SistemaLocal.salvar('usuarios_fornecedores', usuariosFornecedores);
+                
+                // Atualizar lista (usar função existente)
+                if (typeof atualizarListaFornecedores === 'function') {
+                    atualizarListaFornecedores();
+                }
+                
+                // Limpar campo e mostrar sucesso
+                emailInput.value = '';
+                
+                alert(`✅ FORNECEDOR CADASTRADO COM SUCESSO!\n\n` +
+                      `📧 E-mail: ${email}\n` +
+                      `🔑 Senha temporária: ${senhaTemp}\n\n` +
+                      `O fornecedor pode fazer login em:\n` +
+                      `sistema-autenticacao-fornecedores.html`);
+                
+                // Restaurar botão
+                if (botao) {
+                    botao.disabled = false;
+                    botao.innerHTML = '<i class="fas fa-magic"></i> Cadastrar Rápido';
+                }
+                
+            } catch (error) {
+                console.error('Erro no cadastro rápido:', error);
+                
+                let mensagemErro = 'Erro ao cadastrar: ';
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    mensagemErro = '⚠️ Este e-mail já está cadastrado no Firebase!';
+                } else if (error.code === 'auth/invalid-email') {
+                    mensagemErro = '⚠️ E-mail inválido!';
+                } else {
+                    mensagemErro += error.message;
+                }
+                
+                alert(mensagemErro);
+                
+                // Restaurar botão em caso de erro
+                const botao = document.querySelector('[onclick="cadastroRapidoFirebase()"]');
+                if (botao) {
+                    botao.disabled = false;
+                    botao.innerHTML = '<i class="fas fa-magic"></i> Cadastrar Rápido';
+                }
+            }
+        }
+        
         // Atualizar lista de fornecedores
         function atualizarListaFornecedores() {
             const container = document.getElementById('fornecedores-container');
