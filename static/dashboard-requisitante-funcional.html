@@ -2434,13 +2434,13 @@
         });
     </script>
 
-    <!-- Script do Realtime Sync Corrigido -->
+    <!-- Script do Realtime Sync Corrigido - Versão Inline -->
     <script type="module">
         import { doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+    
         const firebaseConfig = {
             apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
             authDomain: "portal-de-proposta.firebaseapp.com",
@@ -2449,7 +2449,7 @@
             messagingSenderId: "321036073908",
             appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
         };
-
+    
         let app;
         try { 
             app = initializeApp(firebaseConfig); 
@@ -2460,7 +2460,7 @@
         
         const db = getFirestore();
         const auth = getAuth();
-
+    
         // Chaves para sincronização
         const KEYS = [
             "sistema_trs",
@@ -2470,65 +2470,89 @@
             "sistema_propostas",
             "notificacoes_comprador"
         ];
-
+    
         let unsubscribers = [];
         let isApplyingRemote = false;
-
+    
         function attachListeners() {
             detachListeners();
             
+            const user = auth.currentUser;
+            if (!user) {
+                console.warn('[realtime-sync] Sem usuário autenticado');
+                return;
+            }
+            
             for (const key of KEYS) {
-                const ref = doc(db, "localstorage", key);
-
+                // IMPORTANTE: Usar chave composta com UID
+                const docKey = `${key}_${user.uid}`;
+                const ref = doc(db, "localstorage", docKey);
+    
                 // Seed inicial
                 getDoc(ref).then((snap) => {
                     if (snap.exists()) {
-                        const { value } = snap.data() || {};
-                        if (typeof value !== "undefined") {
+                        const data = snap.data() || {};
+                        // Verificar se pertence ao usuário
+                        if (data.uid === user.uid && typeof data.value !== "undefined") {
                             try { 
-                                isApplyingRemote = true; // Corrigido: true com minúscula
-                                localStorage.setItem(key, value); 
+                                isApplyingRemote = true;
+                                localStorage.setItem(key, data.value); 
+                                console.log(`📥 Carregado do Firebase: ${key}`);
                             } finally { 
                                 isApplyingRemote = false; 
                             }
                         }
                     }
-                }).catch((e) => console.warn("[realtime-sync] erro ao buscar:", key, e.code || e.message));
-
+                }).catch((e) => {
+                    // Ignorar permission-denied para docs não existentes
+                    if (e.code !== 'permission-denied') {
+                        console.warn("[realtime-sync] erro ao buscar:", key, e.code || e.message);
+                    }
+                });
+    
                 // Listener em tempo real
                 const unsub = onSnapshot(ref, (snap) => {
                     if (!snap.exists()) return;
-                    const { value } = snap.data() || {};
-                    try { 
-                        isApplyingRemote = true; 
-                        localStorage.setItem(key, value); 
-                        console.log(`✅ Sincronizado do Firebase: ${key}`);
-                        
-                        // Atualizar UI se necessário
-                        if (key === 'sistema_trs' && window.carregarMeusTRs) {
-                            window.carregarMeusTRs();
+                    const data = snap.data() || {};
+                    
+                    // Verificar se pertence ao usuário
+                    if (data.uid === user.uid && typeof data.value !== "undefined") {
+                        try { 
+                            isApplyingRemote = true; 
+                            localStorage.setItem(key, data.value); 
+                            console.log(`🔄 Sincronizado do Firebase: ${key}`);
+                            
+                            // Atualizar UI se necessário
+                            if (key === 'sistema_trs' && window.carregarMeusTRs) {
+                                window.carregarMeusTRs();
+                            }
+                            if (key === 'sistema_trs' && window.carregarEstatisticas) {
+                                window.carregarEstatisticas();
+                            }
+                        } finally { 
+                            isApplyingRemote = false; 
                         }
-                        if (key === 'sistema_trs' && window.carregarEstatisticas) {
-                            window.carregarEstatisticas();
-                        }
-                    } finally { 
-                        isApplyingRemote = false; 
                     }
                 }, (err) => {
-                    console.warn("[realtime-sync] erro no listener:", key, err.code || err.message);
+                    // Ignorar permission-denied esperados
+                    if (err.code !== 'permission-denied') {
+                        console.warn("[realtime-sync] erro no listener:", key, err.code || err.message);
+                    }
                 });
-
+    
                 unsubscribers.push(unsub);
             }
+            
+            console.log(`✅ ${KEYS.length} listeners anexados para ${user.email || user.uid}`);
         }
-
+    
         function detachListeners() {
             for (const u of unsubscribers) { 
                 try { u(); } catch(_) {} 
             }
             unsubscribers = [];
         }
-
+    
         // Override do localStorage.setItem para sincronizar com Firebase
         const _setItem = localStorage.setItem.bind(localStorage);
         localStorage.setItem = function(k, v) {
@@ -2536,29 +2560,78 @@
             const user = auth.currentUser;
             
             if (!isApplyingRemote && user && KEYS.includes(k)) {
-                const ref = doc(db, "localstorage", k);
+                // IMPORTANTE: Usar chave composta com UID
+                const docKey = `${k}_${user.uid}`;
+                const ref = doc(db, "localstorage", docKey);
+                
                 setDoc(ref, { 
                     value: v, 
+                    uid: user.uid,  // OBRIGATÓRIO para as regras
                     updatedAt: new Date().toISOString(), 
-                    uid: user.uid 
+                    userEmail: user.email || 'unknown',
+                    key: k
                 }, { merge: true })
-                .then(() => console.log(`✅ Enviado para Firebase: ${k}`))
-                .catch((e) => console.warn("[realtime-sync] erro ao enviar:", k, e.code || e.message));
+                .then(() => console.log(`📤 Enviado para Firebase: ${k}`))
+                .catch((e) => {
+                    if (e.code !== 'permission-denied') {
+                        console.warn("[realtime-sync] erro ao enviar:", k, e.code || e.message);
+                    }
+                });
             }
             return res;
         };
-
+    
         // Monitorar autenticação
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 console.log("[realtime-sync] ✅ Usuário autenticado:", user.uid);
-                attachListeners();
+                
+                // Criar perfil se não existir
+                const userRef = doc(db, "usuarios", user.uid);
+                getDoc(userRef).then((docSnap) => {
+                    if (!docSnap.exists()) {
+                        setDoc(userRef, {
+                            uid: user.uid,
+                            email: user.email,
+                            nome: user.displayName || user.email?.split('@')[0] || 'Usuário',
+                            perfil: 'requisitante',
+                            dataCriacao: new Date().toISOString()
+                        }, { merge: true });
+                    }
+                });
+                
+                // Aguardar antes de anexar listeners
+                setTimeout(() => {
+                    attachListeners();
+                }, 1000);
             } else {
                 console.log("[realtime-sync] ⚠️ Sem autenticação");
                 detachListeners();
             }
         });
-
+    
+        // Exportar funções úteis
+        window.realtimeSync = {
+            isConnected: () => auth.currentUser !== null,
+            getCurrentUser: () => auth.currentUser,
+            forceSync: () => {
+                if (auth.currentUser) {
+                    attachListeners();
+                }
+            },
+            debugSync: () => {
+                const user = auth.currentUser;
+                if (user) {
+                    console.log("Debug:", {
+                        uid: user.uid,
+                        email: user.email,
+                        keys: KEYS.length,
+                        listeners: unsubscribers.length
+                    });
+                }
+            }
+        };
+    
         console.log("[realtime-sync] 🚀 Sistema de sincronização inicializado");
     </script>
 </body>
