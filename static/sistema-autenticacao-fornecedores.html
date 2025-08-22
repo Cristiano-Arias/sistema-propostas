@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Acesso - Fornecedores</title>
+    <title>Portal do Fornecedor - Login</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -23,53 +23,48 @@
 
         .portal-container {
             display: flex;
-            width: 100%;
-            max-width: 1200px;
             gap: 40px;
+            max-width: 1000px;
+            width: 100%;
             align-items: center;
         }
 
         .portal-info {
             flex: 1;
             color: white;
-            text-align: center;
+        }
+
+        .portal-info h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .portal-info p {
+            font-size: 18px;
+            line-height: 1.6;
+            opacity: 0.95;
         }
 
         .portal-info .logo {
             font-size: 64px;
             margin-bottom: 20px;
-            opacity: 0.9;
-        }
-
-        .portal-info h1 {
-            font-size: 32px;
-            margin-bottom: 20px;
-            font-weight: 300;
-        }
-
-        .portal-info p {
-            font-size: 16px;
-            line-height: 1.6;
-            opacity: 0.9;
-            max-width: 400px;
-            margin: 0 auto;
         }
 
         .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
+            background: white;
             padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
         }
 
         .login-container h2 {
-            text-align: center;
             color: #333;
             margin-bottom: 30px;
             font-size: 24px;
+            text-align: center;
         }
 
         .form-group {
@@ -79,8 +74,9 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #333;
+            color: #555;
             font-weight: 500;
+            font-size: 14px;
         }
 
         .form-group input {
@@ -89,12 +85,13 @@
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             font-size: 16px;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s;
         }
 
         .form-group input:focus {
             outline: none;
             border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .login-btn {
@@ -107,84 +104,81 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.3s ease;
+            transition: transform 0.2s;
         }
 
         .login-btn:hover {
             transform: translateY(-2px);
         }
 
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .error-message {
+            display: none;
             background: #fee;
             color: #c33;
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
-            display: none;
-            text-align: center;
+            font-size: 14px;
         }
 
         .success-message {
-            background: #efe;
-            color: #3c3;
+            display: none;
+            background: #e8f5e8;
+            color: #2d5a2d;
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
-            display: none;
-            text-align: center;
-        }
-
-        .demo-section {
-            margin-top: 30px;
-            text-align: center;
-        }
-
-        .demo-toggle {
-            color: #667eea;
-            text-decoration: none;
             font-size: 14px;
-            cursor: pointer;
-        }
-
-        .demo-toggle:hover {
-            text-decoration: underline;
-        }
-
-        .demo-credentials {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            font-size: 12px;
-        }
-
-        .demo-credentials h3 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
-
-        .credential-item {
-            background: white;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            border-left: 4px solid #667eea;
-        }
-
-        .credential-item:last-child {
-            margin-bottom: 0;
         }
 
         .integration-info {
             margin-top: 20px;
             padding: 15px;
-            background: #e8f4fd;
+            background: #f0f4ff;
             border-radius: 8px;
-            font-size: 12px;
-            color: #0066cc;
+            font-size: 13px;
+            color: #4a5568;
             text-align: center;
+            line-height: 1.6;
+        }
+
+        .integration-info a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .integration-info a:hover {
+            text-decoration: underline;
+        }
+
+        .divider {
+            margin: 20px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            position: relative;
+            color: #999;
+            font-size: 13px;
         }
 
         @media (max-width: 768px) {
@@ -219,8 +213,8 @@
 
             <form id="login-form">
                 <div class="form-group">
-                    <label for="login">Login</label>
-                    <input type="text" id="login" placeholder="Digite seu login" required>
+                    <label for="login">E-mail</label>
+                    <input type="email" id="login" placeholder="seu@email.com" required>
                 </div>
                 <div class="form-group">
                     <label for="senha">Senha</label>
@@ -229,75 +223,23 @@
                 <button type="submit" class="login-btn">Entrar no Sistema</button>
             </form>
 
-            <div class="demo-section">
-                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
-                    Não possui acesso? Entre em contato com o setor de licitações.
-                </p>
-                <a href="#" class="demo-toggle" onclick="toggleDemo()">Ver credenciais de demonstração</a>
-                <a href="#" class="demo-toggle" onclick="toggleDemo()" id="hide-demo" style="display: none;">Ocultar</a>
-            </div>
-
-            <div id="demo-credentials" class="demo-credentials">
-                <h3>🔑 Credenciais de Demonstração</h3>
-                
-                <div class="credential-item">
-                    <strong>Empresa:</strong> Alpha Tecnologia Ltda<br>
-                    <strong>Login:</strong> fornecedor_33000144<br>
-                    <strong>Senha:</strong> Alpha123
-                </div>
-                
-                <div class="credential-item">
-                    <strong>Empresa:</strong> Beta Solutions S.A.<br>
-                    <strong>Login:</strong> fornecedor_44000155<br>
-                    <strong>Senha:</strong> Beta456
-                </div>
-                
-                <div class="credential-item">
-                    <strong>Empresa:</strong> Gamma Tech Inovação<br>
-                    <strong>Login:</strong> fornecedor_55000166<br>
-                    <strong>Senha:</strong> Gamma789
-                </div>
-
-                <button onclick="copyCredentials()" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
-                    Copiar
-                </button>
+            <div class="divider">
+                <span>Precisa de ajuda?</span>
             </div>
 
             <div class="integration-info">
-                <strong>🔗 Sistema Integrado</strong><br>
-                Este portal agora aceita credenciais geradas automaticamente pelo módulo comprador.<br>
-                <strong>Formato:</strong> E-mail + Senha padrão (123456)
+                <strong>📧 Acesso ao Portal</strong><br>
+                Use as credenciais enviadas para seu e-mail.<br>
+                Primeira vez? Verifique sua caixa de entrada.<br><br>
+                <a href="#" onclick="esqueciSenha()" style="font-weight: 600;">
+                    🔑 Esqueci minha senha
+                </a>
             </div>
         </div>
     </div>
 
     <script>
-        // Credenciais de demonstração (sistema original)
-        const credenciaisDemo = [
-            {
-                empresa: 'Alpha Tecnologia Ltda',
-                login: 'fornecedor_33000144',
-                senha: 'Alpha123',
-                cnpj: '12.345.678/0001-90',
-                email: 'alpha@tecnologia.com'
-            },
-            {
-                empresa: 'Beta Solutions S.A.',
-                login: 'fornecedor_44000155',
-                senha: 'Beta456',
-                cnpj: '98.765.432/0001-10',
-                email: 'beta@solutions.com'
-            },
-            {
-                empresa: 'Gamma Tech Inovação',
-                login: 'fornecedor_55000166',
-                senha: 'Gamma789',
-                cnpj: '11.222.333/0001-44',
-                email: 'gamma@tech.com'
-            }
-        ];
-
-        // Sistema de dados local
+        // Sistema de dados local simplificado
         const SistemaLocal = {
             carregar(chave, padrao = null) {
                 try {
@@ -320,20 +262,26 @@
             }
         };
 
-        // Função de login integrada
+        // Função de login simplificada
         document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const login = document.getElementById('login').value.trim();
+            const email = document.getElementById('login').value.trim();
             const senha = document.getElementById('senha').value.trim();
             
-            if (!login || !senha) {
+            if (!email || !senha) {
                 mostrarErro('Por favor, preencha todos os campos.');
                 return;
             }
 
+            // Validar formato de email
+            if (!email.includes('@') || !email.includes('.')) {
+                mostrarErro('Por favor, insira um e-mail válido.');
+                return;
+            }
+
             // Tentar autenticação
-            const resultado = autenticarFornecedor(login, senha);
+            const resultado = autenticarFornecedor(email, senha);
             
             if (resultado.sucesso) {
                 mostrarSucesso('Login realizado com sucesso! Redirecionando...');
@@ -343,9 +291,7 @@
                 
                 // Redirecionar após 1 segundo
                 setTimeout(() => {
-                    // Tentar redirecionar para o dashboard do fornecedor
-                    const dashboardUrl = '/static/dashboard-fornecedor-funcional.html';
-                    window.location.href = dashboardUrl;
+                    window.location.href = '/static/dashboard-fornecedor-funcional.html';
                 }, 1000);
                 
             } else {
@@ -353,88 +299,45 @@
             }
         });
 
-        function autenticarFornecedor(login, senha) {
-            console.log('Tentativa de login:', { login, senha });
+        function autenticarFornecedor(email, senha) {
+            console.log('Tentativa de login:', { email });
 
-            // 1. Verificar credenciais de demonstração (sistema original)
-            const credencialDemo = credenciaisDemo.find(c => 
-                c.login === login && c.senha === senha
-            );
-            
-            if (credencialDemo) {
-                console.log('Login com credencial de demonstração:', credencialDemo.empresa);
-                return {
-                    sucesso: true,
-                    fornecedor: {
-                        id: credencialDemo.login,
-                        razaoSocial: credencialDemo.empresa,
-                        cnpj: credencialDemo.cnpj,
-                        email: credencialDemo.email,
-                        login: credencialDemo.login,
-                        tipo: 'demo'
-                    }
-                };
-            }
-
-            // 2. Verificar credenciais geradas pelo módulo comprador
+            // Verificar credenciais no localStorage (temporário - será migrado para Firebase)
             const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
-            console.log('Usuários fornecedores encontrados:', usuariosFornecedores);
+            console.log('Fornecedores cadastrados:', usuariosFornecedores.length);
             
-            // Verificar por e-mail + senha padrão
-            const fornecedorPorEmail = usuariosFornecedores.find(f => 
-                f.email === login && f.senha === senha
+            // Verificar por e-mail
+            const fornecedor = usuariosFornecedores.find(f => 
+                f.email === email && f.senha === senha
             );
             
-            if (fornecedorPorEmail) {
-                console.log('Login com credencial do módulo comprador (e-mail):', fornecedorPorEmail.razaoSocial);
+            if (fornecedor) {
+                console.log('Login autorizado:', fornecedor.razaoSocial);
                 return {
                     sucesso: true,
                     fornecedor: {
-                        id: fornecedorPorEmail.id,
-                        razaoSocial: fornecedorPorEmail.razaoSocial,
-                        cnpj: fornecedorPorEmail.cnpj,
-                        email: fornecedorPorEmail.email,
-                        tipo: 'comprador'
+                        id: fornecedor.id,
+                        razaoSocial: fornecedor.razaoSocial || 'Fornecedor',
+                        cnpj: fornecedor.cnpj || 'Pendente',
+                        email: fornecedor.email,
+                        tipo: 'fornecedor'
                     }
                 };
             }
 
-            // 3. Verificar por CNPJ (sem formatação) + senha padrão
-            const cnpjLimpo = login.replace(/\D/g, ''); // Remove formatação
-            const fornecedorPorCNPJ = usuariosFornecedores.find(f => {
-                const cnpjFornecedor = f.cnpj.replace(/\D/g, '');
-                return cnpjFornecedor === cnpjLimpo && f.senha === senha;
-            });
-            
-            if (fornecedorPorCNPJ) {
-                console.log('Login com credencial do módulo comprador (CNPJ):', fornecedorPorCNPJ.razaoSocial);
-                return {
-                    sucesso: true,
-                    fornecedor: {
-                        id: fornecedorPorCNPJ.id,
-                        razaoSocial: fornecedorPorCNPJ.razaoSocial,
-                        cnpj: fornecedorPorCNPJ.cnpj,
-                        email: fornecedorPorCNPJ.email,
-                        tipo: 'comprador'
-                    }
-                };
-            }
-
-            // 4. Verificar se é tentativa com e-mail mas senha incorreta
-            const fornecedorExiste = usuariosFornecedores.find(f => f.email === login);
+            // Verificar se email existe mas senha está incorreta
+            const fornecedorExiste = usuariosFornecedores.find(f => f.email === email);
             if (fornecedorExiste) {
-                console.log('E-mail encontrado mas senha incorreta');
                 return {
                     sucesso: false,
-                    mensagem: 'Senha incorreta. A senha padrão para fornecedores cadastrados pelo setor de compras é: 123456'
+                    mensagem: 'Senha incorreta. Use a opção "Esqueci minha senha" se necessário.'
                 };
             }
 
-            // 5. Login não encontrado
-            console.log('Credenciais não encontradas');
+            // Login não encontrado
             return {
                 sucesso: false,
-                mensagem: 'Login ou senha incorretos. Verifique suas credenciais e tente novamente.'
+                mensagem: 'E-mail não cadastrado. Verifique se recebeu o convite do setor de compras.'
             };
         }
 
@@ -442,9 +345,9 @@
             const errorDiv = document.getElementById('error-message');
             const successDiv = document.getElementById('success-message');
             
-            successDiv.style.display = 'none';
             errorDiv.textContent = mensagem;
             errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
             
             setTimeout(() => {
                 errorDiv.style.display = 'none';
@@ -455,87 +358,76 @@
             const errorDiv = document.getElementById('error-message');
             const successDiv = document.getElementById('success-message');
             
-            errorDiv.style.display = 'none';
             successDiv.textContent = mensagem;
             successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
         }
 
-        function toggleDemo() {
-            const demoDiv = document.getElementById('demo-credentials');
-            const hideLink = document.getElementById('hide-demo');
-            const showLink = document.querySelector('.demo-toggle:not(#hide-demo)');
+        // Função para recuperação de senha
+        function esqueciSenha() {
+            const email = document.getElementById('login').value.trim();
             
-            if (demoDiv.style.display === 'none' || demoDiv.style.display === '') {
-                demoDiv.style.display = 'block';
-                hideLink.style.display = 'inline';
-                showLink.style.display = 'none';
-            } else {
-                demoDiv.style.display = 'none';
-                hideLink.style.display = 'none';
-                showLink.style.display = 'inline';
+            if (!email) {
+                alert('Por favor, digite seu e-mail no campo de login primeiro.');
+                document.getElementById('login').focus();
+                return;
             }
-        }
 
-        function copyCredentials() {
-            const text = `Alpha Tecnologia: fornecedor_33000144 / Alpha123
-Beta Solutions: fornecedor_44000155 / Beta456
-Gamma Tech: fornecedor_55000166 / Gamma789`;
+            if (!email.includes('@') || !email.includes('.')) {
+                alert('Por favor, insira um e-mail válido.');
+                return;
+            }
+
+            // Aqui será implementado o envio de reset via Firebase
+            alert(`📧 Instruções de recuperação serão enviadas para:\n${email}\n\nVerifique sua caixa de entrada em alguns minutos.`);
             
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Credenciais copiadas para a área de transferência!');
-            }).catch(() => {
-                alert('Erro ao copiar credenciais.');
-            });
+            // TODO: Implementar Firebase sendPasswordResetEmail
+            console.log('Implementar recuperação de senha para:', email);
         }
 
-        // Verificar se há dados do módulo comprador ao carregar a página
+        // Verificar se há fornecedores cadastrados ao carregar
         window.addEventListener('load', function() {
             const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
             
             if (usuariosFornecedores.length > 0) {
-                console.log(`Sistema integrado: ${usuariosFornecedores.length} fornecedor(es) cadastrado(s) pelo módulo comprador`);
-                
-                // Mostrar informação de integração
-                const infoDiv = document.querySelector('.integration-info');
-                infoDiv.innerHTML = `
-                    <strong>🔗 Sistema Integrado Ativo</strong><br>
-                    ${usuariosFornecedores.length} fornecedor(es) cadastrado(s) pelo módulo comprador.<br>
-                    <strong>Login:</strong> E-mail cadastrado | <strong>Senha:</strong> 123456
-                `;
-                infoDiv.style.background = '#e8f5e8';
-                infoDiv.style.color = '#2d5a2d';
+                console.log(`✅ ${usuariosFornecedores.length} fornecedor(es) encontrado(s) no sistema`);
             } else {
-                console.log('Nenhum fornecedor cadastrado pelo módulo comprador encontrado');
+                console.log('⚠️ Nenhum fornecedor cadastrado encontrado');
             }
         });
 
-        console.log('Sistema de autenticação integrado carregado!');
+        console.log('Portal do Fornecedor inicializado - Versão sem Demo');
     </script>
 
-  <script type="module" src="/static/js/firebase.js"></script>
-  <script type="module" src="/static/js/auth-facade.js"></script>
+    <!-- Firebase Integration -->
+    <script type="module" src="/static/js/firebase.js"></script>
+    <script type="module" src="/static/js/auth-facade.js"></script>
 
-<script type="module">
-import { loginComPerfil } from '/static/js/auth-facade.js';
-const form = document.querySelector('form') || document.getElementById('loginForm') || document.body;
-if (form) {
-  const btn = document.querySelector('button[type="submit"], button.login, #btnLogin');
-  if (btn) {
-    btn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const email = (document.querySelector('input[type="email"]')||{value:''}).value.trim();
-      const senha = (document.querySelector('input[type="password"]')||{value:''}).value.trim();
-      if (!email || !senha) return;
-      try {
-        await loginComPerfil(email, senha, 'Fornecedor');
-        window.location.href = 'dashboard-fornecedor-funcional.html';
-      } catch (err) {
-        console.error(err);
-        alert('Falha no login Firebase: ' + (err.message||err));
-      }
-    });
-  }
-}
-</script>
+    <script type="module">
+        import { loginComPerfil } from '/static/js/auth-facade.js';
+        
+        // Sobrescrever submit para usar Firebase
+        const form = document.getElementById('login-form');
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('login').value.trim();
+                const senha = document.getElementById('senha').value.trim();
+                
+                if (!email || !senha) return;
+                
+                try {
+                    mostrarSucesso('Autenticando via Firebase...');
+                    await loginComPerfil(email, senha, 'Fornecedor');
+                    window.location.href = 'dashboard-fornecedor-funcional.html';
+                } catch (err) {
+                    console.error('Erro Firebase:', err);
+                    // Fallback para autenticação local
+                    mostrarErro('Erro na autenticação. Tentando método alternativo...');
+                }
+            });
+        }
+    </script>
 </body>
 </html>
