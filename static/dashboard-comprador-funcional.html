@@ -1854,8 +1854,8 @@
             atualizarListaFornecedores();
         }
 
-        // NOVO: Cadastro Rápido via Firebase Auth
-        async function cadastroRapidoFirebase() {
+        // NOVO: Cadastro Rápido via Firebase Auth - Função Global
+        window.cadastroRapidoFirebase = async function() {
             const emailInput = document.getElementById('email-rapido-firebase');
             const email = emailInput?.value?.trim();
             
@@ -1877,22 +1877,11 @@
                     botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...';
                 }
                 
-                // Importar Firebase Auth
-                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+                // NÃO inicializar Firebase novamente - usar instância global existente
                 const { getAuth, createUserWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
                 
-                // Configuração Firebase (usar a mesma do sistema)
-                const firebaseConfig = {
-                    apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
-                    authDomain: "portal-de-proposta.firebaseapp.com",
-                    projectId: "portal-de-proposta",
-                    storageBucket: "portal-de-proposta.firebasestorage.app",
-                    messagingSenderId: "321036073908",
-                    appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
-                };
-                
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
+                // Usar a instância auth já existente
+                const auth = getAuth();
                 
                 // Gerar senha temporária segura
                 const senhaTemp = 'Forn@' + Date.now().toString(36).toUpperCase();
@@ -1956,7 +1945,7 @@
                 // Restaurar botão
                 if (botao) {
                     botao.disabled = false;
-                    botao.innerHTML = '<i class="fas fa-magic"></i> Cadastrar Rápido';
+                    botao.innerHTML = '<i class="fas fa-plus"></i> Cadastrar Fornecedor';
                 }
                 
             } catch (error) {
@@ -1978,7 +1967,7 @@
                 const botao = document.querySelector('[onclick="cadastroRapidoFirebase()"]');
                 if (botao) {
                     botao.disabled = false;
-                    botao.innerHTML = '<i class="fas fa-magic"></i> Cadastrar Rápido';
+                    botao.innerHTML = '<i class="fas fa-plus"></i> Cadastrar Fornecedor';
                 }
             }
         }
