@@ -1,6 +1,6 @@
 // ================================
-// realtime-sync.js - Versão Corrigida
-// Sincroniza chaves de localStorage com Firestore em /localstorage/{key}
+// realtime-sync.js - Versão Corrigida com Isolamento por Usuário
+// Sincroniza chaves de localStorage com Firestore em /localstorage/{key}_{uid}
 // ================================
 
 import { doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -82,17 +82,27 @@ let isApplyingRemote = false;
 function attachListeners() {
   detachListeners();
   
+  // ALTERAÇÃO 1: Verificar se há usuário autenticado
+  const user = auth.currentUser;
+  if (!user) {
+    console.warn('[realtime-sync] Sem usuário autenticado para anexar listeners');
+    return;
+  }
+  
   for (const key of KEYS) {
-    const ref = doc(db, "localstorage", key);
+    // ALTERAÇÃO 2: Usar chave composta com UID do usuário
+    const docKey = `${key}_${user.uid}`;
+    const ref = doc(db, "localstorage", docKey);
 
     // Buscar valor inicial do Firestore
     getDoc(ref).then((snap) => {
       if (snap.exists()) {
-        const { value } = snap.data() || {};
-        if (typeof value !== "undefined") {
+        const data = snap.data() || {};
+        // ALTERAÇÃO 3: Verificar se o documento pertence ao usuário
+        if (data.uid === user.uid && typeof data.value !== "undefined") {
           try { 
-            isApplyingRemote = true; // CORRIGIDO: true com minúscula
-            localStorage.setItem(key, value); 
+            isApplyingRemote = true;
+            localStorage.setItem(key, data.value); 
             console.log(`📥 Carregado do Firebase: ${key}`);
           } finally { 
             isApplyingRemote = false; 
@@ -100,43 +110,50 @@ function attachListeners() {
         }
       }
     }).catch((e) => {
-      console.warn("[realtime-sync] Erro ao buscar:", key, e.code || e.message);
+      // Ignorar erros de permissão para documentos não existentes
+      if (e.code !== 'permission-denied') {
+        console.warn("[realtime-sync] Erro ao buscar:", key, e.code || e.message);
+      }
     });
 
     // Listener em tempo real
     const unsub = onSnapshot(ref, (snap) => {
       if (!snap.exists()) return;
       
-      const { value } = snap.data() || {};
-      if (typeof value === "undefined") return;
-      
-      try { 
-        isApplyingRemote = true; 
-        localStorage.setItem(key, value); 
-        console.log(`🔄 Atualizado do Firebase: ${key}`);
-        
-        // Disparar evento customizado para notificar a aplicação
-        window.dispatchEvent(new CustomEvent('localStorage-sync', {
-          detail: { key, value }
-        }));
-        
-        // Atualizar UI específica se as funções estiverem disponíveis
-        if (key === 'sistema_trs') {
-          if (window.carregarMeusTRs) window.carregarMeusTRs();
-          if (window.carregarEstatisticas) window.carregarEstatisticas();
+      const data = snap.data() || {};
+      // ALTERAÇÃO 4: Verificar se o documento pertence ao usuário
+      if (data.uid === user.uid && typeof data.value !== "undefined") {
+        try { 
+          isApplyingRemote = true; 
+          localStorage.setItem(key, data.value); 
+          console.log(`🔄 Atualizado do Firebase: ${key}`);
+          
+          // Disparar evento customizado para notificar a aplicação
+          window.dispatchEvent(new CustomEvent('localStorage-sync', {
+            detail: { key, value: data.value }
+          }));
+          
+          // Atualizar UI específica se as funções estiverem disponíveis
+          if (key === 'sistema_trs') {
+            if (window.carregarMeusTRs) window.carregarMeusTRs();
+            if (window.carregarEstatisticas) window.carregarEstatisticas();
+          }
+          
+        } finally { 
+          isApplyingRemote = false; 
         }
-        
-      } finally { 
-        isApplyingRemote = false; 
       }
     }, (err) => {
-      console.warn("[realtime-sync] Erro no listener:", key, err.code || err.message);
+      // Ignorar erros de permissão esperados
+      if (err.code !== 'permission-denied') {
+        console.warn("[realtime-sync] Erro no listener:", key, err.code || err.message);
+      }
     });
 
     unsubscribers.push(unsub);
   }
   
-  console.log(`✅ ${KEYS.length} listeners anexados`);
+  console.log(`✅ ${KEYS.length} listeners anexados para usuário ${user.email || user.uid}`);
 }
 
 function detachListeners() {
@@ -158,19 +175,25 @@ localStorage.setItem = function(k, v) {
   // 2. Usuário estiver autenticado
   // 3. A chave estiver na lista de sincronização
   if (!isApplyingRemote && user && KEYS.includes(k)) {
-    const ref = doc(db, "localstorage", k);
+    // ALTERAÇÃO 5: Usar chave composta com UID do usuário
+    const docKey = `${k}_${user.uid}`;
+    const ref = doc(db, "localstorage", docKey);
     
+    // ALTERAÇÃO 6: Incluir UID no documento (OBRIGATÓRIO para as regras)
     setDoc(ref, { 
       value: v, 
-      updatedAt: new Date().toISOString(), 
-      uid: user.uid,
-      userEmail: user.email || 'unknown'
+      uid: user.uid,  // Campo obrigatório para as regras de segurança
+      updatedAt: new Date().toISOString(),
+      userEmail: user.email || 'unknown',
+      key: k  // Chave original para referência
     }, { merge: true })
     .then(() => {
       console.log(`📤 Enviado para Firebase: ${k}`);
     })
     .catch((e) => {
-      console.warn("[realtime-sync] Erro ao enviar:", k, e.code || e.message);
+      if (e.code !== 'permission-denied') {
+        console.warn("[realtime-sync] Erro ao enviar:", k, e.code || e.message);
+      }
     });
   }
   
@@ -184,19 +207,24 @@ localStorage.removeItem = function(k) {
   const user = auth.currentUser;
   
   if (!isApplyingRemote && user && KEYS.includes(k)) {
-    const ref = doc(db, "localstorage", k);
+    // ALTERAÇÃO 7: Usar chave composta com UID do usuário
+    const docKey = `${k}_${user.uid}`;
+    const ref = doc(db, "localstorage", docKey);
     
     setDoc(ref, { 
       value: null, 
-      updatedAt: new Date().toISOString(), 
-      uid: user.uid,
-      deleted: true
+      uid: user.uid,  // Manter UID mesmo na remoção
+      updatedAt: new Date().toISOString(),
+      deleted: true,
+      deletedBy: user.email || user.uid
     }, { merge: true })
     .then(() => {
       console.log(`🗑️ Removido do Firebase: ${k}`);
     })
     .catch((e) => {
-      console.warn("[realtime-sync] Erro ao remover:", k, e.code || e.message);
+      if (e.code !== 'permission-denied') {
+        console.warn("[realtime-sync] Erro ao remover:", k, e.code || e.message);
+      }
     });
   }
   
@@ -207,7 +235,29 @@ localStorage.removeItem = function(k) {
 onAuthStateChanged(auth, (user) => {
   if (user) {
     console.log("[realtime-sync] ✅ Usuário autenticado:", user.email || user.uid);
-    attachListeners();
+    
+    // ALTERAÇÃO 8: Criar perfil de usuário se não existir
+    const userRef = doc(db, "usuarios", user.uid);
+    getDoc(userRef).then((docSnap) => {
+      if (!docSnap.exists()) {
+        setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          nome: user.displayName || user.email?.split('@')[0] || 'Usuário',
+          perfil: 'requisitante', // Perfil padrão
+          dataCriacao: new Date().toISOString()
+        }, { merge: true }).then(() => {
+          console.log('✅ Perfil de usuário criado');
+        }).catch((e) => {
+          console.warn('Erro ao criar perfil:', e);
+        });
+      }
+    });
+    
+    // ALTERAÇÃO 9: Aguardar um momento para garantir autenticação completa
+    setTimeout(() => {
+      attachListeners();
+    }, 1000);
     
     // Salvar informação do usuário no localStorage
     if (!isApplyingRemote) {
@@ -228,7 +278,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Exportar funções úteis
+// Exportar funções úteis (mantidas como original)
 window.realtimeSync = {
   isConnected: () => auth.currentUser !== null,
   getCurrentUser: () => auth.currentUser,
@@ -253,6 +303,19 @@ window.realtimeSync = {
       KEYS.splice(index, 1);
       console.log(`➖ Chave removida da sincronização: ${key}`);
       if (auth.currentUser) attachListeners();
+    }
+  },
+  // ALTERAÇÃO 10: Adicionar função de debug
+  debugSync: () => {
+    const user = auth.currentUser;
+    if (user) {
+      console.log("🔍 Debug Info:");
+      console.log("User ID:", user.uid);
+      console.log("User Email:", user.email);
+      console.log("Keys monitoradas:", KEYS.length);
+      console.log("Listeners ativos:", unsubscribers.length);
+    } else {
+      console.log("Nenhum usuário autenticado");
     }
   }
 };
