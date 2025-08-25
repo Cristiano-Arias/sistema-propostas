@@ -8,6 +8,9 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
+import sendgrid
+from sendgrid.helpers.mail import Mail, Email, To, Content
+from dotenv import load_dotenv
 
 # Configuração de logs
 logging.basicConfig(level=logging.INFO)
@@ -152,6 +155,286 @@ def require_admin(f):
         return f(*args, **kwargs)
     
     return decorated_function
+
+def enviar_email_boas_vindas(email_destino, senha_temporaria, nome_fornecedor="Fornecedor"):
+    """Envia email de boas-vindas para fornecedor cadastrado"""
+    
+    # Verificar se SendGrid está configurado
+    sg_api_key = os.environ.get('SENDGRID_API_KEY')
+    if not sg_api_key:
+        logger.warning("⚠️ SENDGRID_API_KEY não configurada - Email não enviado")
+        return False
+    
+    try:
+        sg = sendgrid.SendGridAPIClient(api_key=sg_api_key)
+        
+        # Email do remetente (configure no SendGrid)
+        from_email = Email(os.environ.get('EMAIL_FROM', 'noreply@seudominio.com'))
+        to_email = To(email_destino)
+        subject = "🎉 Bem-vindo ao Portal do Fornecedor"
+        
+        # HTML do email
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }}
+                .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                .credentials {{ background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }}
+                .button {{ display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+                .footer {{ text-align: center; margin-top: 30px; font-size: 12px; color: #999; }}
+                .warning {{ background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🏢 Portal do Fornecedor</h1>
+                    <p>Bem-vindo ao Sistema de Licitações</p>
+                </div>
+                
+                <div class="content">
+                    <h2>Olá, {nome_fornecedor}!</h2>
+                    
+                    <p>Você foi cadastrado com sucesso em nosso Portal de Licitações. Agora você pode:</p>
+                    <ul>
+                        <li>✅ Participar de processos licitatórios</li>
+                        <li>📄 Enviar propostas e documentos</li>
+                        <li>📊 Acompanhar resultados em tempo real</li>
+                        <li>🔔 Receber notificações de novas oportunidades</li>
+                    </ul>
+                    
+                    <div class="credentials">
+                        <h3>📧 Suas Credenciais de Acesso:</h3>
+                        <p><strong>E-mail:</strong> {email_destino}</p>
+                        <p><strong>Senha Temporária:</strong> {senha_temporaria}</p>
+                    </div>
+                    
+                    <div class="warning">
+                        <strong>⚠️ Importante:</strong> Por segurança, você deve trocar sua senha no primeiro acesso.
+                    </div>
+                    
+                    <center>
+                        <a href="{os.environ.get('PORTAL_URL', 'https://seu-dominio.onrender.com')}/static/sistema-autenticacao-fornecedores.html" 
+                           class="button" style="color: white;">
+                            Acessar Portal do Fornecedor
+                        </a>
+                    </center>
+                    
+                    <h3>Próximos Passos:</h3>
+                    <ol>
+                        <li>Acesse o portal usando suas credenciais</li>
+                        <li>Complete seu cadastro com informações da empresa</li>
+                        <li>Faça upload dos documentos necessários</li>
+                        <li>Aguarde a validação do setor de compras</li>
+                    </ol>
+                    
+                    <p>Se tiver dúvidas, entre em contato com nosso setor de compras:</p>
+                    <p>📧 compras@seudominio.com<br>
+                    📞 (00) 0000-0000</p>
+                </div>
+                
+                <div class="footer">
+                    <p>Este é um email automático, por favor não responda.</p>
+                    <p>© 2024 Portal de Licitações - Todos os direitos reservados</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        content = Content("text/html", html_content)
+        mail = Mail(from_email, to_email, subject, content)
+        
+        # Enviar email
+        response = sg.send(mail)
+        
+        if response.status_code in [200, 201, 202]:
+            logger.info(f"✅ Email enviado para {email_destino}")
+            
+            # Registrar no Firestore se disponível
+            if db:
+                db.collection('emails_log').add({
+                    'para': email_destino,
+                    'tipo': 'boas_vindas',
+                    'status': 'enviado',
+                    'timestamp': firestore.SERVER_TIMESTAMP
+                })
+            
+            return True
+        else:
+            logger.error(f"❌ Erro ao enviar email: Status {response.status_code}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"❌ Erro ao enviar email: {e}")
+        return False
+
+def enviar_email_reset_senha(email_destino):
+    """Envia email com link para reset de senha"""
+    
+    sg_api_key = os.environ.get('SENDGRID_API_KEY')
+    if not sg_api_key:
+        logger.warning("⚠️ SENDGRID_API_KEY não configurada")
+        return False
+    
+    try:
+        # Gerar link de reset usando Firebase Auth
+        link_reset = auth.generate_password_reset_link(email_destino)
+        
+        sg = sendgrid.SendGridAPIClient(api_key=sg_api_key)
+        from_email = Email(os.environ.get('EMAIL_FROM', 'noreply@seudominio.com'))
+        to_email = To(email_destino)
+        subject = "🔑 Recuperação de Senha - Portal do Fornecedor"
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }}
+                .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                .button {{ display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+                .warning {{ background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🔑 Recuperação de Senha</h1>
+                </div>
+                
+                <div class="content">
+                    <h2>Solicitação de Nova Senha</h2>
+                    
+                    <p>Recebemos uma solicitação para redefinir a senha da sua conta no Portal do Fornecedor.</p>
+                    
+                    <p>Para criar uma nova senha, clique no botão abaixo:</p>
+                    
+                    <center>
+                        <a href="{link_reset}" class="button" style="color: white;">
+                            Redefinir Minha Senha
+                        </a>
+                    </center>
+                    
+                    <div class="warning">
+                        <strong>⚠️ Atenção:</strong> Este link é válido por apenas 1 hora. Se você não solicitou esta alteração, ignore este email.
+                    </div>
+                    
+                    <p>Se o botão não funcionar, copie e cole o link abaixo em seu navegador:</p>
+                    <p style="word-break: break-all; font-size: 12px; color: #666;">{link_reset}</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        content = Content("text/html", html_content)
+        mail = Mail(from_email, to_email, subject, content)
+        
+        response = sg.send(mail)
+        return response.status_code in [200, 201, 202]
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao enviar email de reset: {e}")
+        return False
+
+# ==================== ROTAS DE EMAIL ====================
+
+@app.route('/api/fornecedor/cadastrar', methods=['POST'])
+@require_auth
+def cadastrar_fornecedor():
+    """Cadastra novo fornecedor e envia email"""
+    
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        senha_temp = data.get('senha_temporaria')
+        
+        if not email or not senha_temp:
+            return jsonify({'erro': 'Email e senha são obrigatórios'}), 400
+        
+        # Criar usuário no Firebase Auth
+        try:
+            user = auth.create_user(
+                email=email,
+                password=senha_temp,
+                disabled=False
+            )
+            uid = user.uid
+        except Exception as e:
+            if 'EMAIL_EXISTS' in str(e):
+                return jsonify({'erro': 'Email já cadastrado'}), 400
+            raise e
+        
+        # Salvar dados no Firestore
+        if db:
+            fornecedor_data = {
+                'uid': uid,
+                'email': email,
+                'razaoSocial': data.get('razaoSocial', f'Fornecedor - {email.split("@")[0]}'),
+                'cnpj': data.get('cnpj', 'Pendente'),
+                'status': 'pendente_cadastro',
+                'perfil': 'fornecedor',
+                'criadoPor': request.user.get('email', 'sistema'),
+                'criadoEm': firestore.SERVER_TIMESTAMP,
+                'primeiroAcesso': True
+            }
+            
+            db.collection('fornecedores').document(uid).set(fornecedor_data)
+        
+        # Enviar email de boas-vindas
+        email_enviado = enviar_email_boas_vindas(
+            email_destino=email,
+            senha_temporaria=senha_temp,
+            nome_fornecedor=fornecedor_data.get('razaoSocial')
+        )
+        
+        return jsonify({
+            'sucesso': True,
+            'uid': uid,
+            'email': email,
+            'emailEnviado': email_enviado
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Erro ao cadastrar fornecedor: {e}")
+        return jsonify({'erro': str(e)}), 500
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def reset_password():
+    """Envia email para reset de senha"""
+    
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'erro': 'Email é obrigatório'}), 400
+        
+        # Verificar se usuário existe
+        try:
+            user = auth.get_user_by_email(email)
+        except:
+            # Não revelar se o email existe ou não (segurança)
+            return jsonify({'sucesso': True, 'mensagem': 'Se o email existir, instruções serão enviadas'}), 200
+        
+        # Enviar email
+        email_enviado = enviar_email_reset_senha(email)
+        
+        return jsonify({
+            'sucesso': True,
+            'mensagem': 'Email de recuperação enviado' if email_enviado else 'Email será enviado em breve'
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Erro no reset de senha: {e}")
+        return jsonify({'erro': 'Erro ao processar solicitação'}), 500
 
 # ==================== ROTAS DE AUTENTICAÇÃO ====================
 
