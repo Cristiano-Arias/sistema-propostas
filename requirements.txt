@@ -3,3 +3,5 @@ Flask-CORS==4.0.0
 firebase-admin==6.2.0
 google-cloud-firestore==2.13.1
 gunicorn==21.2.0
+sendgrid==6.11.0
+python-dotenv==1.0.0
