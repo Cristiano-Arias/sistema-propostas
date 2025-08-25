@@ -1877,58 +1877,65 @@
                     botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...';
                 }
                 
-                // NÃO inicializar Firebase novamente - usar instância global existente
-                const { getAuth, createUserWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+                // Importar funções do Firebase
+                const { getAuth, createUserWithEmailAndPassword } = 
+                    await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
                 
-                // Usar a instância auth já existente
+                const { getFirestore, doc, setDoc, serverTimestamp } = 
+                    await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                
                 const auth = getAuth();
+                const db = getFirestore();
                 
                 // Gerar senha temporária segura
-                const senhaTemp = 'Forn@' + Date.now().toString(36).toUpperCase();
+                const senhaTemp = 'Temp@' + Math.random().toString(36).substring(2, 10).toUpperCase() + '2024';
                 
-                // Criar usuário no Firebase
+                // Criar usuário no Firebase Auth
                 const userCredential = await createUserWithEmailAndPassword(auth, email, senhaTemp);
                 const uid = userCredential.user.uid;
                 
-                // Criar dados do fornecedor compatível com sistema existente
+                // Criar dados completos do fornecedor no Firestore
                 const novoFornecedor = {
                     id: uid,
+                    email: email,
                     razaoSocial: 'Fornecedor - ' + email.split('@')[0],
                     cnpj: 'Pendente cadastro',
-                    email: email,
-                    usuario: email,
-                    senha: senhaTemp,
-                    dataConvite: new Date().toISOString(),
-                    dataCadastro: new Date().toISOString(),
-                    status: 'ativo',
-                    cadastroViaFirebase: true
+                    telefone: '',
+                    endereco: '',
+                    senhaTemporaria: senhaTemp,
+                    status: 'pendente_cadastro',
+                    perfil: 'fornecedor',
+                    criadoPor: localStorage.getItem('comprador_logado') ? 
+                        JSON.parse(localStorage.getItem('comprador_logado')).email : 'sistema',
+                    criadoEm: serverTimestamp(),
+                    primeiroAcesso: true,
+                    documentosValidados: false,
+                    dadosCompletos: false
                 };
                 
-                // Adicionar ao processo atual (compatível com código existente)
+                // IMPORTANTE: Salvar no Firestore para trigger do email
+                await setDoc(doc(db, 'fornecedores', uid), novoFornecedor);
+                
+                // Adicionar ao processo atual se existir
                 if (window.processoAtual && window.processoAtual.fornecedores) {
-                    processoAtual.fornecedores.push(novoFornecedor);
+                    processoAtual.fornecedores.push({
+                        ...novoFornecedor,
+                        criadoEm: new Date().toISOString()
+                    });
                 }
                 
-                // Salvar no localStorage para compatibilidade
-                const fornecedoresExistentes = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES, []);
-                fornecedoresExistentes.push(novoFornecedor);
-                SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDORES, fornecedoresExistentes);
-                
-                // Salvar credenciais (compatível com sistema existente)
-                const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
-                usuariosFornecedores.push({
+                // Manter compatibilidade com localStorage
+                const fornecedoresLocais = JSON.parse(localStorage.getItem('usuarios_fornecedores') || '[]');
+                fornecedoresLocais.push({
                     id: uid,
                     email: email,
                     senha: senhaTemp,
                     razaoSocial: novoFornecedor.razaoSocial,
-                    cnpj: novoFornecedor.cnpj,
-                    tipo: 'fornecedor',
-                    ativo: true,
-                    dataCadastro: new Date().toISOString()
+                    cnpj: novoFornecedor.cnpj
                 });
-                SistemaLocal.salvar('usuarios_fornecedores', usuariosFornecedores);
+                localStorage.setItem('usuarios_fornecedores', JSON.stringify(fornecedoresLocais));
                 
-                // Atualizar lista (usar função existente)
+                // Atualizar lista visual
                 if (typeof atualizarListaFornecedores === 'function') {
                     atualizarListaFornecedores();
                 }
@@ -1936,11 +1943,12 @@
                 // Limpar campo e mostrar sucesso
                 emailInput.value = '';
                 
+                // Mostrar mensagem de sucesso aprimorada
                 alert(`✅ FORNECEDOR CADASTRADO COM SUCESSO!\n\n` +
                       `📧 E-mail: ${email}\n` +
                       `🔑 Senha temporária: ${senhaTemp}\n\n` +
-                      `O fornecedor pode fazer login em:\n` +
-                      `sistema-autenticacao-fornecedores.html`);
+                      `📬 Um email com as instruções foi enviado ao fornecedor.\n\n` +
+                      `Portal de acesso: sistema-autenticacao-fornecedores.html`);
                 
                 // Restaurar botão
                 if (botao) {
@@ -1949,14 +1957,16 @@
                 }
                 
             } catch (error) {
-                console.error('Erro no cadastro rápido:', error);
+                console.error('Erro no cadastro:', error);
                 
                 let mensagemErro = 'Erro ao cadastrar: ';
                 
                 if (error.code === 'auth/email-already-in-use') {
-                    mensagemErro = '⚠️ Este e-mail já está cadastrado no Firebase!';
+                    mensagemErro = '⚠️ Este e-mail já está cadastrado no sistema!';
                 } else if (error.code === 'auth/invalid-email') {
                     mensagemErro = '⚠️ E-mail inválido!';
+                } else if (error.code === 'auth/weak-password') {
+                    mensagemErro = '⚠️ Erro na geração de senha. Tente novamente.';
                 } else {
                     mensagemErro += error.message;
                 }
