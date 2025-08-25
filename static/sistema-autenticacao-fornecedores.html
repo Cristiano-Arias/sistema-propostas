@@ -364,7 +364,7 @@
         }
 
         // Função para recuperação de senha
-        function esqueciSenha() {
+        async function esqueciSenha() {
             const email = document.getElementById('login').value.trim();
             
             if (!email) {
@@ -372,17 +372,37 @@
                 document.getElementById('login').focus();
                 return;
             }
-
+        
             if (!email.includes('@') || !email.includes('.')) {
                 alert('Por favor, insira um e-mail válido.');
                 return;
             }
-
-            // Aqui será implementado o envio de reset via Firebase
-            alert(`📧 Instruções de recuperação serão enviadas para:\n${email}\n\nVerifique sua caixa de entrada em alguns minutos.`);
-            
-            // TODO: Implementar Firebase sendPasswordResetEmail
-            console.log('Implementar recuperação de senha para:', email);
+        
+            try {
+                // Importar Firebase Auth
+                const { getAuth, sendPasswordResetEmail } = 
+                    await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+                
+                const auth = getAuth();
+                
+                // Enviar email de reset
+                await sendPasswordResetEmail(auth, email);
+                
+                alert(`✅ Email de recuperação enviado!\n\n` +
+                      `📧 Verifique sua caixa de entrada: ${email}\n\n` +
+                      `O link de recuperação é válido por 1 hora.`);
+                      
+            } catch (error) {
+                console.error('Erro ao enviar email de reset:', error);
+                
+                if (error.code === 'auth/user-not-found') {
+                    alert('⚠️ Este e-mail não está cadastrado no sistema.');
+                } else if (error.code === 'auth/invalid-email') {
+                    alert('⚠️ E-mail inválido.');
+                } else {
+                    alert('Erro ao enviar email de recuperação. Tente novamente.');
+                }
+            }
         }
 
         // Verificar se há fornecedores cadastrados ao carregar
