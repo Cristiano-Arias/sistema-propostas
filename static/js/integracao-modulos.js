@@ -57,7 +57,9 @@
         const senhaProvisoria = (Math.random().toString(36).slice(-8) + 'A1'); // senha provisória simples
 
         // 1) cria usuário no backend -> Firebase Auth + coleções
-        const resp = await fetch('/api/usuarios', {
+        //    Ajustado para utilizar a nova rota /api/fornecedores que permite
+        //    compradores ou administradores criarem contas de fornecedores.
+        const resp = await fetch('/api/fornecedores', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
