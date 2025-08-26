@@ -442,7 +442,15 @@
             </div>
 
             <!-- Card Fornecedor -->
-            <div class="module-card" id="moduleFornecedor" onclick="accessModule('fornecedor')">
+            <!--
+                Anteriormente o card do Fornecedor usava a função accessModule('fornecedor'),
+                que dependia do login via Portal Unificado. Para evitar ambiguidades e
+                direcionar os fornecedores para um fluxo exclusivo de autenticação,
+                substituímos o onclick para redirecionar diretamente para a página
+                "sistema-autenticacao-fornecedores.html". Isso garante que os fornecedores
+                utilizem o portal próprio sem passar pelo login unificado.
+            -->
+            <div class="module-card" id="moduleFornecedor" onclick="window.location.href='/static/sistema-autenticacao-fornecedores.html'">
                 <i class="fas fa-building module-icon module-fornecedor"></i>
                 <div class="module-title">Fornecedor</div>
                 <div class="module-desc">Enviar propostas e acompanhar</div>
