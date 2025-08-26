@@ -271,6 +271,90 @@ def criar_usuario():
         logger.error(f"Erro ao criar usuário: {e}")
         return jsonify({'erro': 'Erro interno'}), 500
 
+# ==================== NOVA ROTA PARA CRIAR FORNECEDOR ====================
+@app.route('/api/fornecedores', methods=['POST'])
+@require_auth
+def criar_fornecedor():
+    """
+    Cria um novo fornecedor no Firebase Authentication e registra no Firestore.
+
+    Esta rota pode ser acessada por usuários com perfil COMPRADOR ou ADMIN.
+    Ela recebe um JSON com pelo menos os campos: email, senha e nome. O campo
+    'perfil' é opcional e por padrão será 'fornecedor'. Campos adicionais
+    enviados em 'metadata' serão mesclados ao documento salvo no Firestore.
+    """
+    try:
+        data = request.get_json() or {}
+
+        # Verificar dados obrigatórios
+        required_fields = ['email', 'senha', 'nome']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'erro': f'Campo {field} é obrigatório'}), 400
+
+        # Verificar o perfil do usuário que está realizando a chamada
+        # Buscar o usuário autenticado pelo email no Firestore
+        requester_email = request.user.get('email')
+        if not requester_email:
+            return jsonify({'erro': 'Email não encontrado no token'}), 401
+
+        users = db.collection('Usuario').where('email', '==', requester_email).get()
+        if not users or len(users) == 0:
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
+
+        requester_data = users[0].to_dict()
+        perfil_solicitante = (requester_data.get('perfil') or '').upper()
+
+        # Apenas COMPRADOR ou ADMIN podem criar fornecedores
+        if perfil_solicitante not in ['COMPRADOR', 'ADMIN']:
+            return jsonify({'erro': 'Acesso negado'}), 403
+
+        # Verificar se o fornecedor já existe pelo e-mail
+        try:
+            existing = auth.get_user_by_email(data['email'])
+            # Já existe - retornar erro para evitar duplicidade
+            return jsonify({'erro': 'Usuário já existe'}), 400
+        except auth.UserNotFoundError:
+            # Não encontrado - pode continuar
+            pass
+
+        # Criar usuário no Firebase Authentication
+        new_user = auth.create_user(
+            email=data['email'],
+            password=data['senha'],
+            display_name=data['nome']
+        )
+
+        # Preparar dados para Firestore
+        perfil_fornecedor = data.get('perfil', 'fornecedor')
+        metadata = data.get('metadata') or {}
+
+        user_doc = {
+            'email': data['email'],
+            'nome': data['nome'],
+            'perfil': perfil_fornecedor,
+            'ativo': True,
+            'criadoEm': firestore.SERVER_TIMESTAMP,
+            'criadoPor': request.user['uid']
+        }
+
+        # Mesclar metadados adicionais (cnpj, razaoSocial, etc.)
+        for key, value in metadata.items():
+            user_doc[key] = value
+
+        # Salvar no Firestore com o UID como ID do documento
+        db.collection('Usuario').document(new_user.uid).set(user_doc)
+
+        return jsonify({
+            'sucesso': True,
+            'uid': new_user.uid,
+            'email': data['email']
+        }), 201
+
+    except Exception as e:
+        logger.error(f'Erro ao criar fornecedor: {e}')
+        return jsonify({'erro': 'Erro interno'}), 500
+
 # ==================== ROTAS DE DADOS ====================
 
 @app.route('/api/termos-referencia', methods=['GET', 'POST'])
