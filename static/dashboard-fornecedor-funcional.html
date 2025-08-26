@@ -1066,16 +1066,34 @@
         
         // Visualizar TR completo
         function visualizarTR(processoId) {
-            // Buscar o processo
+            // Buscar o processo. Alguns objetos usam id, outros processoId.
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            const processo = processos.find(p => p.id === processoId);
-            
-            if (!processo || !processo.trVinculado) {
-                alert('TR não encontrado!');
+            let processo = processos.find(p => p.id === processoId);
+            if (!processo) {
+                processo = processos.find(p => p.processoId === processoId);
+            }
+            // Caso ainda não encontrado, alertar
+            if (!processo) {
+                alert('Processo não encontrado!');
                 return;
             }
             
-            const tr = processo.trVinculado;
+            // Tentar obter TR vinculado. Se não existir, procurar pelo número do TR na vinculação.
+            let tr = processo.trVinculado;
+            if (!tr) {
+                // Procurar vinculação com o fornecedor para extrair número do TR
+                const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
+                const vinc = vinculacoes.find(v => v.processoId === processoId);
+                if (vinc && vinc.trNumero) {
+                    const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+                    tr = trs.find(t => t.numeroTR === vinc.trNumero || t.numero === vinc.trNumero);
+                }
+            }
+            // Se ainda não houver TR, exibir erro
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
             
             // Criar modal com o TR completo
             const modal = document.createElement('div');
@@ -1385,14 +1403,31 @@
         // Baixar TR completo com todos os campos
         function baixarTR(processoId) {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            const processo = processos.find(p => p.id === processoId);
-            
-            if (!processo || !processo.trVinculado) {
+            let processo = processos.find(p => p.id === processoId);
+            if (!processo) {
+                processo = processos.find(p => p.processoId === processoId);
+            }
+
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+
+            // Tentar obter TR vinculado ou procurar por número
+            let tr = processo.trVinculado;
+            if (!tr) {
+                const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
+                const vinc = vinculacoes.find(v => v.processoId === processoId);
+                if (vinc && vinc.trNumero) {
+                    const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+                    tr = trs.find(t => t.numeroTR === vinc.trNumero || t.numero === vinc.trNumero);
+                }
+            }
+
+            if (!tr) {
                 alert('TR não encontrado!');
                 return;
             }
-            
-            const tr = processo.trVinculado;
             
             // Gerar HTML do TR completo com TODOS os 26+ campos
             const conteudoHTML = `
@@ -2491,6 +2526,16 @@
                 carregarEstatisticas();
             }
         }, 30000);
+
+        // Expor funções globalmente para uso em atributos onclick
+        // Conforme documentação da MDN, funções declaradas no topo do script se tornam
+        // propriedades da janela global, mas atribuir explicitamente melhora a clareza【665451314570718†L196-L201】.
+        window.visualizarTR = visualizarTR;
+        window.baixarTR = baixarTR;
+        window.abrirPortalPropostas = abrirPortalPropostas;
+        window.visualizarProposta = visualizarProposta;
+        window.abrirPropostaCompleta = abrirPropostaCompleta;
+        window.baixarComprovante = baixarComprovante;
     </script>
     
 <!-- removido auth.js inexistente -->
