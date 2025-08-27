@@ -603,27 +603,29 @@ def require_role(*roles):
 def health():
     return jsonify({'ok': True, 'ts': __import__('time').time()})
 
-@app.post('/auth/verify')
-def verify_token():
+@app.post('/auth/verify', endpoint='auth_verify')
+def auth_verify():
+    from flask import request, jsonify
     data = request.get_json(silent=True) or {}
     token = data.get('token') or data.get('idToken')
-    if not token: return jsonify({'erro':'Token ausente'}), 400
+    if not token:
+        return jsonify({'erro': 'Token ausente'}), 400
     try:
-        decoded = auth.verify_id_token(token)
+        decoded = auth.verify_id_token(token)  # firebase_admin.auth
     except Exception as e:
         return jsonify({'erro':'Token inválido','detalhe':str(e)}), 401
+
     uid = decoded.get('uid')
-    doc = db.collection('Usuario').document(uid).get()
     perfil = None
-    if doc.exists: perfil = doc.to_dict().get('perfil')
-    # role via custom claims
-    claims = decoded.get('claims') or {}
-    role = claims.get('role') or perfil
-    return jsonify({
-        'uid': uid,
-        'email': decoded.get('email'),
-        'perfil': role or perfil,
-    })
+    try:
+        udoc = db.collection('Usuario').document(uid).get()
+        if udoc.exists:
+            perfil = udoc.to_dict().get('perfil')
+    except Exception:
+        pass
+
+    role = (decoded.get('claims') or {}).get('role') or perfil
+    return jsonify({'uid': uid, 'email': decoded.get('email'), 'perfil': role or perfil}), 200
 
 # ===== IA via Azure OpenAI - proxy backend =====
 AZURE_ENDPOINT  = os.getenv('AZURE_OPENAI_ENDPOINT')
