@@ -1,0 +1,21 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function role() { return request.auth.token.role; }
+    function isAdmin() { return signedIn() && role() == 'ADMIN'; }
+    function isComprador() { return signedIn() && (role() == 'COMPRADOR' || isAdmin()); }
+    function isRequisitante() { return signedIn() && (role() == 'REQUISITANTE' || isAdmin()); }
+    function isFornecedor() { return signedIn() && (role() == 'FORNECEDOR' || isAdmin()); }
+
+    match /tr/{trId}/{allPaths=**} {
+      allow read: signedIn() && (isAdmin() || (isRequisitante() && get(/databases/(default)/documents/termos_referencia/$(trId)).data.requisitante_uid == request.auth.uid) || isComprador());
+      allow write: isRequisitante() && get(/databases/(default)/documents/termos_referencia/$(trId)).data.requisitante_uid == request.auth.uid && request.resource.size < 20 * 1024 * 1024;
+    }
+
+    match /propostas/{procId}/{fornecedorUid}/{fileName} {
+      allow read: signedIn() && (isAdmin() || (isFornecedor() && fornecedorUid == request.auth.uid) || (isComprador() && get(/databases/(default)/documents/processos/$(procId)).data.comprador_uid == request.auth.uid) || (isRequisitante() && resource.metadata.visibility == 'tecnica' && get(/databases/(default)/documents/processos/$(procId)).data.requisitante_uid == request.auth.uid));
+      allow write: isFornecedor() && fornecedorUid == request.auth.uid && request.resource.size < 50 * 1024 * 1024;
+    }
+  }
+}
