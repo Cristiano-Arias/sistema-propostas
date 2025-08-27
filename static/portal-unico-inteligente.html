@@ -375,52 +375,36 @@
     <script type="module" src="/static/js/firebase.js"></script>
     <script type="module" src="/static/js/auth-facade.js"></script>
     <script type="module">
-        import { loginComPerfil } from '/static/js/auth-facade.js';
-        import { auth, onAuthStateChanged } from '/static/js/firebase.js';
-
-        // Elementos do DOM
+        import { loginComPerfil, obterDashboardPorPerfil } from '/static/js/auth-facade.js';
+        
+        // Elementos do DOM - usar IDs corretos
         const form = document.getElementById('loginForm');
         const emailEl = document.getElementById('email');
         const passwordEl = document.getElementById('password');
         const btnLogin = document.getElementById('btnLogin');
         const profileSelection = document.getElementById('profileSelection');
-
-        let currentUser = null;
-        let detectedProfile = null;
-
-        // Verificar sessão existente
+        
+        let tempCredentials = null;
+    
+        // Verificar sessão existente ao carregar
         window.addEventListener('load', () => {
-            checkExistingSession();
-        });
-
-        // Verificar se já existe sessão ativa
-        function checkExistingSession() {
-            const sessions = [
-                { key: 'fornecedor_logado', dashboard: '/static/dashboard-fornecedor-funcional.html' },
-                { key: 'requisitante_logado', dashboard: '/static/dashboard-requisitante-funcional.html' },
-                { key: 'comprador_logado', dashboard: '/static/dashboard-comprador-funcional.html' },
-                { key: 'admin_logado', dashboard: '/static/admin-usuarios.html' }
-            ];
-
-            for (const session of sessions) {
-                const userData = localStorage.getItem(session.key);
-                if (userData) {
-                    try {
-                        const user = JSON.parse(userData);
-                        if (user && user.email) {
-                            showInfo('Sessão ativa detectada. Redirecionando...');
-                            setTimeout(() => {
-                                window.location.href = session.dashboard;
-                            }, 1500);
-                            return;
-                        }
-                    } catch (e) {
-                        localStorage.removeItem(session.key);
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                try {
+                    const user = JSON.parse(currentUser);
+                    const dashboard = obterDashboardPorPerfil(user.perfil);
+                    if (dashboard) {
+                        showInfo('Sessão ativa detectada. Redirecionando...');
+                        setTimeout(() => {
+                            window.location.href = dashboard;
+                        }, 1500);
                     }
+                } catch (e) {
+                    localStorage.removeItem('currentUser');
                 }
             }
-        }
-
+        });
+    
         // Manipular envio do formulário
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -432,26 +416,30 @@
                 showError('Por favor, informe e-mail e senha.');
                 return;
             }
-
+    
             setLoading(true);
             hideMessages();
-
+    
             try {
-                // Detectar perfil do usuário
-                detectedProfile = await detectUserProfile(email);
+                // Tentar fazer login com detecção automática de perfil
+                const resultado = await loginComPerfil(email, password);
                 
-                if (detectedProfile) {
-                    // Login com perfil detectado
-                    await loginComPerfil(email, password, detectedProfile);
-                    showSuccess(`Login realizado! Perfil: ${detectedProfile}`);
+                if (resultado && resultado.perfil) {
+                    showSuccess(`Login realizado com sucesso! Perfil: ${resultado.perfil}`);
+                    const dashboard = obterDashboardPorPerfil(resultado.perfil);
                     
-                    setTimeout(() => {
-                        redirectToDashboard(detectedProfile);
-                    }, 1500);
+                    if (dashboard) {
+                        setTimeout(() => {
+                            window.location.href = dashboard;
+                        }, 1500);
+                    } else {
+                        showError('Dashboard não encontrado para este perfil');
+                    }
                 } else {
-                    // Fallback: mostrar seleção manual
-                    currentUser = { email, password };
-                    showProfileSelection();
+                    // Se não detectou perfil, mostrar seleção manual
+                    tempCredentials = { email, password };
+                    profileSelection.style.display = 'block';
+                    showInfo('Selecione seu perfil de acesso');
                 }
                 
             } catch (error) {
@@ -461,112 +449,88 @@
                 setLoading(false);
             }
         });
-
-        // Detectar perfil do usuário
-        async function detectUserProfile(email) {
-            try {
-                // Tentar buscar perfil no backend
-                const response = await fetch('/api/user-profile', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.perfil;
-                }
-            } catch (error) {
-                console.warn('Erro ao detectar perfil:', error);
+    
+        // Seleção manual de perfil
+        window.selectProfile = async function(perfil) {
+            if (!tempCredentials) {
+                showError('Credenciais não encontradas');
+                return;
             }
-
-            // Fallback: detecção baseada no domínio do e-mail
-            const domain = email.split('@')[1]?.toLowerCase();
-            
-            if (domain) {
-                if (domain.includes('fornecedor') || domain.includes('empresa')) {
-                    return 'Fornecedor';
-                } else if (domain.includes('compras') || domain.includes('licitacao')) {
-                    return 'Comprador';
-                } else if (domain.includes('admin')) {
-                    return 'Admin';
-                }
-            }
-
-            return null; // Não foi possível detectar
-        }
-
-        // Mostrar seleção de perfil
-        function showProfileSelection() {
-            profileSelection.style.display = 'block';
-            showInfo('Não foi possível detectar seu perfil automaticamente. Por favor, selecione manualmente.');
-        }
-
-        // Selecionar perfil manualmente
-        window.selectProfile = async function(profile) {
-            if (!currentUser) return;
-
+    
             setLoading(true);
             hideMessages();
-
+    
             try {
-                const profileMap = {
-                    'fornecedor': 'Fornecedor',
-                    'requisitante': 'Requisitante',
-                    'comprador': 'Comprador',
-                    'admin': 'Admin'
-                };
-
-                const selectedProfile = profileMap[profile];
-                await loginComPerfil(currentUser.email, currentUser.password, selectedProfile);
+                const resultado = await loginComPerfil(
+                    tempCredentials.email, 
+                    tempCredentials.password, 
+                    perfil
+                );
                 
-                showSuccess(`Login realizado! Perfil: ${selectedProfile}`);
+                showSuccess(`Login realizado! Perfil: ${perfil}`);
+                const dashboard = obterDashboardPorPerfil(perfil);
                 
-                setTimeout(() => {
-                    redirectToDashboard(selectedProfile);
-                }, 1500);
+                if (dashboard) {
+                    setTimeout(() => {
+                        window.location.href = dashboard;
+                    }, 1500);
+                }
                 
             } catch (error) {
                 console.error('Erro no login:', error);
                 handleLoginError(error);
             } finally {
                 setLoading(false);
+                tempCredentials = null;
             }
         }
-
-        // Redirecionar para dashboard apropriado
-        function redirectToDashboard(profile) {
-            const dashboards = {
-                'Fornecedor': '/static/dashboard-fornecedor-funcional.html',
-                'Requisitante': '/static/dashboard-requisitante-funcional.html',
-                'Comprador': '/static/dashboard-comprador-funcional.html',
-                'Admin': '/static/admin-usuarios.html'
-            };
-
-            const dashboard = dashboards[profile];
-            if (dashboard) {
-                window.location.href = dashboard;
-            } else {
-                showError('Perfil não reconhecido.');
-            }
+    
+        // Funções auxiliares (manter as existentes)
+        function setLoading(loading) {
+            btnLogin.disabled = loading;
+            btnLogin.classList.toggle('loading', loading);
         }
-
-        // Tratar erros de login
+    
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+        }
+    
+        function showSuccess(message) {
+            const el = document.getElementById('successMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+        }
+    
+        function showInfo(message) {
+            const el = document.getElementById('infoMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+        }
+    
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('infoMessage').style.display = 'none';
+        }
+    
         function handleLoginError(error) {
             let errorMessage = 'Erro no login. Verifique suas credenciais.';
             
             if (error.code === 'auth/user-not-found') {
-                errorMessage = 'Usuário não encontrado. Verifique o e-mail informado.';
+                errorMessage = 'Usuário não encontrado.';
             } else if (error.code === 'auth/wrong-password') {
-                errorMessage = 'Senha incorreta. Tente novamente.';
+                errorMessage = 'Senha incorreta.';
             } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'E-mail inválido. Verifique o formato.';
-            } else if (error.code === 'auth/too-many-requests') {
-                errorMessage = 'Muitas tentativas de login. Tente novamente mais tarde.';
+                errorMessage = 'E-mail inválido.';
+            } else if (error.message) {
+                errorMessage = error.message;
             }
             
             showError(errorMessage);
         }
+    </script>
 
         // Funções auxiliares
         function setLoading(loading) {
