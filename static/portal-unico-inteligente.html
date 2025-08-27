@@ -601,6 +601,20 @@
             document.getElementById('infoMessage').style.display = 'none';
         }
     </script>
+    
+    <!-- Config do Firebase deve vir ANTES do módulo que lê window.firebaseConfig -->
+    <script>
+      window.firebaseConfig = {
+        apiKey: "SEU_API_KEY",
+        authDomain: "SEU_AUTH_DOMAIN",
+        projectId: "SEU_PROJECT_ID",
+        storageBucket: "SEU_BUCKET",
+        appId: "SEU_APP_ID"
+      };
+    </script>
+    
+    <!-- Módulo que faz o login e redireciona por perfil -->
+    <script type="module" src="/static/js/auth-facade.js"></script>
 </body>
 </html>
 
