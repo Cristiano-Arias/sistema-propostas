@@ -1,584 +1,243 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!doctype html>
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Propostas - Sistema de Gestão</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal de Propostas — Acesso</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <style>
+    :root {
+      --bg1: #6a88ff;
+      --bg2: #7c4dff;
+      --card: #ffffff;
+      --text: #1f2330;
+      --muted: #6b7280;
+      --primary: #5a67d8;
+      --primary-2: #7f56d9;
+      --danger: #ef4444;
+      --success: #10b981;
+      --radius: 14px;
+      --shadow: 0 20px 50px rgba(31, 35, 48, 0.12);
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      color: var(--text);
+      background: linear-gradient(135deg, var(--bg1), var(--bg2)) fixed;
+    }
+    .wrap {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 32px 16px;
+    }
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 28px 22px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+      font-weight: 700; font-size: 20px;
+    }
+    .badge {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:36px; height:36px; border-radius: 10px; background: #eef2ff; color:#5145cd;
+      font-weight:700;
+    }
+    h1 {
+      font-size: 22px; margin: 8px 0 4px; line-height: 1.25;
+    }
+    p.subtitle {
+      margin: 0 0 18px; color: var(--muted); font-size: 14px;
+    }
+    label {
+      display:block; margin: 14px 0 6px; font-weight: 600; font-size: 14px;
+    }
+    input[type="email"], input[type="password"] {
+      width: 100%; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 10px;
+      font-size: 16px; outline: none; transition: border .16s ease;
+    }
+    input:focus { border-color: #a78bfa; box-shadow: 0 0 0 3px rgba(167,139,250,.15); }
+    .row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .btn {
+      width: 100%; margin-top: 16px; padding: 13px 16px; font-weight: 700;
+      background: linear-gradient(135deg, #6d7cff, #7f56d9);
+      border: none; color: #fff; border-radius: 12px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn.loading { opacity: .7; cursor: progress; }
+    .btn .spinner {
+      display: none; width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.5); border-top-color: #fff; animation: spin .8s linear infinite;
+    }
+    .btn.loading .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+    .alert {
+      display: none; margin-top: 14px; padding: 10px 12px; border-radius: 10px; font-size: 14px;
+    }
+    .alert.error   { background: #fee2e2; color: #b91c1c; }
+    .alert.success { background: #dcfce7; color: #065f46; }
+    .alert.info    { background: #e0e7ff; color: #3730a3; }
 
-        /* Container Principal */
-        .main-container {
-            width: 100%;
-            max-width: 1000px;
-            opacity: 0;
-            animation: fadeIn 0.8s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Header */
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            font-size: 42px;
-            font-weight: 300;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .header p {
-            font-size: 18px;
-            opacity: 0.9;
-        }
-
-        /* Card de Login */
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .login-header i {
-            font-size: 64px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 15px;
-        }
-
-        .login-header h2 {
-            color: #333;
-            font-size: 24px;
-            font-weight: 400;
-            margin-bottom: 8px;
-        }
-
-        .login-header p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        /* Formulário */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        /* Botão de Login */
-        .btn-login {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .btn-login:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-login:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-login .loading {
-            display: none;
-        }
-
-        .btn-login.loading .btn-text {
-            display: none;
-        }
-
-        .btn-login.loading .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Mensagens */
-        .alert {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-            font-size: 14px;
-        }
-
-        .alert-error {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-        }
-
-        .alert-success {
-            background: #f0fdf4;
-            color: #16a34a;
-            border: 1px solid #bbf7d0;
-        }
-
-        .alert-info {
-            background: #eff6ff;
-            color: #2563eb;
-            border: 1px solid #bfdbfe;
-        }
-
-        /* Seleção Manual de Perfil */
-        .profile-selection {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
-        }
-
-        .profile-selection h3 {
-            color: #333;
-            margin-bottom: 15px;
-            text-align: center;
-            font-size: 16px;
-        }
-
-        .profile-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-        }
-
-        .profile-btn {
-            padding: 12px;
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            font-size: 14px;
-            color: #333;
-        }
-
-        .profile-btn:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .profile-btn i {
-            display: block;
-            font-size: 20px;
-            margin-bottom: 5px;
-            color: #667eea;
-        }
-
-        /* Status do Sistema */
-        .system-status {
-            margin-top: 20px;
-            padding: 16px;
-            background: rgba(16, 185, 129, 0.1);
-            border-radius: 12px;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            text-align: center;
-        }
-
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #059669;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #10b981;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* Responsividade */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 32px;
-            }
-
-            .login-card {
-                padding: 30px 20px;
-            }
-
-            .profile-buttons {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-    </style>
+    .status {
+      margin-top: 18px; font-size: 13px; color: var(--muted); display:flex; align-items:center; gap:8px;
+    }
+    .dot { width:8px; height:8px; border-radius:50%; background: var(--success); display:inline-block; }
+    .foot {
+      margin-top: 12px; font-size: 12px; color: var(--muted); text-align:center;
+    }
+    .toggle {
+      cursor:pointer; user-select:none; font-size: 12px; color: #4b5563;
+    }
+  </style>
 </head>
 <body>
-    <div class="main-container">
-        <!-- Header -->
-        <div class="header">
-            <h1>🏢 Portal de Propostas</h1>
-            <p>Sistema Unificado de Gestão de Licitações</p>
+  <div class="wrap">
+    <main class="card" role="main" aria-labelledby="titulo">
+      <div class="brand"><span class="badge">🔒</span>Portal de Propostas</div>
+      <h1 id="titulo">Acesso ao Sistema</h1>
+      <p class="subtitle">Entre com suas credenciais para continuar.</p>
+
+      <!-- Mensagens -->
+      <div id="errorMessage"   class="alert error"   role="alert"></div>
+      <div id="successMessage" class="alert success" role="status"></div>
+      <div id="infoMessage"    class="alert info"    role="status"></div>
+
+      <!-- Formulário -->
+      <form id="formLogin" novalidate>
+        <label for="email">E‑mail</label>
+        <input id="email" name="email" type="email" autocomplete="email" placeholder="seu@email.com" required />
+
+        <label for="senha">Senha</label>
+        <div class="row">
+          <input id="senha" name="senha" type="password" autocomplete="current-password" placeholder="••••••••" required />
+          <span id="togglePwd" class="toggle" title="Mostrar/ocultar senha">mostrar</span>
         </div>
 
-        <!-- Card de Login -->
-        <div class="login-card">
-            <div class="login-header">
-                <i class="fas fa-shield-alt"></i>
-                <h2>Acesso ao Sistema</h2>
-                <p>Entre com suas credenciais para continuar</p>
-            </div>
+        <button id="btnLogin" type="submit" class="btn">
+          <span class="spinner" aria-hidden="true"></span>
+          Entrar no Sistema
+        </button>
+      </form>
 
-            <!-- Mensagens -->
-            <div class="alert alert-error" id="errorMessage"></div>
-            <div class="alert alert-success" id="successMessage"></div>
-            <div class="alert alert-info" id="infoMessage"></div>
+      <div class="status">
+        <span class="dot" aria-hidden="true"></span> Sistema operacional
+      </div>
+      <div class="foot">Ambiente: Produção • Atualizações em tempo real</div>
+    </main>
+  </div>
 
-            <!-- Formulário de Login -->
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" required placeholder="seu@email.com" autocomplete="username">
-                </div>
+  <!-- Config do Firebase (do SEU projeto). Pode ficar público; segurança vem das Rules. -->
+  <script>
+    window.firebaseConfig = {
+      apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+      authDomain: "portal-de-proposta.firebaseapp.com",
+      projectId: "portal-de-proposta",
+      storageBucket: "portal-de-proposta.firebasestorage.app",
+      messagingSenderId: "321036073908",
+      appId: "1:321036073908:web:3149b9ea2cb77a704890e1",
+      measurementId: "G-CFFVQGM3EC"
+    };
+  </script>
 
-                <div class="form-group">
-                    <label for="password">Senha</label>
-                    <input type="password" id="password" required placeholder="Digite sua senha" autocomplete="current-password">
-                </div>
+  <!-- Login e verificação de perfil (Firebase CDN Modules) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-                <button type="submit" class="btn-login" id="btnLogin">
-                    <span class="btn-text">Entrar no Sistema</span>
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        Autenticando...
-                    </div>
-                </button>
-            </form>
+    // ===== Utilitários de UI =====
+    const btnLogin = document.getElementById('btnLogin');
+    const errorEl  = document.getElementById('errorMessage');
+    const okEl     = document.getElementById('successMessage');
+    const infoEl   = document.getElementById('infoMessage');
+    const emailI   = document.getElementById('email');
+    const passI    = document.getElementById('senha');
+    const toggle   = document.getElementById('togglePwd');
 
-            <!-- Seleção Manual de Perfil (fallback) -->
-            <div class="profile-selection" id="profileSelection">
-                <h3>Selecione seu perfil de acesso:</h3>
-                <div class="profile-buttons">
-                    <button class="profile-btn" onclick="selectProfile('fornecedor')">
-                        <i class="fas fa-building"></i>
-                        Fornecedor
-                    </button>
-                    <button class="profile-btn" onclick="selectProfile('requisitante')">
-                        <i class="fas fa-user"></i>
-                        Requisitante
-                    </button>
-                    <button class="profile-btn" onclick="selectProfile('comprador')">
-                        <i class="fas fa-shopping-cart"></i>
-                        Comprador
-                    </button>
-                    <button class="profile-btn" onclick="selectProfile('admin')">
-                        <i class="fas fa-user-shield"></i>
-                        Admin
-                    </button>
-                </div>
-            </div>
+    function setLoading(loading) {
+      if (!btnLogin) return;
+      btnLogin.disabled = loading;
+      btnLogin.classList.toggle('loading', loading);
+    }
+    function show(el, msg, ms=4000) {
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = 'block';
+      if (ms) setTimeout(() => el.style.display = 'none', ms);
+    }
+    function hideAll() { [errorEl, okEl, infoEl].forEach(e => e && (e.style.display='none')); }
 
-            <!-- Status do Sistema -->
-            <div class="system-status">
-                <div class="status-indicator">
-                    <span class="status-dot"></span>
-                    Sistema operacional
-                </div>
-            </div>
-        </div>
-    </div>
+    toggle?.addEventListener('click', () => {
+      passI.type = passI.type === 'password' ? 'text' : 'password';
+      toggle.textContent = passI.type === 'password' ? 'mostrar' : 'ocultar';
+    });
 
-    <!-- Scripts -->
-    <script type="module" src="/static/js/firebase.js"></script>
-    <script type="module" src="/static/js/auth-facade.js"></script>
-    <script type="module">
-        import { loginComPerfil, obterDashboardPorPerfil } from '/static/js/auth-facade.js';
-        
-        // Elementos do DOM - usar IDs corretos
-        const form = document.getElementById('loginForm');
-        const emailEl = document.getElementById('email');
-        const passwordEl = document.getElementById('password');
-        const btnLogin = document.getElementById('btnLogin');
-        const profileSelection = document.getElementById('profileSelection');
-        
-        let tempCredentials = null;
-    
-        // Verificar sessão existente ao carregar
-        window.addEventListener('load', () => {
-            const currentUser = localStorage.getItem('currentUser');
-            if (currentUser) {
-                try {
-                    const user = JSON.parse(currentUser);
-                    const dashboard = obterDashboardPorPerfil(user.perfil);
-                    if (dashboard) {
-                        showInfo('Sessão ativa detectada. Redirecionando...');
-                        setTimeout(() => {
-                            window.location.href = dashboard;
-                        }, 1500);
-                    }
-                } catch (e) {
-                    localStorage.removeItem('currentUser');
-                }
-            }
-        });
-    
-        // Manipular envio do formulário
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = emailEl.value.trim();
-            const password = passwordEl.value;
-            
-            if (!email || !password) {
-                showError('Por favor, informe e-mail e senha.');
-                return;
-            }
-    
-            setLoading(true);
-            hideMessages();
-    
-            try {
-                // Tentar fazer login com detecção automática de perfil
-                const resultado = await loginComPerfil(email, password);
-                
-                if (resultado && resultado.perfil) {
-                    showSuccess(`Login realizado com sucesso! Perfil: ${resultado.perfil}`);
-                    const dashboard = obterDashboardPorPerfil(resultado.perfil);
-                    
-                    if (dashboard) {
-                        setTimeout(() => {
-                            window.location.href = dashboard;
-                        }, 1500);
-                    } else {
-                        showError('Dashboard não encontrado para este perfil');
-                    }
-                } else {
-                    // Se não detectou perfil, mostrar seleção manual
-                    tempCredentials = { email, password };
-                    profileSelection.style.display = 'block';
-                    showInfo('Selecione seu perfil de acesso');
-                }
-                
-            } catch (error) {
-                console.error('Erro no login:', error);
-                handleLoginError(error);
-            } finally {
-                setLoading(false);
-            }
-        });
-    
-        // Seleção manual de perfil
-        window.selectProfile = async function(perfil) {
-            if (!tempCredentials) {
-                showError('Credenciais não encontradas');
-                return;
-            }
-    
-            setLoading(true);
-            hideMessages();
-    
-            try {
-                const resultado = await loginComPerfil(
-                    tempCredentials.email, 
-                    tempCredentials.password, 
-                    perfil
-                );
-                
-                showSuccess(`Login realizado! Perfil: ${perfil}`);
-                const dashboard = obterDashboardPorPerfil(perfil);
-                
-                if (dashboard) {
-                    setTimeout(() => {
-                        window.location.href = dashboard;
-                    }, 1500);
-                }
-                
-            } catch (error) {
-                console.error('Erro no login:', error);
-                handleLoginError(error);
-            } finally {
-                setLoading(false);
-                tempCredentials = null;
-            }
-        }
-    
-        // Funções auxiliares (manter as existentes)
-        function setLoading(loading) {
-            btnLogin.disabled = loading;
-            btnLogin.classList.toggle('loading', loading);
-        }
-    
-        function showError(message) {
-            const el = document.getElementById('errorMessage');
-            el.textContent = message;
-            el.style.display = 'block';
-        }
-    
-        function showSuccess(message) {
-            const el = document.getElementById('successMessage');
-            el.textContent = message;
-            el.style.display = 'block';
-        }
-    
-        function showInfo(message) {
-            const el = document.getElementById('infoMessage');
-            el.textContent = message;
-            el.style.display = 'block';
-        }
-    
-        function hideMessages() {
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('infoMessage').style.display = 'none';
-        }
-    
-        function handleLoginError(error) {
-            let errorMessage = 'Erro no login. Verifique suas credenciais.';
-            
-            if (error.code === 'auth/user-not-found') {
-                errorMessage = 'Usuário não encontrado.';
-            } else if (error.code === 'auth/wrong-password') {
-                errorMessage = 'Senha incorreta.';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'E-mail inválido.';
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-            
-            showError(errorMessage);
-        }
-    </script>
+    // ===== Firebase Auth =====
+    const app = initializeApp(window.firebaseConfig);
+    const auth = getAuth(app);
 
-        // Funções auxiliares
-        function setLoading(loading) {
-            btnLogin.disabled = loading;
-            btnLogin.classList.toggle('loading', loading);
-        }
+    async function verifyAndRedirect(user) {
+      // Obtém ID Token do Firebase e verifica no backend
+      const idToken = await user.getIdToken();
+      const resp = await fetch('/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ token: idToken })
+      });
+      const data = await resp.json();
 
-        function showError(message) {
-            const el = document.getElementById('errorMessage');
-            el.textContent = message;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 5000);
-        }
+      if (!resp.ok) {
+        throw new Error(data?.erro || 'Falha ao verificar token no servidor');
+      }
 
-        function showSuccess(message) {
-            const el = document.getElementById('successMessage');
-            el.textContent = message;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 3000);
-        }
-
-        function showInfo(message) {
-            const el = document.getElementById('infoMessage');
-            el.textContent = message;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 5000);
-        }
-
-        function hideMessages() {
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('infoMessage').style.display = 'none';
-        }
-    <script>
-      // Config do seu app (pode ficar público; segurança vem das Rules)
-      window.firebaseConfig = {
-        apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
-        authDomain: "portal-de-proposta.firebaseapp.com",
-        projectId: "portal-de-proposta",
-        storageBucket: "portal-de-proposta.firebasestorage.app",
-        messagingSenderId: "321036073908",
-        appId: "1:321036073908:web:3149b9ea2cb77a704890e1",
-        measurementId: "G-CFFVQGM3EC"
+      const perfil = (data?.perfil || '').toLowerCase();
+      const map = {
+        admin:        '/static/admin-usuarios.html',
+        requisitante: '/static/dashboard-requisitante-funcional.html',
+        comprador:    '/static/dashboard-comprador-funcional.html',
+        fornecedor:   '/static/dashboard-fornecedor-funcional.html'
       };
-    </script>
-    
-    <!-- Módulo que faz o login e redireciona por perfil -->
-    <script type="module" src="/static/js/auth-facade.js"></script>
+
+      if (map[perfil]) {
+        show(okEl, 'Login realizado. Redirecionando…', 1200);
+        setTimeout(() => window.location.href = map[perfil], 800);
+      } else {
+        show(infoEl, 'Usuário sem perfil definido. Contate o administrador.');
+      }
+    }
+
+    // Submissão do formulário
+    document.getElementById('formLogin')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAll();
+      setLoading(true);
+      try {
+        const email = emailI.value.trim();
+        const senha = passI.value;
+        if (!email || !senha) throw new Error('Informe e-mail e senha.');
+
+        const { user } = await signInWithEmailAndPassword(auth, email, senha);
+        await verifyAndRedirect(user);
+      } catch (err) {
+        console.error(err);
+        const msg = (err?.message || '').toLowerCase().includes('password') ? 'E-mail ou senha inválidos.' :
+                    err?.message || 'Falha no login';
+        show(errorEl, msg);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // Se já estiver logado, verifica e redireciona
+    onAuthStateChanged(auth, (user) => { if (user) verifyAndRedirect(user).catch(console.error); });
+  </script>
 </body>
 </html>
-
