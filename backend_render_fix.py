@@ -499,15 +499,6 @@ def serve_static(path):
 
 # ==================== HEALTH CHECK ====================
 
-@app.route('/health')
-def health():
-    """Health check"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.utcnow().isoformat(),
-        'firebase': 'connected' if db else 'disconnected'
-    }), 200
-
 @app.route('/api/status')
 def api_status():
     """Status da API"""
