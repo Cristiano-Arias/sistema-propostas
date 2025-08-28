@@ -471,39 +471,25 @@
             }
         });
 
-        // Detectar perfil do usuário
-        async function detectUserProfile(email) {
-            try {
-                // Tentar buscar perfil no backend
-                const response = await fetch('/api/user-profile', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.perfil;
+            // Detectar perfil do usuário
+            async function detectUserProfile(email) {
+                try {
+                    // Consultar o backend para obter o perfil do usuário
+                    const response = await fetch('/api/user-profile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.perfil || null;
+                    }
+                } catch (error) {
+                    console.warn('Erro ao detectar perfil:', error);
                 }
-            } catch (error) {
-                console.warn('Erro ao detectar perfil:', error);
+                // Se o backend não retornar perfil, não tente adivinhar pelo domínio.
+                return null;
             }
-
-            // Fallback: detecção baseada no domínio do e-mail
-            const domain = email.split('@')[1]?.toLowerCase();
-            
-            if (domain) {
-                if (domain.includes('fornecedor') || domain.includes('empresa')) {
-                    return 'Fornecedor';
-                } else if (domain.includes('compras') || domain.includes('licitacao')) {
-                    return 'Comprador';
-                } else if (domain.includes('admin')) {
-                    return 'Admin';
-                }
-            }
-
-            return null; // Não foi possível detectar
-        }
 
         // Mostrar seleção de perfil
         function showProfileSelection() {
