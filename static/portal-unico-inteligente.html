@@ -374,9 +374,9 @@
     <!-- Scripts -->
     <script type="module" src="/static/js/firebase.js"></script>
     <script type="module" src="/static/js/auth-facade.js"></script>
-    <script type="module">
-        import { loginComPerfil } from '/static/js/auth-facade.js';
-        import { auth, onAuthStateChanged } from '/static/js/firebase.js';
+        <script type="module">
+            import { loginComPerfil } from '/static/js/auth-facade.js';
+            import { auth, onAuthStateChanged, signOut } from '/static/js/firebase.js';
 
         // Elementos do DOM
         const form = document.getElementById('loginForm');
@@ -388,38 +388,51 @@
         let currentUser = null;
         let detectedProfile = null;
 
-        // Verificar sessão existente
-        window.addEventListener('load', () => {
-            checkExistingSession();
-        });
+            // Verificar sessão existente
+            // Antes de verificar a sessão precisamos garantir que não exista
+            // um usuário autenticado previamente no Firebase. O Firebase
+            // persiste a autenticação em navegadores modernos, então
+            // invocamos signOut(auth) ao carregar a página. Em seguida
+            // verificamos a sessão no sessionStorage.
+            window.addEventListener('load', () => {
+                // forçar sign out da sessão Firebase caso exista
+                try {
+                    // signOut retorna uma Promise; não aguardamos para não
+                    // bloquear o carregamento. Falhas são ignoradas.
+                    signOut(auth).catch(() => {});
+                } catch (e) {
+                    // ignore se signOut não estiver disponível
+                }
+                checkExistingSession();
+            });
 
-        // Verificar se já existe sessão ativa
-        function checkExistingSession() {
-            const sessions = [
-                { key: 'fornecedor_logado', dashboard: '/static/dashboard-fornecedor-funcional.html' },
-                { key: 'requisitante_logado', dashboard: '/static/dashboard-requisitante-funcional.html' },
-                { key: 'comprador_logado', dashboard: '/static/dashboard-comprador-funcional.html' },
-                { key: 'admin_logado', dashboard: '/static/admin-usuarios.html' }
-            ];
-
-            for (const session of sessions) {
-                const userData = localStorage.getItem(session.key);
-                if (userData) {
-                    try {
-                        const user = JSON.parse(userData);
-                        if (user && user.email) {
-                            showInfo('Sessão ativa detectada. Redirecionando...');
-                            setTimeout(() => {
-                                window.location.href = session.dashboard;
-                            }, 1500);
-                            return;
+            // Verificar se já existe sessão ativa
+            function checkExistingSession() {
+                const sessions = [
+                    { key: 'fornecedor_logado', dashboard: '/static/dashboard-fornecedor-funcional.html' },
+                    { key: 'requisitante_logado', dashboard: '/static/dashboard-requisitante-funcional.html' },
+                    { key: 'comprador_logado', dashboard: '/static/dashboard-comprador-funcional.html' },
+                    { key: 'admin_logado', dashboard: '/static/admin-usuarios.html' }
+                ];
+                for (const session of sessions) {
+                    // ler dados do sessionStorage ao invés do localStorage
+                    const userData = sessionStorage.getItem(session.key);
+                    if (userData) {
+                        try {
+                            const user = JSON.parse(userData);
+                            if (user && user.email) {
+                                showInfo('Sessão ativa detectada. Redirecionando...');
+                                setTimeout(() => {
+                                    window.location.href = session.dashboard;
+                                }, 1500);
+                                return;
+                            }
+                        } catch (e) {
+                            sessionStorage.removeItem(session.key);
                         }
-                    } catch (e) {
-                        localStorage.removeItem(session.key);
                     }
                 }
             }
-        }
 
         // Manipular envio do formulário
         form.addEventListener('submit', async (e) => {
