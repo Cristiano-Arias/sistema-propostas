@@ -211,6 +211,52 @@ def verify_token():
         logger.error(f"Erro na verificação: {e}")
         return jsonify({'erro': 'Erro interno'}), 500
 
+@app.route('/api/user-profile', methods=['POST'])
+def get_user_profile():
+    """Retorna o perfil do usuário baseado no email - usado pelo portal unificado"""
+    if not db:
+        return jsonify({'erro': 'Serviço indisponível'}), 503
+    
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'erro': 'Email não fornecido'}), 400
+        
+        # Buscar usuário por email na coleção Usuario
+        users = db.collection('Usuario').where('email', '==', email).limit(1).get()
+        
+        if users and len(users) > 0:
+            user_data = users[0].to_dict()
+            perfil_firestore = (user_data.get('perfil') or '').lower()
+            
+            # Mapear para o formato esperado pelo frontend
+            perfil_map = {
+                'fornecedor': 'Fornecedor',
+                'requisitante': 'Requisitante', 
+                'comprador': 'Comprador',
+                'admin': 'Admin'
+            }
+            
+            # Retornar perfil no formato correto
+            perfil_final = perfil_map.get(perfil_firestore)
+            
+            if perfil_final:
+                logger.info(f"✅ Perfil encontrado para {email}: {perfil_final}")
+                return jsonify({'perfil': perfil_final}), 200
+            else:
+                logger.warning(f"⚠️ Perfil não mapeado para {email}: {perfil_firestore}")
+                return jsonify({'erro': 'Perfil não configurado'}), 404
+                
+        else:
+            logger.info(f"❌ Usuário não encontrado: {email}")
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
+            
+    except Exception as e:
+        logger.error(f"Erro ao buscar perfil: {e}")
+        return jsonify({'erro': 'Erro interno'}), 500
+
 # ==================== ROTAS DE USUÁRIOS ====================
 
 @app.route('/api/usuarios', methods=['GET'])
