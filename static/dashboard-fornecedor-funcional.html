@@ -958,15 +958,56 @@
             const container = document.getElementById('processos-list');
             if (!container) return;
             
-            // Fallback para localStorage se Firebase não funcionar
-            const usarLocalStorage = !window.firebaseDb;
-            
-            if (usarLocalStorage) {
-                // Usar dados locais
-                const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
-                const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-                const meusProcessos = vinculacoes.filter(v => v.fornecedorId === fornecedorLogado.id);
+            try {
+                // Importar funções do Firestore
+                const { getFirestore, collection, query, where, getDocs, doc, getDoc } = 
+                    await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
                 
+                const db = getFirestore();
+                
+                // Buscar convites do fornecedor
+                const convitesQuery = query(
+                    collection(db, 'convites_fornecedor'),
+                    where('fornecedorEmail', '==', fornecedorLogado.email),
+                    where('status', '==', 'pendente')
+                );
+                
+                const convitesSnapshot = await getDocs(convitesQuery);
+                const meusProcessos = [];
+                
+                // Para cada convite, buscar dados do processo
+                for (const conviteDoc of convitesSnapshot.docs) {
+                    const convite = conviteDoc.data();
+                    
+                    const processoRef = doc(db, 'processos', convite.processoId);
+                    const processoDoc = await getDoc(processoRef);
+                    
+                    if (processoDoc.exists()) {
+                        meusProcessos.push({
+                            ...processoDoc.data(),
+                            id: processoDoc.id,
+                            processoId: processoDoc.id,
+                            conviteId: conviteDoc.id,
+                            ...convite
+                        });
+                    }
+                }
+                
+                // Buscar propostas existentes para verificar status
+                const propostasQuery = query(
+                    collection(db, 'propostas'),
+                    where('fornecedorId', '==', fornecedorLogado.id)
+                );
+                const propostasSnapshot = await getDocs(propostasQuery);
+                const propostas = [];
+                propostasSnapshot.forEach(doc => {
+                    propostas.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                // Renderizar processos
                 if (meusProcessos.length === 0) {
                     container.innerHTML = `
                         <div style="text-align: center; padding: 40px; color: #666;">
@@ -998,8 +1039,10 @@
                         }
                     }
                     
-                    const dataAbertura = new Date(processo.dataAbertura).toLocaleDateString('pt-BR');
-                    const dataLimite = new Date(processo.dataLimite).toLocaleDateString('pt-BR');
+                    const dataAbertura = processo.dataAbertura ? 
+                        new Date(processo.dataAbertura).toLocaleDateString('pt-BR') : 'Não informado';
+                    const dataLimite = processo.dataLimite ? 
+                        new Date(processo.dataLimite).toLocaleDateString('pt-BR') : 'Não informado';
                     
                     html += `
                         <div class="process-item ${statusClass}">
@@ -1007,14 +1050,14 @@
                                 <i class="fas ${statusBadge.icone}"></i> ${statusBadge.label}
                             </div>
                             
-                            <div class="process-title">${processo.numeroProcesso}</div>
+                            <div class="process-title">${processo.numeroProcesso || 'Processo sem número'}</div>
                             <div class="process-meta">
-                                <span><i class="fas fa-tag"></i> ${processo.modalidade}</span>
+                                <span><i class="fas fa-tag"></i> ${processo.modalidade || 'Não informado'}</span>
                                 <span><i class="fas fa-calendar"></i> Abertura: ${dataAbertura}</span>
                                 <span><i class="fas fa-clock"></i> Limite: ${dataLimite}</span>
                             </div>
                             <div class="process-description">
-                                <strong>TR:</strong> ${processo.trTitulo}<br>
+                                <strong>TR:</strong> ${processo.trTitulo || 'Não informado'}<br>
                             </div>
                             
                             <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
@@ -1039,84 +1082,133 @@
                 });
                 
                 container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erro ao carregar processos:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 64px; margin-bottom: 20px; color: #dc3545;"></i>
+                        <h3>Erro ao carregar processos</h3>
+                        <p>Não foi possível conectar ao servidor. Tente novamente mais tarde.</p>
+                    </div>
+                `;
             }
         }
+        
         // Carregar propostas
-        function carregarPropostas() {
+        async function carregarPropostas() {
             if (!fornecedorLogado) return;
             
             const container = document.getElementById('propostas-list');
             if (!container) return;
             
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const minhasPropostas = propostas.filter(p => p.fornecedorId === fornecedorLogado.id);
-            
-            if (minhasPropostas.length === 0) {
+            try {
+                // Importar funções do Firestore
+                const { getFirestore, collection, query, where, orderBy, getDocs } = 
+                    await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                
+                const db = getFirestore();
+                
+                // Buscar apenas propostas deste fornecedor
+                const propostasQuery = query(
+                    collection(db, 'propostas'),
+                    where('fornecedorId', '==', fornecedorLogado.id),
+                    orderBy('dataCriacao', 'desc')
+                );
+                
+                const querySnapshot = await getDocs(propostasQuery);
+                const minhasPropostas = [];
+                
+                querySnapshot.forEach((docSnap) => {
+                    minhasPropostas.push({
+                        id: docSnap.id,
+                        ...docSnap.data()
+                    });
+                });
+                
+                // Renderizar propostas
+                if (minhasPropostas.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-file-alt" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
+                            <h3>Nenhuma proposta enviada</h3>
+                            <p>As propostas enviadas aparecerão aqui.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                minhasPropostas.forEach(proposta => {
+                    const dataEnvio = proposta.dataEnvio ? 
+                        new Date(proposta.dataEnvio.seconds * 1000).toLocaleDateString('pt-BR') :
+                        (proposta.dataCriacao ? 
+                            new Date(proposta.dataCriacao.seconds * 1000).toLocaleDateString('pt-BR') : 
+                            'Data não informada');
+                    
+                    const statusInfo = proposta.status === 'ENVIADA' 
+                        ? { cor: '#28a745', icone: 'fa-check-circle', label: 'Enviada' }
+                        : { cor: '#ffc107', icone: 'fa-edit', label: 'Rascunho' };
+                    
+                    html += `
+                        <div class="proposal-status-card ${proposta.status.toLowerCase()}">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <h4 style="color: #333; margin-bottom: 10px;">
+                                        Processo: ${proposta.numeroProcesso || 'Sem número'}
+                                    </h4>
+                                    <div style="color: #666; font-size: 14px;">
+                                        <p><i class="fas fa-money-bill"></i> Valor: R$ ${parseFloat(proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                        <p><i class="fas fa-clock"></i> Prazo: ${proposta.prazoExecucao || 'Não informado'}</p>
+                                        <p><i class="fas fa-calendar"></i> Data: ${dataEnvio}</p>
+                                        ${proposta.protocolo ? `<p><i class="fas fa-receipt"></i> Protocolo: ${proposta.protocolo}</p>` : ''}
+                                    </div>
+                                </div>
+                                <span style="
+                                    background: ${statusInfo.cor};
+                                    color: white;
+                                    padding: 6px 16px;
+                                    border-radius: 20px;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 5px;
+                                ">
+                                    <i class="fas ${statusInfo.icone}"></i> ${statusInfo.label}
+                                </span>
+                            </div>
+                            
+                            <div style="margin-top: 15px;">
+                                ${proposta.status === 'ENVIADA' ? `
+                                    <button class="btn btn-info" onclick="visualizarProposta('${proposta.id}')">
+                                        <i class="fas fa-eye"></i> Visualizar Proposta
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-primary" onclick="abrirPortalPropostas('${proposta.processoId}')">
+                                        <i class="fas fa-edit"></i> Continuar Edição
+                                    </button>
+                                    <button class="btn btn-danger" onclick="excluirRascunho('${proposta.id}')">
+                                        <i class="fas fa-trash"></i> Excluir Rascunho
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erro ao carregar propostas:', error);
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-file-alt" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                        <h3>Nenhuma proposta enviada</h3>
-                        <p>As propostas enviadas aparecerão aqui.</p>
+                        <i class="fas fa-exclamation-triangle" style="font-size: 64px; margin-bottom: 20px; color: #dc3545;"></i>
+                        <h3>Erro ao carregar propostas</h3>
+                        <p>Não foi possível conectar ao servidor. Tente novamente mais tarde.</p>
                     </div>
                 `;
-                return;
             }
-            
-            let html = '';
-            minhasPropostas.forEach(proposta => {
-                const dataEnvio = new Date(proposta.dataEnvio || proposta.dataCriacao).toLocaleDateString('pt-BR');
-                const statusInfo = proposta.status === 'ENVIADA' 
-                    ? { cor: '#28a745', icone: 'fa-check-circle', label: 'Enviada' }
-                    : { cor: '#ffc107', icone: 'fa-edit', label: 'Rascunho' };
-                
-                html += `
-                    <div class="proposal-status-card ${proposta.status.toLowerCase()}">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <div>
-                                <h4 style="color: #333; margin-bottom: 10px;">
-                                    Processo: ${proposta.numeroProcesso}
-                                </h4>
-                                <div style="color: #666; font-size: 14px;">
-                                    <p><i class="fas fa-money-bill"></i> Valor: R$ ${parseFloat(proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                    <p><i class="fas fa-clock"></i> Prazo: ${proposta.prazoExecucao || 'Não informado'}</p>
-                                    <p><i class="fas fa-calendar"></i> Data: ${dataEnvio}</p>
-                                    ${proposta.protocolo ? `<p><i class="fas fa-receipt"></i> Protocolo: ${proposta.protocolo}</p>` : ''}
-                                </div>
-                            </div>
-                            <span style="
-                                background: ${statusInfo.cor};
-                                color: white;
-                                padding: 6px 16px;
-                                border-radius: 20px;
-                                font-size: 12px;
-                                font-weight: 600;
-                                display: flex;
-                                align-items: center;
-                                gap: 5px;
-                            ">
-                                <i class="fas ${statusInfo.icone}"></i> ${statusInfo.label}
-                            </span>
-                        </div>
-                        
-                        <div style="margin-top: 15px;">
-                            ${proposta.status === 'ENVIADA' ? `
-                                <button class="btn btn-info" onclick="visualizarProposta('${proposta.id}')">
-                                    <i class="fas fa-eye"></i> Visualizar Proposta
-                                </button>
-                            ` : `
-                                <button class="btn btn-primary" onclick="abrirPortalPropostas('${proposta.processoId}')">
-                                    <i class="fas fa-edit"></i> Continuar Edição
-                                </button>
-                                <button class="btn btn-danger" onclick="excluirRascunho('${proposta.id}')">
-                                    <i class="fas fa-trash"></i> Excluir Rascunho
-                                </button>
-                            `}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
         }
 
         // Função para mostrar aba no modal do fornecedor
