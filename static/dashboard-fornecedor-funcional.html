@@ -814,7 +814,7 @@
         
                 try {
                     // Buscar dados do usuário
-                    const userDoc = await getDoc(doc(db, 'Usuario', user.uid));
+                    const userDoc = await getDoc(doc(db, 'usuario', user.uid));
                     
                     if (!userDoc.exists()) {
                         alert('Usuário não encontrado no sistema');
