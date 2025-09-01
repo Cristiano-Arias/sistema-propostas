@@ -453,9 +453,10 @@
                     // Login com perfil detectado
                     await loginComPerfil(email, password, detectedProfile);
                     showSuccess(`Login realizado! Perfil: ${detectedProfile}`);
-                    
+
+                    // Redirecionamento direto garantido
                     setTimeout(() => {
-                        redirectToDashboard(detectedProfile);
+                        window.location.replace('/static/dashboard-fornecedor-funcional.html');
                     }, 1500);
                 } else {
                     // Não foi possível detectar o perfil. Informe o usuário para procurar o administrador.
