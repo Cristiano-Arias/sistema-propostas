@@ -764,52 +764,30 @@
         // Estado da aplicação
         let fornecedorLogado = null;
 
-        // Função de Login
-        // Esta função utiliza Firebase Authentication e Firestore para autenticar o usuário
-        // e buscar seus dados de perfil. Apenas usuários com perfil "fornecedor" são
-        // autorizados a acessar este módulo. Os dados são salvos no sessionStorage para
-        // garantir que a sessão seja descartada ao fechar a aba【22882929202904†L67-L72】.
-        async function fazerLogin(email, senha) {
-            try {
-                // Autenticar via Firebase
-                const userCredential = await window.firebaseSignInWithEmailAndPassword(window.firebaseAuth, email, senha);
-                const user = userCredential.user;
+        // Funções de Login
+        function fazerLogin(email, senha) {
+            const usuarios = SistemaLocal.carregar(SistemaLocal.CHAVES.USUARIOS_FORNECEDORES, []);
+            
+            const usuario = usuarios.find(u => 
+                u.email === email && 
+                u.senha === senha && 
+                u.tipo === 'fornecedor' && 
+                u.ativo
+            );
 
-                // Buscar dados do usuário no Firestore
-                const userDoc = await window.firebaseGetDoc(
-                    window.firebaseDoc(window.firebaseDb, 'Usuario', user.uid)
-                );
+            if (usuario) {
+                // Buscar dados completos do fornecedor
+                const fornecedores = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES_CADASTRADOS, []);
+                const fornecedor = fornecedores.find(f => f.id === usuario.id);
 
-                if (!userDoc.exists()) {
-                    throw new Error('Usuário não encontrado no banco de dados');
+                if (fornecedor) {
+                    fornecedorLogado = fornecedor;
+                    SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO, fornecedorLogado);
+                    return true;
                 }
-
-                const userData = userDoc.data();
-
-                // Verificar perfil
-                if (userData.perfil !== 'fornecedor') {
-                    throw new Error('Acesso negado. Apenas fornecedores podem acessar este módulo.');
-                }
-
-                // Montar objeto do fornecedor logado
-                fornecedorLogado = {
-                    id: user.uid,
-                    email: userData.email,
-                    razaoSocial: userData.nome || userData.nomeEmpresa,
-                    cnpj: userData.cnpj,
-                    telefone: userData.telefone,
-                    endereco: userData.endereco,
-                    cidade: userData.cidade
-                };
-
-                // Armazenar no sessionStorage em vez de localStorage【22882929202904†L67-L72】.
-                sessionStorage.setItem('fornecedor_logado', JSON.stringify(fornecedorLogado));
-
-                return true;
-            } catch (error) {
-                console.error('Erro no login:', error);
-                return false;
             }
+
+            return false;
         }
 
         function mostrarDashboard() {
@@ -825,17 +803,11 @@
             carregarProcessos();
         }
 
-        async function logout() {
+        function logout() {
             if (confirm('Deseja realmente sair do sistema?')) {
-                try {
-                    await window.firebaseSignOut(window.firebaseAuth);
-                    sessionStorage.clear();
-                    fornecedorLogado = null;
-                    // Redirecionar para tela de login após logout
-                    window.location.href = '/static/portal-fornecedor-unificado.html';
-                } catch (error) {
-                    console.error('Erro ao fazer logout:', error);
-                }
+                localStorage.removeItem(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
+                fornecedorLogado = null;
+                location.reload();
             }
         }
 
@@ -878,119 +850,49 @@
         }
 
         // Carregar estatísticas
-        // Consulta o Firestore para obter convites e propostas do fornecedor logado
-        async function carregarEstatisticas() {
-            if (!fornecedorLogado) return;
-            try {
-                // Buscar convites do fornecedor
-                const convitesQuery = window.firebaseQuery(
-                    window.firebaseCollection(window.firebaseDb, 'convites_fornecedor'),
-                    window.firebaseWhere('fornecedorEmail', '==', fornecedorLogado.email)
-                );
-                const convitesSnap = await window.firebaseGetDocs(convitesQuery);
-                const meusProcessos = [];
-                convitesSnap.forEach((docSnap) => {
-                    meusProcessos.push(docSnap.data());
-                });
-
-                // Buscar propostas do fornecedor
-                const propostasQuery = window.firebaseQuery(
-                    window.firebaseCollection(window.firebaseDb, 'propostas'),
-                    window.firebaseWhere('fornecedorId', '==', fornecedorLogado.id)
-                );
-                const propostasSnap = await window.firebaseGetDocs(propostasQuery);
-                const minhasPropostas = [];
-                propostasSnap.forEach((docSnap) => {
-                    minhasPropostas.push(docSnap.data());
-                });
-
-                // Calcular estatísticas
-                const processosNovos = meusProcessos.filter(p => !minhasPropostas.some(prop => prop.processoId === p.processoId)).length;
-                const propostasEnviadas = minhasPropostas.filter(p => p.status === 'ENVIADA').length;
-                const propostasRascunho = minhasPropostas.filter(p => p.status === 'RASCUNHO').length;
-
-                // Atualizar interface
-                document.getElementById('processos-novos').textContent = processosNovos;
-                document.getElementById('propostas-enviadas').textContent = propostasEnviadas;
-                document.getElementById('processos-total').textContent = meusProcessos.length;
-                document.getElementById('propostas-rascunho').textContent = propostasRascunho;
-
-                // Atualizar badge
-                const badge = document.getElementById('processos-notification');
-                if (badge) {
-                    if (processosNovos > 0) {
-                        badge.textContent = processosNovos;
-                        badge.style.display = 'flex';
-                    } else {
-                        badge.style.display = 'none';
-                    }
+        function carregarEstatisticas() {
+            const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
+            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+            
+            // Filtrar dados do fornecedor logado
+            const meusProcessos = vinculacoes.filter(v => v.fornecedorId === fornecedorLogado.id);
+            const minhasPropostas = propostas.filter(p => p.fornecedorId === fornecedorLogado.id);
+            
+            // Calcular estatísticas
+            const processosNovos = meusProcessos.filter(p => !minhasPropostas.some(prop => prop.processoId === p.processoId)).length;
+            const propostasEnviadas = minhasPropostas.filter(p => p.status === 'ENVIADA').length;
+            const propostasRascunho = minhasPropostas.filter(p => p.status === 'RASCUNHO').length;
+            
+            // Atualizar interface
+            document.getElementById('processos-novos').textContent = processosNovos;
+            document.getElementById('propostas-enviadas').textContent = propostasEnviadas;
+            document.getElementById('processos-total').textContent = meusProcessos.length;
+            document.getElementById('propostas-rascunho').textContent = propostasRascunho;
+            
+            // Atualizar badge
+            const badge = document.getElementById('processos-notification');
+            if (badge) {
+                if (processosNovos > 0) {
+                    badge.textContent = processosNovos;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
                 }
-            } catch (error) {
-                console.error('Erro ao carregar estatísticas:', error);
             }
         }
 
         // Carregar processos
-        // Esta função consulta o Firestore para buscar convites pendentes do fornecedor logado
-        // e em seguida carrega os detalhes de cada processo. Os dados são renderizados com
-        // base na função auxiliar renderizarProcessos().
-        async function carregarProcessos() {
-            if (!fornecedorLogado) return;
-            try {
-                const q = window.firebaseQuery(
-                    window.firebaseCollection(window.firebaseDb, 'convites_fornecedor'),
-                    window.firebaseWhere('fornecedorEmail', '==', fornecedorLogado.email),
-                    window.firebaseWhere('status', '==', 'pendente')
-                );
-                const querySnapshot = await window.firebaseGetDocs(q);
-                const processos = [];
-                for (const conviteDoc of querySnapshot.docs) {
-                    const convite = conviteDoc.data();
-                    const processoDoc = await window.firebaseGetDoc(
-                        window.firebaseDoc(window.firebaseDb, 'processos', convite.processoId)
-                    );
-                    if (processoDoc.exists()) {
-                        processos.push({
-                            ...processoDoc.data(),
-                            id: processoDoc.id,
-                            conviteId: conviteDoc.id
-                        });
-                    }
-                }
-                renderizarProcessos(processos);
-            } catch (error) {
-                console.error('Erro ao carregar processos:', error);
-            }
-        }
-
-        // Carregar propostas
-        // Consulta o Firestore para obter as propostas enviadas pelo fornecedor logado
-        // As propostas são ordenadas por data de criação em ordem decrescente
-        async function carregarPropostas() {
-            if (!fornecedorLogado) return;
-            try {
-                const q = window.firebaseQuery(
-                    window.firebaseCollection(window.firebaseDb, 'propostas'),
-                    window.firebaseWhere('fornecedorId', '==', fornecedorLogado.id),
-                    window.firebaseOrderBy('dataCriacao', 'desc')
-                );
-                const querySnapshot = await window.firebaseGetDocs(q);
-                const propostas = [];
-                querySnapshot.forEach((docSnap) => {
-                    propostas.push({ id: docSnap.id, ...docSnap.data() });
-                });
-                renderizarPropostas(propostas);
-            } catch (error) {
-                console.error('Erro ao carregar propostas:', error);
-            }
-        }
-
-        // Função auxiliar para renderizar a lista de processos obtidos do Firestore
-        function renderizarProcessos(processos) {
+        function carregarProcessos() {
+            const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
+            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+            
+            // Filtrar processos do fornecedor logado
+            const meusProcessos = vinculacoes.filter(v => v.fornecedorId === fornecedorLogado.id);
+            
             const container = document.getElementById('processos-list');
             if (!container) return;
-
-            if (!processos || processos.length === 0) {
+            
+            if (meusProcessos.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #666;">
                         <i class="fas fa-inbox" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
@@ -1000,54 +902,80 @@
                 `;
                 return;
             }
-
+            
             let html = '';
-            processos.forEach(processo => {
-                // Para compatibilidade com diferentes formatos de dados, use campos alternativos
-                const numero = processo.numeroProcesso || processo.numero || processo.id || 'N/A';
-                const modalidade = processo.modalidade || '';
-                const dataAbertura = processo.dataAbertura ? new Date(processo.dataAbertura).toLocaleDateString('pt-BR') : '';
-                const dataLimite = processo.dataLimite ? new Date(processo.dataLimite).toLocaleDateString('pt-BR') : '';
-                const trTitulo = processo.trTitulo || processo.titulo || '';
-                // Todos convites pendentes aparecem como "Novo Processo"
-                const statusBadge = { cor: '#667eea', icone: 'fa-clock', label: 'Novo Processo' };
+            meusProcessos.forEach(processo => {
+                // Verificar se já existe proposta
+                const proposta = propostas.find(p => 
+                    p.processoId === processo.processoId && 
+                    p.fornecedorId === fornecedorLogado.id
+                );
+                
+                let statusClass = 'novo';
+                let statusBadge = { cor: '#667eea', icone: 'fa-clock', label: 'Novo Processo' };
+                
+                if (proposta) {
+                    if (proposta.status === 'ENVIADA') {
+                        statusClass = 'enviado';
+                        statusBadge = { cor: '#28a745', icone: 'fa-check-circle', label: 'Proposta Enviada' };
+                    } else {
+                        statusClass = 'analisando';
+                        statusBadge = { cor: '#ffc107', icone: 'fa-edit', label: 'Rascunho Salvo' };
+                    }
+                }
+                
+                const dataAbertura = new Date(processo.dataAbertura).toLocaleDateString('pt-BR');
+                const dataLimite = new Date(processo.dataLimite).toLocaleDateString('pt-BR');
+                
                 html += `
-                    <div class="process-item novo">
+                    <div class="process-item ${statusClass}">
                         <div class="process-status-badge" style="background: ${statusBadge.cor};">
                             <i class="fas ${statusBadge.icone}"></i> ${statusBadge.label}
                         </div>
-                        <div class="process-title">${numero}</div>
+                        
+                        <div class="process-title">${processo.numeroProcesso}</div>
                         <div class="process-meta">
-                            <span><i class="fas fa-tag"></i> ${modalidade}</span>
-                            ${dataAbertura ? `<span><i class="fas fa-calendar"></i> Abertura: ${dataAbertura}</span>` : ''}
-                            ${dataLimite ? `<span><i class="fas fa-clock"></i> Limite: ${dataLimite}</span>` : ''}
+                            <span><i class="fas fa-tag"></i> ${processo.modalidade}</span>
+                            <span><i class="fas fa-calendar"></i> Abertura: ${dataAbertura}</span>
+                            <span><i class="fas fa-clock"></i> Limite: ${dataLimite}</span>
                         </div>
                         <div class="process-description">
-                            <strong>TR:</strong> ${trTitulo}<br>
+                            <strong>TR:</strong> ${processo.trTitulo}<br>
                             </div>
+                        
                         <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-info" onclick="visualizarTR('${processo.processoId || processo.id}')">
+                            <button class="btn btn-info" onclick="visualizarTR('${processo.processoId}')">
                                 <i class="fas fa-eye"></i> Visualizar TR
                             </button>
-                            <button class="btn btn-secondary" onclick="baixarTR('${processo.processoId || processo.id}')">
+                            <button class="btn btn-secondary" onclick="baixarTR('${processo.processoId}')">
                                 <i class="fas fa-download"></i> Baixar TR
                             </button>
-                            <button class="btn btn-primary" onclick="abrirPortalPropostas('${processo.processoId || processo.id}')">
-                                <i class="fas fa-edit"></i> Criar Proposta
-                            </button>
+                            ${!proposta || proposta.status === 'RASCUNHO' ? `
+                                <button class="btn btn-primary" onclick="abrirPortalPropostas('${processo.processoId}')">
+                                    <i class="fas fa-edit"></i> ${proposta ? 'Continuar Proposta' : 'Criar Proposta'}
+                                </button>
+                            ` : `
+                                <button class="btn btn-success" onclick="visualizarProposta('${proposta.id}')">
+                                    <i class="fas fa-file-check"></i> Ver Proposta Enviada
+                                </button>
+                            `}
                         </div>
                     </div>
                 `;
             });
+            
             container.innerHTML = html;
         }
 
-        // Função auxiliar para renderizar a lista de propostas obtidas do Firestore
-        function renderizarPropostas(propostas) {
+        // Carregar propostas
+        function carregarPropostas() {
+            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+            const minhasPropostas = propostas.filter(p => p.fornecedorId === fornecedorLogado.id);
+            
             const container = document.getElementById('propostas-list');
             if (!container) return;
-
-            if (!propostas || propostas.length === 0) {
+            
+            if (minhasPropostas.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #666;">
                         <i class="fas fa-file-alt" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
@@ -1057,28 +985,25 @@
                 `;
                 return;
             }
-
+            
             let html = '';
-            propostas.forEach(proposta => {
-                const numeroProcesso = proposta.numeroProcesso || proposta.numero || proposta.processoId || 'N/A';
-                const dataEnvio = proposta.dataEnvio || proposta.dataCriacao;
-                const dataFormatada = dataEnvio ? new Date(dataEnvio).toLocaleDateString('pt-BR') : '';
-                const valor = parseFloat(proposta.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                const prazo = proposta.prazoExecucao || 'Não informado';
-                const statusInfo = proposta.status === 'ENVIADA'
+            minhasPropostas.forEach(proposta => {
+                const dataEnvio = new Date(proposta.dataEnvio || proposta.dataCriacao).toLocaleDateString('pt-BR');
+                const statusInfo = proposta.status === 'ENVIADA' 
                     ? { cor: '#28a745', icone: 'fa-check-circle', label: 'Enviada' }
                     : { cor: '#ffc107', icone: 'fa-edit', label: 'Rascunho' };
+                
                 html += `
-                    <div class="proposal-status-card ${proposta.status ? proposta.status.toLowerCase() : ''}">
+                    <div class="proposal-status-card ${proposta.status.toLowerCase()}">
                         <div style="display: flex; justify-content: space-between; align-items: start;">
                             <div>
                                 <h4 style="color: #333; margin-bottom: 10px;">
-                                    Processo: ${numeroProcesso}
+                                    Processo: ${proposta.numeroProcesso}
                                 </h4>
                                 <div style="color: #666; font-size: 14px;">
-                                    <p><i class="fas fa-money-bill"></i> Valor: R$ ${valor}</p>
-                                    <p><i class="fas fa-clock"></i> Prazo: ${prazo}</p>
-                                    ${dataFormatada ? `<p><i class="fas fa-calendar"></i> Data: ${dataFormatada}</p>` : ''}
+                                    <p><i class="fas fa-money-bill"></i> Valor: R$ ${parseFloat(proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                    <p><i class="fas fa-clock"></i> Prazo: ${proposta.prazoExecucao || 'Não informado'}</p>
+                                    <p><i class="fas fa-calendar"></i> Data: ${dataEnvio}</p>
                                     ${proposta.protocolo ? `<p><i class="fas fa-receipt"></i> Protocolo: ${proposta.protocolo}</p>` : ''}
                                 </div>
                             </div>
@@ -1096,6 +1021,7 @@
                                 <i class="fas ${statusInfo.icone}"></i> ${statusInfo.label}
                             </span>
                         </div>
+                        
                         <div style="margin-top: 15px;">
                             ${proposta.status === 'ENVIADA' ? `
                                 <button class="btn btn-info" onclick="visualizarProposta('${proposta.id}')">
@@ -1113,6 +1039,7 @@
                     </div>
                 `;
             });
+            
             container.innerHTML = html;
         }
 
@@ -2557,26 +2484,21 @@
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Verificar se já está logado usando sessionStorage
-            const fornecedorSalvoStr = sessionStorage.getItem('fornecedor_logado');
-            if (fornecedorSalvoStr) {
-                try {
-                    fornecedorLogado = JSON.parse(fornecedorSalvoStr);
-                    mostrarDashboard();
-                } catch (err) {
-                    console.error('Erro ao recuperar fornecedor armazenado:', err);
-                }
+            // Verificar se já está logado
+            const fornecedorSalvo = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
+            if (fornecedorSalvo) {
+                fornecedorLogado = fornecedorSalvo;
+                mostrarDashboard();
             }
 
             // Login form
-            document.getElementById('login-form')?.addEventListener('submit', async function(e) {
+            document.getElementById('login-form')?.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
                 const email = document.getElementById('email').value;
                 const senha = document.getElementById('senha').value;
                 
-                const sucesso = await fazerLogin(email, senha);
-                if (sucesso) {
+                if (fazerLogin(email, senha)) {
                     mostrarDashboard();
                 } else {
                     const errorDiv = document.getElementById('login-error');
@@ -2617,55 +2539,6 @@
     </script>
     
 <!-- removido auth.js inexistente -->
-
-    <!-- Firebase Configuration -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import {
-            getAuth,
-            signInWithEmailAndPassword,
-            signOut
-        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import {
-            getFirestore,
-            collection,
-            doc,
-            getDoc,
-            getDocs,
-            query,
-            where,
-            orderBy,
-            limit
-        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
-        // Configuração Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCqF366Ft7RkzHYaZb77HboNO3BPbmCjT8",
-            authDomain: "portal-de-proposta.firebaseapp.com",
-            projectId: "portal-de-proposta",
-            storageBucket: "portal-de-proposta.appspot.com",
-            messagingSenderId: "321036073908",
-            appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Expor objetos e funções no escopo global para uso no código existente
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
-        window.firebaseSignOut = signOut;
-        window.firebaseSignInWithEmailAndPassword = signInWithEmailAndPassword;
-        window.firebaseCollection = collection;
-        window.firebaseDoc = doc;
-        window.firebaseGetDoc = getDoc;
-        window.firebaseGetDocs = getDocs;
-        window.firebaseQuery = query;
-        window.firebaseWhere = where;
-        window.firebaseOrderBy = orderBy;
-        window.firebaseLimit = limit;
-    </script>
 
 </body>
 </html>
