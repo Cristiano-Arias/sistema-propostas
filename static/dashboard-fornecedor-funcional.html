@@ -719,6 +719,53 @@
         </div>
     </div>
 
+    <!-- INÍCIO DA INTEGRAÇÃO FIREBASE -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut 
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            getDoc,
+            getDocs,
+            query, 
+            where,
+            orderBy
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    
+        // Configuração Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqF366Ft7RkzHYaZb77HboNO3BPbmCjT8",
+            authDomain: "portal-de-proposta.firebaseapp.com",
+            projectId: "portal-de-proposta",
+            storageBucket: "portal-de-proposta.appspot.com",
+            messagingSenderId: "321036073908",
+            appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+        };
+    
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+    
+        // Tornar global para uso no código existente
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.firebaseSignOut = signOut;
+        window.getDoc = getDoc;
+        window.doc = doc;
+        window.collection = collection;
+        window.query = query;
+        window.where = where;
+        window.getDocs = getDocs;
+        window.orderBy = orderBy;
+    </script>
+    
     <script>
         // Sistema de dados local
         const SistemaLocal = {
@@ -765,15 +812,45 @@
         let fornecedorLogado = null;
 
         // Funções de Login
-        function fazerLogin(email, senha) {
-            const usuarios = SistemaLocal.carregar(SistemaLocal.CHAVES.USUARIOS_FORNECEDORES, []);
-            
-            const usuario = usuarios.find(u => 
-                u.email === email && 
-                u.senha === senha && 
-                u.tipo === 'fornecedor' && 
-                u.ativo
-            );
+        async function fazerLogin(email, senha) {
+            try {
+                // Login via Firebase
+                const userCredential = await signInWithEmailAndPassword(window.firebaseAuth, email, senha);
+                const user = userCredential.user;
+                
+                // Buscar dados do fornecedor no Firestore
+                const userDoc = await window.getDoc(window.doc(window.firebaseDb, 'Usuario', user.uid));
+                
+                if (!userDoc.exists()) {
+                    throw new Error('Usuário não encontrado');
+                }
+                
+                const userData = userDoc.data();
+                
+                // Verificar se é fornecedor
+                if (userData.perfil !== 'fornecedor') {
+                    throw new Error('Apenas fornecedores podem acessar este módulo');
+                }
+                
+                // Salvar dados do fornecedor
+                fornecedorLogado = {
+                    id: user.uid,
+                    razaoSocial: userData.nome || userData.nomeEmpresa,
+                    cnpj: userData.cnpj || 'Não informado',
+                    email: userData.email,
+                    telefone: userData.telefone || '',
+                    endereco: userData.endereco || '',
+                    cidade: userData.cidade || ''
+                };
+                
+                sessionStorage.setItem('fornecedor_logado', JSON.stringify(fornecedorLogado));
+                return true;
+                
+            } catch (error) {
+                console.error('Erro no login:', error);
+                return false;
+            }
+        }
 
             if (usuario) {
                 // Buscar dados completos do fornecedor
@@ -803,11 +880,17 @@
             carregarProcessos();
         }
 
-        function logout() {
+        async function logout() {
             if (confirm('Deseja realmente sair do sistema?')) {
-                localStorage.removeItem(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
-                fornecedorLogado = null;
-                location.reload();
+                try {
+                    await window.firebaseSignOut(window.firebaseAuth);
+                    sessionStorage.clear();
+                    localStorage.removeItem('fornecedor_logado');
+                    fornecedorLogado = null;
+                    location.reload();
+                } catch (error) {
+                    console.error('Erro ao fazer logout:', error);
+                }
             }
         }
 
@@ -882,12 +965,51 @@
         }
 
         // Carregar processos
-        function carregarProcessos() {
-            const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+        async function carregarProcessos() {
+            if (!fornecedorLogado) return;
             
-            // Filtrar processos do fornecedor logado
-            const meusProcessos = vinculacoes.filter(v => v.fornecedorId === fornecedorLogado.id);
+            const container = document.getElementById('processos-list');
+            if (!container) return;
+            
+            try {
+                // Buscar apenas convites para este fornecedor no Firestore
+                const q = window.query(
+                    window.collection(window.firebaseDb, 'convites_fornecedor'),
+                    window.where('fornecedorEmail', '==', fornecedorLogado.email),
+                    window.where('status', '==', 'pendente')
+                );
+                
+                const querySnapshot = await window.getDocs(q);
+                const meusProcessos = [];
+                
+                for (const docSnap of querySnapshot.docs) {
+                    const convite = docSnap.data();
+                    
+                    // Buscar detalhes do processo
+                    const processoDoc = await window.getDoc(
+                        window.doc(window.firebaseDb, 'processos', convite.processoId)
+                    );
+                    
+                    if (processoDoc.exists()) {
+                        meusProcessos.push({
+                            ...processoDoc.data(),
+                            processoId: processoDoc.id,
+                            ...convite
+                        });
+                    }
+                }
+                
+                // Resto do código de renderização permanece igual
+                if (meusProcessos.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-inbox" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
+                            <h3>Nenhum processo disponível</h3>
+                            <p>Você será notificado quando for convidado para novos processos.</p>
+                        </div>
+                    `;
+                    return;
+                }
             
             const container = document.getElementById('processos-list');
             if (!container) return;
@@ -968,9 +1090,41 @@
         }
 
         // Carregar propostas
-        function carregarPropostas() {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const minhasPropostas = propostas.filter(p => p.fornecedorId === fornecedorLogado.id);
+        async function carregarPropostas() {
+            if (!fornecedorLogado) return;
+            
+            const container = document.getElementById('propostas-list');
+            if (!container) return;
+            
+            try {
+                // Buscar apenas propostas deste fornecedor no Firestore
+                const q = window.query(
+                    window.collection(window.firebaseDb, 'propostas'),
+                    window.where('fornecedorId', '==', fornecedorLogado.id),
+                    window.orderBy('dataCriacao', 'desc')
+                );
+                
+                const querySnapshot = await window.getDocs(q);
+                const minhasPropostas = [];
+                
+                querySnapshot.forEach((docSnap) => {
+                    minhasPropostas.push({
+                        id: docSnap.id,
+                        ...docSnap.data()
+                    });
+                });
+                
+                // Resto do código de renderização permanece igual
+                if (minhasPropostas.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-file-alt" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
+                            <h3>Nenhuma proposta enviada</h3>
+                            <p>As propostas enviadas aparecerão aqui.</p>
+                        </div>
+                    `;
+                    return;
+                }
             
             const container = document.getElementById('propostas-list');
             if (!container) return;
@@ -2492,13 +2646,14 @@
             }
 
             // Login form
-            document.getElementById('login-form')?.addEventListener('submit', function(e) {
+            document.getElementById('login-form')?.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const email = document.getElementById('email').value;
                 const senha = document.getElementById('senha').value;
                 
-                if (fazerLogin(email, senha)) {
+                const sucesso = await fazerLogin(email, senha);
+                if (sucesso) {
                     mostrarDashboard();
                 } else {
                     const errorDiv = document.getElementById('login-error');
