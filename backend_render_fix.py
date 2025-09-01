@@ -141,9 +141,9 @@ def require_admin(f):
         if not email:
             return jsonify({'erro': 'Email não encontrado no token'}), 401
             
-        users = db.collection('Usuario').where('email', '==', email).get()
+        users = db.collection('usuario').where('email', '==', email).get()
         if not users or len(users) == 0:
-            return jsonify({'erro': 'Usuário não encontrado'}), 404
+            return jsonify({'erro': 'usuario não encontrado'}), 404
             
         user_data = users[0].to_dict()
         if user_data.get('perfil') != 'ADMIN':
@@ -177,7 +177,7 @@ def verify_token():
             return jsonify({'erro': 'Email não encontrado no token'}), 400
         
         # CORREÇÃO: Buscar usuário por EMAIL em vez de UID
-        users = db.collection('Usuario').where('email', '==', email).get()
+        users = db.collection('usuario').where('email', '==', email).get()
         
         if users and len(users) > 0:
             # Usuário encontrado - usar dados do Firestore
@@ -194,7 +194,7 @@ def verify_token():
                 'criadoEm': firestore.SERVER_TIMESTAMP
             }
             # Criar com UID como ID do documento
-            db.collection('Usuario').document(uid).set(user_data)
+            db.collection('usuario').document(uid).set(user_data)
             user_data['novo_usuario'] = True
         
         return jsonify({
@@ -224,8 +224,8 @@ def get_user_profile():
         if not email:
             return jsonify({'erro': 'Email não fornecido'}), 400
         
-        # Buscar usuário por email na coleção Usuario
-        users = db.collection('Usuario').where('email', '==', email).limit(1).get()
+        # Buscar usuário por email na coleção usuario
+        users = db.collection('usuario').where('email', '==', email).limit(1).get()
         
         if users and len(users) > 0:
             user_data = users[0].to_dict()
@@ -265,7 +265,7 @@ def listar_usuarios():
     """Lista todos os usuários (apenas admin)"""
     try:
         usuarios = []
-        for doc in db.collection('Usuario').stream():
+        for doc in db.collection('usuario').stream():
             user_data = doc.to_dict()
             user_data['id'] = doc.id
             # Remover dados sensíveis
@@ -298,7 +298,7 @@ def criar_usuario():
         )
         
         # Criar no Firestore com UID como ID do documento
-        db.collection('Usuario').document(new_user.uid).set({
+        db.collection('usuario').document(new_user.uid).set({
             'email': data['email'],
             'nome': data['nome'],
             'perfil': data.get('perfil', 'requisitante'),
@@ -344,7 +344,7 @@ def criar_fornecedor():
         if not requester_email:
             return jsonify({'erro': 'Email não encontrado no token'}), 401
 
-        users = db.collection('Usuario').where('email', '==', requester_email).get()
+        users = db.collection('usuario').where('email', '==', requester_email).get()
         if not users or len(users) == 0:
             return jsonify({'erro': 'Usuário não encontrado'}), 404
 
@@ -389,7 +389,7 @@ def criar_fornecedor():
             user_doc[key] = value
 
         # Salvar no Firestore com o UID como ID do documento
-        db.collection('Usuario').document(new_user.uid).set(user_doc)
+        db.collection('usuario').document(new_user.uid).set(user_doc)
 
         return jsonify({
             'sucesso': True,
@@ -617,7 +617,7 @@ def require_auth(f):
         }
         # Tentar enriquecer com perfil do Firestore
         try:
-            ud = db.collection('Usuario').document(request.user['uid']).get()
+            ud = db.collection('usuario').document(request.user['uid']).get()
             if ud.exists:
                 u = ud.to_dict()
                 request.user['perfil'] = u.get('perfil')
@@ -664,7 +664,7 @@ def auth_verify():
     uid = decoded.get('uid')
     perfil = None
     try:
-        udoc = db.collection('Usuario').document(uid).get()
+        udoc = db.collection('usuario').document(uid).get()
         if udoc.exists:
             perfil = udoc.to_dict().get('perfil')
     except Exception:
