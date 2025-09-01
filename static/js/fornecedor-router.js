@@ -70,10 +70,11 @@ export class FornecedorRouter {
             if (userSnap.exists()) {
                 const userData = userSnap.data();
     
-                if (userData.perfil === "Fornecedor") {
+                if (userData.perfil && userData.perfil.toLowerCase() === "fornecedor") {
                     alert("Login Realizado - Perfil Fornecedor");
                     this.redirectToFornecedorDashboard();
                     return;
+                }
                 } else {
                     // Outros perfis continuam indo para o portal unificado
                     this.redirectToPortalUnificado();
