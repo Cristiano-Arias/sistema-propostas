@@ -2651,7 +2651,7 @@
                 fornecedorLogado = fornecedorSalvo;
                 mostrarDashboard();
             }
-
+            
             // Login form
             document.getElementById('login-form')?.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -2670,38 +2670,36 @@
                     }, 3000);
                 }
             });
-
+            
             // Navegação
             document.getElementById('btn-dashboard')?.addEventListener('click', () => mostrarPagina('dashboard'));
             document.getElementById('btn-processos')?.addEventListener('click', () => mostrarPagina('processos'));
             document.getElementById('btn-propostas')?.addEventListener('click', () => mostrarPagina('propostas'));
             document.getElementById('btn-logout')?.addEventListener('click', logout);
-
+            
             // Cards
             document.getElementById('card-processos')?.addEventListener('click', () => mostrarPagina('processos'));
             document.getElementById('card-propostas')?.addEventListener('click', () => mostrarPagina('propostas'));
-        });
-
-        // Atualizar estatísticas a cada 30 segundos
+        }); // ← FECHA O DOMContentLoaded AQUI
+        
+        // Atualizar estatísticas a cada 30 segundos (FORA do DOMContentLoaded)
         setInterval(() => {
             if (fornecedorLogado) {
                 carregarEstatisticas();
             }
         }, 30000);
-
-        // Expor funções globalmente para uso em atributos onclick
-        // Conforme documentação da MDN, funções declaradas no topo do script se tornam
-        // propriedades da janela global, mas atribuir explicitamente melhora a clareza【665451314570718†L196-L201】.
-            window.visualizarTR = visualizarTR;
-            window.baixarTR = baixarTR;
-            window.abrirPortalPropostas = abrirPortalPropostas;
-            window.visualizarProposta = visualizarProposta;
-            window.abrirPropostaCompleta = abrirPropostaCompleta;
-            window.baixarComprovante = baixarComprovante;
-        });
-    </script>
-    
-<!-- removido auth.js inexistente -->
-
-</body>
-</html>
+        
+        // Expor funções globalmente (FORA do DOMContentLoaded)
+        window.visualizarTR = visualizarTR;
+        window.baixarTR = baixarTR;
+        window.abrirPortalPropostas = abrirPortalPropostas;
+        window.visualizarProposta = visualizarProposta;
+        window.abrirPropostaCompleta = abrirPropostaCompleta;
+        window.baixarComprovante = baixarComprovante;
+        
+        </script>
+        
+        <!-- removido auth.js inexistente -->
+        
+        </body>
+        </html>
