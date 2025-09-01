@@ -1560,7 +1560,11 @@
             
             // Event listeners
             modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
-                
+                btn.addEventListener('click', () => {
+                    modal.remove();
+                });
+            });
+                            
         // Baixar TR completo com todos os campos
         function baixarTR(processoId) {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
