@@ -1,14 +1,12 @@
-// static/auth.js - Sistema de Autenticação Integrado
+// auth.js - Controle unificado de autenticação e roteamento
 import { 
   auth, 
   db, 
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut,
-  doc,
-  setDoc,
-  getDoc
+  signInWithEmailAndPassword, 
+  onAuthStateChanged, 
+  signOut, 
+  doc, 
+  getDoc 
 } from './firebase.js';
 
 class AuthSystem {
@@ -23,137 +21,65 @@ class AuthSystem {
       if (user) {
         this.currentUser = user;
         await this.loadUserProfile(user.uid);
-        console.log('Usuário autenticado:', user.email);
       } else {
         this.currentUser = null;
         this.userProfile = null;
-        console.log('Usuário não autenticado');
       }
     });
   }
 
+  async login(email, password) {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      alert("Erro no login: " + error.message);
+    }
+  }
+
   async loadUserProfile(uid) {
     try {
-      const userDoc = await getDoc(doc(db, 'usuarios', uid));
-      if (userDoc.exists()) {
-        this.userProfile = userDoc.data();
-        return this.userProfile;
-      }
-      return null;
-    } catch (error) {
-      console.error('Erro ao carregar perfil:', error);
-      return null;
-    }
-  }
+      const userDocRef = doc(db, "usuarios", uid);
+      const userSnap = await getDoc(userDocRef);
 
-  async login(email, senha, perfil) {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, senha);
-      const userProfile = await this.loadUserProfile(userCredential.user.uid);
-      
-      // Verificar se o perfil corresponde
-      if (userProfile && userProfile.perfil === perfil) {
-        return { 
-          success: true, 
-          user: userCredential.user,
-          profile: userProfile 
-        };
-      } else if (!userProfile) {
-        // Criar perfil se não existir (primeira vez)
-        await this.createUserProfile(userCredential.user.uid, {
-          email: email,
-          perfil: perfil,
-          nome: email.split('@')[0],
-          ativo: true,
-          criadoEm: new Date().toISOString()
-        });
-        return { 
-          success: true, 
-          user: userCredential.user,
-          profile: { email, perfil }
-        };
+      if (userSnap.exists()) {
+        this.userProfile = userSnap.data();
+
+        if (!this.userProfile.ativo) {
+          alert("Usuário inativo, contate o administrador.");
+          return;
+        }
+
+        this.redirectByProfile(this.userProfile.perfil);
       } else {
-        await signOut(auth);
-        throw new Error('Perfil não autorizado para este tipo de acesso');
+        console.warn("Usuário não encontrado no Firestore");
       }
     } catch (error) {
-      console.error('Erro no login:', error);
-      return { 
-        success: false, 
-        error: error.message 
-      };
+      console.error("Erro ao carregar perfil:", error);
     }
   }
 
-  async createUserProfile(uid, profileData) {
-    try {
-      await setDoc(doc(db, 'usuarios', uid), profileData);
-      return true;
-    } catch (error) {
-      console.error('Erro ao criar perfil:', error);
-      return false;
-    }
-  }
-
-  async register(email, senha, perfil, dadosAdicionais = {}) {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
-      
-      // Criar perfil no Firestore
-      const profileData = {
-        email: email,
-        perfil: perfil,
-        nome: dadosAdicionais.nome || email.split('@')[0],
-        ativo: true,
-        criadoEm: new Date().toISOString(),
-        ...dadosAdicionais
-      };
-      
-      await this.createUserProfile(userCredential.user.uid, profileData);
-      
-      return { 
-        success: true, 
-        user: userCredential.user 
-      };
-    } catch (error) {
-      console.error('Erro no registro:', error);
-      return { 
-        success: false, 
-        error: error.message 
-      };
+  redirectByProfile(perfil) {
+    switch (perfil.toLowerCase()) {
+      case "fornecedor":
+        window.location.href = "/static/dashboard-fornecedor-funcional.html";
+        break;
+      case "requisitante":
+        window.location.href = "/static/dashboard-requisitante-funcional.html";
+        break;
+      case "comprador":
+        window.location.href = "/static/dashboard-comprador-funcional.html";
+        break;
+      default:
+        alert("Perfil não reconhecido.");
+        break;
     }
   }
 
   async logout() {
-    try {
-      await signOut(auth);
-      localStorage.clear();
-      window.location.href = '/static/index.html';
-      return { success: true };
-    } catch (error) {
-      console.error('Erro no logout:', error);
-      return { 
-        success: false, 
-        error: error.message 
-      };
-    }
-  }
-
-  isAuthenticated() {
-    return this.currentUser !== null;
-  }
-
-  getUserProfile() {
-    return this.userProfile;
-  }
-
-  checkPermission(requiredProfile) {
-    return this.userProfile && this.userProfile.perfil === requiredProfile;
+    await signOut(auth);
+    window.location.href = "/static/index.html"; // volta para tela inicial
   }
 }
 
-// Criar instância global
+// Instância global
 window.authSystem = new AuthSystem();
-
-// Exportar para uso em outros módulos
-export default window.authSystem;
