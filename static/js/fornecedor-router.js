@@ -63,28 +63,30 @@ export class FornecedorRouter {
      */
     async handleAuthenticatedUser(user) {
         try {
-            // Buscar perfil do usuário no backend
-            const perfil = await this.getUserProfile(user);
-            
-            if (perfil === 'Fornecedor') {
-                this.setupFornecedorSession(user, perfil);
-                this.redirectToFornecedorDashboard();
+            // Buscar dados do usuário no Firestore
+            const userDocRef = doc(db, "usuarios", user.uid);
+            const userSnap = await getDoc(userDocRef);
+    
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+    
+                if (userData.perfil === "Fornecedor") {
+                    alert("Login Realizado - Perfil Fornecedor");
+                    this.redirectToFornecedorDashboard();
+                    return;
+                } else {
+                    // Outros perfis continuam indo para o portal unificado
+                    this.redirectToPortalUnificado();
+                }
             } else {
-                this.setupGeneralSession(user, perfil);
+                console.warn("Usuário não encontrado no Firestore");
                 this.redirectToPortalUnificado();
             }
         } catch (error) {
-            console.error('Erro ao processar usuário autenticado:', error);
-            // Em caso de erro, assumir fornecedor se estiver na página de fornecedor
-            if (this.isOnFornecedorPage()) {
-                this.setupFornecedorSession(user, 'Fornecedor');
-                this.redirectToFornecedorDashboard();
-            } else {
-                this.redirectToPortalUnificado();
-            }
+            console.error("Erro ao processar usuário autenticado:", error);
+            this.redirectToPortalUnificado();
         }
     }
-
     /**
      * Busca perfil do usuário no backend
      */
