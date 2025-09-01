@@ -782,27 +782,81 @@
 
         // Estado da aplicação
         let fornecedorLogado = null;
-
-        // Funções de Login
-        async function fazerLogin(email, senha) {
-            try {
-                // Login via Firebase
-                const userCredential = await signInWithEmailAndPassword(window.firebaseAuth, email, senha);
-                const user = userCredential.user;
-                
-                // Buscar dados do fornecedor no Firestore
-                const userDoc = await window.getDoc(window.doc(window.firebaseDb, 'Usuario', user.uid));
-                
-                if (!userDoc.exists()) {
-                    throw new Error('Usuário não encontrado');
+        
+        // Adicionar imports Firebase no início
+        (async function() {
+            // Importar Firebase
+            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+            const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+            const { getFirestore, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        
+            // Configuração Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyCqF366Ft7RkzHYaZb77HboNO3BPbmCjT8",
+                authDomain: "portal-de-proposta.firebaseapp.com",
+                projectId: "portal-de-proposta",
+                storageBucket: "portal-de-proposta.appspot.com",
+                messagingSenderId: "321036073908",
+                appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+            };
+        
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+        
+            // Verificar autenticação
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    // Não autenticado - redirecionar para login
+                    window.location.href = '/static/portal-fornecedor-unificado.html';
+                    return;
                 }
-                
-                const userData = userDoc.data();
-                
-                // Verificar se é fornecedor
-                if (userData.perfil !== 'fornecedor') {
-                    throw new Error('Apenas fornecedores podem acessar este módulo');
+        
+                try {
+                    // Buscar dados do usuário
+                    const userDoc = await getDoc(doc(db, 'Usuario', user.uid));
+                    
+                    if (!userDoc.exists()) {
+                        alert('Usuário não encontrado no sistema');
+                        window.location.href = '/static/portal-fornecedor-unificado.html';
+                        return;
+                    }
+        
+                    const userData = userDoc.data();
+                    
+                    // Verificar se é fornecedor
+                    if (userData.perfil !== 'fornecedor') {
+                        alert('Acesso negado. Esta área é exclusiva para fornecedores.');
+                        window.location.href = '/static/portal-fornecedor-unificado.html';
+                        return;
+                    }
+        
+                    // Configurar fornecedor logado
+                    fornecedorLogado = {
+                        id: user.uid,
+                        razaoSocial: userData.nome || userData.nomeEmpresa || 'Fornecedor',
+                        cnpj: userData.cnpj || 'CNPJ não informado',
+                        email: userData.email,
+                        telefone: userData.telefone || '',
+                        endereco: userData.endereco || '',
+                        cidade: userData.cidade || ''
+                    };
+        
+                    // Atualizar interface
+                    document.getElementById('user-name').textContent = fornecedorLogado.razaoSocial;
+                    document.getElementById('user-cnpj').textContent = `CNPJ: ${fornecedorLogado.cnpj}`;
+        
+                    // Carregar dados iniciais
+                    carregarEstatisticas();
+                    carregarProcessos();
+        
+                } catch (error) {
+                    console.error('Erro ao carregar dados do usuário:', error);
+                    alert('Erro ao carregar dados. Faça login novamente.');
+                    window.location.href = '/static/portal-fornecedor-unificado.html';
                 }
+            });
+        })();
                 
                 // Salvar dados do fornecedor
                 fornecedorLogado = {
@@ -839,29 +893,25 @@
             return false;
         }
 
-        function mostrarDashboard() {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('dashboard-screen').style.display = 'flex';
-            
-            // Atualizar informações do usuário
-            document.getElementById('user-name').textContent = fornecedorLogado.razaoSocial;
-            document.getElementById('user-cnpj').textContent = `CNPJ: ${fornecedorLogado.cnpj}`;
-            
-            // Carregar dados iniciais
-            carregarEstatisticas();
-            carregarProcessos();
-        }
+        // Função removida - dashboard já é mostrado diretamente
 
         async function logout() {
             if (confirm('Deseja realmente sair do sistema?')) {
                 try {
-                    await window.firebaseSignOut(window.firebaseAuth);
+                    // Importar signOut do Firebase
+                    const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+                    const auth = getAuth();
+                    
+                    await signOut(auth);
                     sessionStorage.clear();
-                    localStorage.removeItem('fornecedor_logado');
-                    fornecedorLogado = null;
-                    location.reload();
+                    localStorage.clear();
+                    
+                    // Redirecionar para login
+                    window.location.href = '/static/portal-fornecedor-unificado.html';
                 } catch (error) {
                     console.error('Erro ao fazer logout:', error);
+                    // Forçar redirecionamento mesmo com erro
+                    window.location.href = '/static/portal-fornecedor-unificado.html';
                 }
             }
         }
@@ -1518,14 +1568,7 @@
             
             // Event listeners
             modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
-                btn.addEventListener('click', () => modal.remove());
-            });
-            
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.remove();
-            });
-        }
-
+                
         // Baixar TR completo com todos os campos
         function baixarTR(processoId) {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
