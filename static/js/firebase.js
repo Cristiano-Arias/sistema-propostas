@@ -1,34 +1,33 @@
-// /static/js/firebase.js — Web v9 modular (CDN) com proteção contra init duplicado
-
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  onAuthStateChanged,
+// firebase.js - Configuração centralizada do Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { 
+  getAuth, 
   signInWithEmailAndPassword,
-  signOut
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  onSnapshot
+import { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  setDoc 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Config do projeto (a mesma do Console)
-export const firebaseConfig = {
-  apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+// ⚠️ Substituir pelas suas credenciais
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
   authDomain: "portal-de-proposta.firebaseapp.com",
   projectId: "portal-de-proposta",
-  storageBucket: "portal-de-proposta.firebasestorage.app",
-  messagingSenderId: "321036073908",
-  appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+  storageBucket: "portal-de-proposta.appspot.com",
+  messagingSenderId: "XXXXXXXXX",
+  appId: "1:XXXXXXXX:web:XXXXXXX"
 };
 
-// ✅ Inicializa UMA ÚNICA instância
-export const app  = getApps().length ? getApp() : initializeApp(firebaseConfig);  // evita app/duplicate-app
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db   = getFirestore(app);
+export const db = getFirestore(app);
 
-// Re-exporta utilitários que o resto do app usa
-export { onAuthStateChanged, signInWithEmailAndPassword, signOut, doc, getDoc, setDoc, onSnapshot };
+// Exportações comuns
+export { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, doc, getDoc, setDoc };
