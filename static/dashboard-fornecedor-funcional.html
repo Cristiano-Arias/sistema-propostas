@@ -858,41 +858,6 @@
             });
         })();
                 
-                // Salvar dados do fornecedor
-                fornecedorLogado = {
-                    id: user.uid,
-                    razaoSocial: userData.nome || userData.nomeEmpresa,
-                    cnpj: userData.cnpj || 'Não informado',
-                    email: userData.email,
-                    telefone: userData.telefone || '',
-                    endereco: userData.endereco || '',
-                    cidade: userData.cidade || ''
-                };
-                
-                sessionStorage.setItem('fornecedor_logado', JSON.stringify(fornecedorLogado));
-                return true;
-                
-            } catch (error) {
-                console.error('Erro no login:', error);
-                return false;
-            }
-        }
-
-            if (usuario) {
-                // Buscar dados completos do fornecedor
-                const fornecedores = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES_CADASTRADOS, []);
-                const fornecedor = fornecedores.find(f => f.id === usuario.id);
-
-                if (fornecedor) {
-                    fornecedorLogado = fornecedor;
-                    SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO, fornecedorLogado);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         // Função removida - dashboard já é mostrado diretamente
 
         async function logout() {
