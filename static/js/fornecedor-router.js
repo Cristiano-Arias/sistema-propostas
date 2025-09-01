@@ -64,7 +64,7 @@ export class FornecedorRouter {
     async handleAuthenticatedUser(user) {
         try {
             // Buscar dados do usuário no Firestore
-            const userDocRef = doc(db, "usuarios", user.uid);
+            const userDocRef = doc(db, Uusuario", user.uid);
             const userSnap = await getDoc(userDocRef);
     
             if (userSnap.exists()) {
