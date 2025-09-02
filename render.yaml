@@ -1,6 +1,7 @@
 databases:
   - name: concorrencia-db
     plan: starter
+    
 services:
   - type: web
     name: concorrencia-api
