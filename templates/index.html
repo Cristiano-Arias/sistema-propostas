@@ -1,618 +1,4 @@
-                case 'FORNECEDOR':
-                    setupFornecedorDashboard();
-                    break;
-            }
-        }
-
-        // ============= REQUISITANTE MODULE =============
-        function setupRequisitanteDashboard() {
-            const navTabs = document.getElementById('navTabs');
-            const content = document.getElementById('content');
-            
-            // Create tabs
-            navTabs.innerHTML = `
-                <button class="nav-tab active" onclick="switchTab('tr-create')">Criar/Editar TR</button>
-                <button class="nav-tab" onclick="switchTab('tr-list')">Meus TRs</button>
-                <button class="nav-tab" onclick="switchTab('technical-review')">Análise Técnica</button>
-            `;
-            
-            // Create content areas
-            content.innerHTML = `
-                <div id="tr-create" class="tab-content active">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Termo de Referência</h3>
-                            <div>
-                                <button class="btn btn-primary" onclick="saveTR()">💾 Salvar</button>
-                                <button class="btn btn-success" onclick="submitTR()">📤 Enviar para Aprovação</button>
-                            </div>
-                        </div>
-                        <form id="trForm">
-                            <div class="form-group">
-                                <label>Processo</label>
-                                <select id="trProcurement" onchange="loadTR()">
-                                    <option value="">Selecione um processo...</option>
-                                </select>
-                            </div>
-                            
-                            <h4>📋 Informações Gerais</h4>
-                            <div class="form-group">
-                                <label>Objetivo</label>
-                                <textarea id="trObjetivo" placeholder="Descreva o objetivo do processo..."></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Situação Atual</label>
-                                <textarea id="trSituacaoAtual" placeholder="Descreva a situação atual..."></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Descrição dos Serviços</label>
-                                <textarea id="trDescricaoServicos" placeholder="Detalhe os serviços necessários..."></textarea>
-                            </div>
-                            
-                            <h4>📍 Execução</h4>
-                            <div class="form-group">
-                                <label>Local e Horário dos Trabalhos</label>
-                                <input type="text" id="trLocalHorario" placeholder="Ex: Sede da empresa, 08h às 18h">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Prazo de Execução</label>
-                                <input type="text" id="trPrazoExecucao" placeholder="Ex: 90 dias">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Garantia</label>
-                                <input type="text" id="trGarantia" placeholder="Ex: 12 meses">
-                            </div>
-                            
-                            <h4>📊 Planilha de Serviços</h4>
-                            <div id="serviceItemsContainer">
-                                <div class="service-item-row service-item-header">
-                                    <div>Ordem</div>
-                                    <div>Código</div>
-                                    <div>Descrição</div>
-                                    <div>Unidade</div>
-                                    <div>Quantidade</div>
-                                    <div>Ações</div>
-                                </div>
-                                <div id="serviceItemsList"></div>
-                            </div>
-                            <button type="button" class="btn btn-secondary" onclick="addServiceItem()">➕ Adicionar Item</button>
-                        </form>
-                    </div>
-                </div>
-                
-                <div id="tr-list" class="tab-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Meus Termos de Referência</h3>
-                        </div>
-                        <div id="myTRsList"></div>
-                    </div>
-                </div>
-                
-                <div id="technical-review" class="tab-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Propostas para Análise Técnica</h3>
-                        </div>
-                        <div id="technicalProposalsList"></div>
-                    </div>
-                </div>
-            `;
-            
-            // Load initial data
-            loadProcurementsForTR();
-            loadMyTRs();
-            loadTechnicalProposals();
-        }
-
-        // TR Functions
-        async function loadProcurementsForTR() {
-            try {
-                const response = await fetchAPI('/procurements');
-                const procurements = await response.json();
-                
-                const select = document.getElementById('trProcurement');
-                procurements.forEach(proc => {
-                    const option = document.createElement('option');
-                    option.value = proc.id;
-                    option.textContent = proc.title;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error loading procurements:', error);
-            }
-        }
-
-        async function loadTR() {
-            const procId = document.getElementById('trProcurement').value;
-            if (!procId) return;
-            
-            try {
-                const response = await fetchAPI(`/procurements/${procId}/tr`);
-                if (response.ok) {
-                    const tr = await response.json();
-                    
-                    // Fill form with TR data
-                    document.getElementById('trObjetivo').value = tr.objetivo || '';
-                    document.getElementById('trSituacaoAtual').value = tr.situacao_atual || '';
-                    document.getElementById('trDescricaoServicos').value = tr.descricao_servicos || '';
-                    document.getElementById('trLocalHorario').value = tr.local_horario_trabalhos || '';
-                    document.getElementById('trPrazoExecucao').value = tr.prazo_execucao || '';
-                    document.getElementById('trGarantia').value = tr.garantia || '';
-                    
-                    // Load service items
-                    loadServiceItems(tr.service_items || []);
-                    
-                    currentTR = tr;
-                }
-            } catch (error) {
-                console.error('Error loading TR:', error);
-            }
-        }
-
-        function loadServiceItems(items) {
-            const container = document.getElementById('serviceItemsList');
-            container.innerHTML = '';
-            
-            items.forEach((item, index) => {
-                addServiceItem(item);
-            });
-            
-            if (items.length === 0) {
-                addServiceItem();
-            }
-        }
-
-        function addServiceItem(item = {}) {
-            const container = document.getElementById('serviceItemsList');
-            const index = container.children.length + 1;
-            
-            const row = document.createElement('div');
-            row.className = 'service-item-row';
-            row.innerHTML = `
-                <input type="number" class="service-item-input" value="${item.item_ordem || index}" data-field="item_ordem">
-                <input type="text" class="service-item-input" value="${item.codigo || ''}" placeholder="COD" data-field="codigo">
-                <input type="text" class="service-item-input" value="${item.descricao || ''}" placeholder="Descrição do serviço" data-field="descricao">
-                <input type="text" class="service-item-input" value="${item.unid || 'UN'}" data-field="unid">
-                <input type="number" class="service-item-input" value="${item.qtde || 1}" step="0.001" data-field="qtde">
-                <button onclick="removeServiceItem(this)" class="btn btn-danger">🗑️</button>
-            `;
-            
-            container.appendChild(row);
-        }
-
-        function removeServiceItem(button) {
-            button.parentElement.remove();
-        }
-
-        async function saveTR() {
-            const procId = document.getElementById('trProcurement').value;
-            if (!procId) {
-                alert('Selecione um processo');
-                return;
-            }
-            
-            const serviceItems = [];
-            document.querySelectorAll('#serviceItemsList .service-item-row').forEach(row => {
-                const inputs = row.querySelectorAll('.service-item-input');
-                const item = {};
-                inputs.forEach(input => {
-                    const field = input.dataset.field;
-                    item[field] = field === 'qtde' || field === 'item_ordem' ? 
-                        parseFloat(input.value) : input.value;
-                });
-                serviceItems.push(item);
-            });
-            
-            const trData = {
-                objetivo: document.getElementById('trObjetivo').value,
-                situacao_atual: document.getElementById('trSituacaoAtual').value,
-                descricao_servicos: document.getElementById('trDescricaoServicos').value,
-                local_horario_trabalhos: document.getElementById('trLocalHorario').value,
-                prazo_execucao: document.getElementById('trPrazoExecucao').value,
-                garantia: document.getElementById('trGarantia').value,
-                planilha_servico: serviceItems
-            };
-            
-            try {
-                const response = await fetchAPI(`/procurements/${procId}/tr`, {
-                    method: 'POST',
-                    body: JSON.stringify(trData)
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    showNotification('Sucesso', 'TR salvo com sucesso!');
-                    currentTR = result;
-                }
-            } catch (error) {
-                console.error('Error saving TR:', error);
-                showNotification('Erro', 'Erro ao salvar TR');
-            }
-        }
-
-        async function submitTR() {
-            if (!currentTR || !currentTR.tr_id) {
-                alert('Salve o TR antes de enviar para aprovação');
-                return;
-            }
-            
-            if (confirm('Deseja enviar o TR para aprovação do comprador?')) {
-                try {
-                    const response = await fetchAPI(`/tr/${currentTR.tr_id}/submit`, {
-                        method: 'POST'
-                    });
-                    
-                    if (response.ok) {
-                        showNotification('Sucesso', 'TR enviado para aprovação!');
-                        loadMyTRs();
-                    }
-                } catch (error) {
-                    console.error('Error submitting TR:', error);
-                    showNotification('Erro', 'Erro ao enviar TR');
-                }
-            }
-        }
-
-        async function loadMyTRs() {
-            // Implementation to load user's TRs
-            const container = document.getElementById('myTRsList');
-            container.innerHTML = '<div class="spinner"></div>';
-            
-            // Fetch TRs from API
-            // Display in table format
-        }
-
-        async function loadTechnicalProposals() {
-            // Implementation to load proposals for technical review
-            const container = document.getElementById('technicalProposalsList');
-            container.innerHTML = '<div class="spinner"></div>';
-            
-            // Fetch proposals needing technical review
-            // Display with review forms
-        }
-
-        // ============= COMPRADOR MODULE =============
-        function setupCompradorDashboard() {
-            const navTabs = document.getElementById('navTabs');
-            const content = document.getElementById('content');
-            
-            navTabs.innerHTML = `
-                <button class="nav-tab active" onclick="switchTab('procurements')">Processos</button>
-                <button class="nav-tab" onclick="switchTab('tr-approval')">Aprovar TRs</button>
-                <button class="nav-tab" onclick="switchTab('invites')">Convites</button>
-                <button class="nav-tab" onclick="switchTab('proposals-analysis')">Análise de Propostas</button>
-                <button class="nav-tab" onclick="switchTab('comparison')">Comparação IA</button>
-            `;
-            
-            content.innerHTML = `
-                <div id="procurements" class="tab-content active">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Processos de Concorrência</h3>
-                            <button class="btn btn-primary" onclick="createProcurement()">➕ Novo Processo</button>
-                        </div>
-                        <div id="procurementsList"></div>
-                    </div>
-                </div>
-                
-                <div id="tr-approval" class="tab-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">TRs Pendentes de Aprovação</h3>
-                        </div>
-                        <div id="pendingTRsList"></div>
-                    </div>
-                </div>
-                
-                <div id="invites" class="tab-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Gerenciar Convites</h3>
-                        </div>
-                        <div id="invitesList"></div>
-                    </div>
-                </div>
-                
-                <div id="proposals-analysis" class="tab-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Propostas Recebidas</h3>
-                        </div>
-                        <div id="proposalsList"></div>
-                    </div>
-                </div>
-                
-                <div id="comparison" class="tab-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Análise Comparativa com IA</h3>
-                        </div>
-                        <div id="comparisonView"></div>
-                    </div>
-                </div>
-            `;
-            
-            // Load initial data
-            loadProcurements();
-            loadPendingTRs();
-        }
-
-        async function createProcurement() {
-            const title = prompt('Título do Processo:');
-            if (!title) return;
-            
-            try {
-                const response = await fetchAPI('/procurements', {
-                    method: 'POST',
-                    body: JSON.stringify({ title })
-                });
-                
-                if (response.ok) {
-                    showNotification('Sucesso', 'Processo criado!');
-                    loadProcurements();
-                }
-            } catch (error) {
-                console.error('Error creating procurement:', error);
-            }
-        }
-
-        async function loadProcurements() {
-            const container = document.getElementById('procurementsList');
-            container.innerHTML = '<div class="spinner"></div>';
-            
-            try {
-                const response = await fetchAPI('/procurements');
-                const procurements = await response.json();
-                
-                if (procurements.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📋</div>
-                            <div class="empty-state-title">Nenhum processo encontrado</div>
-                            <div class="empty-state-text">Crie um novo processo para começar</div>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                const table = `
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Título</th>
-                                <th>Status</th>
-                                <th>Criado em</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${procurements.map(proc => `
-                                <tr>
-                                    <td>#${proc.id}</td>
-                                    <td>${proc.title}</td>
-                                    <td><span class="status-badge status-${proc.status.toLowerCase()}">${proc.status}</span></td>
-                                    <td>${new Date(proc.created_at).toLocaleDateString('pt-BR')}</td>
-                                    <td>
-                                        <button class="btn btn-primary" onclick="viewProcurement(${proc.id})">Ver</button>
-                                        ${proc.status === 'TR_APROVADO' ? 
-                                            `<button class="btn btn-success" onclick="openProcurement(${proc.id})">Abrir</button>` : ''}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-                
-                container.innerHTML = table;
-            } catch (error) {
-                console.error('Error loading procurements:', error);
-                container.innerHTML = '<div class="error">Erro ao carregar processos</div>';
-            }
-        }
-
-        async function loadPendingTRs() {
-            const container = document.getElementById('pendingTRsList');
-            container.innerHTML = '<div class="spinner"></div>';
-            
-            // Fetch pending TRs for approval
-            // Display with approve/reject buttons
-        }
-
-        async function openProcurement(procId) {
-            const deadline = prompt('Prazo para propostas (YYYY-MM-DD HH:MM):');
-            if (!deadline) return;
-            
-            try {
-                const response = await fetchAPI(`/procurements/${procId}/open`, {
-                    method: 'POST',
-                    body: JSON.stringify({ deadline })
-                });
-                
-                if (response.ok) {
-                    showNotification('Sucesso', 'Processo aberto para propostas!');
-                    loadProcurements();
-                }
-            } catch (error) {
-                console.error('Error opening procurement:', error);
-            }
-        }
-
-        // ============= FORNECEDOR MODULE =============
-        function setupFornecedorDashboard() {
-            const navTabs = document.getElementById('navTabs');
-            const content = document.getElementById('content');
-            
-            navTabs.innerHTML = `
-                <button class="nav-tab active" onclick="switchTab('available-procurements')">Processos Disponíveis</button>
-                <button class="nav-tab" onclick="switchTab('my-proposals')">Minhas Propostas</button>
-                <button class="nav-tab" onclick="switchTab('create-proposal')">Criar Proposta</button>
-            `;
-            
-            content.innerHTML = `
-                <div id="available-procurements" class="tab-content active">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Processos Abertos</h3>
-                        </div>
-                        <div id="availableProcurementsList"></div>
-                    </div>
-                </div>
-                
-                <div id="my-proposals" class="tab-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Minhas Propostas</h3>
-                        </div>
-                        <div id="myProposalsList"></div>
-                    </div>
-                </div>
-                
-                <div id="create-proposal" class="tab-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Nova Proposta</h3>
-                            <div>
-                                <button class="btn btn-primary" onclick="saveProposal()">💾 Salvar</button>
-                                <button class="btn btn-success" onclick="submitProposal()">📤 Enviar Proposta</button>
-                            </div>
-                        </div>
-                        <form id="proposalForm">
-                            <div class="form-group">
-                                <label>Processo</label>
-                                <select id="proposalProcurement" onchange="loadTRForProposal()">
-                                    <option value="">Selecione um processo...</option>
-                                </select>
-                            </div>
-                            
-                            <div id="trDetails" style="display:none;">
-                                <h4>📄 Termo de Referência</h4>
-                                <div class="card" style="background: #f8f9fa;">
-                                    <div id="trContent"></div>
-                                </div>
-                            </div>
-                            
-                            <h4>📝 Proposta Técnica</h4>
-                            <div class="form-group">
-                                <label>Descrição Técnica</label>
-                                <textarea id="technicalDescription" rows="5" placeholder="Descreva sua solução técnica..."></textarea>
-                            </div>
-                            
-                            <h4>💰 Proposta Comercial</h4>
-                            <div class="form-group">
-                                <label>Condições de Pagamento</label>
-                                <input type="text" id="paymentConditions" placeholder="Ex: 30/60/90 dias">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Prazo de Entrega</label>
-                                <input type="text" id="deliveryTime" placeholder="Ex: 45 dias">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Garantia</label>
-                                <input type="text" id="warrantyTerms" placeholder="Ex: 12 meses">
-                            </div>
-                            
-                            <h4>📊 Itens e Preços</h4>
-                            <div id="proposalItemsContainer"></div>
-                        </form>
-                    </div>
-                </div>
-            `;
-            
-            // Load initial data
-            loadAvailableProcurements();
-            loadMyProposals();
-        }
-
-        async function loadAvailableProcurements() {
-            const container = document.getElementById('availableProcurementsList');
-            container.innerHTML = '<div class="spinner"></div>';
-            
-            // Fetch open procurements
-            // Display with view TR and create proposal buttons
-        }
-
-        async function loadMyProposals() {
-            const container = document.getElementById('myProposalsList');
-            container.innerHTML = '<div class="spinner"></div>';
-            
-            // Fetch user's proposals
-            // Display with status and edit options
-        }
-
-        async function loadTRForProposal() {
-            const procId = document.getElementById('proposalProcurement').value;
-            if (!procId) {
-                document.getElementById('trDetails').style.display = 'none';
-                return;
-            }
-            
-            // Load TR details and display
-            document.getElementById('trDetails').style.display = 'block';
-            
-            // Load service items for pricing
-        }
-
-        // ============= UTILITY FUNCTIONS =============
-        function switchTab(tabId) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(tabId).classList.add('active');
-            
-            // Update nav tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-        }
-
-        function openModal(title, content) {
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalBody').innerHTML = content;
-            document.getElementById('modal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('modal').classList.remove('active');
-        }
-
-        async function fetchAPI(endpoint, options = {}) {
-            const token = localStorage.getItem('token');
-            
-            const defaultOptions = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            };
-            
-            if (options.body && typeof options.body !== 'string') {
-                options.body = JSON.stringify(options.body);
-            }
-            
-            return fetch(`${API_BASE}${endpoint}`, { ...defaultOptions, ...options });
-        }
-
-        // Click outside modal to close
-        document.getElementById('modal').addEventListener('click', (e) => {
-            if (e.target.id === 'modal') {
-                closeModal();
-            }
-        });
-    </script>
-</body>
-</html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -878,6 +264,8 @@
         .status-aprovado { background: #d4edda; color: #155724; }
         .status-rejeitado { background: #f8d7da; color: #721c24; }
         .status-aberto { background: #cce5ff; color: #004085; }
+        .status-tr_pendente { background: #fff3cd; color: #856404; }
+        .status-tr_aprovado { background: #d4edda; color: #155724; }
 
         /* Tables */
         .table {
@@ -931,6 +319,17 @@
             to {
                 transform: translateX(0);
                 opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
             }
         }
 
@@ -1047,6 +446,7 @@
             padding: 5px;
             border: 1px solid #ced4da;
             border-radius: 3px;
+            width: 100%;
         }
 
         /* Comparison View */
@@ -1089,6 +489,34 @@
         .empty-state-text {
             font-size: 16px;
         }
+
+        .error {
+            color: #dc3545;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .service-item-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1102,15 +530,21 @@
             <form id="loginForm">
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" required placeholder="seu@email.com">
+                    <input type="email" id="email" required placeholder="seu@email.com" autocomplete="email">
                 </div>
                 <div class="form-group">
                     <label for="password">Senha</label>
-                    <input type="password" id="password" required placeholder="••••••••">
+                    <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
             </form>
             <div id="loginError" style="color: #dc3545; margin-top: 15px; text-align: center;"></div>
+            
+            <!-- Link para criar conta de teste -->
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef; text-align: center; font-size: 14px; color: #6c757d;">
+                <p>Primeira vez? Crie uma conta de teste:</p>
+                <button type="button" class="btn btn-secondary" onclick="showRegisterForm()" style="margin-top: 10px;">Criar Conta</button>
+            </div>
         </div>
     </div>
 
@@ -1146,207 +580,100 @@
         </div>
     </div>
 
+    <!-- JavaScript -->
+    <script src="/static/js/app.js"></script>
+    
+    <!-- Quick Register for Testing -->
     <script>
-        // Global Variables
-        let socket = null;
-        let currentUser = null;
-        let currentProcurement = null;
-        let currentTR = null;
-        let currentProposal = null;
-
-        // API Base URL
-        const API_BASE = window.location.origin + '/api';
-
-        // Initialize App
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
-            setupEventListeners();
-        });
-
-        // Authentication
-        function checkAuth() {
-            const token = localStorage.getItem('token');
-            if (token) {
-                // Verify token and get user info
-                fetch(`${API_BASE}/auth/me`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        return response.json();
-                    } else {
-                        throw new Error('Invalid token');
-                    }
-                })
-                .then(user => {
-                    currentUser = user;
-                    showDashboard();
-                })
-                .catch(() => {
-                    localStorage.removeItem('token');
-                    showLogin();
-                });
-            } else {
-                showLogin();
-            }
-        }
-
-        function showLogin() {
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('dashboard').classList.remove('active');
-        }
-
-        function showDashboard() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('dashboard').classList.add('active');
+        function showRegisterForm() {
+            const modalContent = `
+                <h4>Criar Conta de Teste</h4>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input type="text" id="regName" required placeholder="Seu nome">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" required placeholder="seu@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Senha</label>
+                        <input type="password" id="regPassword" required placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Usuário</label>
+                        <select id="regRole" required>
+                            <option value="">Selecione...</option>
+                            <option value="REQUISITANTE">Requisitante - Cria TRs</option>
+                            <option value="COMPRADOR">Comprador - Gerencia Processos</option>
+                            <option value="FORNECEDOR">Fornecedor - Envia Propostas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Organização</label>
+                        <input type="text" id="regOrg" placeholder="Nome da empresa (opcional)">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Criar Conta</button>
+                </form>
+                <div id="registerError" style="color: #dc3545; margin-top: 10px;"></div>
+                <div id="registerSuccess" style="color: #28a745; margin-top: 10px;"></div>
+            `;
             
-            // Update user info
-            document.getElementById('userName').textContent = currentUser.full_name;
-            document.getElementById('userRole').textContent = currentUser.role;
+            document.getElementById('modalTitle').textContent = 'Criar Conta de Teste';
+            document.getElementById('modalBody').innerHTML = modalContent;
+            document.getElementById('modal').classList.add('active');
             
-            // Setup dashboard based on role
-            setupDashboard();
-            
-            // Connect WebSocket
-            connectSocket();
-        }
-
-        function setupEventListeners() {
-            // Login form
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            // Setup register form handler
+            document.getElementById('registerForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
+                
+                const data = {
+                    full_name: document.getElementById('regName').value,
+                    email: document.getElementById('regEmail').value,
+                    password: document.getElementById('regPassword').value,
+                    role: document.getElementById('regRole').value,
+                    organization: document.getElementById('regOrg').value || null
+                };
                 
                 try {
-                    const response = await fetch(`${API_BASE}/auth/login`, {
+                    const response = await fetch('/api/auth/register', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ email, password })
+                        body: JSON.stringify(data)
                     });
                     
-                    const data = await response.json();
+                    const result = await response.json();
                     
                     if (response.ok) {
-                        localStorage.setItem('token', data.access_token);
-                        currentUser = data.user;
-                        showDashboard();
+                        document.getElementById('registerSuccess').textContent = 'Conta criada com sucesso! Você já pode fazer login.';
+                        document.getElementById('registerError').textContent = '';
+                        setTimeout(() => {
+                            closeModal();
+                            document.getElementById('email').value = data.email;
+                            document.getElementById('password').value = data.password;
+                        }, 2000);
                     } else {
-                        document.getElementById('loginError').textContent = data.error || 'Erro ao fazer login';
+                        document.getElementById('registerError').textContent = result.error || 'Erro ao criar conta';
+                        document.getElementById('registerSuccess').textContent = '';
                     }
                 } catch (error) {
-                    document.getElementById('loginError').textContent = 'Erro de conexão';
+                    document.getElementById('registerError').textContent = 'Erro de conexão';
+                    document.getElementById('registerSuccess').textContent = '';
                 }
             });
         }
-
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
         function logout() {
             localStorage.removeItem('token');
-            currentUser = null;
-            if (socket) {
-                socket.disconnect();
-            }
-            showLogin();
+            location.reload();
         }
-
-        // WebSocket Connection
-        function connectSocket() {
-            socket = io({
-                transports: ['websocket']
-            });
-            
-            socket.on('connect', () => {
-                console.log('Socket connected:', socket.id);
-                
-                // Join appropriate rooms based on role
-                if (currentUser.role === 'COMPRADOR') {
-                    socket.emit('join_role', { role: 'COMPRADOR' });
-                }
-            });
-            
-            // Listen to events
-            setupSocketListeners();
-        }
-
-        function setupSocketListeners() {
-            // TR Events
-            socket.on('tr.saved', (data) => {
-                showNotification('Termo de Referência', 'TR foi atualizado');
-                if (currentUser.role === 'COMPRADOR') {
-                    loadPendingTRs();
-                }
-            });
-            
-            socket.on('tr.submitted', (data) => {
-                showNotification('Novo TR para Aprovação', `TR do processo ${data.title} foi submetido`);
-                if (currentUser.role === 'COMPRADOR') {
-                    loadPendingTRs();
-                }
-            });
-            
-            socket.on('tr.approval_result', (data) => {
-                const status = data.approved ? 'aprovado' : 'rejeitado';
-                showNotification('Resultado da Aprovação', `Seu TR foi ${status}`);
-                if (currentUser.role === 'REQUISITANTE') {
-                    loadMyTRs();
-                }
-            });
-            
-            // Procurement Events
-            socket.on('procurement.opened', (data) => {
-                showNotification('Processo Aberto', `${data.title} está recebendo propostas`);
-                if (currentUser.role === 'FORNECEDOR') {
-                    loadAvailableProcurements();
-                }
-            });
-            
-            // Proposal Events
-            socket.on('proposal.submitted', (data) => {
-                showNotification('Nova Proposta', `${data.supplier} enviou uma proposta`);
-                if (currentUser.role === 'COMPRADOR') {
-                    loadProposals();
-                }
-            });
-            
-            socket.on('proposal.technical_reviewed', (data) => {
-                const status = data.approved ? 'aprovada' : 'rejeitada';
-                showNotification('Parecer Técnico', `Proposta foi ${status} tecnicamente`);
-            });
-        }
-
-        function showNotification(title, body) {
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.innerHTML = `
-                <div class="notification-title">${title}</div>
-                <div class="notification-body">${body}</div>
-            `;
-            
-            document.getElementById('notifications').appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 5000);
-        }
-
-        // Dashboard Setup Based on Role
-        function setupDashboard() {
-            const navTabs = document.getElementById('navTabs');
-            const content = document.getElementById('content');
-            
-            navTabs.innerHTML = '';
-            content.innerHTML = '';
-            
-            switch(currentUser.role) {
-                case 'REQUISITANTE':
-                    setupRequisitanteDashboard();
-                    break;
-                case 'COMPRADOR':
-                    setupCompradorDashboard();
-                    break;
-                case 'FORNECEDOR':
-                    setupFornecedorDashboard();
+    </script>
+</body>
+</html>
