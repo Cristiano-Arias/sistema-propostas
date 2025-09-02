@@ -1,16 +1,30 @@
-// static/js/auth-facade.js - Fachada simples para logins via Firebase
+// static/js/auth-facade.js
 import { auth, signInWithEmailAndPassword } from './firebase.js';
 
 export async function loginComPerfil(email, senha, perfil) {
-    const cred = await signInWithEmailAndPassword(auth, email, senha);
-    // Após login, persistimos perfil no localStorage (mantendo compatibilidade com o front atual)
-    const lower = (perfil || '').toLowerCase();
-    if (lower.includes('requisitante')) {
-        /* REMOVIDO PARA PRODUÇÃO */
-    } else if (lower.includes('comprador')) {
-        /* REMOVIDO PARA PRODUÇÃO */
-    } else if (lower.includes('fornecedor')) {
-        /* REMOVIDO PARA PRODUÇÃO */
+    try {
+        const cred = await signInWithEmailAndPassword(auth, email, senha);
+        
+        // NÃO usar localStorage - apenas retornar o usuário
+        // O perfil será gerenciado pelo backend via token
+        
+        console.log(`Login realizado: ${email}, perfil: ${perfil}`);
+        return cred.user;
+    } catch (error) {
+        console.error('Erro no login:', error);
+        throw error;
     }
-    return cred.user;
+}
+
+export function getCurrentUser() {
+    return auth.currentUser;
+}
+
+export async function logout() {
+    try {
+        await auth.signOut();
+        console.log('Logout realizado');
+    } catch (error) {
+        console.error('Erro no logout:', error);
+    }
 }
