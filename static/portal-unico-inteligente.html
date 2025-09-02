@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Propostas - Sistema de Gestão</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Portal de Propostas - Login</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +12,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -22,597 +21,506 @@
             padding: 20px;
         }
 
-        /* Container Principal */
-        .main-container {
-            width: 100%;
-            max-width: 1000px;
-            opacity: 0;
-            animation: fadeIn 0.8s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Header */
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            font-size: 42px;
-            font-weight: 300;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .header p {
-            font-size: 18px;
-            opacity: 0.9;
-        }
-
-        /* Card de Login */
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+        .login-container {
+            background: white;
             border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 420px;
+            animation: slideIn 0.5s ease;
         }
 
-        .login-header {
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-container {
             text-align: center;
             margin-bottom: 30px;
         }
 
-        .login-header i {
-            font-size: 64px;
+        .logo {
+            width: 80px;
+            height: 80px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 15px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
-        .login-header h2 {
-            color: #333;
-            font-size: 24px;
-            font-weight: 400;
-            margin-bottom: 8px;
+        .logo svg {
+            width: 45px;
+            height: 45px;
+            fill: white;
         }
 
-        .login-header p {
-            color: #666;
+        h1 {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #718096;
             font-size: 14px;
+            margin-bottom: 30px;
         }
 
-        /* Formulário */
+        .error-message, .success-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #fc8181;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
 
-        .form-group label {
+        label {
             display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
+            color: #4a5568;
             font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
         }
 
-        .form-group input {
+        input {
             width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
             transition: all 0.3s ease;
-            background: white;
+            background: #f7fafc;
         }
 
-        .form-group input:focus {
+        input:focus {
             outline: none;
             border-color: #667eea;
+            background: white;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        /* Botão de Login */
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #a0aec0;
+            transition: color 0.3s ease;
+        }
+
+        .toggle-password:hover {
+            color: #667eea;
+        }
+
         .btn-login {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-bottom: 20px;
-            position: relative;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .btn-login:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
         .btn-login:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
         }
 
-        .btn-login .loading {
-            display: none;
-        }
-
-        .btn-login.loading .btn-text {
-            display: none;
-        }
-
-        .btn-login.loading .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .spinner {
+        .loading {
+            display: inline-block;
             width: 20px;
             height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid white;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
 
-        /* Mensagens */
-        .alert {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-            font-size: 14px;
-        }
-
-        .alert-error {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-        }
-
-        .alert-success {
-            background: #f0fdf4;
-            color: #16a34a;
-            border: 1px solid #bbf7d0;
-        }
-
-        .alert-info {
-            background: #eff6ff;
-            color: #2563eb;
-            border: 1px solid #bfdbfe;
-        }
-
-        /* Seleção Manual de Perfil */
-        .profile-selection {
-            display: none;
+        .forgot-password {
+            text-align: center;
             margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
         }
 
-        .profile-selection h3 {
-            color: #333;
-            margin-bottom: 15px;
-            text-align: center;
-            font-size: 16px;
-        }
-
-        .profile-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-        }
-
-        .profile-btn {
-            padding: 12px;
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            font-size: 14px;
-            color: #333;
-        }
-
-        .profile-btn:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .profile-btn i {
-            display: block;
-            font-size: 20px;
-            margin-bottom: 5px;
+        .forgot-password a {
             color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
         }
 
-        /* Status do Sistema */
-        .system-status {
+        .forgot-password a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .redirect-info {
+            background: #edf2f7;
+            border-radius: 8px;
+            padding: 12px;
             margin-top: 20px;
-            padding: 16px;
-            background: rgba(16, 185, 129, 0.1);
-            border-radius: 12px;
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            display: none;
             text-align: center;
         }
 
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #059669;
+        .redirect-info.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #10b981;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .redirect-info .profile-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 0 4px;
         }
 
         /* Responsividade */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 32px;
-            }
-
-            .login-card {
+        @media (max-width: 480px) {
+            .login-container {
                 padding: 30px 20px;
             }
-
-            .profile-buttons {
-                grid-template-columns: 1fr 1fr;
+            
+            h1 {
+                font-size: 24px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <!-- Header -->
-        <div class="header">
-            <h1>🏢 Portal de Propostas</h1>
-            <p>Sistema Unificado de Gestão de Licitações</p>
+    <div class="login-container">
+        <div class="logo-container">
+            <div class="logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
+                    <path d="M2 17L12 22L22 17"/>
+                    <path d="M2 12L12 17L22 12"/>
+                </svg>
+            </div>
+            <h1>Portal de Propostas</h1>
+            <p class="subtitle">Entre com suas credenciais para continuar</p>
         </div>
 
-        <!-- Card de Login -->
-        <div class="login-card">
-            <div class="login-header">
-                <i class="fas fa-shield-alt"></i>
-                <h2>Acesso ao Sistema</h2>
-                <p>Entre com suas credenciais para continuar</p>
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required 
+                    placeholder="seu.email@exemplo.com"
+                    autocomplete="email"
+                >
             </div>
 
-            <!-- Mensagens -->
-            <div class="alert alert-error" id="errorMessage"></div>
-            <div class="alert alert-success" id="successMessage"></div>
-            <div class="alert alert-info" id="infoMessage"></div>
-
-            <!-- Formulário de Login -->
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" required placeholder="seu@email.com" autocomplete="username">
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Senha</label>
-                    <input type="password" id="password" required placeholder="Digite sua senha" autocomplete="current-password">
-                </div>
-
-                <button type="submit" class="btn-login" id="btnLogin">
-                    <span class="btn-text">Entrar no Sistema</span>
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        Autenticando...
-                    </div>
-                </button>
-            </form>
-
-            <!-- Seleção Manual de Perfil (fallback) -->
-            <div class="profile-selection" id="profileSelection">
-                <h3>Selecione seu perfil de acesso:</h3>
-                <div class="profile-buttons">
-                    <button class="profile-btn" onclick="selectProfile('fornecedor')">
-                        <i class="fas fa-building"></i>
-                        Fornecedor
-                    </button>
-                    <button class="profile-btn" onclick="selectProfile('requisitante')">
-                        <i class="fas fa-user"></i>
-                        Requisitante
-                    </button>
-                    <button class="profile-btn" onclick="selectProfile('comprador')">
-                        <i class="fas fa-shopping-cart"></i>
-                        Comprador
-                    </button>
-                    <button class="profile-btn" onclick="selectProfile('admin')">
-                        <i class="fas fa-user-shield"></i>
-                        Admin
-                    </button>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <div class="password-container">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required 
+                        placeholder="••••••••"
+                        autocomplete="current-password"
+                    >
+                    <span class="toggle-password" onclick="togglePassword()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </span>
                 </div>
             </div>
 
-            <!-- Status do Sistema -->
-            <div class="system-status">
-                <div class="status-indicator">
-                    <span class="status-dot"></span>
-                    Sistema operacional
-                </div>
-            </div>
+            <button type="submit" class="btn-login" id="btnLogin">
+                <span id="btnText">Entrar no Sistema</span>
+            </button>
+        </form>
+
+        <div class="forgot-password">
+            <a href="#" onclick="showForgotPassword(); return false;">Esqueceu sua senha?</a>
+        </div>
+
+        <div id="redirectInfo" class="redirect-info">
+            Detectamos seu perfil: <span class="profile-badge" id="userProfile"></span>
+            <br>
+            <small>Redirecionando em <span id="countdown">3</span> segundos...</small>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script type="module" src="/static/js/firebase.js"></script>
-    <script type="module" src="/static/js/auth-facade.js"></script>
-        <script type="module">
-            import { loginComPerfil } from '/static/js/auth-facade.js';
-            import { auth, onAuthStateChanged, signOut } from '/static/js/firebase.js';
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
-        // Elementos do DOM
-        const form = document.getElementById('loginForm');
-        const emailEl = document.getElementById('email');
-        const passwordEl = document.getElementById('password');
-        const btnLogin = document.getElementById('btnLogin');
-        const profileSelection = document.getElementById('profileSelection');
+    <script>
+        // Configuração do Firebase (substitua com suas credenciais)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKTtdvOl3ebPiVnJiTm7KvEYL1-ruVVsU",
+            authDomain: "sistema-propostas-7fa07.firebaseapp.com",
+            projectId: "sistema-propostas-7fa07",
+            storageBucket: "sistema-propostas-7fa07.appspot.com",
+            messagingSenderId: "1092080268414",
+            appId: "1:1092080268414:web:3a5a8b9c7d6e8f9g0h1i2j"
+        };
 
-        let currentUser = null;
-        let detectedProfile = null;
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
-            // Verificar sessão existente
-            // Antes de verificar a sessão precisamos garantir que não exista
-            // um usuário autenticado previamente no Firebase. O Firebase
-            // persiste a autenticação em navegadores modernos, então
-            // invocamos signOut(auth) ao carregar a página. Em seguida
-            // verificamos a sessão no sessionStorage.
-            window.addEventListener('load', () => {
-                // forçar sign out da sessão Firebase caso exista
-                try {
-                    // signOut retorna uma Promise; não aguardamos para não
-                    // bloquear o carregamento. Falhas são ignoradas.
-                    signOut(auth).catch(() => {});
-                } catch (e) {
-                    // ignore se signOut não estiver disponível
-                }
-                checkExistingSession();
-            });
+        // Configuração da API backend
+        const API_URL = 'https://portal-proposta.onrender.com';
 
-            // Verificar se já existe sessão ativa
-            function checkExistingSession() {
-                const sessions = [
-                    { key: 'fornecedor_logado', dashboard: '/static/dashboard-fornecedor-funcional.html' },
-                    { key: 'requisitante_logado', dashboard: '/static/dashboard-requisitante-funcional.html' },
-                    { key: 'comprador_logado', dashboard: '/static/dashboard-comprador-funcional.html' },
-                    { key: 'admin_logado', dashboard: '/static/admin-usuarios.html' }
-                ];
-                for (const session of sessions) {
-                    // ler dados do sessionStorage ao invés do localStorage
-                    const userData = sessionStorage.getItem(session.key);
-                    if (userData) {
-                        try {
-                            const user = JSON.parse(userData);
-                            if (user && user.email) {
-                                showInfo('Sessão ativa detectada. Redirecionando...');
-                                setTimeout(() => {
-                                    window.location.href = session.dashboard;
-                                }, 1500);
-                                return;
-                            }
-                        } catch (e) {
-                            sessionStorage.removeItem(session.key);
-                        }
-                    }
-                }
-            }
+        // Mapeamento de perfis para URLs dos módulos
+        const PROFILE_ROUTES = {
+            'ADMIN': '/admin',
+            'REQUISITANTE': '/requisitante',
+            'COMPRADOR': '/comprador',
+            'FORNECEDOR': '/fornecedor',
+            'admin': '/admin',
+            'requisitante': '/requisitante',
+            'comprador': '/comprador',
+            'fornecedor': '/fornecedor'
+        };
 
-        // Manipular envio do formulário
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = emailEl.value.trim();
-            const password = passwordEl.value;
-            
-            if (!email || !password) {
-                showError('Por favor, informe e-mail e senha.');
+        // Toggle visibility da senha
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+        }
+
+        // Mostrar mensagem de erro
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Mostrar mensagem de sucesso
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+
+        // Esqueceu a senha
+        function showForgotPassword() {
+            const email = document.getElementById('email').value;
+            if (!email) {
+                showError('Por favor, digite seu email primeiro');
                 return;
             }
 
-            setLoading(true);
-            hideMessages();
+            if (confirm(`Enviar instruções de recuperação para ${email}?`)) {
+                auth.sendPasswordResetEmail(email)
+                    .then(() => {
+                        showSuccess('Email de recuperação enviado! Verifique sua caixa de entrada.');
+                    })
+                    .catch(error => {
+                        showError('Erro ao enviar email: ' + error.message);
+                    });
+            }
+        }
 
-            try {
-                // Detectar perfil do usuário
-                detectedProfile = await detectUserProfile(email);
-                
-                if (detectedProfile) {
-                    // Login com perfil detectado
-                    await loginComPerfil(email, password, detectedProfile);
-                    showSuccess(`Login realizado! Perfil: ${detectedProfile}`);
-                    
-                    setTimeout(() => {
-                        redirectToDashboard(detectedProfile);
-                    }, 1500);
-                } else {
-                    // Fallback: mostrar seleção manual
-                    currentUser = { email, password };
-                    showProfileSelection();
+        // Redirecionar para o módulo correto
+        function redirectToModule(profile) {
+            const redirectInfo = document.getElementById('redirectInfo');
+            const userProfile = document.getElementById('userProfile');
+            const countdown = document.getElementById('countdown');
+            
+            // Mostrar informação de redirecionamento
+            userProfile.textContent = profile.toUpperCase();
+            redirectInfo.classList.add('show');
+            
+            let count = 3;
+            const timer = setInterval(() => {
+                count--;
+                countdown.textContent = count;
+                if (count <= 0) {
+                    clearInterval(timer);
+                    const route = PROFILE_ROUTES[profile] || PROFILE_ROUTES[profile.toLowerCase()];
+                    if (route) {
+                        window.location.href = API_URL + route;
+                    } else {
+                        showError('Perfil não reconhecido. Contate o administrador.');
+                    }
                 }
+            }, 1000);
+        }
+
+        // Handler do formulário de login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btnLogin = document.getElementById('btnLogin');
+            const btnText = document.getElementById('btnText');
+            
+            // Desabilitar botão e mostrar loading
+            btnLogin.disabled = true;
+            btnText.innerHTML = '<span class="loading"></span> Entrando...';
+            
+            try {
+                // 1. Fazer login no Firebase
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // 2. Obter o token
+                const idToken = await user.getIdToken();
+                
+                // 3. Verificar o perfil no backend
+                const response = await fetch(`${API_URL}/auth/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({ token: idToken })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao verificar perfil');
+                }
+                
+                const userData = await response.json();
+                
+                // 4. Salvar token e dados do usuário no localStorage
+                localStorage.setItem('authToken', idToken);
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userProfile', userData.perfil || 'requisitante');
+                localStorage.setItem('userName', userData.nome || email.split('@')[0]);
+                localStorage.setItem('userId', userData.uid);
+                
+                showSuccess('Login realizado com sucesso!');
+                
+                // 5. Redirecionar baseado no perfil
+                setTimeout(() => {
+                    redirectToModule(userData.perfil || 'requisitante');
+                }, 500);
                 
             } catch (error) {
                 console.error('Erro no login:', error);
-                handleLoginError(error);
-            } finally {
-                setLoading(false);
+                
+                // Tratamento de erros específicos
+                if (error.code === 'auth/user-not-found') {
+                    showError('Usuário não encontrado. Verifique o email digitado.');
+                } else if (error.code === 'auth/wrong-password') {
+                    showError('Senha incorreta. Tente novamente.');
+                } else if (error.code === 'auth/invalid-email') {
+                    showError('Email inválido. Verifique o formato do email.');
+                } else if (error.code === 'auth/too-many-requests') {
+                    showError('Muitas tentativas. Aguarde alguns minutos e tente novamente.');
+                } else {
+                    showError('Erro ao fazer login: ' + error.message);
+                }
+                
+                // Reabilitar botão
+                btnLogin.disabled = false;
+                btnText.textContent = 'Entrar no Sistema';
             }
         });
 
-        // Detectar perfil do usuário
-        async function detectUserProfile(email) {
-            try {
-                // Tentar buscar perfil no backend
-                const response = await fetch('/api/user-profile', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.perfil;
-                }
-            } catch (error) {
-                console.warn('Erro ao detectar perfil:', error);
-            }
-
-            // Fallback: detecção baseada no domínio do e-mail
-            const domain = email.split('@')[1]?.toLowerCase();
-            
-            if (domain) {
-                if (domain.includes('fornecedor') || domain.includes('empresa')) {
-                    return 'Fornecedor';
-                } else if (domain.includes('compras') || domain.includes('licitacao')) {
-                    return 'Comprador';
-                } else if (domain.includes('admin')) {
-                    return 'Admin';
+        // Verificar se já está logado ao carregar a página
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                try {
+                    const idToken = await user.getIdToken();
+                    const response = await fetch(`${API_URL}/auth/verify`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${idToken}`
+                        },
+                        body: JSON.stringify({ token: idToken })
+                    });
+                    
+                    if (response.ok) {
+                        const userData = await response.json();
+                        // Se já está logado, redirecionar automaticamente
+                        showSuccess('Sessão ativa detectada. Redirecionando...');
+                        setTimeout(() => {
+                            redirectToModule(userData.perfil || 'requisitante');
+                        }, 1000);
+                    }
+                } catch (error) {
+                    console.log('Sessão expirada ou inválida');
+                    auth.signOut();
                 }
             }
+        });
 
-            return null; // Não foi possível detectar
-        }
-
-        // Mostrar seleção de perfil
-        function showProfileSelection() {
-            profileSelection.style.display = 'block';
-            showInfo('Não foi possível detectar seu perfil automaticamente. Por favor, selecione manualmente.');
-        }
-
-        // Selecionar perfil manualmente
-        window.selectProfile = async function(profile) {
-            if (!currentUser) return;
-
-            setLoading(true);
-            hideMessages();
-
-            try {
-                const profileMap = {
-                    'fornecedor': 'Fornecedor',
-                    'requisitante': 'Requisitante',
-                    'comprador': 'Comprador',
-                    'admin': 'Admin'
-                };
-
-                const selectedProfile = profileMap[profile];
-                await loginComPerfil(currentUser.email, currentUser.password, selectedProfile);
-                
-                showSuccess(`Login realizado! Perfil: ${selectedProfile}`);
-                
-                setTimeout(() => {
-                    redirectToDashboard(selectedProfile);
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Erro no login:', error);
-                handleLoginError(error);
-            } finally {
-                setLoading(false);
+        // Adicionar listener para Enter no campo de senha
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
             }
-        }
-
-        // Redirecionar para dashboard apropriado
-        function redirectToDashboard(profile) {
-            const dashboards = {
-                'Fornecedor': '/static/dashboard-fornecedor-funcional.html',
-                'Requisitante': '/static/dashboard-requisitante-funcional.html',
-                'Comprador': '/static/dashboard-comprador-funcional.html',
-                'Admin': '/static/admin-usuarios.html'
-            };
-
-            const dashboard = dashboards[profile];
-            if (dashboard) {
-                window.location.href = dashboard;
-            } else {
-                showError('Perfil não reconhecido.');
-            }
-        }
-
-        // Tratar erros de login
-        function handleLoginError(error) {
-            let errorMessage = 'Erro no login. Verifique suas credenciais.';
-            
-            if (error.code === 'auth/user-not-found') {
-                errorMessage = 'Usuário não encontrado. Verifique o e-mail informado.';
-            } else if (error.code === 'auth/wrong-password') {
-                errorMessage = 'Senha incorreta. Tente novamente.';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'E-mail inválido. Verifique o formato.';
-            } else if (error.code === 'auth/too-many-requests') {
-                errorMessage = 'Muitas tentativas de login. Tente novamente mais tarde.';
-            }
-            
-            showError(errorMessage);
-        }
-
-        // Funções auxiliares
-        function setLoading(loading) {
-            btnLogin.disabled = loading;
-            btnLogin.classList.toggle('loading', loading);
-        }
-
-        function showError(message) {
-            const el = document.getElementById('errorMessage');
-            el.textContent = message;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 5000);
-        }
-
-        function showSuccess(message) {
-            const el = document.getElementById('successMessage');
-            el.textContent = message;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 3000);
-        }
-
-        function showInfo(message) {
-            const el = document.getElementById('infoMessage');
-            el.textContent = message;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 5000);
-        }
-
-        function hideMessages() {
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('infoMessage').style.display = 'none';
-        }
+        });
     </script>
 </body>
 </html>
