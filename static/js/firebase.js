@@ -14,21 +14,20 @@ import {
   setDoc 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ⚠️ Substituir pelas suas credenciais
+// ⚠️ Substitua pelas credenciais reais do Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
-    authDomain: "portal-de-proposta.firebaseapp.com",
-    projectId: "portal-de-proposta",
-    storageBucket: "portal-de-proposta.firebasestorage.app",
-    messagingSenderId: "321036073908",
-    appId: "1:321036073908:web:3149b9ea2cb77a704890e1",
-    measurementId: "G-CFFVQGM3EC"
-  };
+  apiKey: "SUA_API_KEY",
+  authDomain: "portal-de-proposta.firebaseapp.com",
+  projectId: "portal-de-proposta",
+  storageBucket: "portal-de-proposta.appspot.com",
+  messagingSenderId: "XXXXXXXXX",
+  appId: "1:XXXXXXXX:web:XXXXXXX"
+};
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Exportações comuns
+// Exportar funções comuns
 export { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, doc, getDoc, setDoc };
