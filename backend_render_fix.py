@@ -120,7 +120,7 @@ def require_admin(f):
         if not email:
             return jsonify({'erro': 'Email não encontrado no token'}), 401
             
-        users = db.collection('Usuario').where('email', '==', email).get()
+        users = db.collection('usuarios').where('email', '==', email).get()
         if not users or len(users) == 0:
             return jsonify({'erro': 'Usuário não encontrado'}), 404
             
@@ -183,8 +183,8 @@ def verify_token():
         
         logger.info(f"🔍 Verificando usuário: {email}")
         
-        # Buscar usuário por email primeiro
-        users_by_email = db.collection('Usuario').where('email', '==', email).get()
+        # Buscar usuário por email primeiro (coleção em minúsculo)
+        users_by_email = db.collection('usuarios').where('email', '==', email).get()
         
         if users_by_email and len(users_by_email) > 0:
             # Usuário encontrado
@@ -198,10 +198,10 @@ def verify_token():
             # Se o ID do documento não corresponde ao UID, corrigir
             if user_id != uid:
                 logger.info(f"🔄 Sincronizando documento do usuário")
-                # Copiar dados para documento com UID correto
-                db.collection('Usuario').document(uid).set(user_data)
+                # Copiar dados para documento com UID correto (coleção em minúsculo)
+                db.collection('usuarios').document(uid).set(user_data)
                 # Deletar documento antigo
-                db.collection('Usuario').document(user_id).delete()
+                db.collection('usuarios').document(user_id).delete()
                 
         else:
             # Usuário não existe - criar novo
@@ -219,8 +219,8 @@ def verify_token():
                 'primeiroAcesso': True
             }
             
-            # Criar documento com UID
-            db.collection('Usuario').document(uid).set(user_data)
+            # Criar documento com UID (coleção em minúsculo)
+            db.collection('usuarios').document(uid).set(user_data)
             user_data['novo_usuario'] = True
             
             logger.info(f"✅ Novo usuário criado com perfil: {perfil_padrao}")
@@ -261,8 +261,8 @@ def get_user_profile():
         if not email:
             return jsonify({'erro': 'Email não fornecido'}), 400
         
-        # Buscar usuário por email
-        users = db.collection('Usuario').where('email', '==', email).get()
+        # Buscar usuário por email (coleção em minúsculo)
+        users = db.collection('usuarios').where('email', '==', email).get()
         
         if users and len(users) > 0:
             user_data = users[0].to_dict()
@@ -319,7 +319,7 @@ def listar_usuarios():
     """Lista todos os usuários (apenas admin)"""
     try:
         usuarios = []
-        for doc in db.collection('Usuario').stream():
+        for doc in db.collection('usuarios').stream():
             user_data = doc.to_dict()
             user_data['id'] = doc.id
             # Remover dados sensíveis
@@ -348,13 +348,13 @@ def atualizar_perfil(uid):
         if novo_perfil.lower() not in perfis_validos:
             return jsonify({'erro': f'Perfil inválido. Valores aceitos: {perfis_validos}'}), 400
         
-        # Verificar se usuário existe
-        user_doc = db.collection('Usuario').document(uid).get()
+        # Verificar se usuário existe (coleção em minúsculo)
+        user_doc = db.collection('usuarios').document(uid).get()
         if not user_doc.exists:
             return jsonify({'erro': 'Usuário não encontrado'}), 404
         
         # Atualizar perfil
-        db.collection('Usuario').document(uid).update({
+        db.collection('usuarios').document(uid).update({
             'perfil': novo_perfil.lower(),
             'atualizadoEm': firestore.SERVER_TIMESTAMP,
             'atualizadoPor': request.user['uid']
@@ -392,8 +392,8 @@ def criar_usuario():
             display_name=data['nome']
         )
         
-        # Criar no Firestore
-        db.collection('Usuario').document(new_user.uid).set({
+        # Criar no Firestore (coleção em minúsculo)
+        db.collection('usuarios').document(new_user.uid).set({
             'email': data['email'],
             'nome': data['nome'],
             'perfil': data['perfil'].lower(),
