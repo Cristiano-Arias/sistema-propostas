@@ -1,19 +1,28 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Único Inteligente</title>
-</head>
-<body>
-  <h1>Login no Sistema</h1>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="senha" placeholder="Senha">
-  <button onclick="authSystem.login(
-    document.getElementById('email').value, 
-    document.getElementById('senha').value
-  )">Entrar</button>
+<h2>Login no Sistema</h2>
+<form id="loginForm">
+  <input type="email" id="email" placeholder="Email" required>
+  <input type="password" id="senha" placeholder="Senha" required>
+  <button type="submit">Entrar</button>
+</form>
 
-  <script type="module" src="./js/auth.js"></script>
-</body>
-</html>
+<script type="module">
+  import { getAuth, signInWithEmailAndPassword } 
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { app } from "./js/SistemaFirebase.js"; // sua config firebase centralizada
+
+  const auth = getAuth(app);
+
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value;
+    const senha = document.getElementById("senha").value;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, senha);
+      // Redirecionar para o dashboard correto após login
+      window.location.href = "/static/dashboard-requisitante-funcional.html";
+    } catch (error) {
+      alert("Erro ao fazer login: " + error.message);
+    }
+  });
+</script>
