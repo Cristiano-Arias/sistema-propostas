@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Propostas - Login</title>
+    <title>Portal de Propostas - Sistema de Gestão</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -12,7 +13,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -21,301 +22,445 @@
             padding: 20px;
         }
 
-        .login-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
+        /* Container Principal */
+        .main-container {
             width: 100%;
-            max-width: 420px;
-            animation: slideIn 0.5s ease;
+            max-width: 1000px;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .logo-container {
+        /* Header */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 300;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        /* Card de Login */
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .login-header {
             text-align: center;
             margin-bottom: 30px;
         }
 
-        .logo {
-            width: 80px;
-            height: 80px;
+        .login-header i {
+            font-size: 64px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
         }
 
-        .logo svg {
-            width: 45px;
-            height: 45px;
-            fill: white;
+        .login-header h2 {
+            color: #333;
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 8px;
         }
 
-        h1 {
-            color: #2d3748;
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            color: #718096;
+        .login-header p {
+            color: #666;
             font-size: 14px;
-            margin-bottom: 30px;
         }
 
-        .error-message, .success-message {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .error-message {
-            background: #fed7d7;
-            color: #c53030;
-            border: 1px solid #fc8181;
-        }
-
-        .success-message {
-            background: #c6f6d5;
-            color: #22543d;
-            border: 1px solid #9ae6b4;
-        }
-
+        /* Formulário */
         .form-group {
             margin-bottom: 20px;
         }
 
-        label {
+        .form-group label {
             display: block;
-            color: #4a5568;
-            font-size: 14px;
-            font-weight: 600;
             margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
         }
 
-        input {
+        .form-group input {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 15px;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
             transition: all 0.3s ease;
-            background: #f7fafc;
+            background: white;
         }
 
-        input:focus {
+        .form-group input:focus {
             outline: none;
             border-color: #667eea;
-            background: white;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .password-container {
-            position: relative;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #a0aec0;
-            transition: color 0.3s ease;
-        }
-
-        .toggle-password:hover {
-            color: #667eea;
-        }
-
+        /* Botão de Login */
         .btn-login {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            margin-bottom: 20px;
+            position: relative;
         }
 
         .btn-login:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
         }
 
         .btn-login:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
 
-        .loading {
-            display: inline-block;
+        .btn-login .loading {
+            display: none;
+        }
+
+        .btn-login.loading .btn-text {
+            display: none;
+        }
+
+        .btn-login.loading .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Botão de Logout */
+        .btn-logout {
+            padding: 10px 20px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
+        }
+
+        /* Spinner */
+        .spinner {
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .forgot-password {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .forgot-password a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .forgot-password a:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-
-        .redirect-info {
-            background: #edf2f7;
+        /* Mensagens */
+        .alert {
+            padding: 12px 16px;
             border-radius: 8px;
-            padding: 12px;
-            margin-top: 20px;
+            margin-bottom: 20px;
             display: none;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+        }
+
+        /* Seleção Manual de Perfil */
+        .profile-selection {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .profile-selection h3 {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .profile-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .profile-btn {
+            padding: 12px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .profile-btn:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .profile-btn i {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+
+        /* Informações do Usuário Logado */
+        .user-info {
+            display: none;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .user-info h3 {
+            color: #16a34a;
+            margin-bottom: 10px;
+        }
+
+        .user-info p {
+            color: #15803d;
+            margin: 5px 0;
+        }
+
+        /* Status do Sistema */
+        .system-status {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
             text-align: center;
         }
 
-        .redirect-info.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #059669;
         }
 
-        .redirect-info .profile-badge {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin: 0 4px;
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .loading-screen.active {
+            display: flex;
+        }
+
+        .loading-screen .spinner-large {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
         }
 
         /* Responsividade */
-        @media (max-width: 480px) {
-            .login-container {
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .login-card {
                 padding: 30px 20px;
             }
-            
-            h1 {
-                font-size: 24px;
+
+            .profile-buttons {
+                grid-template-columns: 1fr 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="logo-container">
-            <div class="logo">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
-                    <path d="M2 17L12 22L22 17"/>
-                    <path d="M2 12L12 17L22 12"/>
-                </svg>
-            </div>
-            <h1>Portal de Propostas</h1>
-            <p class="subtitle">Entre com suas credenciais para continuar</p>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="spinner-large"></div>
+        <p>Verificando sessão...</p>
+    </div>
+
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏢 Portal de Propostas</h1>
+            <p>Sistema Unificado de Gestão de Licitações</p>
         </div>
 
-        <div id="errorMessage" class="error-message"></div>
-        <div id="successMessage" class="success-message"></div>
-
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="email">E-mail</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    required 
-                    placeholder="seu.email@exemplo.com"
-                    autocomplete="email"
-                >
+        <!-- Card de Login -->
+        <div class="login-card">
+            <!-- Informações do Usuário Logado -->
+            <div class="user-info" id="userInfo">
+                <h3>Bem-vindo!</h3>
+                <p id="userEmail"></p>
+                <p id="userProfile"></p>
+                <button class="btn-logout" onclick="handleLogout()">Sair do Sistema</button>
             </div>
 
-            <div class="form-group">
-                <label for="password">Senha</label>
-                <div class="password-container">
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        required 
-                        placeholder="••••••••"
-                        autocomplete="current-password"
-                    >
-                    <span class="toggle-password" onclick="togglePassword()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </span>
+            <!-- Seção de Login -->
+            <div id="loginSection">
+                <div class="login-header">
+                    <i class="fas fa-shield-alt"></i>
+                    <h2>Acesso ao Sistema</h2>
+                    <p>Entre com suas credenciais para continuar</p>
+                </div>
+
+                <!-- Mensagens -->
+                <div class="alert alert-error" id="errorMessage"></div>
+                <div class="alert alert-success" id="successMessage"></div>
+                <div class="alert alert-info" id="infoMessage"></div>
+
+                <!-- Formulário de Login -->
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" required placeholder="seu@email.com" autocomplete="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Senha</label>
+                        <input type="password" id="password" required placeholder="Digite sua senha" autocomplete="current-password">
+                    </div>
+
+                    <button type="submit" class="btn-login" id="btnLogin">
+                        <span class="btn-text">Entrar no Sistema</span>
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Autenticando...
+                        </div>
+                    </button>
+                </form>
+
+                <!-- Seleção Manual de Perfil -->
+                <div class="profile-selection" id="profileSelection">
+                    <h3>Selecione seu perfil de acesso:</h3>
+                    <div class="profile-buttons">
+                        <button class="profile-btn" onclick="selectProfile('fornecedor')">
+                            <i class="fas fa-building"></i>
+                            Fornecedor
+                        </button>
+                        <button class="profile-btn" onclick="selectProfile('requisitante')">
+                            <i class="fas fa-user"></i>
+                            Requisitante
+                        </button>
+                        <button class="profile-btn" onclick="selectProfile('comprador')">
+                            <i class="fas fa-shopping-cart"></i>
+                            Comprador
+                        </button>
+                        <button class="profile-btn" onclick="selectProfile('admin')">
+                            <i class="fas fa-user-shield"></i>
+                            Admin
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn-login" id="btnLogin">
-                <span id="btnText">Entrar no Sistema</span>
-            </button>
-        </form>
-
-        <div class="forgot-password">
-            <a href="#" onclick="showForgotPassword(); return false;">Esqueceu sua senha?</a>
-        </div>
-
-        <div id="redirectInfo" class="redirect-info">
-            Detectamos seu perfil: <span class="profile-badge" id="userProfile"></span>
-            <br>
-            <small>Redirecionando em <span id="countdown">3</span> segundos...</small>
+            <!-- Status do Sistema -->
+            <div class="system-status">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    Sistema operacional - Sessão segura
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 
     <script>
-        // Configuração do Firebase (substitua com suas credenciais)
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBKTtdvOl3ebPiVnJiTm7KvEYL1-ruVVsU",
             authDomain: "sistema-propostas-7fa07.firebaseapp.com",
@@ -329,198 +474,278 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // Configuração da API backend
-        const API_URL = 'https://portal-proposta.onrender.com';
+        // Configurar persistência apenas para a sessão do navegador
+        auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
 
-        // Mapeamento de perfis para URLs dos módulos
-        const PROFILE_ROUTES = {
-            'ADMIN': '/admin',
-            'REQUISITANTE': '/requisitante',
-            'COMPRADOR': '/comprador',
-            'FORNECEDOR': '/fornecedor',
-            'admin': '/admin',
-            'requisitante': '/requisitante',
-            'comprador': '/comprador',
-            'fornecedor': '/fornecedor'
+        // Variáveis globais (apenas em memória)
+        let currentUser = null;
+        let currentUserProfile = null;
+        let pendingLogin = null;
+
+        // URLs dos dashboards
+        const DASHBOARD_URLS = {
+            'fornecedor': '/static/dashboard-fornecedor-funcional.html',
+            'requisitante': '/static/dashboard-requisitante-funcional.html',
+            'comprador': '/static/dashboard-comprador-funcional.html',
+            'admin': '/static/admin-usuarios.html',
+            'FORNECEDOR': '/static/dashboard-fornecedor-funcional.html',
+            'REQUISITANTE': '/static/dashboard-requisitante-funcional.html',
+            'COMPRADOR': '/static/dashboard-comprador-funcional.html',
+            'ADMIN': '/static/admin-usuarios.html'
         };
 
-        // Toggle visibility da senha
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const type = passwordInput.type === 'password' ? 'text' : 'password';
-            passwordInput.type = type;
-        }
-
-        // Mostrar mensagem de erro
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
-
-        // Mostrar mensagem de sucesso
-        function showSuccess(message) {
-            const successDiv = document.getElementById('successMessage');
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-        }
-
-        // Esqueceu a senha
-        function showForgotPassword() {
-            const email = document.getElementById('email').value;
-            if (!email) {
-                showError('Por favor, digite seu email primeiro');
-                return;
-            }
-
-            if (confirm(`Enviar instruções de recuperação para ${email}?`)) {
-                auth.sendPasswordResetEmail(email)
-                    .then(() => {
-                        showSuccess('Email de recuperação enviado! Verifique sua caixa de entrada.');
-                    })
-                    .catch(error => {
-                        showError('Erro ao enviar email: ' + error.message);
-                    });
-            }
-        }
-
-        // Redirecionar para o módulo correto
-        function redirectToModule(profile) {
-            const redirectInfo = document.getElementById('redirectInfo');
-            const userProfile = document.getElementById('userProfile');
-            const countdown = document.getElementById('countdown');
+        // Verificar estado de autenticação ao carregar
+        window.addEventListener('DOMContentLoaded', () => {
+            showLoadingScreen(true);
             
-            // Mostrar informação de redirecionamento
-            userProfile.textContent = profile.toUpperCase();
-            redirectInfo.classList.add('show');
-            
-            let count = 3;
-            const timer = setInterval(() => {
-                count--;
-                countdown.textContent = count;
-                if (count <= 0) {
-                    clearInterval(timer);
-                    const route = PROFILE_ROUTES[profile] || PROFILE_ROUTES[profile.toLowerCase()];
-                    if (route) {
-                        window.location.href = API_URL + route;
-                    } else {
-                        showError('Perfil não reconhecido. Contate o administrador.');
-                    }
+            // Observar mudanças no estado de autenticação
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    // Usuário logado - verificar perfil
+                    currentUser = user;
+                    await checkUserProfile();
+                } else {
+                    // Nenhum usuário logado
+                    currentUser = null;
+                    currentUserProfile = null;
+                    showLoginForm();
                 }
-            }, 1000);
+                showLoadingScreen(false);
+            });
+        });
+
+        // Verificar perfil do usuário autenticado
+        async function checkUserProfile() {
+            try {
+                const token = await currentUser.getIdToken();
+                
+                // Verificar perfil no backend
+                const response = await fetch('/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    currentUserProfile = userData.perfil;
+                    
+                    // Mostrar informações do usuário
+                    showUserInfo(currentUser.email, userData.perfil);
+                    
+                    // Auto-redirecionar se não estiver na página principal
+                    if (window.location.pathname !== '/' && 
+                        window.location.pathname !== '/static/portal-unico-inteligente.html') {
+                        redirectToDashboard(userData.perfil);
+                    }
+                } else {
+                    // Erro ao verificar perfil - fazer logout
+                    await auth.signOut();
+                    showError('Erro ao verificar perfil. Por favor, faça login novamente.');
+                }
+            } catch (error) {
+                console.error('Erro ao verificar perfil:', error);
+                await auth.signOut();
+            }
         }
 
-        // Handler do formulário de login
+        // Manipular envio do formulário de login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const btnLogin = document.getElementById('btnLogin');
-            const btnText = document.getElementById('btnText');
             
-            // Desabilitar botão e mostrar loading
-            btnLogin.disabled = true;
-            btnText.innerHTML = '<span class="loading"></span> Entrando...';
-            
+            if (!email || !password) {
+                showError('Por favor, informe e-mail e senha.');
+                return;
+            }
+
+            setLoading(true);
+            hideMessages();
+
             try {
-                // 1. Fazer login no Firebase
+                // Fazer login no Firebase
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const user = userCredential.user;
+                currentUser = userCredential.user;
                 
-                // 2. Obter o token
-                const idToken = await user.getIdToken();
+                // Obter token
+                const token = await currentUser.getIdToken();
                 
-                // 3. Verificar o perfil no backend
-                const response = await fetch(`${API_URL}/auth/verify`, {
+                // Verificar perfil no backend
+                const response = await fetch('/auth/verify', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${idToken}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ token: idToken })
+                    body: JSON.stringify({ token })
                 });
-                
-                if (!response.ok) {
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    currentUserProfile = userData.perfil;
+                    
+                    if (currentUserProfile) {
+                        showSuccess(`Login realizado! Perfil: ${currentUserProfile}`);
+                        showUserInfo(email, currentUserProfile);
+                        
+                        // Redirecionar após 1.5 segundos
+                        setTimeout(() => {
+                            redirectToDashboard(currentUserProfile);
+                        }, 1500);
+                    } else {
+                        // Perfil não detectado - mostrar seleção manual
+                        pendingLogin = { email, token };
+                        showProfileSelection();
+                    }
+                } else {
                     throw new Error('Erro ao verificar perfil');
                 }
                 
-                const userData = await response.json();
-                
-                // 4. Salvar token e dados do usuário no localStorage
-                localStorage.setItem('authToken', idToken);
-                localStorage.setItem('userEmail', email);
-                localStorage.setItem('userProfile', userData.perfil || 'requisitante');
-                localStorage.setItem('userName', userData.nome || email.split('@')[0]);
-                localStorage.setItem('userId', userData.uid);
-                
-                showSuccess('Login realizado com sucesso!');
-                
-                // 5. Redirecionar baseado no perfil
-                setTimeout(() => {
-                    redirectToModule(userData.perfil || 'requisitante');
-                }, 500);
-                
             } catch (error) {
                 console.error('Erro no login:', error);
-                
-                // Tratamento de erros específicos
-                if (error.code === 'auth/user-not-found') {
-                    showError('Usuário não encontrado. Verifique o email digitado.');
-                } else if (error.code === 'auth/wrong-password') {
-                    showError('Senha incorreta. Tente novamente.');
-                } else if (error.code === 'auth/invalid-email') {
-                    showError('Email inválido. Verifique o formato do email.');
-                } else if (error.code === 'auth/too-many-requests') {
-                    showError('Muitas tentativas. Aguarde alguns minutos e tente novamente.');
-                } else {
-                    showError('Erro ao fazer login: ' + error.message);
-                }
-                
-                // Reabilitar botão
-                btnLogin.disabled = false;
-                btnText.textContent = 'Entrar no Sistema';
+                handleLoginError(error);
+            } finally {
+                setLoading(false);
             }
         });
 
-        // Verificar se já está logado ao carregar a página
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                try {
-                    const idToken = await user.getIdToken();
-                    const response = await fetch(`${API_URL}/auth/verify`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${idToken}`
-                        },
-                        body: JSON.stringify({ token: idToken })
-                    });
-                    
-                    if (response.ok) {
-                        const userData = await response.json();
-                        // Se já está logado, redirecionar automaticamente
-                        showSuccess('Sessão ativa detectada. Redirecionando...');
-                        setTimeout(() => {
-                            redirectToModule(userData.perfil || 'requisitante');
-                        }, 1000);
-                    }
-                } catch (error) {
-                    console.log('Sessão expirada ou inválida');
-                    auth.signOut();
-                }
+        // Selecionar perfil manualmente
+        window.selectProfile = async function(profile) {
+            if (!pendingLogin || !currentUser) {
+                showError('Sessão expirada. Por favor, faça login novamente.');
+                return;
             }
-        });
 
-        // Adicionar listener para Enter no campo de senha
-        document.getElementById('password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            setLoading(true);
+            hideMessages();
+
+            try {
+                // Aqui você poderia fazer uma chamada ao backend para atualizar o perfil
+                // Por enquanto, apenas redireciona
+                
+                currentUserProfile = profile;
+                showSuccess(`Perfil selecionado: ${profile}`);
+                
+                setTimeout(() => {
+                    redirectToDashboard(profile);
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Erro ao selecionar perfil:', error);
+                showError('Erro ao processar seleção. Tente novamente.');
+            } finally {
+                setLoading(false);
             }
-        });
+        };
+
+        // Fazer logout
+        window.handleLogout = async function() {
+            try {
+                await auth.signOut();
+                currentUser = null;
+                currentUserProfile = null;
+                pendingLogin = null;
+                showLoginForm();
+                showSuccess('Logout realizado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao fazer logout:', error);
+                showError('Erro ao sair do sistema.');
+            }
+        };
+
+        // Redirecionar para dashboard apropriado
+        function redirectToDashboard(profile) {
+            const url = DASHBOARD_URLS[profile] || DASHBOARD_URLS[profile.toUpperCase()];
+            if (url) {
+                window.location.href = url;
+            } else {
+                showError('Perfil não reconhecido: ' + profile);
+            }
+        }
+
+        // Mostrar informações do usuário logado
+        function showUserInfo(email, profile) {
+            document.getElementById('userEmail').textContent = `Email: ${email}`;
+            document.getElementById('userProfile').textContent = `Perfil: ${profile || 'Não definido'}`;
+            document.getElementById('userInfo').style.display = 'block';
+            document.getElementById('loginSection').style.display = 'none';
+        }
+
+        // Mostrar formulário de login
+        function showLoginForm() {
+            document.getElementById('userInfo').style.display = 'none';
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('profileSelection').style.display = 'none';
+        }
+
+        // Mostrar seleção de perfil
+        function showProfileSelection() {
+            document.getElementById('profileSelection').style.display = 'block';
+            showInfo('Não foi possível detectar seu perfil automaticamente. Por favor, selecione manualmente.');
+        }
+
+        // Tratar erros de login
+        function handleLoginError(error) {
+            let errorMessage = 'Erro no login. Verifique suas credenciais.';
+            
+            if (error.code === 'auth/user-not-found') {
+                errorMessage = 'Usuário não encontrado. Verifique o e-mail informado.';
+            } else if (error.code === 'auth/wrong-password') {
+                errorMessage = 'Senha incorreta. Tente novamente.';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = 'E-mail inválido. Verifique o formato.';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = 'Muitas tentativas de login. Tente novamente mais tarde.';
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = 'Erro de rede. Verifique sua conexão.';
+            }
+            
+            showError(errorMessage);
+        }
+
+        // Funções auxiliares de UI
+        function setLoading(loading) {
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = loading;
+            btn.classList.toggle('loading', loading);
+        }
+
+        function showLoadingScreen(show) {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.classList.toggle('active', show);
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        function showSuccess(message) {
+            const el = document.getElementById('successMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+
+        function showInfo(message) {
+            const el = document.getElementById('infoMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('infoMessage').style.display = 'none';
+        }
     </script>
 </body>
 </html>
