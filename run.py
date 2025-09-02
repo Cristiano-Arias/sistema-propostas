@@ -1,17 +1,25 @@
 # -*- coding: utf-8 -*-
+"""
+Arquivo principal da aplicação
+"""
+# IMPORTANTE: eventlet.monkey_patch() DEVE ser a primeira coisa
+import eventlet
+eventlet.monkey_patch()
+
 from app import create_app, socketio
+from flask_socketio import join_room
 
-# IMPORTANTE: Esta linha DEVE estar aqui para o Gunicorn encontrar
-app = create_app()
+# Criar a aplicação Flask
+application = create_app()
+app = application  # Alias para compatibilidade com Gunicorn
 
-# Socket.IO helpers: join a "room" per processo
+# Socket.IO event handlers
 @socketio.on("join_procurement")
 def on_join_proc(data):
     proc_id = data.get("procurement_id")
     if not proc_id:
         return
     room = f"proc:{proc_id}"
-    from flask_socketio import join_room
     join_room(room)
 
 
@@ -21,7 +29,6 @@ def on_join_user(data):
     if not user_id:
         return
     room = f"user:{user_id}"
-    from flask_socketio import join_room
     join_room(room)
 
 
@@ -31,11 +38,9 @@ def on_join_role(data):
     if not role:
         return
     room = f"role:{role}"
-    from flask_socketio import join_room
     join_room(room)
 
 
 if __name__ == "__main__":
-    # For local dev: `python app.py`
-    # In production (Render), gunicorn with eventlet worker is used
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    # Para desenvolvimento local
+    socketio.run(application, host="0.0.0.0", port=5000, debug=False)
