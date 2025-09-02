@@ -281,6 +281,67 @@ def upsert_quantities(proc_id: int):
     
     for row in payload:
         sid = row.get("service_item_id")
+        qty = row.get("qty")
+        
+        if sid not in valid_item_ids:
+            return {"error": f"service_item_id {sid} inválido para este processo"}, 400
+        
+        ps = ProposalService.query.filter_by(
+            proposal_id=proposal.id,
+            service_item_id=sid
+        ).first()
+        
+        if not ps:
+            ps = ProposalService(
+                proposal_id=proposal.id,
+                service_item_id=sid,
+                qty=qty
+            )
+            db.session.add(ps)
+        else:
+            ps.qty = qty
+    
+    db.session.commit()
+    
+    socketio.emit("proposal.tech.received", {
+        "procurement_id": proc_id,
+        "proposal_id": proposal.id
+    }, to=f"proc:{proc_id}")
+    
+    return {"proposal_id": proposal.id, "items": len(payload)}
+
+
+@bp.put("/proposals/<int:proc_id>/prices")
+@require_role(["FORNECEDOR"])
+def upsert_prices(proc_id: int):
+    """Atualiza preços da proposta comercial"""
+    ident = get_jwt_identity()
+    
+    # Criar ou obter proposta
+    proposal = Proposal.query.filter_by(
+        procurement_id=proc_id,
+        supplier_user_id=ident["user_id"]
+    ).first()
+    
+    if not proposal:
+        proposal = Proposal(
+            procurement_id=proc_id,
+            supplier_user_id=ident["user_id"],
+            status=ProposalStatus.RASCUNHO
+        )
+        db.session.add(proposal)
+        db.session.commit()
+    
+    payload = request.get_json() or []
+    if not isinstance(payload, list):
+        return {"error": "payload deve ser lista de itens"}, 400
+    
+    # Verificar se service_item pertence ao TR do processo
+    proc = Procurement.query.get_or_404(proc_id)
+    valid_item_ids = {r.id for r in TRServiceItem.query.filter_by(tr_id=proc.tr.id).all()}
+    
+    for row in payload:
+        sid = row.get("service_item_id")
         price = row.get("unit_price")
         
         if sid not in valid_item_ids:
@@ -367,65 +428,4 @@ def list_commercial_items(proc_id: int):
             "itens": items_out,
         })
     
-    return {"proposals": out}": "payload deve ser lista de itens"}, 400
-    
-    # Verificar se service_item pertence ao TR do processo
-    proc = Procurement.query.get_or_404(proc_id)
-    valid_item_ids = {r.id for r in TRServiceItem.query.filter_by(tr_id=proc.tr.id).all()}
-    
-    for row in payload:
-        sid = row.get("service_item_id")
-        qty = row.get("qty")
-        
-        if sid not in valid_item_ids:
-            return {"error": f"service_item_id {sid} inválido para este processo"}, 400
-        
-        ps = ProposalService.query.filter_by(
-            proposal_id=proposal.id,
-            service_item_id=sid
-        ).first()
-        
-        if not ps:
-            ps = ProposalService(
-                proposal_id=proposal.id,
-                service_item_id=sid,
-                qty=qty
-            )
-            db.session.add(ps)
-        else:
-            ps.qty = qty
-    
-    db.session.commit()
-    
-    socketio.emit("proposal.tech.received", {
-        "procurement_id": proc_id,
-        "proposal_id": proposal.id
-    }, to=f"proc:{proc_id}")
-    
-    return {"proposal_id": proposal.id, "items": len(payload)}
-
-
-@bp.put("/proposals/<int:proc_id>/prices")
-@require_role(["FORNECEDOR"])
-def upsert_prices(proc_id: int):
-    """Atualiza preços da proposta comercial"""
-    ident = get_jwt_identity()
-    
-    # Criar ou obter proposta
-    proposal = Proposal.query.filter_by(
-        procurement_id=proc_id,
-        supplier_user_id=ident["user_id"]
-    ).first()
-    
-    if not proposal:
-        proposal = Proposal(
-            procurement_id=proc_id,
-            supplier_user_id=ident["user_id"],
-            status=ProposalStatus.RASCUNHO
-        )
-        db.session.add(proposal)
-        db.session.commit()
-    
-    payload = request.get_json() or []
-    if not isinstance(payload, list):
-        return {"error
+    return {"proposals": out}
