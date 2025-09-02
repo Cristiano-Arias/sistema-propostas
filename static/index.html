@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <title>Concorrência MVP — Login & Eventos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-4+lpKVhh8Ph7Ng1i6mfrSie1Rmy8j0VnFe+3mEw7b8rN4K3VZV2WCi7uP6k6t03d" crossorigin="anonymous"></script>
+    <script defer src="/static/js/app.js"></script>
+    <style>
+      body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol';margin:2rem;line-height:1.4}
+      .card{border:1px solid #ddd;border-radius:8px;padding:1rem;margin-bottom:1rem}
+      label{display:block;margin-top:.5rem}
+      input{width:100%;padding:.5rem;margin-top:.25rem}
+      button{padding:.6rem 1rem;margin-top:.75rem}
+      ul{list-style:disc;padding-left:1.25rem}
+      .row{display:flex;gap:1rem;flex-wrap:wrap}
+      .col{flex:1 1 320px}
+    </style>
+  </head>
+  <body>
+    <h1>Concorrência MVP</h1>
+
+    <div class="row">
+      <div class="col">
+        <div class="card">
+          <h2>Login</h2>
+          <form id="loginForm">
+            <label>Email <input id="email" type="email" placeholder="seu@email.com" required /></label>
+            <label>Senha <input id="password" type="password" required /></label>
+            <button type="submit">Entrar</button>
+            <div id="loginStatus" style="margin-top:.5rem;color:#0a0"></div>
+          </form>
+        </div>
+        <div class="card">
+          <h2>Entrar em um Processo (sala)</h2>
+          <label>ID do Processo <input id="procId" type="number" placeholder="1" /></label>
+          <button id="joinBtn">Entrar</button>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card">
+          <h2>Eventos (tempo real)</h2>
+          <ul id="log"></ul>
+        </div>
+      </div>
+    </div>
+
+    <p>Use as APIs para criar processos, TR e propostas via HTTP (veja README).</p>
+  </body>
+</html>
