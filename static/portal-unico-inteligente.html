@@ -15,14 +15,13 @@
   </form>
 
   <script type="module">
-    import { getAuth, signInWithEmailAndPassword } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, doc, getDoc } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { app } from "./js/SistemaFirebase.js";
-
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    import { 
+      auth, 
+      db, 
+      signInWithEmailAndPassword, 
+      doc, 
+      getDoc 
+    } from "/static/js/firebase.js";
 
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -30,11 +29,11 @@
       const senha = document.getElementById("senha").value;
 
       try {
-        // 🔹 Autentica usuário no Firebase
+        // 🔹 Login Firebase
         const userCredential = await signInWithEmailAndPassword(auth, email, senha);
         const uid = userCredential.user.uid;
 
-        // 🔹 Busca perfil do Firestore (coleção "usuarios")
+        // 🔹 Busca perfil do usuário no Firestore
         const userDoc = await getDoc(doc(db, "usuarios", uid));
 
         if (userDoc.exists()) {
