@@ -161,23 +161,6 @@
             gap: 8px;
         }
 
-        /* Botão de Logout */
-        .btn-logout {
-            padding: 10px 20px;
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .btn-logout:hover {
-            background: #dc2626;
-        }
-
-        /* Spinner */
         .spinner {
             width: 20px;
             height: 20px;
@@ -219,71 +202,25 @@
             border: 1px solid #bfdbfe;
         }
 
-        /* Seleção Manual de Perfil */
-        .profile-selection {
+        /* Welcome Screen */
+        .welcome-screen {
             display: none;
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
-        }
-
-        .profile-selection h3 {
-            color: #333;
-            margin-bottom: 15px;
             text-align: center;
-            font-size: 16px;
-        }
-
-        .profile-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-        }
-
-        .profile-btn {
-            padding: 12px;
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            font-size: 14px;
-            color: #333;
-        }
-
-        .profile-btn:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .profile-btn i {
-            display: block;
-            font-size: 20px;
-            margin-bottom: 5px;
-            color: #667eea;
-        }
-
-        /* Informações do Usuário Logado */
-        .user-info {
-            display: none;
+            padding: 40px;
             background: #f0fdf4;
-            border: 1px solid #bbf7d0;
             border-radius: 12px;
-            padding: 20px;
-            text-align: center;
             margin-bottom: 20px;
         }
 
-        .user-info h3 {
+        .welcome-screen h3 {
             color: #16a34a;
+            font-size: 24px;
             margin-bottom: 10px;
         }
 
-        .user-info p {
+        .welcome-screen p {
             color: #15803d;
-            margin: 5px 0;
+            margin: 10px 0;
         }
 
         /* Status do Sistema */
@@ -318,35 +255,6 @@
             50% { opacity: 0.5; }
         }
 
-        /* Loading Screen */
-        .loading-screen {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        }
-
-        .loading-screen.active {
-            display: flex;
-        }
-
-        .loading-screen .spinner-large {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #e5e7eb;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-
         /* Responsividade */
         @media (max-width: 768px) {
             .header h1 {
@@ -356,20 +264,10 @@
             .login-card {
                 padding: 30px 20px;
             }
-
-            .profile-buttons {
-                grid-template-columns: 1fr 1fr;
-            }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="spinner-large"></div>
-        <p>Verificando sessão...</p>
-    </div>
-
     <div class="main-container">
         <!-- Header -->
         <div class="header">
@@ -379,15 +277,15 @@
 
         <!-- Card de Login -->
         <div class="login-card">
-            <!-- Informações do Usuário Logado -->
-            <div class="user-info" id="userInfo">
+            <!-- Welcome Screen -->
+            <div class="welcome-screen" id="welcomeScreen">
                 <h3>Bem-vindo!</h3>
-                <p id="userEmail"></p>
-                <p id="userProfile"></p>
+                <p>Email: <span id="welcomeEmail"></span></p>
+                <p>Perfil: <span id="welcomeProfile"></span></p>
                 <button class="btn-logout" onclick="handleLogout()">Sair do Sistema</button>
             </div>
 
-            <!-- Seção de Login -->
+            <!-- Login Form -->
             <div id="loginSection">
                 <div class="login-header">
                     <i class="fas fa-shield-alt"></i>
@@ -420,29 +318,6 @@
                         </div>
                     </button>
                 </form>
-
-                <!-- Seleção Manual de Perfil -->
-                <div class="profile-selection" id="profileSelection">
-                    <h3>Selecione seu perfil de acesso:</h3>
-                    <div class="profile-buttons">
-                        <button class="profile-btn" onclick="selectProfile('fornecedor')">
-                            <i class="fas fa-building"></i>
-                            Fornecedor
-                        </button>
-                        <button class="profile-btn" onclick="selectProfile('requisitante')">
-                            <i class="fas fa-user"></i>
-                            Requisitante
-                        </button>
-                        <button class="profile-btn" onclick="selectProfile('comprador')">
-                            <i class="fas fa-shopping-cart"></i>
-                            Comprador
-                        </button>
-                        <button class="profile-btn" onclick="selectProfile('admin')">
-                            <i class="fas fa-user-shield"></i>
-                            Admin
-                        </button>
-                    </div>
-                </div>
             </div>
 
             <!-- Status do Sistema -->
@@ -455,110 +330,82 @@
         </div>
     </div>
 
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <!-- Scripts -->
+    <script type="module">
+        import { loginComPerfil } from '/static/js/auth-facade.js';
+        import { auth, onAuthStateChanged } from '/static/js/firebase.js';
 
-    <script>
-        // Configuração do Firebase
-        const firebaseConfig = {
-          apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
-          authDomain: "portal-de-proposta.firebaseapp.com",
-          projectId: "portal-de-proposta",
-          storageBucket: "portal-de-proposta.firebasestorage.app",
-          messagingSenderId: "321036073908",
-          appId: "1:321036073908:web:3149b9ea2cb77a704890e1",
-          measurementId: "G-CFFVQGM3EC"
-        };
+        // Elementos do DOM
+        const form = document.getElementById('loginForm');
+        const emailEl = document.getElementById('email');
+        const passwordEl = document.getElementById('password');
+        const btnLogin = document.getElementById('btnLogin');
+        const loginSection = document.getElementById('loginSection');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const welcomeEmail = document.getElementById('welcomeEmail');
+        const welcomeProfile = document.getElementById('welcomeProfile');
 
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+        let isRedirecting = false;
 
-        // Configurar persistência apenas para a sessão do navegador
-        auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
-
-        // Variáveis globais (apenas em memória)
-        let currentUser = null;
-        let currentUserProfile = null;
-        let pendingLogin = null;
-
-        // URLs dos dashboards
+        // URLs dos dashboards - aceitar maiúsculas e minúsculas
         const DASHBOARD_URLS = {
             'fornecedor': '/static/dashboard-fornecedor-funcional.html',
             'requisitante': '/static/dashboard-requisitante-funcional.html',
             'comprador': '/static/dashboard-comprador-funcional.html',
             'admin': '/static/admin-usuarios.html',
+            'Fornecedor': '/static/dashboard-fornecedor-funcional.html',
+            'Requisitante': '/static/dashboard-requisitante-funcional.html',
+            'Comprador': '/static/dashboard-comprador-funcional.html',
+            'Admin': '/static/admin-usuarios.html',
             'FORNECEDOR': '/static/dashboard-fornecedor-funcional.html',
             'REQUISITANTE': '/static/dashboard-requisitante-funcional.html',
             'COMPRADOR': '/static/dashboard-comprador-funcional.html',
             'ADMIN': '/static/admin-usuarios.html'
         };
 
-        // Verificar estado de autenticação ao carregar
-        window.addEventListener('DOMContentLoaded', () => {
-            showLoadingScreen(true);
-            
-            // Observar mudanças no estado de autenticação
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    // Usuário logado - verificar perfil
-                    currentUser = user;
-                    await checkUserProfile();
-                } else {
-                    // Nenhum usuário logado
-                    currentUser = null;
-                    currentUserProfile = null;
+        // Verificar autenticação ao carregar
+        onAuthStateChanged(auth, async (user) => {
+            if (user && !isRedirecting) {
+                // Usuário autenticado - verificar perfil
+                try {
+                    const token = await user.getIdToken();
+                    const response = await fetch('/auth/verify', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ token })
+                    });
+
+                    if (response.ok) {
+                        const userData = await response.json();
+                        console.log('Usuário autenticado:', userData);
+                        
+                        // Mostrar bem-vindo e redirecionar
+                        showWelcome(user.email, userData.perfil);
+                        
+                        // Redirecionar após 2 segundos
+                        setTimeout(() => {
+                            redirectToDashboard(userData.perfil);
+                        }, 2000);
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar perfil:', error);
                     showLoginForm();
                 }
-                showLoadingScreen(false);
-            });
+            } else {
+                // Não autenticado
+                showLoginForm();
+            }
         });
 
-        // Verificar perfil do usuário autenticado
-        async function checkUserProfile() {
-            try {
-                const token = await currentUser.getIdToken();
-                
-                // Verificar perfil no backend
-                const response = await fetch('/auth/verify', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ token })
-                });
-
-                if (response.ok) {
-                    const userData = await response.json();
-                    currentUserProfile = userData.perfil;
-                    
-                    // Mostrar informações do usuário
-                    showUserInfo(currentUser.email, userData.perfil);
-                    
-                    // Auto-redirecionar se não estiver na página principal
-                    if (window.location.pathname !== '/' && 
-                        window.location.pathname !== '/static/portal-unico-inteligente.html') {
-                        redirectToDashboard(userData.perfil);
-                    }
-                } else {
-                    // Erro ao verificar perfil - fazer logout
-                    await auth.signOut();
-                    showError('Erro ao verificar perfil. Por favor, faça login novamente.');
-                }
-            } catch (error) {
-                console.error('Erro ao verificar perfil:', error);
-                await auth.signOut();
-            }
-        }
-
-        // Manipular envio do formulário de login
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        // Manipular envio do formulário
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+            const email = emailEl.value.trim();
+            const password = passwordEl.value;
             
             if (!email || !password) {
                 showError('Por favor, informe e-mail e senha.');
@@ -569,141 +416,122 @@
             hideMessages();
 
             try {
-                // Fazer login no Firebase
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                currentUser = userCredential.user;
-                
-                // Obter token
-                const token = await currentUser.getIdToken();
-                
-                // Verificar perfil no backend
-                const response = await fetch('/auth/verify', {
+                // Detectar perfil primeiro
+                const profileResponse = await fetch('/api/user-profile', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ token })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
                 });
 
-                if (response.ok) {
-                    const userData = await response.json();
-                    currentUserProfile = userData.perfil;
+                let detectedProfile = 'requisitante';
+                if (profileResponse.ok) {
+                    const profileData = await profileResponse.json();
+                    detectedProfile = profileData.perfil || 'requisitante';
+                }
+
+                // Fazer login
+                const user = await loginComPerfil(email, password, detectedProfile);
+                
+                if (user) {
+                    const token = await user.getIdToken();
                     
-                    if (currentUserProfile) {
-                        showSuccess(`Login realizado! Perfil: ${currentUserProfile}`);
-                        showUserInfo(email, currentUserProfile);
+                    // Verificar perfil no backend
+                    const response = await fetch('/auth/verify', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ token })
+                    });
+
+                    if (response.ok) {
+                        const userData = await response.json();
+                        console.log('Login bem-sucedido:', userData);
                         
-                        // Redirecionar após 1.5 segundos
+                        showSuccess('Login realizado com sucesso!');
+                        showWelcome(email, userData.perfil);
+                        
+                        // Marcar que está redirecionando
+                        isRedirecting = true;
+                        
+                        // Redirecionar após 2 segundos
                         setTimeout(() => {
-                            redirectToDashboard(currentUserProfile);
-                        }, 1500);
+                            redirectToDashboard(userData.perfil);
+                        }, 2000);
                     } else {
-                        // Perfil não detectado - mostrar seleção manual
-                        pendingLogin = { email, token };
-                        showProfileSelection();
+                        throw new Error('Erro ao verificar perfil');
                     }
-                } else {
-                    throw new Error('Erro ao verificar perfil');
                 }
                 
             } catch (error) {
                 console.error('Erro no login:', error);
                 handleLoginError(error);
+                isRedirecting = false;
             } finally {
                 setLoading(false);
             }
         });
 
-        // Selecionar perfil manualmente
-        window.selectProfile = async function(profile) {
-            if (!pendingLogin || !currentUser) {
-                showError('Sessão expirada. Por favor, faça login novamente.');
-                return;
+        // Função para redirecionar
+        function redirectToDashboard(profile) {
+            console.log('Redirecionando para perfil:', profile);
+            
+            const url = DASHBOARD_URLS[profile] || 
+                       DASHBOARD_URLS[profile.toLowerCase()] || 
+                       DASHBOARD_URLS[profile.toUpperCase()];
+            
+            if (url) {
+                console.log('Redirecionando para:', url);
+                // Usar replace para evitar loop de volta
+                window.location.replace(url);
+            } else {
+                console.error('Perfil não reconhecido:', profile);
+                showError('Perfil não reconhecido: ' + profile);
+                isRedirecting = false;
             }
+        }
 
-            setLoading(true);
-            hideMessages();
+        // Mostrar tela de bem-vindo
+        function showWelcome(email, profile) {
+            welcomeEmail.textContent = email;
+            welcomeProfile.textContent = profile;
+            loginSection.style.display = 'none';
+            welcomeScreen.style.display = 'block';
+        }
 
-            try {
-                // Aqui você poderia fazer uma chamada ao backend para atualizar o perfil
-                // Por enquanto, apenas redireciona
-                
-                currentUserProfile = profile;
-                showSuccess(`Perfil selecionado: ${profile}`);
-                
-                setTimeout(() => {
-                    redirectToDashboard(profile);
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Erro ao selecionar perfil:', error);
-                showError('Erro ao processar seleção. Tente novamente.');
-            } finally {
-                setLoading(false);
-            }
-        };
+        // Mostrar formulário de login
+        function showLoginForm() {
+            loginSection.style.display = 'block';
+            welcomeScreen.style.display = 'none';
+            isRedirecting = false;
+        }
 
         // Fazer logout
         window.handleLogout = async function() {
             try {
                 await auth.signOut();
-                currentUser = null;
-                currentUserProfile = null;
-                pendingLogin = null;
                 showLoginForm();
                 showSuccess('Logout realizado com sucesso!');
+                isRedirecting = false;
             } catch (error) {
                 console.error('Erro ao fazer logout:', error);
                 showError('Erro ao sair do sistema.');
             }
         };
 
-        // Redirecionar para dashboard apropriado
-        function redirectToDashboard(profile) {
-            const url = DASHBOARD_URLS[profile] || DASHBOARD_URLS[profile.toUpperCase()];
-            if (url) {
-                window.location.href = url;
-            } else {
-                showError('Perfil não reconhecido: ' + profile);
-            }
-        }
-
-        // Mostrar informações do usuário logado
-        function showUserInfo(email, profile) {
-            document.getElementById('userEmail').textContent = `Email: ${email}`;
-            document.getElementById('userProfile').textContent = `Perfil: ${profile || 'Não definido'}`;
-            document.getElementById('userInfo').style.display = 'block';
-            document.getElementById('loginSection').style.display = 'none';
-        }
-
-        // Mostrar formulário de login
-        function showLoginForm() {
-            document.getElementById('userInfo').style.display = 'none';
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('profileSelection').style.display = 'none';
-        }
-
-        // Mostrar seleção de perfil
-        function showProfileSelection() {
-            document.getElementById('profileSelection').style.display = 'block';
-            showInfo('Não foi possível detectar seu perfil automaticamente. Por favor, selecione manualmente.');
-        }
-
         // Tratar erros de login
         function handleLoginError(error) {
             let errorMessage = 'Erro no login. Verifique suas credenciais.';
             
             if (error.code === 'auth/user-not-found') {
-                errorMessage = 'Usuário não encontrado. Verifique o e-mail informado.';
+                errorMessage = 'Usuário não encontrado.';
             } else if (error.code === 'auth/wrong-password') {
-                errorMessage = 'Senha incorreta. Tente novamente.';
+                errorMessage = 'Senha incorreta.';
             } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'E-mail inválido. Verifique o formato.';
+                errorMessage = 'E-mail inválido.';
             } else if (error.code === 'auth/too-many-requests') {
-                errorMessage = 'Muitas tentativas de login. Tente novamente mais tarde.';
-            } else if (error.code === 'auth/network-request-failed') {
-                errorMessage = 'Erro de rede. Verifique sua conexão.';
+                errorMessage = 'Muitas tentativas. Aguarde alguns minutos.';
             }
             
             showError(errorMessage);
@@ -711,14 +539,8 @@
 
         // Funções auxiliares de UI
         function setLoading(loading) {
-            const btn = document.getElementById('btnLogin');
-            btn.disabled = loading;
-            btn.classList.toggle('loading', loading);
-        }
-
-        function showLoadingScreen(show) {
-            const loadingScreen = document.getElementById('loadingScreen');
-            loadingScreen.classList.toggle('active', show);
+            btnLogin.disabled = loading;
+            btnLogin.classList.toggle('loading', loading);
         }
 
         function showError(message) {
