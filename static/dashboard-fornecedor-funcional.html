@@ -19,112 +19,9 @@
             display: flex;
         }
 
-        /* Tela de Login */
-        .login-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            width: 100%;
-            padding: 20px;
-        }
-
-        .login-box {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .login-logo {
-            margin-bottom: 30px;
-        }
-
-        .login-logo i {
-            font-size: 48px;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .login-logo h2 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .login-logo p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .login-form {
-            margin-top: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 20px;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .login-error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
-        }
-
-        /* Dashboard (oculto inicialmente) */
+        /* Dashboard (sem tela de login) */
         .dashboard-container {
-            display: none;
+            display: flex;
             width: 100%;
         }
 
@@ -280,7 +177,6 @@
         }
 
         .content-section {
-            /* background: rgba(255, 255, 255, 0.95); */  /* Comentado para manter o fundo original */
             backdrop-filter: blur(10px);
             border-radius: 15px;
             padding: 30px;
@@ -573,38 +469,7 @@
     </style>
 </head>
 <body>
-    <!-- Tela de Login -->
-    <div class="login-container" id="login-screen">
-        <div class="login-box">
-            <div class="login-logo">
-                <i class="fas fa-truck"></i>
-                <h2>Portal do Fornecedor</h2>
-                <p>Sistema de Gestão de Propostas</p>
-            </div>
-            
-            <div class="login-error" id="login-error">
-                <i class="fas fa-exclamation-triangle"></i> <span id="error-message">Credenciais inválidas</span>
-            </div>
-            
-            <form class="login-form" id="login-form">
-                <div class="form-group">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" required placeholder="seu@email.com">
-                </div>
-                
-                <div class="form-group">
-                    <label for="senha">Senha</label>
-                    <input type="password" id="senha" required placeholder="Sua senha">
-                </div>
-                
-                <button type="submit" class="login-btn">
-                    <i class="fas fa-sign-in-alt"></i> Entrar
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Dashboard (oculto inicialmente) -->
+    <!-- Dashboard (sem tela de login) -->
     <div class="dashboard-container" id="dashboard-screen">
         <div class="sidebar">
             <div class="logo">
@@ -615,7 +480,8 @@
 
             <div class="user-info">
                 <strong id="user-name">-</strong>
-                <small id="user-cnpj">CNPJ: -</small>
+                <small id="user-email">-</small>
+                <small id="user-cnpj" style="display: block; margin-top: 5px;">CNPJ: -</small>
             </div>
 
             <div class="nav-section">
@@ -719,8 +585,93 @@
         </div>
     </div>
 
+<script type="module">
+        // INTEGRAÇÃO COM FIREBASE AUTH
+        import { auth, onAuthStateChanged } from '/static/js/firebase.js';
+        
+        // Verificar autenticação ao carregar
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Verificando autenticação Firebase...');
+            
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    // Não autenticado - redirecionar para login principal
+                    console.log('Usuário não autenticado - redirecionando...');
+                    window.location.replace('/');
+                    return;
+                }
+                
+                try {
+                    // Obter token e verificar perfil
+                    const token = await user.getIdToken();
+                    
+                    const response = await fetch('/auth/verify', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ token })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Erro ao verificar perfil');
+                    }
+                    
+                    const userData = await response.json();
+                    console.log('Usuário autenticado:', userData);
+                    
+                    // Verificar se é fornecedor
+                    const profile = (userData.perfil || '').toLowerCase();
+                    if (profile !== 'fornecedor' && profile !== 'admin') {
+                        console.log('Perfil incorreto - redirecionando...');
+                        const dashboards = {
+                            'requisitante': '/static/dashboard-requisitante-funcional.html',
+                            'comprador': '/static/dashboard-comprador-funcional.html',
+                            'admin': '/static/admin-usuarios.html'
+                        };
+                        
+                        const correctUrl = dashboards[profile];
+                        if (correctUrl) {
+                            window.location.replace(correctUrl);
+                        } else {
+                            window.location.replace('/');
+                        }
+                        return;
+                    }
+                    
+                    // Configurar dados do fornecedor para compatibilidade
+                    window.fornecedorLogado = {
+                        id: userData.uid,
+                        email: userData.email,
+                        nome: userData.nome,
+                        razaoSocial: userData.razaoSocial || userData.nome || 'Empresa',
+                        cnpj: userData.cnpj || '00.000.000/0000-00',
+                        telefone: userData.telefone || '',
+                        endereco: userData.endereco || '',
+                        cidade: userData.cidade || '',
+                        ativo: true
+                    };
+                    
+                    // Atualizar interface com dados do usuário
+                    document.getElementById('user-name').textContent = window.fornecedorLogado.razaoSocial;
+                    document.getElementById('user-email').textContent = window.fornecedorLogado.email;
+                    document.getElementById('user-cnpj').textContent = `CNPJ: ${window.fornecedorLogado.cnpj}`;
+                    
+                    // Carregar dados iniciais
+                    carregarEstatisticas();
+                    carregarProcessos();
+                    
+                } catch (error) {
+                    console.error('Erro na autenticação:', error);
+                    window.location.replace('/');
+                }
+            });
+        });
+    </script>
+
     <script>
-        // Sistema de dados local
+        // Sistema de dados local (mantido para compatibilidade)
         const SistemaLocal = {
             // Chaves para localStorage
             CHAVES: {
@@ -761,53 +712,26 @@
             }
         };
 
-        // Estado da aplicação
-        let fornecedorLogado = null;
+        // Estado da aplicação - fornecedorLogado será preenchido pela autenticação Firebase
 
-        // Funções de Login
-        function fazerLogin(email, senha) {
-            const usuarios = SistemaLocal.carregar(SistemaLocal.CHAVES.USUARIOS_FORNECEDORES, []);
-            
-            const usuario = usuarios.find(u => 
-                u.email === email && 
-                u.senha === senha && 
-                u.tipo === 'fornecedor' && 
-                u.ativo
-            );
-
-            if (usuario) {
-                // Buscar dados completos do fornecedor
-                const fornecedores = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES_CADASTRADOS, []);
-                const fornecedor = fornecedores.find(f => f.id === usuario.id);
-
-                if (fornecedor) {
-                    fornecedorLogado = fornecedor;
-                    SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO, fornecedorLogado);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        function mostrarDashboard() {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('dashboard-screen').style.display = 'flex';
-            
-            // Atualizar informações do usuário
-            document.getElementById('user-name').textContent = fornecedorLogado.razaoSocial;
-            document.getElementById('user-cnpj').textContent = `CNPJ: ${fornecedorLogado.cnpj}`;
-            
-            // Carregar dados iniciais
-            carregarEstatisticas();
-            carregarProcessos();
-        }
-
-        function logout() {
+        // Função de logout integrada com Firebase
+        async function logout() {
             if (confirm('Deseja realmente sair do sistema?')) {
-                localStorage.removeItem(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
-                fornecedorLogado = null;
-                location.reload();
+                try {
+                    // Importar auth do Firebase
+                    const { auth } = await import('/static/js/firebase.js');
+                    await auth.signOut();
+                    
+                    // Limpar dados locais (opcional)
+                    localStorage.removeItem(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
+                    window.fornecedorLogado = null;
+                    
+                    // Redirecionar para login
+                    window.location.replace('/');
+                } catch (error) {
+                    console.error('Erro ao fazer logout:', error);
+                    location.reload();
+                }
             }
         }
 
@@ -851,12 +775,17 @@
 
         // Carregar estatísticas
         function carregarEstatisticas() {
+            if (!window.fornecedorLogado) {
+                console.log('Aguardando autenticação...');
+                return;
+            }
+            
             const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
             
             // Filtrar dados do fornecedor logado
-            const meusProcessos = vinculacoes.filter(v => v.fornecedorId === fornecedorLogado.id);
-            const minhasPropostas = propostas.filter(p => p.fornecedorId === fornecedorLogado.id);
+            const meusProcessos = vinculacoes.filter(v => v.fornecedorId === window.fornecedorLogado.id);
+            const minhasPropostas = propostas.filter(p => p.fornecedorId === window.fornecedorLogado.id);
             
             // Calcular estatísticas
             const processosNovos = meusProcessos.filter(p => !minhasPropostas.some(prop => prop.processoId === p.processoId)).length;
@@ -883,11 +812,16 @@
 
         // Carregar processos
         function carregarProcessos() {
+            if (!window.fornecedorLogado) {
+                console.log('Aguardando autenticação...');
+                return;
+            }
+            
             const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
             
             // Filtrar processos do fornecedor logado
-            const meusProcessos = vinculacoes.filter(v => v.fornecedorId === fornecedorLogado.id);
+            const meusProcessos = vinculacoes.filter(v => v.fornecedorId === window.fornecedorLogado.id);
             
             const container = document.getElementById('processos-list');
             if (!container) return;
@@ -908,7 +842,7 @@
                 // Verificar se já existe proposta
                 const proposta = propostas.find(p => 
                     p.processoId === processo.processoId && 
-                    p.fornecedorId === fornecedorLogado.id
+                    p.fornecedorId === window.fornecedorLogado.id
                 );
                 
                 let statusClass = 'novo';
@@ -941,7 +875,7 @@
                         </div>
                         <div class="process-description">
                             <strong>TR:</strong> ${processo.trTitulo}<br>
-                            </div>
+                        </div>
                         
                         <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                             <button class="btn btn-info" onclick="visualizarTR('${processo.processoId}')">
@@ -969,8 +903,13 @@
 
         // Carregar propostas
         function carregarPropostas() {
+            if (!window.fornecedorLogado) {
+                console.log('Aguardando autenticação...');
+                return;
+            }
+            
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const minhasPropostas = propostas.filter(p => p.fornecedorId === fornecedorLogado.id);
+            const minhasPropostas = propostas.filter(p => p.fornecedorId === window.fornecedorLogado.id);
             
             const container = document.getElementById('propostas-list');
             if (!container) return;
@@ -1043,7 +982,7 @@
             container.innerHTML = html;
         }
 
-        // Função para mostrar aba no modal do fornecedor
+// Função para mostrar aba no modal do fornecedor
         function mostrarAbaFornecedor(aba, botao) {
             // Esconder todas as abas
             document.querySelectorAll('.tr-tab-content').forEach(content => {
@@ -1066,22 +1005,18 @@
         
         // Visualizar TR completo
         function visualizarTR(processoId) {
-            // Buscar o processo. Alguns objetos usam id, outros processoId.
+            // Buscar o processo
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            let processo = processos.find(p => p.id === processoId);
-            if (!processo) {
-                processo = processos.find(p => p.processoId === processoId);
-            }
-            // Caso ainda não encontrado, alertar
+            let processo = processos.find(p => p.id === processoId || p.processoId === processoId);
+            
             if (!processo) {
                 alert('Processo não encontrado!');
                 return;
             }
             
-            // Tentar obter TR vinculado. Se não existir, procurar pelo número do TR na vinculação.
+            // Tentar obter TR vinculado
             let tr = processo.trVinculado;
             if (!tr) {
-                // Procurar vinculação com o fornecedor para extrair número do TR
                 const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
                 const vinc = vinculacoes.find(v => v.processoId === processoId);
                 if (vinc && vinc.trNumero) {
@@ -1089,299 +1024,42 @@
                     tr = trs.find(t => t.numeroTR === vinc.trNumero || t.numero === vinc.trNumero);
                 }
             }
-            // Se ainda não houver TR, exibir erro
+            
             if (!tr) {
                 alert('TR não encontrado!');
                 return;
             }
             
-            // Criar modal com o TR completo
+            // Criar modal simplificado
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
-            
             modal.innerHTML = `
-                <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
-                    <div class="modal-header" style="flex-shrink: 0;">
+                <div class="modal-content">
+                    <div class="modal-header">
                         <div>
-                            <h3 style="margin: 0; color: #333;">${tr.numeroTR} - ${tr.titulo}</h3>
-                            <p style="margin: 5px 0 0 0; color: #666;">Modalidade: ${tr.modalidade}</p>
+                            <h3>${tr.numeroTR} - ${tr.titulo}</h3>
+                            <p>Modalidade: ${tr.modalidade}</p>
                         </div>
-                        <button class="btn-fechar-modal" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                     </div>
-                    <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 0;">
-                        <!-- Navegação por abas -->
-                        <div style="background: #f8f9fa; border-bottom: 2px solid #e0e0e0; padding: 0; position: sticky; top: 0; z-index: 10;">
-                            <div style="display: flex; overflow-x: auto;">
-                                <button class="tr-tab-btn active" onclick="mostrarAbaFornecedor('dados-gerais', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
-                                    <i class="fas fa-info-circle"></i> Dados Gerais
-                                </button>
-                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('local-acesso', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
-                                    <i class="fas fa-map-marker-alt"></i> Local e Acesso
-                                </button>
-                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('escopo-tecnico', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
-                                    <i class="fas fa-cogs"></i> Escopo Técnico
-                                </button>
-                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('servicos', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
-                                    <i class="fas fa-list"></i> Serviços
-                                </button>
-                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('prazos-resp', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
-                                    <i class="fas fa-calendar"></i> Prazos
-                                </button>
-                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('seguranca', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
-                                    <i class="fas fa-hard-hat"></i> Segurança
-                                </button>
-                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('gestao', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
-                                    <i class="fas fa-chart-bar"></i> Gestão
-                                </button>
-                                <button class="tr-tab-btn" onclick="mostrarAbaFornecedor('encerramento', this)" style="background: none; border: none; padding: 15px 20px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap;">
-                                    <i class="fas fa-check"></i> Encerramento
-                                </button>
-                            </div>
-                        </div>
+                    <div class="modal-body">
+                        <h4>Objetivo</h4>
+                        <p>${tr.objetivo || 'Não informado'}</p>
                         
-                        <div style="padding: 25px;">
-                            <!-- Dados Gerais -->
-                            <div id="tr-dados-gerais" class="tr-tab-content" style="display: block;">
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 15px;"><i class="fas fa-info-circle"></i> Informações Básicas</h4>
-                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                                        <div>
-                                            <strong style="color: #666;">Número do TR:</strong><br>
-                                            <span style="font-size: 16px;">${tr.numeroTR || 'Não informado'}</span>
-                                        </div>
-                                        <div>
-                                            <strong style="color: #666;">Modalidade:</strong><br>
-                                            <span style="font-size: 16px;">${tr.modalidade || 'Não informado'}</span>
-                                        </div>
-                                        <div>
-                                            <strong style="color: #666;">Valor Estimado:</strong><br>
-                                            <span style="font-size: 16px;">R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Objetivo</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.objetivo || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Conformidade ao Termo de Referência</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.conformidade || 'Não informado'}</p>
-                                </div>
-                            </div>
-                            
-                            <!-- Local e Acesso -->
-                            <div id="tr-local-acesso" class="tr-tab-content" style="display: none;">
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Visita ao Local</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.visitaLocal || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Local/Acesso</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.local || 'Não informado'}</p>
-                                </div>
-                            </div>
-                            
-                            <!-- Escopo Técnico -->
-                            <div id="tr-escopo-tecnico" class="tr-tab-content" style="display: none;">
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Escopo Técnico</h4>
-                                    <p style="color: #555; line-height: 1.6; white-space: pre-wrap;">${tr.escopo || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Situação Atual</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.situacaoAtual || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Situação Proposta</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.situacaoProposta || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Especificação Técnica</h4>
-                                    <p style="color: #555; line-height: 1.6; white-space: pre-wrap;">${tr.especificacao || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Premissas, Requisitos e Restrições</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.premissas || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Planilha de Quantidade</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.planilhaQuantidade || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Escopo Geral</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.escopoGeral || 'Não informado'}</p>
-                                </div>
-                            </div>
-                            
-                            <!-- Serviços -->
-                            <div id="tr-servicos" class="tr-tab-content" style="display: none;">
-                                ${tr.servicos && tr.servicos.length > 0 ? `
-                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                                        <h4 style="color: #333; margin-bottom: 15px;"><i class="fas fa-list"></i> Tabela de Serviços</h4>
-                                        <div style="overflow-x: auto;">
-                                            <table style="width: 100%; border-collapse: collapse;">
-                                                <thead>
-                                                    <tr style="background: #e9ecef;">
-                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Item</th>
-                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Descrição</th>
-                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">Unidade</th>
-                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">Quantidade</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    ${tr.servicos.map(servico => `
-                                                        <tr>
-                                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${servico.item}</td>
-                                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${servico.descricao}</td>
-                                                            <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">${servico.unidade}</td>
-                                                            <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">${servico.quantidade}</td>
-                                                        </tr>
-                                                    `).join('')}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                ` : '<p style="text-align: center; color: #666; padding: 40px;">Nenhum serviço cadastrado</p>'}
-                            </div>
-                            
-                            <!-- Prazos e Responsabilidades -->
-                            <div id="tr-prazos-resp" class="tr-tab-content" style="display: none;">
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Prazos</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.prazos || tr.prazo || 'Não informado'}</p>
-                                </div>
-                                
-                                ${tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0 ? `
-                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                                        <h4 style="color: #333; margin-bottom: 15px;"><i class="fas fa-tasks"></i> Matriz de Responsabilidade</h4>
-                                        <div style="overflow-x: auto;">
-                                            <table style="width: 100%; border-collapse: collapse;">
-                                                <thead>
-                                                    <tr style="background: #e9ecef;">
-                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Item/Atividade</th>
-                                                        <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">Responsável</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    ${tr.matrizResponsabilidade.map(item => `
-                                                        <tr>
-                                                            <td style="padding: 12px; border: 1px solid #dee2e6;">${item.item}</td>
-                                                            <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">
-                                                                ${item.responsavel === 'contratada' ? 'Contratada' : 
-                                                                  item.responsavel === 'contratante' ? 'Contratante' : 'N/A'}
-                                                            </td>
-                                                        </tr>
-                                                    `).join('')}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            
-                            <!-- Segurança -->
-                            <div id="tr-seguranca" class="tr-tab-content" style="display: none;">
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Mobilização Segurança e Saúde do Trabalho</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.mobilizacao || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Canteiro de Obras e Infraestrutura Temporárias</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.canteiro || 'Não informado'}</p>
-                                </div>
-                                
-                                ${tr.credenciamento ? `
-                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                        <h4 style="color: #333; margin-bottom: 10px;">Credenciamento Aeroportuário</h4>
-                                        <p style="color: #555; line-height: 1.6;">${tr.credenciamento}</p>
-                                    </div>
-                                ` : ''}
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Meio Ambiente</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.meioAmbiente || 'Não informado'}</p>
-                                </div>
-                            </div>
-                            
-                            <!-- Gestão -->
-                            <div id="tr-gestao" class="tr-tab-content" style="display: none;">
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Engenharia</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.engenharia || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Aquisições</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.aquisicoes || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Planejamento/Gestão de Contratos</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.planejamentoGestao || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Planejamento Executivo</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.planejamentoExecutivo || 'Não informado'}</p>
-                                </div>
-                            </div>
-                            
-                            <!-- Encerramento -->
-                            <div id="tr-encerramento" class="tr-tab-content" style="display: none;">
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Testes, Comissionamento, Treinamento</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.testes || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Ao Encerramento da Obra</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.encerramento || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Certificado de Aceitação Provisória (CAP)</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.cap || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Certificado de Aceitação Final (CAF)</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.caf || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Garantia</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.garantia || 'Não informado'}</p>
-                                </div>
-                                
-                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                    <h4 style="color: #333; margin-bottom: 10px;">Critérios de Avaliação de Propostas</h4>
-                                    <p style="color: #555; line-height: 1.6;">${tr.criterios || 'Não informado'}</p>
-                                </div>
-                                
-                                ${tr.anexos ? `
-                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                                        <h4 style="color: #333; margin-bottom: 10px;">Anexos</h4>
-                                        <p style="color: #555; line-height: 1.6;">${tr.anexos}</p>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
+                        <h4>Escopo</h4>
+                        <p>${tr.escopo || 'Não informado'}</p>
+                        
+                        <h4>Prazo</h4>
+                        <p>${tr.prazo || tr.prazos || 'Não informado'}</p>
+                        
+                        <h4>Valor Estimado</h4>
+                        <p>R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
                     </div>
-                    <div class="modal-footer" style="flex-shrink: 0;">
+                    <div class="modal-footer">
                         <button class="btn btn-secondary" onclick="baixarTR('${processoId}')">
-                            <i class="fas fa-download"></i> Baixar TR Completo
+                            <i class="fas fa-download"></i> Baixar TR
                         </button>
-                        <button class="btn btn-primary btn-fechar-modal">
+                        <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">
                             Fechar
                         </button>
                     </div>
@@ -1389,31 +1067,21 @@
             `;
             
             document.body.appendChild(modal);
-            
-            // Event listeners
-            modal.querySelectorAll('.btn-fechar-modal').forEach(btn => {
-                btn.addEventListener('click', () => modal.remove());
-            });
-            
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) modal.remove();
             });
         }
 
-        // Baixar TR completo com todos os campos
+        // Baixar TR
         function baixarTR(processoId) {
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            let processo = processos.find(p => p.id === processoId);
-            if (!processo) {
-                processo = processos.find(p => p.processoId === processoId);
-            }
+            let processo = processos.find(p => p.id === processoId || p.processoId === processoId);
 
             if (!processo) {
                 alert('Processo não encontrado!');
                 return;
             }
 
-            // Tentar obter TR vinculado ou procurar por número
             let tr = processo.trVinculado;
             if (!tr) {
                 const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
@@ -1429,289 +1097,44 @@
                 return;
             }
             
-            // Gerar HTML do TR completo com TODOS os 26+ campos
+            // Gerar HTML do TR
             const conteudoHTML = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <meta charset="UTF-8">
-                    <title>${tr.numeroTR || 'TR'} - ${tr.titulo || 'Termo de Referência'}</title>
+                    <title>${tr.numeroTR} - ${tr.titulo}</title>
                     <style>
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            margin: 40px; 
-                            line-height: 1.6;
-                            color: #333;
-                        }
+                        body { font-family: Arial, sans-serif; margin: 40px; }
                         h1, h2, h3 { color: #333; }
-                        .header { 
-                            text-align: center; 
-                            margin-bottom: 40px; 
-                            border-bottom: 2px solid #333; 
-                            padding-bottom: 20px; 
-                        }
-                        .section { 
-                            margin-bottom: 30px; 
-                            page-break-inside: avoid; 
-                        }
-                        .section-title { 
-                            background: #f0f0f0; 
-                            padding: 10px; 
-                            margin-bottom: 15px; 
-                            font-weight: bold;
-                            font-size: 16px;
-                        }
-                        table { 
-                            width: 100%; 
-                            border-collapse: collapse; 
-                            margin: 20px 0; 
-                        }
-                        th, td { 
-                            border: 1px solid #ddd; 
-                            padding: 8px; 
-                            text-align: left; 
-                        }
-                        th { 
-                            background: #f0f0f0; 
-                            font-weight: bold;
-                        }
-                        .info-grid {
-                            display: grid;
-                            grid-template-columns: 1fr 1fr;
-                            gap: 20px;
-                            margin-bottom: 30px;
-                        }
-                        .info-item {
-                            padding: 10px;
-                            background: #f9f9f9;
-                            border-radius: 5px;
-                        }
-                        .info-item strong {
-                            color: #555;
-                        }
-                        @media print {
-                            body { margin: 20px; }
-                            .section { page-break-inside: avoid; }
-                        }
+                        .section { margin: 30px 0; }
                     </style>
                 </head>
                 <body>
-                    <div class="header">
-                        <h1>TERMO DE REFERÊNCIA</h1>
-                        <h2>${tr.numeroTR || 'Número não informado'}</h2>
-                        <h3>${tr.titulo || 'Título não informado'}</h3>
-                    </div>
-                    
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <strong>Modalidade Sugerida:</strong> ${tr.modalidade || 'Não informada'}
-                        </div>
-                        <div class="info-item">
-                            <strong>Valor Estimado:</strong> R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                        </div>
-                        <div class="info-item">
-                            <strong>Data de Criação:</strong> ${tr.dataCriacao ? new Date(tr.dataCriacao).toLocaleDateString('pt-BR') : 'Não informada'}
-                        </div>
-                        <div class="info-item">
-                            <strong>Responsável:</strong> ${tr.usuarioNome || 'Não informado'}
-                        </div>
-                    </div>
+                    <h1>TERMO DE REFERÊNCIA</h1>
+                    <h2>${tr.numeroTR}</h2>
+                    <h3>${tr.titulo}</h3>
                     
                     <div class="section">
-                        <div class="section-title">1. OBJETIVO</div>
+                        <h4>1. OBJETIVO</h4>
                         <p>${tr.objetivo || 'Não informado'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">2. CONFORMIDADE AO TERMO DE REFERÊNCIA</div>
-                        <p>${tr.conformidade || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">3. VISITA AO LOCAL</div>
-                        <p><strong>Tipo de Visita:</strong> ${tr.visitaLocal || 'Não especificado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">4. LOCAL/ACESSO</div>
-                        <p>${tr.local || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">5. ESCOPO TÉCNICO</div>
+                        <h4>2. ESCOPO</h4>
                         <p>${tr.escopo || 'Não informado'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">6. SITUAÇÃO ATUAL</div>
-                        <p>${tr.situacaoAtual || 'Não informado'}</p>
+                        <h4>3. PRAZO</h4>
+                        <p>${tr.prazo || tr.prazos || 'Não informado'}</p>
                     </div>
                     
                     <div class="section">
-                        <div class="section-title">7. SITUAÇÃO PROPOSTA</div>
-                        <p>${tr.situacaoProposta || 'Não informado'}</p>
+                        <h4>4. VALOR ESTIMADO</h4>
+                        <p>R$ ${parseFloat(tr.valorEstimado || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
                     </div>
-                    
-                    <div class="section">
-                        <div class="section-title">8. ESPECIFICAÇÃO TÉCNICA</div>
-                        <p>${tr.especificacao || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">9. PREMISSAS, REQUISITOS E RESTRIÇÕES</div>
-                        <p>${tr.premissas || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">10. PLANILHA DE QUANTIDADE</div>
-                        <p>${tr.planilhaQuantidade || 'Não informado'}</p>
-                    </div>
-                    
-                    ${tr.servicos && tr.servicos.length > 0 ? `
-                        <div class="section">
-                            <div class="section-title">11. TABELA DE SERVIÇOS</div>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th width="10%">Item</th>
-                                        <th width="50%">Descrição</th>
-                                        <th width="20%">Unidade</th>
-                                        <th width="20%">Quantidade</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tr.servicos.map(s => `
-                                        <tr>
-                                            <td align="center">${s.item}</td>
-                                            <td>${s.descricao}</td>
-                                            <td align="center">${s.unidade}</td>
-                                            <td align="center">${s.quantidade}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="section">
-                        <div class="section-title">12. ESCOPO GERAL</div>
-                        <p>${tr.escopoGeral || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">13. PRAZOS</div>
-                        <p>${tr.prazos || tr.prazo || 'Não informado'}</p>
-                    </div>
-                    
-                    ${tr.matrizResponsabilidade && tr.matrizResponsabilidade.length > 0 ? `
-                        <div class="section">
-                            <div class="section-title">14. MATRIZ DE RESPONSABILIDADE</div>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th width="70%">Item/Atividade</th>
-                                        <th width="30%">Responsável</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tr.matrizResponsabilidade.map(item => `
-                                        <tr>
-                                            <td>${item.item}</td>
-                                            <td align="center">
-                                                ${item.responsavel === 'contratada' ? 'Contratada' : 
-                                                  item.responsavel === 'contratante' ? 'Contratante' : 'N/A'}
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="section">
-                        <div class="section-title">15. MOBILIZAÇÃO, SEGURANÇA E SAÚDE DO TRABALHO</div>
-                        <p>${tr.mobilizacao || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">16. CANTEIRO DE OBRAS E INFRAESTRUTURA TEMPORÁRIAS</div>
-                        <p>${tr.canteiro || 'Não informado'}</p>
-                    </div>
-                    
-                    ${tr.credenciamento ? `
-                        <div class="section">
-                            <div class="section-title">17. CREDENCIAMENTO AEROPORTUÁRIO</div>
-                            <p>${tr.credenciamento}</p>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '18' : '17'}. MEIO AMBIENTE</div>
-                        <p>${tr.meioAmbiente || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '19' : '18'}. ENGENHARIA</div>
-                        <p>${tr.engenharia || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '20' : '19'}. AQUISIÇÕES</div>
-                        <p>${tr.aquisicoes || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '21' : '20'}. PLANEJAMENTO/GESTÃO DE CONTRATOS</div>
-                        <p>${tr.planejamentoGestao || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '22' : '21'}. PLANEJAMENTO EXECUTIVO</div>
-                        <p>${tr.planejamentoExecutivo || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '23' : '22'}. TESTES, COMISSIONAMENTO E TREINAMENTO</div>
-                        <p>${tr.testes || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '24' : '23'}. AO ENCERRAMENTO DA OBRA</div>
-                        <p>${tr.encerramento || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '25' : '24'}. CERTIFICADO DE ACEITAÇÃO PROVISÓRIA (CAP)</div>
-                        <p>${tr.cap || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '26' : '25'}. CERTIFICADO DE ACEITAÇÃO FINAL (CAF)</div>
-                        <p>${tr.caf || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '27' : '26'}. GARANTIA</div>
-                        <p>${tr.garantia || 'Não informado'}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">${tr.credenciamento ? '28' : '27'}. CRITÉRIOS DE AVALIAÇÃO DE PROPOSTAS</div>
-                        <p>${tr.criterios || 'Não informado'}</p>
-                    </div>
-                    
-                    ${tr.anexos ? `
-                        <div class="section">
-                            <div class="section-title">${tr.credenciamento ? '29' : '28'}. ANEXOS</div>
-                            <p>${tr.anexos}</p>
-                        </div>
-                    ` : ''}
-                    
-                    <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
-                        <p>Documento gerado automaticamente em ${new Date().toLocaleString('pt-BR')}</p>
-                        <p>Sistema de Gestão de Propostas - Módulo Fornecedor</p>
-                    </div>
-</body>
+                </body>
                 </html>
             `;
 
@@ -1720,7 +1143,7 @@
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${tr.numeroTR}_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}_COMPLETO.html`;
+            a.download = `${tr.numeroTR}_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}.html`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1729,14 +1152,18 @@
         
         // Abrir Portal de Propostas
         function abrirPortalPropostas(processoId) {
-            // Buscar dados necessários
             const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
             
+            if (!window.fornecedorLogado) {
+                alert('Erro: Usuário não autenticado');
+                return;
+            }
+            
             const vinculacao = vinculacoes.find(v => 
                 v.processoId === processoId && 
-                v.fornecedorId === fornecedorLogado.id
+                v.fornecedorId === window.fornecedorLogado.id
             );
             
             const processo = processos.find(p => p.id === processoId);
@@ -1746,13 +1173,12 @@
                 return;
             }
             
-            // Verificar se já existe proposta (incluindo rascunhos)
             const propostaExistente = propostas.find(p => 
                 p.processoId === processoId && 
-                p.fornecedorId === fornecedorLogado.id
+                p.fornecedorId === window.fornecedorLogado.id
             );
             
-            // Preparar dados completos para o portal
+            // Preparar dados para o portal
             const dadosPortal = {
                 processo: {
                     processoId: processoId,
@@ -1762,35 +1188,16 @@
                     dataLimite: vinculacao.dataLimite,
                     valorEstimado: vinculacao.valorEstimado
                 },
-                fornecedor: {
-                    id: fornecedorLogado.id,
-                    razaoSocial: fornecedorLogado.razaoSocial,
-                    cnpj: fornecedorLogado.cnpj,
-                    email: fornecedorLogado.email,
-                    telefone: fornecedorLogado.telefone || '',
-                    endereco: fornecedorLogado.endereco || '',
-                    cidade: fornecedorLogado.cidade || ''
-                },
+                fornecedor: window.fornecedorLogado,
                 tr: processo.trVinculado,
                 propostaExistente: propostaExistente,
-                // NOVO: Incluir dados completos da proposta se existir
-                dadosCompletos: propostaExistente && propostaExistente.dadosCompletos ? propostaExistente.dadosCompletos : null
+                dadosCompletos: propostaExistente?.dadosCompletos || null
             };
             
-            // Salvar dados no sessionStorage para o portal
+            // Salvar dados no sessionStorage
             sessionStorage.setItem('dados_processo_portal', JSON.stringify(dadosPortal));
             
-            // NOVO: Salvar também dados específicos para carregamento de tabelas
-            if (propostaExistente && propostaExistente.dadosCompletos) {
-                sessionStorage.setItem('dados_tabelas_proposta', JSON.stringify({
-                    propostaTecnica: propostaExistente.dadosCompletos.propostaTecnica || {},
-                    propostaComercial: propostaExistente.dadosCompletos.propostaComercial || {},
-                    dadosCadastrais: propostaExistente.dadosCompletos.dadosCadastrais || {},
-                    resumo: propostaExistente.dadosCompletos.resumo || {}
-                }));
-            }
-            
-            // Abrir portal em nova janela
+            // Abrir portal
             const portalWindow = window.open('portal-propostas-novo.html', '_blank');
             
             if (!portalWindow) {
@@ -1798,7 +1205,7 @@
             }
         }
 
-        // Visualizar proposta enviada - FUNÇÃO CORRIGIDA
+        // Visualizar proposta enviada
         function visualizarProposta(propostaId) {
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
             const proposta = propostas.find(p => p.id === propostaId);
@@ -1808,13 +1215,10 @@
                 return;
             }
             
-            // Se a proposta tem dados completos do portal, usar eles
             if (proposta.dadosCompletos) {
-                // Abrir proposta completa em nova janela com os dados salvos
                 sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
                 window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
             } else {
-                // Fallback para propostas antigas
                 alert(`
                     PROPOSTA ENVIADA
                     
@@ -1827,615 +1231,6 @@
                     Status: ENVIADA ✓
                 `);
             }
-        }
-        // Função auxiliar para abrir proposta completa
-        function abrirPropostaCompleta(propostaId) {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const proposta = propostas.find(p => p.id === propostaId);
-            
-            if (proposta && proposta.dadosCompletos) {
-                sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
-                window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
-            }
-        }
-
-        // Função para baixar comprovante
-        function baixarComprovante(propostaId) {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const proposta = propostas.find(p => p.id === propostaId);
-            
-            if (!proposta) return;
-            
-            const conteudoHTML = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Comprovante - ${proposta.protocolo}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; }
-                        .header { text-align: center; margin-bottom: 30px; }
-                        .comprovante { border: 2px solid #333; padding: 30px; }
-                        .campo { margin: 10px 0; }
-                        .assinatura { margin-top: 50px; text-align: center; }
-                    </style>
-                </head>
-                <body>
-                    <div class="comprovante">
-                        <div class="header">
-                            <h1>COMPROVANTE DE ENVIO DE PROPOSTA</h1>
-                        </div>
-                        <div class="campo"><strong>Protocolo:</strong> ${proposta.protocolo}</div>
-                        <div class="campo"><strong>Data/Hora:</strong> ${new Date(proposta.dataEnvio).toLocaleString('pt-BR')}</div>
-                        <div class="campo"><strong>Processo:</strong> ${proposta.numeroProcesso}</div>
-                        <div class="campo"><strong>Fornecedor:</strong> ${proposta.fornecedorRazaoSocial}</div>
-                        <div class="campo"><strong>CNPJ:</strong> ${proposta.fornecedorCNPJ}</div>
-                        <div class="campo"><strong>Valor:</strong> R$ ${proposta.valor}</div>
-                        <div class="campo"><strong>Prazo:</strong> ${proposta.prazoExecucao}</div>
-                        <div class="assinatura">
-                            <p>Documento gerado eletronicamente</p>
-                        </div>
-                    </div>
-</body>
-                </html>
-            `;
-            
-            const blob = new Blob([conteudoHTML], { type: 'text/html' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Comprovante_${proposta.protocolo}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }
-
-        // Adicionar esta nova função após a função baixarComprovante existente
-        function baixarPropostaCompleta(propostaId) {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const proposta = propostas.find(p => p.id === propostaId);
-            
-            if (!proposta || !proposta.dadosCompletos) {
-                alert('Proposta não encontrada ou dados incompletos!');
-                return;
-            }
-            
-            const dados = proposta.dadosCompletos;
-            
-            const conteudoHTML = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Proposta Completa - ${proposta.protocolo}</title>
-                    <style>
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            margin: 40px; 
-                            line-height: 1.6;
-                            color: #333;
-                        }
-                        h1, h2, h3, h4 { 
-                            color: #333; 
-                            margin-bottom: 15px;
-                        }
-                        .header { 
-                            text-align: center; 
-                            margin-bottom: 40px; 
-                            border-bottom: 2px solid #333; 
-                            padding-bottom: 20px; 
-                        }
-                        .section { 
-                            margin-bottom: 30px; 
-                            page-break-inside: avoid; 
-                        }
-                        .section-title { 
-                            background: #f0f0f0; 
-                            padding: 10px; 
-                            margin-bottom: 15px; 
-                            font-weight: bold;
-                            font-size: 16px;
-                        }
-                        table { 
-                            width: 100%; 
-                            border-collapse: collapse; 
-                            margin: 20px 0; 
-                        }
-                        th, td { 
-                            border: 1px solid #ddd; 
-                            padding: 8px; 
-                            text-align: left; 
-                        }
-                        th { 
-                            background: #f0f0f0; 
-                            font-weight: bold;
-                        }
-                        .info-grid {
-                            display: grid;
-                            grid-template-columns: 1fr 1fr;
-                            gap: 20px;
-                            margin-bottom: 30px;
-                        }
-                        .info-item {
-                            padding: 10px;
-                            background: #f9f9f9;
-                            border-radius: 5px;
-                        }
-                        .destaque {
-                            background: #e8f5e8;
-                            padding: 15px;
-                            border-radius: 8px;
-                            border-left: 5px solid #27ae60;
-                            margin: 20px 0;
-                        }
-                        @media print {
-                            body { margin: 20px; }
-                            .section { page-break-inside: avoid; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>PROPOSTA TÉCNICA E COMERCIAL</h1>
-                        <h2>Protocolo: ${proposta.protocolo}</h2>
-                        <p><strong>Data de Envio:</strong> ${new Date(proposta.dataEnvio).toLocaleString('pt-BR')}</p>
-                        <p><strong>Processo:</strong> ${proposta.numeroProcesso}</p>
-                    </div>
-                    
-                    <!-- SEÇÃO 1: DADOS CADASTRAIS -->
-                    <div class="section">
-                        <div class="section-title">1. DADOS CADASTRAIS</div>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <strong>Razão Social:</strong><br>
-                                ${dados.dadosCadastrais?.razaoSocial || 'Não informado'}
-                            </div>
-                            <div class="info-item">
-                                <strong>CNPJ:</strong><br>
-                                ${dados.dadosCadastrais?.cnpj || 'Não informado'}
-                            </div>
-                            <div class="info-item">
-                                <strong>Endereço:</strong><br>
-                                ${dados.dadosCadastrais?.endereco || 'Não informado'}
-                            </div>
-                            <div class="info-item">
-                                <strong>Cidade/UF:</strong><br>
-                                ${dados.dadosCadastrais?.cidade || 'Não informado'}
-                            </div>
-                            <div class="info-item">
-                                <strong>Telefone:</strong><br>
-                                ${dados.dadosCadastrais?.telefone || 'Não informado'}
-                            </div>
-                            <div class="info-item">
-                                <strong>E-mail:</strong><br>
-                                ${dados.dadosCadastrais?.email || 'Não informado'}
-                            </div>
-                            <div class="info-item">
-                                <strong>Responsável Técnico:</strong><br>
-                                ${dados.dadosCadastrais?.respTecnico || 'Não informado'}
-                            </div>
-                            <div class="info-item">
-                                <strong>CREA/CAU:</strong><br>
-                                ${dados.dadosCadastrais?.crea || 'Não informado'}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- SEÇÃO 2: PROPOSTA TÉCNICA -->
-                    <div class="section">
-                        <div class="section-title">2. PROPOSTA TÉCNICA</div>
-                        
-                        <h4>2.1 Objeto da Concorrência</h4>
-                        <p>${dados.propostaTecnica?.objetoConcorrencia || 'Não informado'}</p>
-                        
-                        <h4>2.2 Descrição Detalhada do Escopo</h4>
-                        <p><strong>Serviços a Executar:</strong><br>
-                        ${dados.propostaTecnica?.escopoInclusos || 'Não informado'}</p>
-                        <p><strong>Serviços Ocultos:</strong><br>
-                        ${dados.propostaTecnica?.escopoExclusos || 'Não informado'}</p>
-                        
-                        <h4>2.3 Metodologia de Execução</h4>
-                        <p>${dados.propostaTecnica?.metodologia || 'Não informado'}</p>
-                        <p><strong>Plano de Execução:</strong><br>
-                        ${dados.propostaTecnica?.sequenciaExecucao || 'Não informado'}</p>
-                        
-                        ${dados.propostaTecnica?.servicosTecnica && dados.propostaTecnica.servicosTecnica.length > 0 ? `
-                            <h4>2.3.1 Tabela de Serviços (sem valores)</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Descrição</th>
-                                        <th>Unidade</th>
-                                        <th>Quantidade</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaTecnica.servicosTecnica.map(s => `
-                                        <tr>
-                                            <td>${s[0] || ''}</td>
-                                            <td>${s[1] || ''}</td>
-                                            <td>${s[2] || ''}</td>
-                                            <td>${s[3] || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : ''}
-                        
-                        ${dados.propostaTecnica?.equipe && dados.propostaTecnica.equipe.length > 0 ? `
-                            <h4>2.4 Mão de Obra Direta e Indireta</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Função</th>
-                                        <th>Quantidade</th>
-                                        <th>Tempo (meses)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaTecnica.equipe.map(e => `
-                                        <tr>
-                                            <td>${e[0] || ''}</td>
-                                            <td>${e[1] || ''}</td>
-                                            <td>${e[2] || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : ''}
-                        
-                        ${dados.propostaTecnica?.materiais && dados.propostaTecnica.materiais.length > 0 ? `
-                            <h4>2.5 Lista de Materiais</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Material</th>
-                                        <th>Especificação</th>
-                                        <th>Unidade</th>
-                                        <th>Quantidade</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaTecnica.materiais.map(m => `
-                                        <tr>
-                                            <td>${m[0] || ''}</td>
-                                            <td>${m[1] || ''}</td>
-                                            <td>${m[2] || ''}</td>
-                                            <td>${m[3] || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : ''}
-                        
-                        ${dados.propostaTecnica?.equipamentos && dados.propostaTecnica.equipamentos.length > 0 ? `
-                            <h4>2.6 Lista de Equipamentos</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Equipamento</th>
-                                        <th>Especificação</th>
-                                        <th>Unidade</th>
-                                        <th>Quantidade</th>
-                                        <th>Tempo (meses)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaTecnica.equipamentos.map(eq => `
-                                        <tr>
-                                            <td>${eq[0] || ''}</td>
-                                            <td>${eq[1] || ''}</td>
-                                            <td>${eq[2] || ''}</td>
-                                            <td>${eq[3] || ''}</td>
-                                            <td>${eq[4] || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : ''}
-                        
-                        <h4>2.9 Prazo de Execução</h4>
-                        <p>${dados.propostaTecnica?.prazoExecucao || 'Não informado'}</p>
-                        
-                        <h4>2.10 Prazo de Mobilização</h4>
-                        <p>${dados.propostaTecnica?.prazoMobilizacao || 'Não informado'}</p>
-                        
-                        ${dados.propostaTecnica?.cronograma && dados.propostaTecnica.cronograma.length > 0 ? `
-                            <h4>2.11 Cronograma de Execução</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Atividade</th>
-                                        <th>Duração (dias)</th>
-                                        <th>Início</th>
-                                        <th>Fim</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaTecnica.cronograma.map(c => `
-                                        <tr>
-                                            <td>${c[0] || ''}</td>
-                                            <td>${c[1] || ''}</td>
-                                            <td>${c[2] || ''}</td>
-                                            <td>${c[3] || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : ''}
-                        
-                        <h4>2.12 Garantias Oferecidas</h4>
-                        <p>${dados.propostaTecnica?.garantias || 'Não informado'}</p>
-                        
-                        <h4>2.13 Necessidade de Canteiro</h4>
-                        <p>${dados.propostaTecnica?.estruturaCanteiro || 'Não informado'}</p>
-                        
-                        <h4>2.14 Obrigações</h4>
-                        <p><strong>Responsabilidades da CONTRATADA:</strong><br>
-                        ${dados.propostaTecnica?.obrigacoesContratada || 'Não informado'}</p>
-                        <p><strong>Responsabilidades da CONTRATANTE:</strong><br>
-                        ${dados.propostaTecnica?.obrigacoesContratante || 'Não informado'}</p>
-                        
-                        ${dados.propostaTecnica?.experiencia && dados.propostaTecnica.experiencia.length > 0 ? `
-                            <h4>2.15 Experiência</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Obra</th>
-                                        <th>Cliente</th>
-                                        <th>Valor</th>
-                                        <th>Ano</th>
-                                        <th>Contato</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaTecnica.experiencia.map(exp => `
-                                        <tr>
-                                            <td>${exp[0] || ''}</td>
-                                            <td>${exp[1] || ''}</td>
-                                            <td>${exp[2] || ''}</td>
-                                            <td>${exp[3] || ''}</td>
-                                            <td>${exp[4] || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : ''}
-                        
-                        ${dados.propostaTecnica?.certificacoes && dados.propostaTecnica.certificacoes.length > 0 ? `
-                            <h4>2.16 Certificações/Qualificações</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Certificação</th>
-                                        <th>Órgão</th>
-                                        <th>Validade</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaTecnica.certificacoes.map(cert => `
-                                        <tr>
-                                            <td>${cert[0] || ''}</td>
-                                            <td>${cert[1] || ''}</td>
-                                            <td>${cert[2] || ''}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : ''}
-                    </div>
-                    
-                    <!-- SEÇÃO 3: PROPOSTA COMERCIAL -->
-                    <div class="section">
-                        <div class="section-title">3. PROPOSTA COMERCIAL</div>
-                        
-                        <div class="destaque">
-                            <h3>VALOR TOTAL DA PROPOSTA: R$ ${dados.propostaComercial?.valorTotal || '0,00'}</h3>
-                            <p><strong>Validade da Proposta:</strong> ${dados.propostaComercial?.validadeProposta || '60 dias'}</p>
-                        </div>
-                        
-                        ${dados.propostaComercial?.servicos && dados.propostaComercial.servicos.length > 0 ? `
-                            <h4>3.2 Tabela de Serviços por Item</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Descrição</th>
-                                        <th>Unid</th>
-                                        <th>Qtd</th>
-                                        <th>Preço Unit</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaComercial.servicos.map(s => `
-                                        <tr>
-                                            <td>${s[0] || ''}</td>
-                                            <td>${s[1] || ''}</td>
-                                            <td>${s[2] || ''}</td>
-                                            <td>${s[3] || ''}</td>
-                                            <td>R$ ${s[4] || '0,00'}</td>
-                                            <td>R$ ${s[5] || '0,00'}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <th colspan="5" style="text-align: right;">TOTAL SERVIÇOS:</th>
-                                        <th>R$ ${dados.propostaComercial.totais?.servicos || '0,00'}</th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        ` : ''}
-                        
-                        ${dados.propostaComercial?.maoObra && dados.propostaComercial.maoObra.length > 0 ? `
-                            <h4>3.4 Mão de Obra Direta e Indireta</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Função</th>
-                                        <th>Qtd</th>
-                                        <th>Tempo</th>
-                                        <th>Salário</th>
-                                        <th>Enc. Sociais</th>
-                                        <th>Total Mensal</th>
-                                        <th>Total Geral</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaComercial.maoObra.map(mo => `
-                                        <tr>
-                                            <td>${mo[0] || ''}</td>
-                                            <td>${mo[1] || ''}</td>
-                                            <td>${mo[2] || ''}</td>
-                                            <td>R$ ${mo[3] || '0,00'}</td>
-                                            <td>${mo[4] || '0'}%</td>
-                                            <td>R$ ${mo[5] || '0,00'}</td>
-                                            <td>R$ ${mo[6] || '0,00'}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <th colspan="6" style="text-align: right;">TOTAL MÃO DE OBRA:</th>
-                                        <th>R$ ${dados.propostaComercial.totais?.maoObra || '0,00'}</th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        ` : ''}
-                        
-                        ${dados.propostaComercial?.materiaisComercial && dados.propostaComercial.materiaisComercial.length > 0 ? `
-                            <h4>3.5 Lista de Materiais com Valores</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Material</th>
-                                        <th>Especificação</th>
-                                        <th>Unidade</th>
-                                        <th>Quantidade</th>
-                                        <th>Preço Unit.</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaComercial.materiaisComercial.map(mat => `
-                                        <tr>
-                                            <td>${mat[0] || ''}</td>
-                                            <td>${mat[1] || ''}</td>
-                                            <td>${mat[2] || ''}</td>
-                                            <td>${mat[3] || ''}</td>
-                                            <td>R$ ${mat[4] || '0,00'}</td>
-                                            <td>R$ ${mat[5] || '0,00'}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <th colspan="5" style="text-align: right;">TOTAL MATERIAIS:</th>
-                                        <th>R$ ${dados.propostaComercial.totais?.materiais || '0,00'}</th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        ` : ''}
-                        
-                        ${dados.propostaComercial?.equipamentosComercial && dados.propostaComercial.equipamentosComercial.length > 0 ? `
-                            <h4>3.6 Equipamentos</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Equipamento</th>
-                                        <th>Especificação</th>
-                                        <th>Quantidade</th>
-                                        <th>Tempo</th>
-                                        <th>Preço/mês</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaComercial.equipamentosComercial.map(eq => `
-                                        <tr>
-                                            <td>${eq[0] || ''}</td>
-                                            <td>${eq[1] || ''}</td>
-                                            <td>${eq[2] || ''}</td>
-                                            <td>${eq[3] || ''}</td>
-                                            <td>R$ ${eq[4] || '0,00'}</td>
-                                            <td>R$ ${eq[5] || '0,00'}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <th colspan="5" style="text-align: right;">TOTAL EQUIPAMENTOS:</th>
-                                        <th>R$ ${dados.propostaComercial.totais?.equipamentos || '0,00'}</th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        ` : ''}
-                        
-                        ${dados.propostaComercial?.bdi && dados.propostaComercial.bdi.length > 0 ? `
-                            <h4>3.7 BDI Detalhado</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Item do BDI</th>
-                                        <th>Percentual (%)</th>
-                                        <th>Valor (R$)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${dados.propostaComercial.bdi.map(bdi => `
-                                        <tr>
-                                            <td>${bdi[0] || ''}</td>
-                                            <td>${bdi[1] || '0'}%</td>
-                                            <td>R$ ${bdi[2] || '0,00'}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : ''}
-                        
-                        <div style="background: #f0f0f0; padding: 20px; margin-top: 30px; border-radius: 8px;">
-                            <h4>Resumo Financeiro</h4>
-                            <p><strong>CUSTO DIRETO (MO + Mat + Equip):</strong> R$ ${dados.propostaComercial.totais?.custoDirecto || '0,00'}</p>
-                            <p><strong>BDI TOTAL:</strong> ${dados.propostaComercial.totais?.bdiPercentual || '0'}% = R$ ${dados.propostaComercial.totais?.bdiValor || '0,00'}</p>
-                            <h3><strong>VALOR TOTAL DA PROPOSTA:</strong> R$ ${dados.propostaComercial?.valorTotal || '0,00'}</h3>
-                        </div>
-                        
-                        <h4>3.8 Condições</h4>
-                        <p>${dados.propostaComercial?.validadeDetalhada || 'Proposta válida por 60 dias.'}</p>
-                    </div>
-                    
-                    <!-- SEÇÃO 4: RESUMO DA PROPOSTA -->
-                    <div class="section">
-                        <div class="section-title">4. RESUMO DA PROPOSTA</div>
-                        <div class="destaque">
-                            <p><strong>Preço Total:</strong> R$ ${dados.propostaComercial?.valorTotal || '0,00'}</p>
-                            <p><strong>Prazo de Execução:</strong> ${dados.resumo?.prazoExecucao || dados.propostaTecnica?.prazoExecucao || 'Não informado'}</p>
-                            <p><strong>Condição de Pagamento:</strong> ${dados.resumo?.formaPagamento || 'A definir'}</p>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
-                        <p>Documento gerado automaticamente em ${new Date().toLocaleString('pt-BR')}</p>
-                        <p>Sistema de Gestão de Propostas - Módulo Fornecedor</p>
-                        <p>Protocolo: ${proposta.protocolo}</p>
-                    </div>
-</body>
-                </html>
-            `;
-            
-            // Criar blob e download
-            const blob = new Blob([conteudoHTML], { type: 'text/html' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Proposta_Completa_${proposta.protocolo}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
         }
         
         // Excluir rascunho
@@ -2484,31 +1279,6 @@
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Verificar se já está logado
-            const fornecedorSalvo = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
-            if (fornecedorSalvo) {
-                fornecedorLogado = fornecedorSalvo;
-                mostrarDashboard();
-            }
-
-            // Login form
-            document.getElementById('login-form')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const email = document.getElementById('email').value;
-                const senha = document.getElementById('senha').value;
-                
-                if (fazerLogin(email, senha)) {
-                    mostrarDashboard();
-                } else {
-                    const errorDiv = document.getElementById('login-error');
-                    errorDiv.style.display = 'block';
-                    setTimeout(() => {
-                        errorDiv.style.display = 'none';
-                    }, 3000);
-                }
-            });
-
             // Navegação
             document.getElementById('btn-dashboard')?.addEventListener('click', () => mostrarPagina('dashboard'));
             document.getElementById('btn-processos')?.addEventListener('click', () => mostrarPagina('processos'));
@@ -2522,23 +1292,19 @@
 
         // Atualizar estatísticas a cada 30 segundos
         setInterval(() => {
-            if (fornecedorLogado) {
+            if (window.fornecedorLogado) {
                 carregarEstatisticas();
             }
         }, 30000);
 
-        // Expor funções globalmente para uso em atributos onclick
-        // Conforme documentação da MDN, funções declaradas no topo do script se tornam
-        // propriedades da janela global, mas atribuir explicitamente melhora a clareza【665451314570718†L196-L201】.
+        // Expor funções globalmente
         window.visualizarTR = visualizarTR;
         window.baixarTR = baixarTR;
         window.abrirPortalPropostas = abrirPortalPropostas;
         window.visualizarProposta = visualizarProposta;
-        window.abrirPropostaCompleta = abrirPropostaCompleta;
-        window.baixarComprovante = baixarComprovante;
+        window.excluirRascunho = excluirRascunho;
+        window.mostrarAbaFornecedor = mostrarAbaFornecedor;
     </script>
-    
-<!-- removido auth.js inexistente -->
 
 </body>
 </html>
