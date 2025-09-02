@@ -1,28 +1,61 @@
-<h2>Login no Sistema</h2>
-<form id="loginForm">
-  <input type="email" id="email" placeholder="Email" required>
-  <input type="password" id="senha" placeholder="Senha" required>
-  <button type="submit">Entrar</button>
-</form>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Único Inteligente</title>
+</head>
+<body>
+  <h1>Login no Sistema</h1>
 
-<script type="module">
-  import { getAuth, signInWithEmailAndPassword } 
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { app } from "./js/SistemaFirebase.js"; // sua config firebase centralizada
+  <form id="loginForm">
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="senha" placeholder="Senha" required>
+    <button type="submit">Entrar</button>
+  </form>
 
-  const auth = getAuth(app);
+  <script type="module">
+    import { getAuth, signInWithEmailAndPassword } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc } 
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { app } from "./js/SistemaFirebase.js";
 
-  document.getElementById("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("email").value;
-    const senha = document.getElementById("senha").value;
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    try {
-      await signInWithEmailAndPassword(auth, email, senha);
-      // Redirecionar para o dashboard correto após login
-      window.location.href = "/static/dashboard-requisitante-funcional.html";
-    } catch (error) {
-      alert("Erro ao fazer login: " + error.message);
-    }
-  });
-</script>
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const senha = document.getElementById("senha").value;
+
+      try {
+        // 🔹 Autentica usuário no Firebase
+        const userCredential = await signInWithEmailAndPassword(auth, email, senha);
+        const uid = userCredential.user.uid;
+
+        // 🔹 Busca perfil do Firestore (coleção "usuarios")
+        const userDoc = await getDoc(doc(db, "usuarios", uid));
+
+        if (userDoc.exists()) {
+          const perfil = userDoc.data().perfil;
+
+          if (perfil === "requisitante") {
+            window.location.href = "/static/dashboard-requisitante-funcional.html";
+          } else if (perfil === "comprador") {
+            window.location.href = "/static/dashboard-comprador-funcional.html";
+          } else if (perfil === "fornecedor") {
+            window.location.href = "/static/dashboard-fornecedor-funcional.html";
+          } else {
+            alert("Perfil não encontrado. Contate o administrador.");
+          }
+        } else {
+          alert("Usuário sem perfil cadastrado no sistema.");
+        }
+      } catch (error) {
+        alert("Erro ao fazer login: " + error.message);
+      }
+    });
+  </script>
+</body>
+</html>
