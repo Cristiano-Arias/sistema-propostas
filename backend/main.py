@@ -1,8 +1,10 @@
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
 import datetime
+import os
 
 # Inicializa a aplicação FastAPI
 app = FastAPI(
@@ -20,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Modelos de Dados (Define a estrutura dos nossos dados) ---
+# --- Modelos de Dados ---
 class TR_Base(BaseModel):
     titulo: str
     objetivo: Optional[str] = None
@@ -28,66 +30,37 @@ class TR_Base(BaseModel):
 
 class TR(TR_Base):
     id: int
-    criadoEm: datetime.datetime
-    atualizadoEm: Optional[datetime.datetime] = None
+    criado_em: datetime.datetime
 
-# --- Banco de Dados em Memória (Temporário) ---
-db_trs = {
-    1: TR(id=1, titulo="Desenvolvimento de novo App Mobile", status="rascunho", criadoEm=datetime.datetime.now()),
-    2: TR(id=2, titulo="Reforma do Escritório Central", status="enviado", criadoEm=datetime.datetime.now())
-}
-next_id = 3
+# Lista temporária (banco em memória)
+db_tr = []
 
 # --- Rotas da API ---
-
-@app.get("/api", tags=["Status"])
-def read_root():
-    """Verifica se a API está no ar."""
-    return {"message": "API PropostaFlow em Python está no ar!"}
-
-# CREATE - Criar um novo TR
-@app.post("/api/trs", response_model=TR, status_code=status.HTTP_201_CREATED, tags=["Termos de Referência"])
-def create_tr(tr_in: TR_Base):
-    """Cria um novo Termo de Referência."""
-    global next_id
-    novo_tr = TR(id=next_id, criadoEm=datetime.datetime.now(), **tr_in.dict())
-    db_trs[next_id] = novo_tr
-    next_id += 1
+@app.post("/api/tr", response_model=TR, status_code=status.HTTP_201_CREATED)
+def criar_tr(tr: TR_Base):
+    novo_tr = TR(
+        id=len(db_tr) + 1,
+        titulo=tr.titulo,
+        objetivo=tr.objetivo,
+        status=tr.status,
+        criado_em=datetime.datetime.utcnow()
+    )
+    db_tr.append(novo_tr)
     return novo_tr
 
-# READ - Obter todos os TRs
-@app.get("/api/trs", response_model=List[TR], tags=["Termos de Referência"])
-def get_all_trs():
-    """Retorna uma lista de todos os Termos de Referência."""
-    return list(db_trs.values())
+@app.get("/api/tr", response_model=List[TR])
+def listar_tr():
+    return db_tr
 
-# READ - Obter um TR por ID
-@app.get("/api/trs/{tr_id}", response_model=TR, tags=["Termos de Referência"])
-def get_tr_by_id(tr_id: int):
-    """Obtém um Termo de Referência específico pelo seu ID."""
-    if tr_id not in db_trs:
-        raise HTTPException(status_code=404, detail="TR não encontrado.")
-    return db_trs[tr_id]
+@app.get("/api/tr/{tr_id}", response_model=TR)
+def obter_tr(tr_id: int):
+    for tr in db_tr:
+        if tr.id == tr_id:
+            return tr
+    raise HTTPException(status_code=404, detail="TR não encontrada")
 
-# UPDATE - Atualizar um TR
-@app.put("/api/trs/{tr_id}", response_model=TR, tags=["Termos de Referência"])
-def update_tr(tr_id: int, tr_update: TR_Base):
-    """Atualiza um Termo de Referência existente."""
-    if tr_id not in db_trs:
-        raise HTTPException(status_code=404, detail="TR não encontrado.")
-    
-    tr_db = db_trs[tr_id]
-    update_data = tr_update.dict(exclude_unset=True)
-    updated_tr = tr_db.copy(update=update_data)
-    updated_tr.atualizadoEm = datetime.datetime.now()
-    db_trs[tr_id] = updated_tr
-    return updated_tr
+# --- Servindo o frontend compilado ---
+static_path = os.path.join(os.path.dirname(__file__), "../frontend/dist")
 
-# DELETE - Apagar um TR
-@app.delete("/api/trs/{tr_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Termos de Referência"])
-def delete_tr(tr_id: int):
-    """Deleta um Termo de Referência."""
-    if tr_id not in db_trs:
-        raise HTTPException(status_code=404, detail="TR não encontrado.")
-    del db_trs[tr_id]
-    return
+if os.path.exists(static_path):
+    app.mount("/", StaticFiles(directory=static_path, html=True), name="static")
