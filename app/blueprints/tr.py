@@ -4,7 +4,6 @@ from flask_jwt_extended import get_jwt_identity
 from datetime import datetime
 from .. import db, socketio
 from ..models import TR, TRServiceItem, Procurement, TRStatus, ProcurementStatus, AuditLog, Proposal, ProposalStatus
-from .procurements import require_role
 
 bp = Blueprint("tr", __name__)
 
