@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from .. import db, socketio
 from ..models import TR, TRServiceItem, Procurement, TRStatus, ProcurementStatus, Proposal, ProposalStatus, User, Role
+from ..utils.auth import get_current_user
 
 bp = Blueprint("tr", __name__)
 
@@ -13,8 +14,7 @@ bp = Blueprint("tr", __name__)
 def create_or_update_tr(proc_id: int):
     """Cria ou atualiza o TR com auto-save - apenas REQUISITANTE"""
     data = request.get_json() or {}
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é requisitante
     if user.role != Role.REQUISITANTE:
@@ -86,8 +86,7 @@ def create_or_update_tr(proc_id: int):
 @jwt_required()
 def submit_tr_for_approval(tr_id: int):
     """Submete TR para aprovação do comprador - apenas REQUISITANTE"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é requisitante
     if user.role != Role.REQUISITANTE:
@@ -137,8 +136,7 @@ def submit_tr_for_approval(tr_id: int):
 @jwt_required()
 def get_tr_details(proc_id: int):
     """Obtém detalhes completos do TR baseado no procurement_id"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Busca TR pelo procurement_id (não pelo tr.id)
     tr = TR.query.filter_by(procurement_id=proc_id).first()
@@ -198,8 +196,7 @@ def get_tr_details(proc_id: int):
 def approve_tr(tr_id: int):
     """Comprador aprova ou rejeita TR - apenas COMPRADOR"""
     data = request.get_json() or {}
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é comprador
     if user.role != Role.COMPRADOR:
@@ -261,8 +258,7 @@ def approve_tr(tr_id: int):
 def review_technical_proposal(tr_id: int):
     """Requisitante analisa proposta técnica - apenas REQUISITANTE"""
     data = request.get_json() or {}
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é requisitante
     if user.role != Role.REQUISITANTE:
