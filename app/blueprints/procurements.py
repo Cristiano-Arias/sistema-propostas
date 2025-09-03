@@ -11,15 +11,14 @@ from ..models import (
     Organization, TRServiceItem, ProposalPrice, ProposalService
 )
 
+from ..utils.auth import get_current_user
 bp = Blueprint("procurements", __name__)
-
 
 @bp.get("/procurements")
 @jwt_required()
 def list_procurements():
     """Lista processos baseado no role do usuário"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     if not user:
         return {"error": "Usuario nao encontrado"}, 404
@@ -63,8 +62,7 @@ def list_procurements():
 @jwt_required()
 def get_procurement(proc_id: int):
     """Obtém detalhes completos do processo"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     proc = Procurement.query.get_or_404(proc_id)
     
     # Verificar permissões
@@ -115,8 +113,7 @@ def get_procurement(proc_id: int):
 def create_procurement():
     """Cria novo processo de concorrência - apenas COMPRADOR"""
     data = request.get_json() or {}
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é comprador
     if user.role != Role.COMPRADOR:
@@ -169,8 +166,7 @@ def create_procurement():
 def update_procurement(proc_id: int):
     """Atualiza informações do processo - apenas COMPRADOR"""
     data = request.get_json() or {}
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é comprador
     if user.role != Role.COMPRADOR:
@@ -197,8 +193,7 @@ def update_procurement(proc_id: int):
 def send_invite(proc_id: int):
     """Envia convite para fornecedor - apenas COMPRADOR"""
     data = request.get_json() or {}
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é comprador
     if user.role != Role.COMPRADOR:
@@ -259,8 +254,7 @@ def send_invite(proc_id: int):
 @jwt_required()
 def list_invites(proc_id: int):
     """Lista convites enviados para o processo - apenas COMPRADOR"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é comprador
     if user.role != Role.COMPRADOR:
@@ -288,8 +282,7 @@ def list_invites(proc_id: int):
 @jwt_required()
 def accept_invite(token: str):
     """Fornecedor aceita convite"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é fornecedor
     if user.role != Role.FORNECEDOR:
@@ -327,8 +320,7 @@ def accept_invite(token: str):
 def open_procurement(proc_id: int):
     """Abre processo para receber propostas - apenas COMPRADOR"""
     data = request.get_json() or {}
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é comprador
     if user.role != Role.COMPRADOR:
@@ -383,8 +375,7 @@ def open_procurement(proc_id: int):
 @jwt_required()
 def close_procurement(proc_id: int):
     """Fecha processo para análise - apenas COMPRADOR"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é comprador
     if user.role != Role.COMPRADOR:
@@ -415,8 +406,7 @@ def close_procurement(proc_id: int):
 @jwt_required()
 def get_proposals_comparison(proc_id: int):
     """Análise comparativa de propostas com IA - apenas COMPRADOR"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é comprador
     if user.role != Role.COMPRADOR:
@@ -536,8 +526,7 @@ def get_proposals_comparison(proc_id: int):
 @jwt_required()
 def list_procurement_proposals(proc_id: int):
     """Lista todas as propostas do processo"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar permissões
     if user.role not in [Role.COMPRADOR, Role.REQUISITANTE]:
