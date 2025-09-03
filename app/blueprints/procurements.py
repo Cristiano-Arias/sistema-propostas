@@ -13,13 +13,11 @@ from ..models import (
 
 bp = Blueprint("procurements", __name__)
 
-# REMOVER a função require_role por enquanto e usar jwt_required diretamente
 
 @bp.get("/procurements")
 @jwt_required()
 def list_procurements():
     """Lista processos baseado no role do usuário"""
-    # CORREÇÃO: get_jwt_identity() retorna apenas o user_id
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     
@@ -27,7 +25,7 @@ def list_procurements():
         return {"error": "Usuario nao encontrado"}, 404
     
     if user.role == Role.REQUISITANTE:
-        # MUDANÇA: Requisitante vê apenas processos atribuídos a ele
+        # Requisitante vê apenas processos atribuídos a ele
         procurements = Procurement.query.filter_by(requisitante_id=user.id).all()
     elif user.role == Role.COMPRADOR:
         # Comprador vê todos os processos
@@ -47,7 +45,7 @@ def list_procurements():
     
     result = []
     for proc in procurements:
-        proc_dict = {
+        result.append({
             "id": proc.id,
             "title": proc.title,
             "description": proc.description,
@@ -56,29 +54,20 @@ def list_procurements():
             "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None,
             "has_tr": proc.tr is not None,
             "tr_status": proc.tr.status.value if proc.tr else None
-        }
-        
-        # Adicionar informação do requisitante
-        if proc.requisitante:
-            proc_dict["requisitante"] = {
-                "id": proc.requisitante.id,
-                "name": proc.requisitante.full_name,
-                "email": proc.requisitante.email
-            }
-        
-        result.append(proc_dict)
+        })
     
     return jsonify(result)
+
 
 @bp.get("/procurements/<int:proc_id>")
 @jwt_required()
 def get_procurement(proc_id: int):
     """Obtém detalhes completos do processo"""
-    ident = get_jwt_identity()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     proc = Procurement.query.get_or_404(proc_id)
     
     # Verificar permissões
-    user = User.query.get(ident["user_id"])
     if user.role == Role.FORNECEDOR:
         # Fornecedor só pode ver se foi convidado ou processo está aberto
         if proc.status not in [ProcurementStatus.ABERTO, ProcurementStatus.ANALISE_TECNICA]:
@@ -88,10 +77,6 @@ def get_procurement(proc_id: int):
             ).first()
             if not invited:
                 return {"error": "Não autorizado"}, 403
-    elif user.role == Role.REQUISITANTE:
-        # Requisitante só pode ver processos atribuídos a ele
-        if proc.requisitante_id != user.id:
-            return {"error": "Não autorizado"}, 403
     
     # Montar resposta completa
     response = {
@@ -107,14 +92,6 @@ def get_procurement(proc_id: int):
             "name": Organization.query.get(proc.org_id).name if proc.org_id else None
         }
     }
-    
-    # Adicionar informação do requisitante
-    if proc.requisitante:
-        response["requisitante"] = {
-            "id": proc.requisitante.id,
-            "name": proc.requisitante.full_name,
-            "email": proc.requisitante.email
-        }
     
     # Adicionar informações do TR se existir
     if proc.tr:
@@ -134,64 +111,38 @@ def get_procurement(proc_id: int):
 
 
 @bp.post("/procurements")
-@require_role(["COMPRADOR"])
+@jwt_required()
 def create_procurement():
-    """
-    MUDANÇA PRINCIPAL: Comprador cria processo e atribui requisitante
-    """
+    """Cria novo processo de concorrência - apenas COMPRADOR"""
     data = request.get_json() or {}
-    ident = get_jwt_identity()
-    user = User.query.get(ident["user_id"])
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é comprador
+    if user.role != Role.COMPRADOR:
+        return {"error": "Apenas compradores podem criar processos"}, 403
     
     title = data.get("title", "").strip()
     description = data.get("description", "")
-    requisitante_email = data.get("requisitante_email")  # NOVO: email do requisitante
     
     if not title:
         return {"error": "Título é obrigatório"}, 400
     
-    # NOVO: Buscar requisitante se fornecido
-    requisitante = None
-    if requisitante_email:
-        requisitante = User.query.filter_by(
-            email=requisitante_email,
-            role=Role.REQUISITANTE
-        ).first()
-        
-        if not requisitante:
-            # Se não encontrar, tentar buscar qualquer requisitante disponível
-            requisitante = User.query.filter_by(role=Role.REQUISITANTE).first()
-    else:
-        # Se não forneceu email, pegar o primeiro requisitante disponível
-        requisitante = User.query.filter_by(role=Role.REQUISITANTE).first()
+    # Buscar um requisitante para atribuir
+    requisitante = User.query.filter_by(role=Role.REQUISITANTE).first()
     
-    # Criar processo com status inicial correto
     proc = Procurement(
         title=title,
         description=description,
-        status=ProcurementStatus.TR_PENDENTE,  # MUDANÇA: Status inicial correto
+        status=ProcurementStatus.TR_PENDENTE,
         created_by=user.id,
-        requisitante_id=requisitante.id if requisitante else None,  # NOVO: Atribuir requisitante
+        requisitante_id=requisitante.id if requisitante else None,
         org_id=user.org_id
     )
     db.session.add(proc)
     db.session.commit()
     
-    # Audit log
-    audit = AuditLog(
-        user_id=user.id,
-        action="PROCUREMENT_CREATED",
-        entity_type="Procurement",
-        entity_id=proc.id,
-        details={
-            "title": title,
-            "requisitante_id": requisitante.id if requisitante else None
-        }
-    )
-    db.session.add(audit)
-    db.session.commit()
-    
-    # NOVO: Notificar requisitante atribuído
+    # Notificar via WebSocket
     if requisitante:
         socketio.emit("procurement.assigned", {
             "procurement_id": proc.id,
@@ -199,29 +150,31 @@ def create_procurement():
             "message": f"Você foi designado para criar o TR do processo '{proc.title}'"
         }, to=f"user:{requisitante.id}")
     
-    # Notificar organização
     socketio.emit("procurement.created", {
         "procurement_id": proc.id,
         "title": proc.title,
-        "created_by": user.full_name,
-        "requisitante": requisitante.full_name if requisitante else None
+        "created_by": user.full_name
     }, to=f"org:{user.org_id}")
     
     return {
         "id": proc.id,
         "title": proc.title,
         "status": proc.status.value,
-        "requisitante": requisitante.full_name if requisitante else None,
         "message": "Processo criado com sucesso"
     }, 201
 
 
 @bp.put("/procurements/<int:proc_id>")
-@require_role(["COMPRADOR"])
+@jwt_required()
 def update_procurement(proc_id: int):
-    """Atualiza informações do processo"""
+    """Atualiza informações do processo - apenas COMPRADOR"""
     data = request.get_json() or {}
-    ident = get_jwt_identity()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é comprador
+    if user.role != Role.COMPRADOR:
+        return {"error": "Apenas compradores podem atualizar processos"}, 403
     
     proc = Procurement.query.get_or_404(proc_id)
     
@@ -233,123 +186,23 @@ def update_procurement(proc_id: int):
     if "deadline_proposals" in data:
         proc.deadline_proposals = datetime.fromisoformat(data["deadline_proposals"])
     
-    # NOVO: Permitir reatribuir requisitante
-    if "requisitante_email" in data:
-        requisitante = User.query.filter_by(
-            email=data["requisitante_email"],
-            role=Role.REQUISITANTE
-        ).first()
-        if requisitante:
-            old_requisitante_id = proc.requisitante_id
-            proc.requisitante_id = requisitante.id
-            
-            # Notificar novo requisitante
-            if old_requisitante_id != requisitante.id:
-                socketio.emit("procurement.assigned", {
-                    "procurement_id": proc.id,
-                    "title": proc.title,
-                    "message": f"Você foi designado para o processo '{proc.title}'"
-                }, to=f"user:{requisitante.id}")
-    
     proc.updated_at = datetime.utcnow()
-    
-    # Audit log
-    audit = AuditLog(
-        user_id=ident["user_id"],
-        action="PROCUREMENT_UPDATED",
-        entity_type="Procurement",
-        entity_id=proc.id,
-        details=data
-    )
-    db.session.add(audit)
     db.session.commit()
     
     return {"message": "Processo atualizado", "procurement_id": proc.id}
 
 
-@bp.post("/procurements/<int:proc_id>/open")
-@require_role(["COMPRADOR"])
-def open_procurement(proc_id: int):
-    """
-    MUDANÇA: Só pode abrir processo se TR estiver aprovado
-    """
-    data = request.get_json() or {}
-    ident = get_jwt_identity()
-    
-    proc = Procurement.query.get_or_404(proc_id)
-    
-    # MUDANÇA: Verificar se TR está aprovado
-    if not proc.tr or proc.tr.status != TRStatus.APROVADO:
-        return {"error": "TR deve estar aprovado antes de abrir o processo"}, 400
-    
-    # MUDANÇA: Verificar status do processo
-    if proc.status != ProcurementStatus.TR_APROVADO:
-        return {"error": "Processo deve ter TR aprovado para ser aberto"}, 400
-    
-    # Verificar se tem pelo menos um convite enviado (opcional)
-    invites_count = Invite.query.filter_by(procurement_id=proc_id).count()
-    if invites_count == 0 and not data.get("force"):
-        return {"warning": "Nenhum convite enviado. Adicione 'force': true para continuar"}, 400
-    
-    deadline = data.get("deadline")
-    if deadline:
-        proc.deadline_proposals = datetime.fromisoformat(deadline)
-    
-    proc.status = ProcurementStatus.ABERTO
-    proc.updated_at = datetime.utcnow()
-    
-    # Audit log
-    audit = AuditLog(
-        user_id=ident["user_id"],
-        action="PROCUREMENT_OPENED",
-        entity_type="Procurement",
-        entity_id=proc.id,
-        details={"deadline": deadline}
-    )
-    db.session.add(audit)
-    db.session.commit()
-    
-    # Notificar todos os fornecedores convidados
-    invites = Invite.query.filter_by(procurement_id=proc_id).all()
-    for inv in invites:
-        supplier = User.query.filter_by(email=inv.email, role=Role.FORNECEDOR).first()
-        if supplier:
-            socketio.emit("procurement.opened", {
-                "procurement_id": proc.id,
-                "title": proc.title,
-                "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
-            }, to=f"user:{supplier.id}")
-    
-    # Notificar sala do processo e fornecedores em geral
-    socketio.emit("procurement.opened", {
-        "procurement_id": proc.id,
-        "title": proc.title,
-        "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
-    }, to=f"proc:{proc.id}")
-    
-    socketio.emit("procurement.opened", {
-        "procurement_id": proc.id,
-        "title": proc.title,
-        "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
-    }, to="role:FORNECEDOR")
-    
-    return {
-        "message": "Processo aberto para propostas",
-        "procurement_id": proc.id,
-        "status": proc.status.value,
-        "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
-    }
-
-
-# Manter todas as outras rotas iguais...
-# (send_invite, list_invites, accept_invite, close_procurement, get_proposals_comparison, list_procurement_proposals)
-
 @bp.post("/procurements/<int:proc_id>/invites")
-@require_role(["COMPRADOR"])
+@jwt_required()
 def send_invite(proc_id: int):
-    """Envia convite para fornecedor"""
+    """Envia convite para fornecedor - apenas COMPRADOR"""
     data = request.get_json() or {}
-    ident = get_jwt_identity()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é comprador
+    if user.role != Role.COMPRADOR:
+        return {"error": "Apenas compradores podem enviar convites"}, 403
     
     email = (data.get("email") or "").strip().lower()
     message = data.get("message", "")
@@ -374,19 +227,9 @@ def send_invite(proc_id: int):
         procurement_id=proc_id,
         email=email,
         token=token,
-        created_by=ident["user_id"]
+        created_by=user.id
     )
     db.session.add(invite)
-    
-    # Audit log
-    audit = AuditLog(
-        user_id=ident["user_id"],
-        action="INVITE_SENT",
-        entity_type="Invite",
-        entity_id=invite.id,
-        details={"email": email, "procurement_id": proc_id}
-    )
-    db.session.add(audit)
     db.session.commit()
     
     # Notificar via WebSocket
@@ -413,9 +256,16 @@ def send_invite(proc_id: int):
 
 
 @bp.get("/procurements/<int:proc_id>/invites")
-@require_role(["COMPRADOR"])
+@jwt_required()
 def list_invites(proc_id: int):
-    """Lista convites enviados para o processo"""
+    """Lista convites enviados para o processo - apenas COMPRADOR"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é comprador
+    if user.role != Role.COMPRADOR:
+        return {"error": "Apenas compradores podem ver convites"}, 403
+    
     invites = Invite.query.filter_by(procurement_id=proc_id).all()
     
     result = []
@@ -435,11 +285,15 @@ def list_invites(proc_id: int):
 
 
 @bp.post("/invites/accept/<token>")
-@require_role(["FORNECEDOR"])
+@jwt_required()
 def accept_invite(token: str):
     """Fornecedor aceita convite"""
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
+    
+    # Verificar se é fornecedor
+    if user.role != Role.FORNECEDOR:
+        return {"error": "Apenas fornecedores podem aceitar convites"}, 403
     
     invite = Invite.query.filter_by(token=token).first()
     if not invite:
@@ -453,16 +307,6 @@ def accept_invite(token: str):
     
     invite.accepted = True
     invite.accepted_at = datetime.utcnow()
-    
-    # Audit log
-    audit = AuditLog(
-        user_id=user.id,
-        action="INVITE_ACCEPTED",
-        entity_type="Invite",
-        entity_id=invite.id,
-        details={"procurement_id": invite.procurement_id}
-    )
-    db.session.add(audit)
     db.session.commit()
     
     # Notificar comprador
@@ -478,11 +322,74 @@ def accept_invite(token: str):
     }
 
 
+@bp.post("/procurements/<int:proc_id>/open")
+@jwt_required()
+def open_procurement(proc_id: int):
+    """Abre processo para receber propostas - apenas COMPRADOR"""
+    data = request.get_json() or {}
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é comprador
+    if user.role != Role.COMPRADOR:
+        return {"error": "Apenas compradores podem abrir processos"}, 403
+    
+    proc = Procurement.query.get_or_404(proc_id)
+    
+    # Verificar se TR está aprovado
+    if not proc.tr or proc.tr.status != TRStatus.APROVADO:
+        return {"error": "TR deve estar aprovado antes de abrir o processo"}, 400
+    
+    # Verificar se tem pelo menos um convite enviado
+    invites_count = Invite.query.filter_by(procurement_id=proc_id).count()
+    if invites_count == 0:
+        return {"error": "Envie pelo menos um convite antes de abrir o processo"}, 400
+    
+    deadline = data.get("deadline")
+    if deadline:
+        proc.deadline_proposals = datetime.fromisoformat(deadline)
+    
+    proc.status = ProcurementStatus.ABERTO
+    proc.updated_at = datetime.utcnow()
+    db.session.commit()
+    
+    # Notificar todos os fornecedores convidados
+    invites = Invite.query.filter_by(procurement_id=proc_id).all()
+    for inv in invites:
+        supplier = User.query.filter_by(email=inv.email, role=Role.FORNECEDOR).first()
+        if supplier:
+            socketio.emit("procurement.opened", {
+                "procurement_id": proc.id,
+                "title": proc.title,
+                "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
+            }, to=f"user:{supplier.id}")
+    
+    # Notificar sala do processo
+    socketio.emit("procurement.opened", {
+        "procurement_id": proc.id,
+        "title": proc.title,
+        "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
+    }, to=f"proc:{proc.id}")
+    
+    return {
+        "message": "Processo aberto para propostas",
+        "procurement_id": proc.id,
+        "status": proc.status.value,
+        "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
+    }
+
+
 @bp.post("/procurements/<int:proc_id>/close")
-@require_role(["COMPRADOR"])
+@jwt_required()
 def close_procurement(proc_id: int):
-    """Fecha processo para análise"""
-    ident = get_jwt_identity()
+    """Fecha processo para análise - apenas COMPRADOR"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é comprador
+    if user.role != Role.COMPRADOR:
+        return {"error": "Apenas compradores podem fechar processos"}, 403
+    
     proc = Procurement.query.get_or_404(proc_id)
     
     if proc.status != ProcurementStatus.ABERTO:
@@ -490,15 +397,6 @@ def close_procurement(proc_id: int):
     
     proc.status = ProcurementStatus.ANALISE_TECNICA
     proc.updated_at = datetime.utcnow()
-    
-    # Audit log
-    audit = AuditLog(
-        user_id=ident["user_id"],
-        action="PROCUREMENT_CLOSED",
-        entity_type="Procurement",
-        entity_id=proc.id
-    )
-    db.session.add(audit)
     db.session.commit()
     
     socketio.emit("procurement.closed", {
@@ -514,9 +412,16 @@ def close_procurement(proc_id: int):
 
 
 @bp.get("/procurements/<int:proc_id>/comparison")
-@require_role(["COMPRADOR"])
+@jwt_required()
 def get_proposals_comparison(proc_id: int):
-    """Análise comparativa de propostas com IA"""
+    """Análise comparativa de propostas com IA - apenas COMPRADOR"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é comprador
+    if user.role != Role.COMPRADOR:
+        return {"error": "Apenas compradores podem ver análise comparativa"}, 403
+    
     proc = Procurement.query.get_or_404(proc_id)
     
     # Buscar apenas propostas aprovadas tecnicamente
@@ -569,7 +474,7 @@ def get_proposals_comparison(proc_id: int):
     # Ordenar por melhor custo-benefício
     comparison.sort(key=lambda x: x["cost_benefit_score"], reverse=True)
     
-    # Análise com IA (simulada - você pode integrar com OpenAI/Claude API)
+    # Análise com IA (simulada)
     best_price = min(comparison, key=lambda x: x["total_price"])
     best_technical = max(comparison, key=lambda x: x["technical_score"])
     best_overall = comparison[0] if comparison else None
@@ -628,11 +533,15 @@ def get_proposals_comparison(proc_id: int):
 
 
 @bp.get("/procurements/<int:proc_id>/proposals")
-@require_role(["COMPRADOR", "REQUISITANTE"])
+@jwt_required()
 def list_procurement_proposals(proc_id: int):
     """Lista todas as propostas do processo"""
-    ident = get_jwt_identity()
-    user = User.query.get(ident["user_id"])
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar permissões
+    if user.role not in [Role.COMPRADOR, Role.REQUISITANTE]:
+        return {"error": "Não autorizado"}, 403
     
     proposals = Proposal.query.filter_by(procurement_id=proc_id).all()
     
