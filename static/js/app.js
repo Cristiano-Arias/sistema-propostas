@@ -866,6 +866,14 @@ async function createProcurement() {
             <label>Descrição</label>
             <textarea id="procDescription" rows="3" placeholder="Descreva o processo..."></textarea>
         </div>
+        <div class="form-group">
+            <label>Orçamento Disponível</label>
+            <input type="number" id="procOrcamento" step="0.01" placeholder="Ex: 50000.00">
+        </div>
+        <div class="form-group">
+            <label>Prazo Máximo de Contratação</label>
+            <input type="text" id="procPrazoMax" placeholder="Ex: 30 dias ou 01/03/2025">
+        </div>
         <div class="btn-group">
             <button class="btn btn-primary" onclick="saveProcurement()">💾 Criar Processo</button>
             <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
