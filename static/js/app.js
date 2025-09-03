@@ -334,6 +334,18 @@ async function loadTRCreateForm() {
             </form>
         </div>
     `;
+
+    <div class="grid">
+        <div class="form-group">
+            <label>Orçamento Estimado *</label>
+            <input type="number" id="trOrcamento" step="0.01" placeholder="Ex: 50000.00" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Prazo Máximo de Execução *</label>
+            <input type="text" id="trPrazoMaximo" placeholder="Ex: 90 dias" required>
+        </div>
+    </div>
     
     // Add initial service item
     addServiceItem();
@@ -461,6 +473,8 @@ async function saveTR() {
         objetivo: document.getElementById('trObjetivo').value,
         situacao_atual: document.getElementById('trSituacaoAtual').value,
         descricao_servicos: document.getElementById('trDescricaoServicos').value,
+        orcamento_estimado: document.getElementById('trOrcamento').value,  // NOVO
+        prazo_maximo_execucao: document.getElementById('trPrazoMaximo').value,  // NOVO
         local_horario_trabalhos: document.getElementById('trLocalHorario').value,
         prazo_execucao: document.getElementById('trPrazoExecucao').value,
         garantia: document.getElementById('trGarantia').value,
