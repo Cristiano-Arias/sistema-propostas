@@ -446,8 +446,8 @@ def list_invites(proc_id: int):
 @require_role(["FORNECEDOR"])
 def accept_invite(token: str):
     """Fornecedor aceita convite"""
-    ident = get_jwt_identity()
-    user = User.query.get(ident["user_id"])
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     
     invite = Invite.query.filter_by(token=token).first()
     if not invite:
