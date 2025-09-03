@@ -1,22 +1,27 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, request
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from .. import db, socketio
 from ..models import (
     Proposal, ProposalService, ProposalPrice, TRServiceItem, 
-    ProposalStatus, Procurement, ProcurementStatus, AuditLog
+    ProposalStatus, Procurement, ProcurementStatus, User, Role
 )
 
 bp = Blueprint("proposals", __name__)
 
 
 @bp.post("/procurements/<int:proc_id>/proposals")
-@require_role(["FORNECEDOR"])
+@jwt_required()
 def create_or_update_proposal(proc_id: int):
-    """Fornecedor cria ou atualiza proposta completa"""
+    """Fornecedor cria ou atualiza proposta completa - apenas FORNECEDOR"""
     data = request.get_json() or {}
-    ident = get_jwt_identity()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é fornecedor
+    if user.role != Role.FORNECEDOR:
+        return {"error": "Apenas fornecedores podem criar propostas"}, 403
     
     proc = Procurement.query.get_or_404(proc_id)
     
@@ -27,13 +32,13 @@ def create_or_update_proposal(proc_id: int):
     # Criar ou obter proposta existente
     proposal = Proposal.query.filter_by(
         procurement_id=proc_id,
-        supplier_user_id=ident["user_id"]
+        supplier_user_id=user.id
     ).first()
     
     if not proposal:
         proposal = Proposal(
             procurement_id=proc_id,
-            supplier_user_id=ident["user_id"],
+            supplier_user_id=user.id,
             status=ProposalStatus.RASCUNHO
         )
         db.session.add(proposal)
@@ -116,22 +121,13 @@ def create_or_update_proposal(proc_id: int):
             else:
                 prop_price.unit_price = unit_price
     
-    # Audit log
-    audit = AuditLog(
-        user_id=ident["user_id"],
-        action="PROPOSAL_UPDATED",
-        entity_type="Proposal",
-        entity_id=proposal.id
-    )
-    db.session.add(audit)
-    
     db.session.commit()
     
     # Notificar compradores
     socketio.emit("proposal.updated", {
         "proposal_id": proposal.id,
         "procurement_id": proc_id,
-        "supplier": ident["user_id"],
+        "supplier": user.id,
         "status": proposal.status.value
     }, to=f"proc:{proc_id}")
     
@@ -143,15 +139,20 @@ def create_or_update_proposal(proc_id: int):
 
 
 @bp.post("/proposals/<int:proposal_id>/submit")
-@require_role(["FORNECEDOR"])
+@jwt_required()
 def submit_proposal(proposal_id: int):
-    """Fornecedor envia proposta finalizada"""
-    ident = get_jwt_identity()
+    """Fornecedor envia proposta finalizada - apenas FORNECEDOR"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é fornecedor
+    if user.role != Role.FORNECEDOR:
+        return {"error": "Apenas fornecedores podem submeter propostas"}, 403
     
     proposal = Proposal.query.get_or_404(proposal_id)
     
     # Verificar se é o fornecedor correto
-    if proposal.supplier_user_id != ident["user_id"]:
+    if proposal.supplier_user_id != user.id:
         return {"error": "Não autorizado"}, 403
     
     # Validar proposta
@@ -167,15 +168,6 @@ def submit_proposal(proposal_id: int):
     proposal.status = ProposalStatus.ENVIADA
     proposal.technical_submitted_at = datetime.utcnow()
     proposal.commercial_submitted_at = datetime.utcnow()
-    
-    # Audit log
-    audit = AuditLog(
-        user_id=ident["user_id"],
-        action="PROPOSAL_SUBMITTED",
-        entity_type="Proposal",
-        entity_id=proposal.id
-    )
-    db.session.add(audit)
     
     db.session.commit()
     
@@ -195,14 +187,16 @@ def submit_proposal(proposal_id: int):
 
 
 @bp.get("/proposals/<int:proposal_id>")
-@require_role(["FORNECEDOR", "COMPRADOR", "REQUISITANTE"])
+@jwt_required()
 def get_proposal_details(proposal_id: int):
     """Obtém detalhes completos da proposta"""
-    ident = get_jwt_identity()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
     proposal = Proposal.query.get_or_404(proposal_id)
     
     # Verificar permissões
-    if ident["role"] == "FORNECEDOR" and proposal.supplier_user_id != ident["user_id"]:
+    if user.role == Role.FORNECEDOR and proposal.supplier_user_id != user.id:
         return {"error": "Não autorizado"}, 403
     
     # Montar resposta com todos os detalhes
@@ -250,21 +244,26 @@ def get_proposal_details(proposal_id: int):
 
 
 @bp.put("/proposals/<int:proc_id>/service-qty")
-@require_role(["FORNECEDOR"])
+@jwt_required()
 def upsert_quantities(proc_id: int):
-    """Atualiza quantidades da proposta técnica"""
-    ident = get_jwt_identity()
+    """Atualiza quantidades da proposta técnica - apenas FORNECEDOR"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é fornecedor
+    if user.role != Role.FORNECEDOR:
+        return {"error": "Apenas fornecedores podem atualizar quantidades"}, 403
     
     # Criar ou obter proposta
     proposal = Proposal.query.filter_by(
         procurement_id=proc_id,
-        supplier_user_id=ident["user_id"]
+        supplier_user_id=user.id
     ).first()
     
     if not proposal:
         proposal = Proposal(
             procurement_id=proc_id,
-            supplier_user_id=ident["user_id"],
+            supplier_user_id=user.id,
             status=ProposalStatus.RASCUNHO
         )
         db.session.add(proposal)
@@ -311,21 +310,26 @@ def upsert_quantities(proc_id: int):
 
 
 @bp.put("/proposals/<int:proc_id>/prices")
-@require_role(["FORNECEDOR"])
+@jwt_required()
 def upsert_prices(proc_id: int):
-    """Atualiza preços da proposta comercial"""
-    ident = get_jwt_identity()
+    """Atualiza preços da proposta comercial - apenas FORNECEDOR"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é fornecedor
+    if user.role != Role.FORNECEDOR:
+        return {"error": "Apenas fornecedores podem atualizar preços"}, 403
     
     # Criar ou obter proposta
     proposal = Proposal.query.filter_by(
         procurement_id=proc_id,
-        supplier_user_id=ident["user_id"]
+        supplier_user_id=user.id
     ).first()
     
     if not proposal:
         proposal = Proposal(
             procurement_id=proc_id,
-            supplier_user_id=ident["user_id"],
+            supplier_user_id=user.id,
             status=ProposalStatus.RASCUNHO
         )
         db.session.add(proposal)
@@ -372,16 +376,18 @@ def upsert_prices(proc_id: int):
 
 
 @bp.get("/proposals/<int:proc_id>/commercial-items")
-@require_role(["COMPRADOR", "REQUISITANTE", "FORNECEDOR"])
+@jwt_required()
 def list_commercial_items(proc_id: int):
     """Consolidado por item (JOIN TR baseline + quantidade + preço unitário + total)."""
-    ident = get_jwt_identity()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
     props = Proposal.query.filter_by(procurement_id=proc_id).all()
     
     out = []
     for p in props:
         # Se fornecedor, só enxerga sua própria proposta
-        if ident["role"] == "FORNECEDOR" and p.supplier_user_id != ident["user_id"]:
+        if user.role == Role.FORNECEDOR and p.supplier_user_id != user.id:
             continue
         
         items = db.session.query(
