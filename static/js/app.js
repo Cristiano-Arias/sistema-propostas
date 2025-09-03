@@ -913,3 +913,572 @@ async function saveProcurement() {
 async function openProcurementModal(procId) {
     const modalContent = `
         <div class
+async function openProcurementModal(procId) {
+    const modalContent = `
+        <div class="form-group">
+            <label>Prazo para Propostas</label>
+            <input type="datetime-local" id="procDeadline" min="${new Date().toISOString().slice(0,16)}">
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-success" onclick="openProcurement(${procId})">📢 Abrir Processo</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+    `;
+    
+    openModal('📢 Abrir Processo para Propostas', modalContent);
+}
+
+async function openProcurement(procId) {
+    const deadline = document.getElementById('procDeadline').value;
+    
+    if (!deadline) {
+        if (!confirm('Deseja abrir o processo sem prazo definido?')) {
+            return;
+        }
+    }
+    
+    try {
+        const response = await fetchAPI(`/procurements/${procId}/open`, {
+            method: 'POST',
+            body: JSON.stringify({ deadline })
+        });
+        
+        if (response.ok) {
+            showNotification('✅ Sucesso', 'Processo aberto para propostas!');
+            closeModal();
+            loadProcurements();
+        } else {
+            const error = await response.json();
+            showNotification('❌ Erro', error.error || 'Erro ao abrir processo');
+        }
+    } catch (error) {
+        console.error('Error opening procurement:', error);
+        showNotification('❌ Erro', 'Erro ao abrir processo');
+    }
+}
+
+async function closeProcurement(procId) {
+    if (confirm('Deseja fechar o processo para análise?\n\nNão serão aceitas novas propostas após o fechamento.')) {
+        try {
+            const response = await fetchAPI(`/procurements/${procId}/close`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                showNotification('✅ Sucesso', 'Processo fechado para análise!');
+                loadProcurements();
+            } else {
+                const error = await response.json();
+                showNotification('❌ Erro', error.error || 'Erro ao fechar processo');
+            }
+        } catch (error) {
+            console.error('Error closing procurement:', error);
+            showNotification('❌ Erro', 'Erro ao fechar processo');
+        }
+    }
+}
+
+async function loadPendingTRs() {
+    const container = document.getElementById('tr-approval');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="spinner"></div>';
+    
+    try {
+        const procurements = await fetchAPI('/procurements').then(r => r.json());
+        const pendingTRs = procurements.filter(p => p.tr_status === 'SUBMETIDO');
+        
+        if (pendingTRs.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">✅</div>
+                    <div class="empty-state-title">Nenhum TR pendente</div>
+                    <div class="empty-state-text">TRs submetidos aparecerão aqui para aprovação</div>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">✅ TRs Pendentes de Aprovação</h3>
+                </div>
+                <div class="grid">
+                    ${pendingTRs.map(proc => `
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">${proc.title}</div>
+                                <span class="status-badge status-submetido">AGUARDANDO</span>
+                            </div>
+                            <p><strong>Submetido em:</strong> ${new Date(proc.created_at).toLocaleDateString('pt-BR')}</p>
+                            <div class="btn-group">
+                                <button class="btn btn-primary" onclick="reviewTR(${proc.id})">📋 Analisar TR</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading pending TRs:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar TRs pendentes</div>';
+    }
+}
+
+async function loadInvitesManagement() {
+    const container = document.getElementById('invites');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="spinner"></div>';
+    
+    try {
+        const procurements = await fetchAPI('/procurements').then(r => r.json());
+        
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📧 Gerenciar Convites</h3>
+                </div>
+                <div class="form-group">
+                    <label>Selecione o Processo</label>
+                    <select id="inviteProcurement" onchange="loadProcurementInvites()">
+                        <option value="">Selecione um processo...</option>
+                        ${procurements.map(p => `
+                            <option value="${p.id}">${p.title}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div id="invitesList"></div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading invites:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar convites</div>';
+    }
+}
+
+async function loadProposals() {
+    const container = document.getElementById('proposals-analysis');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="spinner"></div>';
+    
+    try {
+        const procurements = await fetchAPI('/procurements').then(r => r.json());
+        
+        let allProposals = [];
+        for (const proc of procurements) {
+            if (proc.status === 'ABERTO' || proc.status === 'ANALISE_TECNICA') {
+                try {
+                    const proposals = await fetchAPI(`/procurements/${proc.id}/proposals`).then(r => r.json());
+                    proposals.forEach(p => {
+                        p.procurement_title = proc.title;
+                        p.procurement_id = proc.id;
+                    });
+                    allProposals = allProposals.concat(proposals);
+                } catch (err) {
+                    console.log('No proposals for', proc.id);
+                }
+            }
+        }
+        
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📊 Propostas Recebidas</h3>
+                </div>
+                ${allProposals.length === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-title">Nenhuma proposta recebida</div>
+                        <div class="empty-state-text">As propostas aparecerão aqui quando enviadas pelos fornecedores</div>
+                    </div>
+                ` : `
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Processo</th>
+                                <th>Fornecedor</th>
+                                <th>Status</th>
+                                <th>Nota Técnica</th>
+                                <th>Valor Total</th>
+                                <th>Enviada em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${allProposals.map(prop => `
+                                <tr>
+                                    <td>${prop.procurement_title}</td>
+                                    <td>
+                                        <strong>${prop.supplier.name}</strong><br>
+                                        <small>${prop.supplier.organization || ''}</small>
+                                    </td>
+                                    <td><span class="status-badge status-${prop.status.toLowerCase()}">${prop.status}</span></td>
+                                    <td>${prop.technical_score ? `${prop.technical_score}/100` : '-'}</td>
+                                    <td>${prop.total_value ? `R$ ${prop.total_value.toLocaleString('pt-BR')}` : '-'}</td>
+                                    <td>${prop.submitted_at ? new Date(prop.submitted_at).toLocaleDateString('pt-BR') : '-'}</td>
+                                    <td>
+                                        <button class="btn btn-primary" onclick="viewProposal(${prop.id})">👁️ Ver</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading proposals:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar propostas</div>';
+    }
+}
+
+async function loadComparison() {
+    const container = document.getElementById('comparison');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="spinner"></div>';
+    
+    try {
+        const procurements = await fetchAPI('/procurements').then(r => r.json());
+        const procsWithProposals = procurements.filter(p => 
+            p.status === 'ANALISE_TECNICA' || p.status === 'ANALISE_COMERCIAL'
+        );
+        
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🤖 Análise Comparativa com IA</h3>
+                </div>
+                <div class="form-group">
+                    <label>Selecione o Processo para Análise</label>
+                    <select id="comparisonProcurement" onchange="loadProcurementComparison()">
+                        <option value="">Selecione um processo...</option>
+                        ${procsWithProposals.map(p => `
+                            <option value="${p.id}">${p.title}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div id="comparisonResult"></div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading comparison:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar análise</div>';
+    }
+}
+
+// ============= FORNECEDOR MODULE =============
+function setupFornecedorDashboard() {
+    const navTabs = document.getElementById('navTabs');
+    const content = document.getElementById('content');
+    
+    navTabs.innerHTML = `
+        <button class="nav-tab active" onclick="switchTab('available-procurements', this)">📢 Processos Disponíveis</button>
+        <button class="nav-tab" onclick="switchTab('my-proposals', this)">📄 Minhas Propostas</button>
+        <button class="nav-tab" onclick="switchTab('create-proposal', this)">✍️ Criar Proposta</button>
+    `;
+    
+    content.innerHTML = `
+        <div id="available-procurements" class="tab-content active"></div>
+        <div id="my-proposals" class="tab-content"></div>
+        <div id="create-proposal" class="tab-content"></div>
+    `;
+    
+    loadAvailableProcurements();
+    loadMyProposals();
+    loadProposalForm();
+}
+
+async function loadAvailableProcurements() {
+    const container = document.getElementById('available-procurements');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="spinner"></div>';
+    
+    try {
+        const procurements = await fetchAPI('/procurements').then(r => r.json());
+        const available = procurements.filter(p => p.status === 'ABERTO' || p.status === 'ANALISE_TECNICA');
+        
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📢 Processos Abertos para Propostas</h3>
+                </div>
+                ${available.length === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📢</div>
+                        <div class="empty-state-title">Nenhum processo disponível</div>
+                        <div class="empty-state-text">Novos processos aparecerão aqui quando disponíveis</div>
+                    </div>
+                ` : `
+                    <div class="grid">
+                        ${available.map(proc => `
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">${proc.title}</div>
+                                    <span class="status-badge status-aberto">ABERTO</span>
+                                </div>
+                                <p>${proc.description || 'Sem descrição'}</p>
+                                <p><strong>Prazo:</strong> ${proc.deadline ? new Date(proc.deadline).toLocaleDateString('pt-BR') : 'Sem prazo definido'}</p>
+                                <div class="btn-group">
+                                    <button class="btn btn-primary" onclick="viewTRForProposal(${proc.id})">📋 Ver TR</button>
+                                    <button class="btn btn-success" onclick="createProposalFor(${proc.id})">✍️ Criar Proposta</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading procurements:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar processos</div>';
+    }
+}
+
+async function loadMyProposals() {
+    const container = document.getElementById('my-proposals');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="spinner"></div>';
+    container.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-state-icon">📄</div>
+            <div class="empty-state-title">Nenhuma proposta enviada</div>
+            <div class="empty-state-text">Suas propostas aparecerão aqui</div>
+        </div>
+    `;
+}
+
+async function loadProposalForm() {
+    const container = document.getElementById('create-proposal');
+    if (!container) return;
+    
+    const procurements = await fetchAPI('/procurements').then(r => r.json());
+    const available = procurements.filter(p => p.status === 'ABERTO');
+    
+    container.innerHTML = `
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">✍️ Nova Proposta</h3>
+                <div>
+                    <button class="btn btn-primary" onclick="saveProposal()">💾 Salvar Rascunho</button>
+                    <button class="btn btn-success" onclick="submitProposal()">📤 Enviar Proposta</button>
+                </div>
+            </div>
+            <form id="proposalForm">
+                <div class="form-group">
+                    <label>Processo *</label>
+                    <select id="proposalProcurement" onchange="loadTRForProposal()" required>
+                        <option value="">Selecione um processo...</option>
+                        ${available.map(p => `
+                            <option value="${p.id}">${p.title}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                
+                <div id="trDetails" style="display:none;">
+                    <h4>📋 Termo de Referência</h4>
+                    <div class="card" style="background: #f8f9fa;">
+                        <div id="trContent"></div>
+                    </div>
+                </div>
+                
+                <h4>📝 Proposta Técnica</h4>
+                <div class="form-group">
+                    <label>Descrição Técnica da Solução *</label>
+                    <textarea id="technicalDescription" rows="5" placeholder="Descreva detalhadamente sua solução técnica..." required></textarea>
+                </div>
+                
+                <h4>💰 Proposta Comercial</h4>
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Condições de Pagamento *</label>
+                        <input type="text" id="paymentConditions" placeholder="Ex: 30/60/90 dias" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Prazo de Entrega *</label>
+                        <input type="text" id="deliveryTime" placeholder="Ex: 45 dias úteis" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Garantia *</label>
+                        <input type="text" id="warrantyTerms" placeholder="Ex: 12 meses" required>
+                    </div>
+                </div>
+                
+                <h4>📊 Itens e Preços</h4>
+                <div id="proposalItemsContainer"></div>
+            </form>
+        </div>
+    `;
+}
+
+// ============= UTILITY FUNCTIONS =============
+function switchTab(tabId, tabElement) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Show selected tab
+    const selectedTab = document.getElementById(tabId);
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Update nav tabs
+    if (tabElement) {
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        tabElement.classList.add('active');
+    }
+}
+
+function openModal(title, content) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = content;
+    document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+function showNotification(title, body) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.innerHTML = `
+        <div class="notification-title">${title}</div>
+        <div class="notification-body">${body}</div>
+    `;
+    
+    document.getElementById('notifications').appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
+}
+
+function refreshCurrentView() {
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab) {
+        const tabId = activeTab.id;
+        switch(tabId) {
+            case 'procurements':
+                loadProcurements();
+                break;
+            case 'tr-list':
+                loadMyTRs();
+                break;
+            case 'technical-review':
+                loadTechnicalProposals();
+                break;
+            case 'tr-approval':
+                loadPendingTRs();
+                break;
+            case 'proposals-analysis':
+                loadProposals();
+                break;
+            case 'available-procurements':
+                loadAvailableProcurements();
+                break;
+            case 'my-proposals':
+                loadMyProposals();
+                break;
+        }
+    }
+}
+
+async function fetchAPI(endpoint, options = {}) {
+    const token = localStorage.getItem('token');
+    
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+    
+    if (options.body && typeof options.body !== 'string') {
+        options.body = JSON.stringify(options.body);
+    }
+    
+    return fetch(`${API_BASE}${endpoint}`, { ...defaultOptions, ...options });
+}
+
+// Stubs for missing functions
+async function viewProcurement(procId) {
+    console.log('View procurement', procId);
+}
+
+async function reviewTR(procId) {
+    console.log('Review TR', procId);
+}
+
+async function loadProcurementInvites() {
+    console.log('Load procurement invites');
+}
+
+async function loadProcurementComparison() {
+    console.log('Load procurement comparison');
+}
+
+async function viewProposal(proposalId) {
+    console.log('View proposal', proposalId);
+}
+
+async function viewTR(procId) {
+    console.log('View TR', procId);
+}
+
+async function editTR(procId) {
+    switchTab('tr-create');
+    document.getElementById('trProcurement').value = procId;
+    loadTR();
+}
+
+async function viewTRForProposal(procId) {
+    console.log('View TR for proposal', procId);
+}
+
+async function createProposalFor(procId) {
+    switchTab('create-proposal');
+    document.getElementById('proposalProcurement').value = procId;
+    loadTRForProposal();
+}
+
+async function loadTRForProposal() {
+    console.log('Load TR for proposal');
+}
+
+async function saveProposal() {
+    console.log('Save proposal');
+}
+
+async function submitProposal() {
+    console.log('Submit proposal');
+}
+
+// Click outside modal to close
+if (document.getElementById('modal')) {
+    document.getElementById('modal').addEventListener('click', (e) => {
+        if (e.target.id === 'modal') {
+            closeModal();
+        }
+    });
+}
+
+// Export for debugging
+window.debugApp = {
+    currentUser: () => currentUser,
+    socket: () => socket,
+    fetchAPI,
+    showNotification
+};
