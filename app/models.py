@@ -118,6 +118,8 @@ class TR(db.Model):
     sst = db.Column(db.Text)
     credenciamento_observacoes = db.Column(db.Text)
     anexos_info = db.Column(db.Text)
+    orcamento_estimado = db.Column(db.Numeric(18, 2))
+    prazo_maximo_execucao = db.Column(db.String(100))
     
     # Campos para aprovação
     status = db.Column(db.Enum(TRStatus), default=TRStatus.RASCUNHO)
