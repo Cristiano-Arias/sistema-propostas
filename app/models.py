@@ -96,7 +96,7 @@ class Procurement(db.Model):
 class TR(db.Model):
     __tablename__ = "tr_terms"
     id = db.Column(db.Integer, primary_key=True)
-    procurement_id = db.Column(db.Integer, db.ForeignKey("procurements.id"), nullable=False, unique=True)
+    procurement_id = db.Column(db.Integer, db.ForeignKey("procurements.id"), nullable=True, unique=True)
     
     # Campos do TR
     objetivo = db.Column(db.Text)
