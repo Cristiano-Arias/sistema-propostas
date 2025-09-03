@@ -331,21 +331,24 @@ async function loadTRCreateForm() {
                     <label>Segurança e Saúde do Trabalho</label>
                     <textarea id="trSST" rows="2" placeholder="Requisitos de SST..."></textarea>
                 </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Orçamento Estimado *</label>
+                        <input type="number" id="trOrcamento" step="0.01" placeholder="Ex: 50000.00" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Prazo Máximo de Execução *</label>
+                        <input type="text" id="trPrazoMaximo" placeholder="Ex: 90 dias" required>
+                    </div>
+                </div>
+                
+                <h4>📍 Condições de Execução</h4>
+                <!-- resto do código continua... -->
             </form>
         </div>
     `;
-
-    <div class="grid">
-        <div class="form-group">
-            <label>Orçamento Estimado *</label>
-            <input type="number" id="trOrcamento" step="0.01" placeholder="Ex: 50000.00" required>
-        </div>
-        
-        <div class="form-group">
-            <label>Prazo Máximo de Execução *</label>
-            <input type="text" id="trPrazoMaximo" placeholder="Ex: 90 dias" required>
-        </div>
-    </div>
     
     // Add initial service item
     addServiceItem();
