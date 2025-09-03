@@ -1,24 +1,34 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from .. import db, socketio
-from ..models import TR, TRServiceItem, Procurement, TRStatus, ProcurementStatus, AuditLog, Proposal, ProposalStatus
+from ..models import TR, TRServiceItem, Procurement, TRStatus, ProcurementStatus, Proposal, ProposalStatus, User, Role
 
 bp = Blueprint("tr", __name__)
 
 
 @bp.post("/procurements/<int:proc_id>/tr")
+@jwt_required()
 def create_or_update_tr(proc_id: int):
-    """Cria ou atualiza o TR com auto-save"""
+    """Cria ou atualiza o TR com auto-save - apenas REQUISITANTE"""
     data = request.get_json() or {}
-    ident = get_jwt_identity()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é requisitante
+    if user.role != Role.REQUISITANTE:
+        return {"error": "Apenas requisitantes podem criar/editar TR"}, 403
     
     proc = Procurement.query.get_or_404(proc_id)
     
+    # Verificar se é o requisitante atribuído
+    if proc.requisitante_id != user.id:
+        return {"error": "Você não é o requisitante deste processo"}, 403
+    
     tr = TR.query.filter_by(procurement_id=proc_id).first()
     if not tr:
-        tr = TR(procurement_id=proc_id, created_by=ident["user_id"])
+        tr = TR(procurement_id=proc_id, created_by=user.id)
         db.session.add(tr)
         action = "TR_CREATED"
     else:
@@ -55,16 +65,6 @@ def create_or_update_tr(proc_id: int):
             )
             db.session.add(service_item)
     
-    # Audit log
-    audit = AuditLog(
-        user_id=ident["user_id"],
-        action=action,
-        entity_type="TR",
-        entity_id=tr.id,
-        details={"procurement_id": proc_id}
-    )
-    db.session.add(audit)
-    
     db.session.commit()
     
     # Emitir evento real-time
@@ -72,7 +72,7 @@ def create_or_update_tr(proc_id: int):
         "procurement_id": proc_id,
         "tr_id": tr.id,
         "status": tr.status.value,
-        "updated_by": ident["user_id"]
+        "updated_by": user.id
     }, to=f"proc:{proc_id}")
     
     return {
@@ -83,10 +83,21 @@ def create_or_update_tr(proc_id: int):
 
 
 @bp.post("/tr/<int:tr_id>/submit")
+@jwt_required()
 def submit_tr_for_approval(tr_id: int):
-    """Submete TR para aprovação do comprador"""
-    ident = get_jwt_identity()
+    """Submete TR para aprovação do comprador - apenas REQUISITANTE"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é requisitante
+    if user.role != Role.REQUISITANTE:
+        return {"error": "Apenas requisitantes podem submeter TR"}, 403
+    
     tr = TR.query.get_or_404(tr_id)
+    
+    # Verificar se é o criador do TR
+    if tr.created_by != user.id:
+        return {"error": "Você não é o criador deste TR"}, 403
     
     if tr.status not in [TRStatus.RASCUNHO, TRStatus.REJEITADO]:
         return {"error": "TR não pode ser submetido neste status"}, 400
@@ -103,16 +114,7 @@ def submit_tr_for_approval(tr_id: int):
     
     # Atualizar status do processo
     proc = Procurement.query.get(tr.procurement_id)
-    proc.status = ProcurementStatus.TR_PENDENTE
-    
-    # Audit log
-    audit = AuditLog(
-        user_id=ident["user_id"],
-        action="TR_SUBMITTED",
-        entity_type="TR",
-        entity_id=tr.id
-    )
-    db.session.add(audit)
+    proc.status = ProcurementStatus.TR_SUBMETIDO
     
     db.session.commit()
     
@@ -120,7 +122,7 @@ def submit_tr_for_approval(tr_id: int):
     socketio.emit("tr.submitted", {
         "procurement_id": tr.procurement_id,
         "tr_id": tr.id,
-        "submitted_by": ident["user_id"],
+        "submitted_by": user.id,
         "title": proc.title
     }, to="role:COMPRADOR")
     
@@ -132,20 +134,27 @@ def submit_tr_for_approval(tr_id: int):
 
 
 @bp.get("/tr/<int:proc_id>")
-@require_role(["REQUISITANTE", "COMPRADOR", "FORNECEDOR"])
+@jwt_required()
 def get_tr_details(proc_id: int):
     """Obtém detalhes completos do TR baseado no procurement_id"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
     # Busca TR pelo procurement_id (não pelo tr.id)
     tr = TR.query.filter_by(procurement_id=proc_id).first()
     
     if not tr:
         return {"error": "TR não encontrado para este processo"}, 404
     
-    ident = get_jwt_identity()
-    
     # Fornecedores só podem ver TR aprovados
-    if ident["role"] == "FORNECEDOR" and tr.status != TRStatus.APROVADO:
+    if user.role == Role.FORNECEDOR and tr.status != TRStatus.APROVADO:
         return {"error": "TR não disponível"}, 403
+    
+    # Requisitante só pode ver TRs dos seus processos
+    if user.role == Role.REQUISITANTE:
+        proc = Procurement.query.get(proc_id)
+        if proc.requisitante_id != user.id:
+            return {"error": "Não autorizado"}, 403
     
     items = [{
         "id": item.id,
@@ -158,6 +167,7 @@ def get_tr_details(proc_id: int):
     
     return {
         "id": tr.id,
+        "tr_id": tr.id,  # Adicionar para compatibilidade com frontend
         "procurement_id": tr.procurement_id,
         "status": tr.status.value,
         "objetivo": tr.objetivo,
@@ -184,11 +194,16 @@ def get_tr_details(proc_id: int):
 
 
 @bp.post("/tr/<int:tr_id>/approve")
-@require_role(["COMPRADOR"])
+@jwt_required()
 def approve_tr(tr_id: int):
-    """Comprador aprova ou rejeita TR"""
+    """Comprador aprova ou rejeita TR - apenas COMPRADOR"""
     data = request.get_json() or {}
-    ident = get_jwt_identity()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é comprador
+    if user.role != Role.COMPRADOR:
+        return {"error": "Apenas compradores podem aprovar TR"}, 403
     
     tr = TR.query.get_or_404(tr_id)
     
@@ -201,39 +216,28 @@ def approve_tr(tr_id: int):
     if action == "approve":
         tr.status = TRStatus.APROVADO
         tr.approved_at = datetime.utcnow()
-        tr.approved_by = ident["user_id"]
+        tr.approved_by = user.id
         tr.approval_comments = comments
         
         # Atualizar processo
         proc = Procurement.query.get(tr.procurement_id)
         proc.status = ProcurementStatus.TR_APROVADO
         
-        audit_action = "TR_APPROVED"
         message = "TR aprovado com sucesso"
         
     elif action == "reject":
         tr.status = TRStatus.REJEITADO
         tr.revision_requested = comments
+        tr.rejection_reason = comments
         
-        # Voltar processo para rascunho
+        # Voltar processo para pendente
         proc = Procurement.query.get(tr.procurement_id)
-        proc.status = ProcurementStatus.RASCUNHO
+        proc.status = ProcurementStatus.TR_REJEITADO
         
-        audit_action = "TR_REJECTED"
         message = "TR rejeitado - revisão solicitada"
         
     else:
         return {"error": "Ação inválida"}, 400
-    
-    # Audit log
-    audit = AuditLog(
-        user_id=ident["user_id"],
-        action=audit_action,
-        entity_type="TR",
-        entity_id=tr.id,
-        details={"comments": comments}
-    )
-    db.session.add(audit)
     
     db.session.commit()
     
@@ -253,10 +257,16 @@ def approve_tr(tr_id: int):
 
 
 @bp.post("/tr/<int:tr_id>/technical-review")
+@jwt_required()
 def review_technical_proposal(tr_id: int):
-    """Requisitante analisa proposta técnica"""
+    """Requisitante analisa proposta técnica - apenas REQUISITANTE"""
     data = request.get_json() or {}
-    ident = get_jwt_identity()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Verificar se é requisitante
+    if user.role != Role.REQUISITANTE:
+        return {"error": "Apenas requisitantes podem fazer análise técnica"}, 403
     
     proposal_id = data.get("proposal_id")
     review = data.get("technical_review")
@@ -267,31 +277,18 @@ def review_technical_proposal(tr_id: int):
     
     # Verificar se é o requisitante correto
     tr = TR.query.get_or_404(tr_id)
-    if tr.created_by != ident["user_id"]:
+    if tr.created_by != user.id:
         return {"error": "Apenas o requisitante original pode revisar"}, 403
     
     proposal.technical_review = review
     proposal.technical_score = score
-    proposal.technical_reviewed_by = ident["user_id"]
+    proposal.technical_reviewed_by = user.id
     proposal.technical_reviewed_at = datetime.utcnow()
     
     if approved:
         proposal.status = ProposalStatus.APROVADA_TECNICAMENTE
     else:
         proposal.status = ProposalStatus.REJEITADA_TECNICAMENTE
-    
-    # Audit log
-    audit = AuditLog(
-        user_id=ident["user_id"],
-        action="TECHNICAL_REVIEW",
-        entity_type="Proposal",
-        entity_id=proposal.id,
-        details={
-            "score": score,
-            "approved": approved
-        }
-    )
-    db.session.add(audit)
     
     db.session.commit()
     
