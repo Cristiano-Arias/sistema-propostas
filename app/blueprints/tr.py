@@ -83,7 +83,6 @@ def create_or_update_tr(proc_id: int):
 
 
 @bp.post("/tr/<int:tr_id>/submit")
-@require_role(["REQUISITANTE"])
 def submit_tr_for_approval(tr_id: int):
     """Submete TR para aprovação do comprador"""
     ident = get_jwt_identity()
@@ -254,7 +253,6 @@ def approve_tr(tr_id: int):
 
 
 @bp.post("/tr/<int:tr_id>/technical-review")
-@require_role(["REQUISITANTE"])
 def review_technical_proposal(tr_id: int):
     """Requisitante analisa proposta técnica"""
     data = request.get_json() or {}
