@@ -9,7 +9,6 @@ bp = Blueprint("tr", __name__)
 
 
 @bp.post("/procurements/<int:proc_id>/tr")
-@require_role(["REQUISITANTE"])
 def create_or_update_tr(proc_id: int):
     """Cria ou atualiza o TR com auto-save"""
     data = request.get_json() or {}
