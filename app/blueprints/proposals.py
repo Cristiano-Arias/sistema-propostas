@@ -7,7 +7,7 @@ from ..models import (
     Proposal, ProposalService, ProposalPrice, TRServiceItem, 
     ProposalStatus, Procurement, ProcurementStatus, User, Role
 )
-
+from ..utils.auth import get_current_user
 bp = Blueprint("proposals", __name__)
 
 
@@ -16,8 +16,7 @@ bp = Blueprint("proposals", __name__)
 def create_or_update_proposal(proc_id: int):
     """Fornecedor cria ou atualiza proposta completa - apenas FORNECEDOR"""
     data = request.get_json() or {}
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é fornecedor
     if user.role != Role.FORNECEDOR:
@@ -142,8 +141,7 @@ def create_or_update_proposal(proc_id: int):
 @jwt_required()
 def submit_proposal(proposal_id: int):
     """Fornecedor envia proposta finalizada - apenas FORNECEDOR"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é fornecedor
     if user.role != Role.FORNECEDOR:
@@ -190,8 +188,7 @@ def submit_proposal(proposal_id: int):
 @jwt_required()
 def get_proposal_details(proposal_id: int):
     """Obtém detalhes completos da proposta"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     proposal = Proposal.query.get_or_404(proposal_id)
     
@@ -247,8 +244,7 @@ def get_proposal_details(proposal_id: int):
 @jwt_required()
 def upsert_quantities(proc_id: int):
     """Atualiza quantidades da proposta técnica - apenas FORNECEDOR"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é fornecedor
     if user.role != Role.FORNECEDOR:
@@ -313,8 +309,7 @@ def upsert_quantities(proc_id: int):
 @jwt_required()
 def upsert_prices(proc_id: int):
     """Atualiza preços da proposta comercial - apenas FORNECEDOR"""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     # Verificar se é fornecedor
     if user.role != Role.FORNECEDOR:
@@ -379,8 +374,7 @@ def upsert_prices(proc_id: int):
 @jwt_required()
 def list_commercial_items(proc_id: int):
     """Consolidado por item (JOIN TR baseline + quantidade + preço unitário + total)."""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = get_current_user()
     
     props = Proposal.query.filter_by(procurement_id=proc_id).all()
     
