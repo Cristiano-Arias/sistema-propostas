@@ -7,7 +7,6 @@ from ..models import (
     Proposal, ProposalService, ProposalPrice, TRServiceItem, 
     ProposalStatus, Procurement, ProcurementStatus, AuditLog
 )
-from .procurements import require_role
 
 bp = Blueprint("proposals", __name__)
 
