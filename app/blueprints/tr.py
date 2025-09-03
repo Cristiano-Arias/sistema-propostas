@@ -301,3 +301,52 @@ def review_technical_proposal(tr_id: int):
         "proposal_id": proposal.id,
         "approved": approved
     }
+@bp.post("/tr/create-independent")
+@jwt_required()
+def create_independent_tr():
+    """Cria TR independente sem processo"""
+    user = get_current_user()
+    
+    if user.role != Role.REQUISITANTE:
+        return {"error": "Apenas requisitantes podem criar TR"}, 403
+    
+    data = request.get_json() or {}
+    
+    # Criar TR sem procurement_id
+    tr = TR(
+        created_by=user.id,
+        objetivo=data.get('objetivo'),
+        situacao_atual=data.get('situacao_atual'),
+        descricao_servicos=data.get('descricao_servicos'),
+        procurement_id=None,  # SEM PROCESSO
+        status=TRStatus.RASCUNHO
+    )
+    db.session.add(tr)
+    db.session.flush()
+    
+    # Adicionar itens de serviço se fornecidos
+    if "planilha_servico" in data:
+        for idx, item in enumerate(data.get("planilha_servico", []), start=1):
+            service_item = TRServiceItem(
+                tr_id=tr.id,
+                item_ordem=item.get("item_ordem", idx),
+                codigo=item.get("codigo", ""),
+                descricao=item.get("descricao", ""),
+                unid=item.get("unid", "UN"),
+                qtde=item.get("qtde", 1)
+            )
+            db.session.add(service_item)
+    
+    db.session.commit()
+    
+    # Notificar compradores
+    socketio.emit("tr.created", {
+        "tr_id": tr.id,
+        "created_by": user.full_name
+    }, to="role:COMPRADOR")
+    
+    return {
+        "tr_id": tr.id,
+        "status": tr.status.value,
+        "message": "TR criado com sucesso"
+    }
