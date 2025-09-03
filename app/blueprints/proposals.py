@@ -8,13 +8,14 @@ from ..models import (
     ProposalStatus, Procurement, ProcurementStatus, User, Role
 )
 from ..utils.auth import get_current_user
+
 bp = Blueprint("proposals", __name__)
 
 
 @bp.post("/procurements/<int:proc_id>/proposals")
 @jwt_required()
 def create_or_update_proposal(proc_id: int):
-    """Fornecedor cria ou atualiza proposta completa - apenas FORNECEDOR"""
+    """Fornecedor cria ou atualiza proposta completa"""
     data = request.get_json() or {}
     user = get_current_user()
     
@@ -27,6 +28,17 @@ def create_or_update_proposal(proc_id: int):
     # Verificar se processo está aberto
     if proc.status != ProcurementStatus.ABERTO:
         return {"error": "Processo não está aberto para propostas"}, 400
+    
+    # Verificar se foi convidado ou se processo é público
+    from ..models import Invite
+    invite = Invite.query.filter_by(
+        procurement_id=proc_id,
+        email=user.email,
+        accepted=True
+    ).first()
+    
+    if not invite:
+        return {"error": "Você não foi convidado para este processo"}, 403
     
     # Criar ou obter proposta existente
     proposal = Proposal.query.filter_by(
@@ -43,6 +55,10 @@ def create_or_update_proposal(proc_id: int):
         db.session.add(proposal)
         db.session.flush()
     
+    # Verificar se proposta ainda pode ser editada
+    if proposal.status not in [ProposalStatus.RASCUNHO, ProposalStatus.EM_ELABORACAO]:
+        return {"error": "Proposta já foi enviada e não pode ser alterada"}, 400
+    
     # Atualizar dados técnicos
     if "technical_description" in data:
         proposal.technical_description = data["technical_description"]
@@ -55,80 +71,70 @@ def create_or_update_proposal(proc_id: int):
     if "warranty_terms" in data:
         proposal.warranty_terms = data["warranty_terms"]
     
-    # Atualizar itens de serviço (quantidades e observações técnicas)
+    # Atualizar itens de serviço (quantidades)
     if "service_items" in data:
+        # Remover itens existentes
+        ProposalService.query.filter_by(proposal_id=proposal.id).delete()
+        
         for item_data in data["service_items"]:
             service_item_id = item_data.get("service_item_id")
             qty = item_data.get("qty", 0)
             technical_notes = item_data.get("technical_notes", "")
             
             # Verificar se item pertence ao TR
-            item = TRServiceItem.query.filter_by(
+            tr_item = TRServiceItem.query.filter_by(
                 id=service_item_id,
                 tr_id=proc.tr.id
             ).first()
             
-            if not item:
+            if not tr_item:
                 continue
             
-            # Criar ou atualizar ProposalService
-            prop_service = ProposalService.query.filter_by(
+            # Criar ProposalService
+            prop_service = ProposalService(
                 proposal_id=proposal.id,
-                service_item_id=service_item_id
-            ).first()
-            
-            if not prop_service:
-                prop_service = ProposalService(
-                    proposal_id=proposal.id,
-                    service_item_id=service_item_id,
-                    qty=qty,
-                    technical_notes=technical_notes
-                )
-                db.session.add(prop_service)
-            else:
-                prop_service.qty = qty
-                prop_service.technical_notes = technical_notes
+                service_item_id=service_item_id,
+                qty=qty,
+                technical_notes=technical_notes
+            )
+            db.session.add(prop_service)
     
     # Atualizar preços
     if "prices" in data:
+        # Remover preços existentes
+        ProposalPrice.query.filter_by(proposal_id=proposal.id).delete()
+        
         for price_data in data["prices"]:
             service_item_id = price_data.get("service_item_id")
             unit_price = price_data.get("unit_price", 0)
             
             # Verificar se item pertence ao TR
-            item = TRServiceItem.query.filter_by(
+            tr_item = TRServiceItem.query.filter_by(
                 id=service_item_id,
                 tr_id=proc.tr.id
             ).first()
             
-            if not item:
+            if not tr_item:
                 continue
             
-            # Criar ou atualizar ProposalPrice
-            prop_price = ProposalPrice.query.filter_by(
+            # Criar ProposalPrice
+            prop_price = ProposalPrice(
                 proposal_id=proposal.id,
-                service_item_id=service_item_id
-            ).first()
-            
-            if not prop_price:
-                prop_price = ProposalPrice(
-                    proposal_id=proposal.id,
-                    service_item_id=service_item_id,
-                    unit_price=unit_price
-                )
-                db.session.add(prop_price)
-            else:
-                prop_price.unit_price = unit_price
+                service_item_id=service_item_id,
+                unit_price=unit_price
+            )
+            db.session.add(prop_price)
     
+    proposal.status = ProposalStatus.EM_ELABORACAO
     db.session.commit()
     
     # Notificar compradores
     socketio.emit("proposal.updated", {
         "proposal_id": proposal.id,
         "procurement_id": proc_id,
-        "supplier": user.id,
+        "supplier": user.full_name,
         "status": proposal.status.value
-    }, to=f"proc:{proc_id}")
+    }, to="role:COMPRADOR")
     
     return {
         "proposal_id": proposal.id,
@@ -140,7 +146,7 @@ def create_or_update_proposal(proc_id: int):
 @bp.post("/proposals/<int:proposal_id>/submit")
 @jwt_required()
 def submit_proposal(proposal_id: int):
-    """Fornecedor envia proposta finalizada - apenas FORNECEDOR"""
+    """Fornecedor envia proposta finalizada"""
     user = get_current_user()
     
     # Verificar se é fornecedor
@@ -153,29 +159,41 @@ def submit_proposal(proposal_id: int):
     if proposal.supplier_user_id != user.id:
         return {"error": "Não autorizado"}, 403
     
-    # Validar proposta
+    # Verificar se pode ser enviada
+    if proposal.status not in [ProposalStatus.RASCUNHO, ProposalStatus.EM_ELABORACAO]:
+        return {"error": "Proposta não pode ser enviada neste status"}, 400
+    
+    # Validações obrigatórias
     if not proposal.technical_description:
         return {"error": "Descrição técnica é obrigatória"}, 400
+    
+    if not proposal.payment_conditions or not proposal.delivery_time or not proposal.warranty_terms:
+        return {"error": "Todas as condições comerciais são obrigatórias"}, 400
     
     if not proposal.service_items:
         return {"error": "Proposta deve incluir itens de serviço"}, 400
     
-    if not proposal.prices:
+    # Verificar se tem preços para todos os itens
+    service_items_count = len(proposal.service_items)
+    prices_count = ProposalPrice.query.filter_by(proposal_id=proposal.id).count()
+    
+    if prices_count == 0:
         return {"error": "Proposta deve incluir preços"}, 400
     
+    # Marcar como enviada
     proposal.status = ProposalStatus.ENVIADA
     proposal.technical_submitted_at = datetime.utcnow()
     proposal.commercial_submitted_at = datetime.utcnow()
     
     db.session.commit()
     
-    # Notificar comprador e requisitante
+    # Notificar comprador
     socketio.emit("proposal.submitted", {
         "proposal_id": proposal.id,
         "procurement_id": proposal.procurement_id,
         "supplier": proposal.supplier.full_name,
         "submitted_at": datetime.utcnow().isoformat()
-    }, to=f"proc:{proposal.procurement_id}")
+    }, to="role:COMPRADOR")
     
     return {
         "message": "Proposta enviada com sucesso",
@@ -196,6 +214,11 @@ def get_proposal_details(proposal_id: int):
     if user.role == Role.FORNECEDOR and proposal.supplier_user_id != user.id:
         return {"error": "Não autorizado"}, 403
     
+    # Verificar se requisitante pode ver (apenas propostas enviadas)
+    if user.role == Role.REQUISITANTE:
+        if proposal.status not in [ProposalStatus.ENVIADA, ProposalStatus.APROVADA_TECNICAMENTE, ProposalStatus.REJEITADA_TECNICAMENTE]:
+            return {"error": "Proposta não disponível para análise"}, 403
+    
     # Montar resposta com todos os detalhes
     items = []
     for service in proposal.service_items:
@@ -206,20 +229,25 @@ def get_proposal_details(proposal_id: int):
         
         tr_item = TRServiceItem.query.get(service.service_item_id)
         
-        items.append({
+        item_data = {
             "service_item_id": service.service_item_id,
-            "item_ordem": tr_item.item_ordem,
-            "codigo": tr_item.codigo,
-            "descricao": tr_item.descricao,
-            "unid": tr_item.unid,
+            "item_ordem": tr_item.item_ordem if tr_item else 0,
+            "codigo": tr_item.codigo if tr_item else "",
+            "descricao": tr_item.descricao if tr_item else "",
+            "unid": tr_item.unid if tr_item else "",
             "qty_proposed": float(service.qty),
-            "qty_baseline": float(tr_item.qtde),
-            "unit_price": float(price.unit_price) if price else 0,
-            "total": float(service.qty * price.unit_price) if price else 0,
+            "qty_baseline": float(tr_item.qtde) if tr_item else 0,
             "technical_notes": service.technical_notes
-        })
+        }
+        
+        # Requisitante não vê preços comerciais
+        if user.role != Role.REQUISITANTE and price:
+            item_data["unit_price"] = float(price.unit_price)
+            item_data["total"] = float(service.qty * price.unit_price)
+        
+        items.append(item_data)
     
-    return {
+    response_data = {
         "id": proposal.id,
         "procurement_id": proposal.procurement_id,
         "supplier": {
@@ -231,200 +259,101 @@ def get_proposal_details(proposal_id: int):
         "technical_description": proposal.technical_description,
         "technical_review": proposal.technical_review,
         "technical_score": proposal.technical_score,
-        "payment_conditions": proposal.payment_conditions,
-        "delivery_time": proposal.delivery_time,
-        "warranty_terms": proposal.warranty_terms,
         "items": items,
-        "total_value": sum(item["total"] for item in items),
-        "submitted_at": proposal.technical_submitted_at.isoformat() if proposal.technical_submitted_at else None
+        "submitted_at": proposal.technical_submitted_at.isoformat() if proposal.technical_submitted_at else None,
+        "technical_reviewed_at": proposal.technical_reviewed_at.isoformat() if proposal.technical_reviewed_at else None
     }
-
-
-@bp.put("/proposals/<int:proc_id>/service-qty")
-@jwt_required()
-def upsert_quantities(proc_id: int):
-    """Atualiza quantidades da proposta técnica - apenas FORNECEDOR"""
-    user = get_current_user()
     
-    # Verificar se é fornecedor
-    if user.role != Role.FORNECEDOR:
-        return {"error": "Apenas fornecedores podem atualizar quantidades"}, 403
-    
-    # Criar ou obter proposta
-    proposal = Proposal.query.filter_by(
-        procurement_id=proc_id,
-        supplier_user_id=user.id
-    ).first()
-    
-    if not proposal:
-        proposal = Proposal(
-            procurement_id=proc_id,
-            supplier_user_id=user.id,
-            status=ProposalStatus.RASCUNHO
-        )
-        db.session.add(proposal)
-        db.session.commit()
-    
-    payload = request.get_json() or []
-    if not isinstance(payload, list):
-        return {"error": "payload deve ser lista de itens"}, 400
-    
-    # Verificar se service_item pertence ao TR do processo
-    proc = Procurement.query.get_or_404(proc_id)
-    valid_item_ids = {r.id for r in TRServiceItem.query.filter_by(tr_id=proc.tr.id).all()}
-    
-    for row in payload:
-        sid = row.get("service_item_id")
-        qty = row.get("qty")
-        
-        if sid not in valid_item_ids:
-            return {"error": f"service_item_id {sid} inválido para este processo"}, 400
-        
-        ps = ProposalService.query.filter_by(
-            proposal_id=proposal.id,
-            service_item_id=sid
-        ).first()
-        
-        if not ps:
-            ps = ProposalService(
-                proposal_id=proposal.id,
-                service_item_id=sid,
-                qty=qty
-            )
-            db.session.add(ps)
-        else:
-            ps.qty = qty
-    
-    db.session.commit()
-    
-    socketio.emit("proposal.tech.received", {
-        "procurement_id": proc_id,
-        "proposal_id": proposal.id
-    }, to=f"proc:{proc_id}")
-    
-    return {"proposal_id": proposal.id, "items": len(payload)}
-
-
-@bp.put("/proposals/<int:proc_id>/prices")
-@jwt_required()
-def upsert_prices(proc_id: int):
-    """Atualiza preços da proposta comercial - apenas FORNECEDOR"""
-    user = get_current_user()
-    
-    # Verificar se é fornecedor
-    if user.role != Role.FORNECEDOR:
-        return {"error": "Apenas fornecedores podem atualizar preços"}, 403
-    
-    # Criar ou obter proposta
-    proposal = Proposal.query.filter_by(
-        procurement_id=proc_id,
-        supplier_user_id=user.id
-    ).first()
-    
-    if not proposal:
-        proposal = Proposal(
-            procurement_id=proc_id,
-            supplier_user_id=user.id,
-            status=ProposalStatus.RASCUNHO
-        )
-        db.session.add(proposal)
-        db.session.commit()
-    
-    payload = request.get_json() or []
-    if not isinstance(payload, list):
-        return {"error": "payload deve ser lista de itens"}, 400
-    
-    # Verificar se service_item pertence ao TR do processo
-    proc = Procurement.query.get_or_404(proc_id)
-    valid_item_ids = {r.id for r in TRServiceItem.query.filter_by(tr_id=proc.tr.id).all()}
-    
-    for row in payload:
-        sid = row.get("service_item_id")
-        price = row.get("unit_price")
-        
-        if sid not in valid_item_ids:
-            return {"error": f"service_item_id {sid} inválido para este processo"}, 400
-        
-        pp = ProposalPrice.query.filter_by(
-            proposal_id=proposal.id,
-            service_item_id=sid
-        ).first()
-        
-        if not pp:
-            pp = ProposalPrice(
-                proposal_id=proposal.id,
-                service_item_id=sid,
-                unit_price=price
-            )
-            db.session.add(pp)
-        else:
-            pp.unit_price = price
-    
-    db.session.commit()
-    
-    socketio.emit("proposal.comm.received", {
-        "procurement_id": proc_id,
-        "proposal_id": proposal.id
-    }, to=f"proc:{proc_id}")
-    
-    return {"proposal_id": proposal.id, "items": len(payload)}
-
-
-@bp.get("/proposals/<int:proc_id>/commercial-items")
-@jwt_required()
-def list_commercial_items(proc_id: int):
-    """Consolidado por item (JOIN TR baseline + quantidade + preço unitário + total)."""
-    user = get_current_user()
-    
-    props = Proposal.query.filter_by(procurement_id=proc_id).all()
-    
-    out = []
-    for p in props:
-        # Se fornecedor, só enxerga sua própria proposta
-        if user.role == Role.FORNECEDOR and p.supplier_user_id != user.id:
-            continue
-        
-        items = db.session.query(
-            TRServiceItem.item_ordem,
-            TRServiceItem.codigo,
-            TRServiceItem.descricao,
-            TRServiceItem.unid,
-            ProposalService.qty,
-            ProposalPrice.unit_price,
-        ).outerjoin(
-            ProposalService, 
-            (ProposalService.service_item_id == TRServiceItem.id) & 
-            (ProposalService.proposal_id == p.id)
-        ).outerjoin(
-            ProposalPrice, 
-            (ProposalPrice.service_item_id == TRServiceItem.id) & 
-            (ProposalPrice.proposal_id == p.id)
-        ).filter(
-            TRServiceItem.tr.has(procurement_id=proc_id)
-        ).order_by(TRServiceItem.item_ordem).all()
-        
-        items_out = []
-        total_geral = 0.0
-        for item in items:
-            qty = float(item.qty or 0)
-            unit_price = float(item.unit_price or 0)
-            total = qty * unit_price
-            total_geral += total
-            items_out.append({
-                "item_ordem": item.item_ordem,
-                "codigo": item.codigo,
-                "descricao": item.descricao,
-                "unid": item.unid,
-                "qty": qty,
-                "unit_price": unit_price,
-                "total_item": total,
-            })
-        
-        out.append({
-            "proposal_id": p.id,
-            "supplier_user_id": p.supplier_user_id,
-            "total_geral": round(total_geral, 2),
-            "itens": items_out,
+    # Adicionar dados comerciais apenas para comprador e fornecedor
+    if user.role != Role.REQUISITANTE:
+        response_data.update({
+            "payment_conditions": proposal.payment_conditions,
+            "delivery_time": proposal.delivery_time,
+            "warranty_terms": proposal.warranty_terms,
+            "total_value": sum(item.get("total", 0) for item in items if "total" in item)
         })
     
-    return {"proposals": out}
+    return response_data
+
+
+@bp.get("/proposals/my-proposals")
+@jwt_required()
+def get_my_proposals():
+    """Lista propostas do fornecedor logado"""
+    user = get_current_user()
+    
+    if user.role != Role.FORNECEDOR:
+        return {"error": "Apenas fornecedores podem ver suas propostas"}, 403
+    
+    proposals = Proposal.query.filter_by(supplier_user_id=user.id).all()
+    
+    result = []
+    for prop in proposals:
+        proc = Procurement.query.get(prop.procurement_id)
+        
+        # Calcular valor total
+        total_value = 0
+        for service in prop.service_items:
+            price = ProposalPrice.query.filter_by(
+                proposal_id=prop.id,
+                service_item_id=service.service_item_id
+            ).first()
+            if price:
+                total_value += float(service.qty * price.unit_price)
+        
+        result.append({
+            "id": prop.id,
+            "procurement_id": prop.procurement_id,
+            "procurement_title": proc.title if proc else "Processo não encontrado",
+            "status": prop.status.value,
+            "total_value": round(total_value, 2),
+            "technical_score": prop.technical_score,
+            "submitted_at": prop.technical_submitted_at.isoformat() if prop.technical_submitted_at else None,
+            "technical_reviewed_at": prop.technical_reviewed_at.isoformat() if prop.technical_reviewed_at else None
+        })
+    
+    return result
+
+
+# Rotas auxiliares para facilitar o desenvolvimento do frontend
+@bp.get("/procurements/<int:proc_id>/tr-items")
+@jwt_required()
+def get_tr_items_for_proposal(proc_id: int):
+    """Obtém itens do TR para elaboração de proposta - apenas FORNECEDOR"""
+    user = get_current_user()
+    
+    if user.role != Role.FORNECEDOR:
+        return {"error": "Apenas fornecedores podem acessar"}, 403
+    
+    proc = Procurement.query.get_or_404(proc_id)
+    
+    # Verificar se foi convidado
+    from ..models import Invite
+    invite = Invite.query.filter_by(
+        procurement_id=proc_id,
+        email=user.email,
+        accepted=True
+    ).first()
+    
+    if not invite:
+        return {"error": "Você não foi convidado para este processo"}, 403
+    
+    if not proc.tr:
+        return {"error": "TR não encontrado"}, 404
+    
+    items = []
+    for item in proc.tr.service_items:
+        items.append({
+            "id": item.id,
+            "item_ordem": item.item_ordem,
+            "codigo": item.codigo,
+            "descricao": item.descricao,
+            "unid": item.unid,
+            "qtde_baseline": float(item.qtde)
+        })
+    
+    return {
+        "tr_id": proc.tr.id,
+        "tr_title": proc.tr.titulo,
+        "items": items
+    }
