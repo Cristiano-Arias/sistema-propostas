@@ -7,31 +7,24 @@ from sqlalchemy import or_, and_, func
 from .. import db, socketio
 from ..models import (
     Procurement, Invite, User, Role, TR, TRStatus, 
-    ProcurementStatus, Proposal, ProposalStatus, AuditLog,
+    ProcurementStatus, Proposal, ProposalStatus,
     Organization, TRServiceItem, ProposalPrice, ProposalService
 )
 
 bp = Blueprint("procurements", __name__)
 
-
-def require_role(roles):
-    def decorator(fn):
-        def wrapper(*args, **kwargs):
-            ident = get_jwt_identity()
-            if ident is None or ident.get("role") not in roles:
-                return {"error": "forbidden"}, 403
-            return fn(*args, **kwargs)
-        wrapper.__name__ = fn.__name__
-        return jwt_required()(wrapper)
-    return decorator
-
+# REMOVER a função require_role por enquanto e usar jwt_required diretamente
 
 @bp.get("/procurements")
 @jwt_required()
 def list_procurements():
     """Lista processos baseado no role do usuário"""
-    ident = get_jwt_identity()
-    user = User.query.get(ident["user_id"])
+    # CORREÇÃO: get_jwt_identity() retorna apenas o user_id
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    if not user:
+        return {"error": "Usuario nao encontrado"}, 404
     
     if user.role == Role.REQUISITANTE:
         # MUDANÇA: Requisitante vê apenas processos atribuídos a ele
@@ -58,8 +51,8 @@ def list_procurements():
             "id": proc.id,
             "title": proc.title,
             "description": proc.description,
-            "status": proc.status.value,
-            "created_at": proc.created_at.isoformat(),
+            "status": proc.status.value if proc.status else "TR_PENDENTE",
+            "created_at": proc.created_at.isoformat() if proc.created_at else None,
             "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None,
             "has_tr": proc.tr is not None,
             "tr_status": proc.tr.status.value if proc.tr else None
@@ -76,7 +69,6 @@ def list_procurements():
         result.append(proc_dict)
     
     return jsonify(result)
-
 
 @bp.get("/procurements/<int:proc_id>")
 @jwt_required()
