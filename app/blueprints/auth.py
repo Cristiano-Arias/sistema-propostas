@@ -76,9 +76,8 @@ def login():
 @bp.get("/me")
 @jwt_required()
 def me():
-    # MUDANÇA: get_jwt_identity() agora retorna apenas o user_id
-    user_id = get_jwt_identity()
-    u = User.query.get(user_id)
+    from ..utils.auth import get_current_user
+    u = get_current_user()
     
     if not u:
         return {"error": "Usuario nao encontrado"}, 404
