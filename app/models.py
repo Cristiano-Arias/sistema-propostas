@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint, CheckConstraint
 from . import db
+
 class Role(str, Enum):
     REQUISITANTE = "REQUISITANTE"
     COMPRADOR = "COMPRADOR"
@@ -213,3 +214,15 @@ class ProposalPrice(db.Model):
     __table_args__ = (
         CheckConstraint("unit_price >= 0", name="chk_price_nonneg"),
     )
+
+class AuditLog(db.Model):
+    """Log de auditoria para todas as ações importantes"""
+    __tablename__ = "audit_logs"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    action = db.Column(db.String(100), nullable=False)
+    entity_type = db.Column(db.String(50))
+    entity_id = db.Column(db.Integer)
+    details = db.Column(db.JSON)
+    ip_address = db.Column(db.String(45))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
