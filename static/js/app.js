@@ -1,5 +1,5 @@
 // ============= COMPLETE FRONTEND JAVASCRIPT =============
-// Este arquivo contém todas as funções JavaScript necessárias para o sistema completo
+// Sistema de Concorrência com fluxo correto
 
 // Global Variables
 let socket = null;
@@ -128,6 +128,13 @@ function connectSocket() {
 
 function setupSocketListeners() {
     // TR Events
+    socket.on('tr.created', (data) => {
+        if (currentUser.role === 'COMPRADOR') {
+            showNotification('Novo TR', `TR "${data.titulo}" foi criado`);
+            loadPendingTRs();
+        }
+    });
+    
     socket.on('tr.saved', (data) => {
         showNotification('Termo de Referência', 'TR foi atualizado');
         refreshCurrentView();
@@ -135,7 +142,7 @@ function setupSocketListeners() {
     
     socket.on('tr.submitted', (data) => {
         if (currentUser.role === 'COMPRADOR') {
-            showNotification('Novo TR para Aprovação', `TR do processo "${data.title}" foi submetido`);
+            showNotification('Novo TR para Aprovação', `TR "${data.titulo}" foi submetido`);
             loadPendingTRs();
         }
     });
@@ -250,27 +257,26 @@ function setupRequisitanteDashboard() {
 async function loadTRCreateForm() {
     const container = document.getElementById('tr-create');
     
-    // Buscar o processo atribuído ao requisitante
-    const procurements = await fetchAPI('/procurements').then(r => r.json());
-    const currentProc = procurements.length > 0 ? procurements[0] : null;
-    
     container.innerHTML = `
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">📝 Termo de Referência</h3>
-                ${currentProc ? `<span class="badge">Processo: ${currentProc.title}</span>` : ''}
+                <h3 class="card-title">📝 Novo Termo de Referência</h3>
                 <div>
                     <button class="btn btn-primary" onclick="saveTR()">💾 Salvar Rascunho</button>
                     <button class="btn btn-success" onclick="submitTR()">📤 Enviar para Aprovação</button>
                 </div>
             </div>
             <form id="trForm">
-                <input type="hidden" id="trProcurement" value="${currentProc ? currentProc.id : ''}">
-                
                 <h4>📋 Informações Gerais</h4>
+                
+                <div class="form-group">
+                    <label>Título do TR *</label>
+                    <input type="text" id="trTitulo" placeholder="Ex: TR para Contratação de Serviços de TI" required>
+                </div>
+                
                 <div class="form-group">
                     <label>Objetivo *</label>
-                    <textarea id="trObjetivo" rows="3" placeholder="Descreva o objetivo do processo..." required></textarea>
+                    <textarea id="trObjetivo" rows="3" placeholder="Descreva o objetivo..." required></textarea>
                 </div>
                 
                 <div class="form-group">
@@ -281,6 +287,18 @@ async function loadTRCreateForm() {
                 <div class="form-group">
                     <label>Descrição dos Serviços *</label>
                     <textarea id="trDescricaoServicos" rows="4" placeholder="Detalhe os serviços necessários..." required></textarea>
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Orçamento Estimado *</label>
+                        <input type="number" id="trOrcamento" step="0.01" placeholder="Ex: 50000.00" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Prazo Máximo de Execução *</label>
+                        <input type="text" id="trPrazoMaximo" placeholder="Ex: 90 dias" required>
+                    </div>
                 </div>
                 
                 <h4>📍 Condições de Execução</h4>
@@ -331,61 +349,37 @@ async function loadTRCreateForm() {
                     <label>Segurança e Saúde do Trabalho</label>
                     <textarea id="trSST" rows="2" placeholder="Requisitos de SST..."></textarea>
                 </div>
-                
-                <div class="grid">
-                    <div class="form-group">
-                        <label>Orçamento Estimado *</label>
-                        <input type="number" id="trOrcamento" step="0.01" placeholder="Ex: 50000.00" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Prazo Máximo de Execução *</label>
-                        <input type="text" id="trPrazoMaximo" placeholder="Ex: 90 dias" required>
-                    </div>
-                </div>
-                
-                <h4>📍 Condições de Execução</h4>
-                <!-- resto do código continua... -->
             </form>
         </div>
     `;
     
     // Add initial service item
     addServiceItem();
+    
+    // Load existing TR if editing
+    if (currentTR && currentTR.id) {
+        loadTRData(currentTR);
+    }
 }
 
-async function loadTR() {
-    const procId = document.getElementById('trProcurement').value;
-    if (!procId) return;
+async function loadTRData(tr) {
+    // Fill form with TR data
+    document.getElementById('trTitulo').value = tr.titulo || '';
+    document.getElementById('trObjetivo').value = tr.objetivo || '';
+    document.getElementById('trSituacaoAtual').value = tr.situacao_atual || '';
+    document.getElementById('trDescricaoServicos').value = tr.descricao_servicos || '';
+    document.getElementById('trOrcamento').value = tr.orcamento_estimado || '';
+    document.getElementById('trPrazoMaximo').value = tr.prazo_maximo_execucao || '';
+    document.getElementById('trLocalHorario').value = tr.local_horario_trabalhos || '';
+    document.getElementById('trPrazoExecucao').value = tr.prazo_execucao || '';
+    document.getElementById('trGarantia').value = tr.garantia || '';
+    document.getElementById('trNormas').value = tr.normas_observar || '';
+    document.getElementById('trMatriz').value = tr.matriz_responsabilidades || '';
+    document.getElementById('trSST').value = tr.sst || '';
     
-    try {
-        const response = await fetchAPI(`/tr/${procId}`);
-        if (response.ok) {
-            const tr = await response.json();
-            
-            // Fill form with TR data
-            document.getElementById('trObjetivo').value = tr.objetivo || '';
-            document.getElementById('trSituacaoAtual').value = tr.situacao_atual || '';
-            document.getElementById('trDescricaoServicos').value = tr.descricao_servicos || '';
-            document.getElementById('trLocalHorario').value = tr.local_horario_trabalhos || '';
-            document.getElementById('trPrazoExecucao').value = tr.prazo_execucao || '';
-            document.getElementById('trGarantia').value = tr.garantia || '';
-            document.getElementById('trNormas').value = tr.normas_observar || '';
-            document.getElementById('trMatriz').value = tr.matriz_responsabilidades || '';
-            document.getElementById('trSST').value = tr.sst || '';
-            
-            // Load service items
-            loadServiceItems(tr.service_items || []);
-            
-            currentTR = tr;
-            
-            // Show status
-            if (tr.status) {
-                showNotification('TR Carregado', `Status: ${tr.status}`);
-            }
-        }
-    } catch (error) {
-        console.error('Error loading TR:', error);
+    // Load service items
+    if (tr.service_items && tr.service_items.length > 0) {
+        loadServiceItems(tr.service_items);
     }
 }
 
@@ -438,15 +432,15 @@ function addServiceItem(item = {}) {
 
 function removeServiceItem(itemId) {
     const element = document.getElementById(itemId);
-    if (element && document.querySelectorAll('.service-item-row').length > 1) {
+    if (element && document.querySelectorAll('.service-item-row').length > 2) {
         element.remove();
     }
 }
 
 async function saveTR() {
-    const procId = document.getElementById('trProcurement').value;
-    if (!procId) {
-        alert('Selecione um processo');
+    const titulo = document.getElementById('trTitulo').value;
+    if (!titulo) {
+        alert('Por favor, informe o título do TR');
         return;
     }
     
@@ -462,7 +456,7 @@ async function saveTR() {
                 item[field] = input.value;
             }
         });
-        if (item.descricao) {  // Only add if has description
+        if (item.descricao) {
             serviceItems.push(item);
         }
     });
@@ -473,11 +467,12 @@ async function saveTR() {
     }
     
     const trData = {
+        titulo: titulo,
         objetivo: document.getElementById('trObjetivo').value,
         situacao_atual: document.getElementById('trSituacaoAtual').value,
         descricao_servicos: document.getElementById('trDescricaoServicos').value,
-        orcamento_estimado: document.getElementById('trOrcamento').value,  // NOVO
-        prazo_maximo_execucao: document.getElementById('trPrazoMaximo').value,  // NOVO
+        orcamento_estimado: parseFloat(document.getElementById('trOrcamento').value) || 0,
+        prazo_maximo_execucao: document.getElementById('trPrazoMaximo').value,
         local_horario_trabalhos: document.getElementById('trLocalHorario').value,
         prazo_execucao: document.getElementById('trPrazoExecucao').value,
         garantia: document.getElementById('trGarantia').value,
@@ -488,8 +483,11 @@ async function saveTR() {
     };
     
     try {
-        const response = await fetchAPI(`/procurements/${procId}/tr`, {
-            method: 'POST',
+        const url = currentTR && currentTR.id ? `/tr/${currentTR.id}` : '/tr/create-independent';
+        const method = currentTR && currentTR.id ? 'PUT' : 'POST';
+        
+        const response = await fetchAPI(url, {
+            method: method,
             body: JSON.stringify(trData)
         });
         
@@ -508,31 +506,33 @@ async function saveTR() {
 }
 
 async function submitTR() {
-    if (!currentTR || !currentTR.tr_id) {
+    if (!currentTR || !currentTR.id) {
         alert('Salve o TR antes de enviar para aprovação');
         return;
     }
     
     // Validate required fields
-    if (!document.getElementById('trObjetivo').value || 
-        !document.getElementById('trDescricaoServicos').value) {
+    if (!document.getElementById('trTitulo').value ||
+        !document.getElementById('trObjetivo').value || 
+        !document.getElementById('trDescricaoServicos').value ||
+        !document.getElementById('trOrcamento').value ||
+        !document.getElementById('trPrazoMaximo').value) {
         alert('Preencha todos os campos obrigatórios');
         return;
     }
     
     if (confirm('Deseja enviar o TR para aprovação do comprador?\n\nApós o envio, o TR não poderá ser editado até receber o parecer.')) {
         try {
-            const response = await fetchAPI(`/tr/${currentTR.tr_id}/submit`, {
+            const response = await fetchAPI(`/tr/${currentTR.id}/submit`, {
                 method: 'POST'
             });
             
             if (response.ok) {
                 showNotification('✅ Sucesso', 'TR enviado para aprovação!');
                 loadMyTRs();
-                // Clear form
-                document.getElementById('trProcurement').value = '';
                 document.getElementById('trForm').reset();
                 currentTR = null;
+                switchTab('tr-list');
             } else {
                 const error = await response.json();
                 showNotification('❌ Erro', error.error || 'Erro ao enviar TR');
@@ -549,12 +549,10 @@ async function loadMyTRs() {
     container.innerHTML = '<div class="spinner"></div>';
     
     try {
-        const response = await fetchAPI('/procurements');
-        const procurements = await response.json();
+        const response = await fetchAPI('/tr/my-trs');
+        const trs = await response.json();
         
-        const trsWithStatus = procurements.filter(p => p.has_tr);
-        
-        if (trsWithStatus.length === 0) {
+        if (trs.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">📋</div>
@@ -573,24 +571,28 @@ async function loadMyTRs() {
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Processo</th>
-                            <th>Status do TR</th>
-                            <th>Status do Processo</th>
+                            <th>Título do TR</th>
+                            <th>Status</th>
+                            <th>Orçamento</th>
+                            <th>Prazo</th>
                             <th>Criado em</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${trsWithStatus.map(proc => `
+                        ${trs.map(tr => `
                             <tr>
-                                <td><strong>${proc.title}</strong></td>
-                                <td><span class="status-badge status-${proc.tr_status.toLowerCase()}">${proc.tr_status}</span></td>
-                                <td><span class="status-badge status-${proc.status.toLowerCase()}">${proc.status}</span></td>
-                                <td>${new Date(proc.created_at).toLocaleDateString('pt-BR')}</td>
+                                <td><strong>${tr.titulo || 'Sem título'}</strong></td>
+                                <td><span class="status-badge status-${tr.status.toLowerCase()}">${tr.status}</span></td>
+                                <td>R$ ${(tr.orcamento_estimado || 0).toLocaleString('pt-BR')}</td>
+                                <td>${tr.prazo_maximo_execucao || '-'}</td>
+                                <td>${new Date(tr.created_at).toLocaleDateString('pt-BR')}</td>
                                 <td>
-                                    <button class="btn btn-primary" onclick="viewTR(${proc.id})">👁️ Ver</button>
-                                    ${proc.tr_status === 'REJEITADO' ? 
-                                        `<button class="btn btn-warning" onclick="editTR(${proc.id})">✏️ Editar</button>` : ''}
+                                    <button class="btn btn-primary" onclick="viewTR(${tr.id})">👁️ Ver</button>
+                                    ${tr.status === 'RASCUNHO' || tr.status === 'REJEITADO' ? 
+                                        `<button class="btn btn-warning" onclick="editTR(${tr.id})">✏️ Editar</button>` : ''}
+                                    ${tr.procurement_id ? 
+                                        `<button class="btn btn-info" onclick="viewProcurement(${tr.procurement_id})">📁 Processo</button>` : ''}
                                 </td>
                             </tr>
                         `).join('')}
@@ -609,25 +611,7 @@ async function loadTechnicalProposals() {
     container.innerHTML = '<div class="spinner"></div>';
     
     try {
-        // Get all procurements where user is requisitante
-        const procurements = await fetchAPI('/procurements').then(r => r.json());
-        
-        let proposalsToReview = [];
-        
-        for (const proc of procurements) {
-            if (proc.status === 'ANALISE_TECNICA' || proc.status === 'ABERTO') {
-                const proposals = await fetchAPI(`/procurements/${proc.id}/proposals`).then(r => r.json());
-                proposals.forEach(prop => {
-                    if (prop.status === 'ENVIADA' || prop.status === 'EM_ANALISE_TECNICA') {
-                        proposalsToReview.push({
-                            ...prop,
-                            procurement_title: proc.title,
-                            procurement_id: proc.id
-                        });
-                    }
-                });
-            }
-        }
+        const proposalsToReview = await fetchAPI('/tr/proposals-for-review').then(r => r.json());
         
         if (proposalsToReview.length === 0) {
             container.innerHTML = `
@@ -757,10 +741,7 @@ async function saveTechnicalReview(procId, proposalId) {
     }
     
     try {
-        // First get the TR ID
-        const tr = await fetchAPI(`/procurements/${procId}/tr`).then(r => r.json());
-        
-        const response = await fetchAPI(`/tr/${tr.id}/technical-review`, {
+        const response = await fetchAPI(`/tr/technical-review`, {
             method: 'POST',
             body: JSON.stringify({
                 proposal_id: proposalId,
@@ -784,36 +765,345 @@ async function saveTechnicalReview(procId, proposalId) {
     }
 }
 
+async function editTR(trId) {
+    try {
+        const tr = await fetchAPI(`/tr/${trId}`).then(r => r.json());
+        currentTR = tr;
+        switchTab('tr-create');
+        loadTRData(tr);
+    } catch (error) {
+        console.error('Error loading TR:', error);
+        showNotification('❌ Erro', 'Erro ao carregar TR');
+    }
+}
+
 // ============= COMPRADOR MODULE =============
 function setupCompradorDashboard() {
     const navTabs = document.getElementById('navTabs');
     const content = document.getElementById('content');
     
     navTabs.innerHTML = `
-        <button class="nav-tab active" onclick="switchTab('procurements', this)">📁 Processos</button>
-        <button class="nav-tab" onclick="switchTab('tr-approval', this)">✅ Aprovar TRs</button>
+        <button class="nav-tab active" onclick="switchTab('tr-approval', this)">✅ TRs para Aprovar</button>
+        <button class="nav-tab" onclick="switchTab('procurements', this)">📁 Processos</button>
         <button class="nav-tab" onclick="switchTab('invites', this)">📧 Convites</button>
         <button class="nav-tab" onclick="switchTab('proposals-analysis', this)">📊 Propostas</button>
         <button class="nav-tab" onclick="switchTab('comparison', this)">🤖 Análise IA</button>
     `;
     
     content.innerHTML = `
-        <div id="procurements" class="tab-content active"></div>
-        <div id="tr-approval" class="tab-content"></div>
+        <div id="tr-approval" class="tab-content active"></div>
+        <div id="procurements" class="tab-content"></div>
         <div id="invites" class="tab-content"></div>
         <div id="proposals-analysis" class="tab-content"></div>
         <div id="comparison" class="tab-content"></div>
     `;
     
-    loadProcurements();
     loadPendingTRs();
+    loadProcurements();
     loadInvitesManagement();
     loadProposals();
     loadComparison();
 }
 
+async function loadPendingTRs() {
+    const container = document.getElementById('tr-approval');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="spinner"></div>';
+    
+    try {
+        const trs = await fetchAPI('/tr/pending-approval').then(r => r.json());
+        const approvedTRs = await fetchAPI('/tr/approved-without-process').then(r => r.json());
+        
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">✅ Gestão de TRs</h3>
+                </div>
+                
+                ${approvedTRs.length > 0 ? `
+                    <div class="section">
+                        <h4>📋 TRs Aprovados sem Processo</h4>
+                        <div class="grid">
+                            ${approvedTRs.map(tr => `
+                                <div class="card" style="border: 2px solid #4CAF50;">
+                                    <div class="card-header">
+                                        <div class="card-title">${tr.titulo}</div>
+                                        <span class="status-badge status-aprovado">APROVADO</span>
+                                    </div>
+                                    <p><strong>Requisitante:</strong> ${tr.creator_name}</p>
+                                    <p><strong>Orçamento:</strong> R$ ${(tr.orcamento_estimado || 0).toLocaleString('pt-BR')}</p>
+                                    <p><strong>Prazo:</strong> ${tr.prazo_maximo_execucao}</p>
+                                    <button class="btn btn-success" onclick="createProcessFromTR(${tr.id})">
+                                        📁 Criar Processo
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${trs.length > 0 ? `
+                    <div class="section">
+                        <h4>⏳ TRs Pendentes de Aprovação</h4>
+                        <div class="grid">
+                            ${trs.map(tr => `
+                                <div class="card">
+                                    <div class="card-header">
+                                        <div class="card-title">${tr.titulo || 'TR sem título'}</div>
+                                        <span class="status-badge status-submetido">AGUARDANDO</span>
+                                    </div>
+                                    <p><strong>Requisitante:</strong> ${tr.creator_name}</p>
+                                    <p><strong>Orçamento:</strong> R$ ${(tr.orcamento_estimado || 0).toLocaleString('pt-BR')}</p>
+                                    <p><strong>Prazo:</strong> ${tr.prazo_maximo_execucao || 'Não especificado'}</p>
+                                    <p><strong>Submetido em:</strong> ${new Date(tr.submitted_at).toLocaleDateString('pt-BR')}</p>
+                                    <div class="btn-group">
+                                        <button class="btn btn-primary" onclick="reviewTR(${tr.id})">📋 Analisar TR</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${trs.length === 0 && approvedTRs.length === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <div class="empty-state-title">Nenhum TR pendente</div>
+                        <div class="empty-state-text">TRs submetidos aparecerão aqui para aprovação</div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading TRs:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar TRs</div>';
+    }
+}
+
+async function createProcessFromTR(trId) {
+    try {
+        const tr = await fetchAPI(`/tr/${trId}`).then(r => r.json());
+        
+        const modalContent = `
+            <h4>📁 Criar Processo de Concorrência</h4>
+            <div class="info-box" style="background: #e8f5e9; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
+                <strong>TR Base:</strong> ${tr.titulo}<br>
+                <strong>Orçamento:</strong> R$ ${(tr.orcamento_estimado || 0).toLocaleString('pt-BR')}<br>
+                <strong>Prazo:</strong> ${tr.prazo_maximo_execucao}
+            </div>
+            
+            <div class="form-group">
+                <label>Título do Processo *</label>
+                <input type="text" id="procTitle" value="${tr.titulo}" placeholder="Ex: Contratação de Serviços de TI">
+            </div>
+            
+            <div class="form-group">
+                <label>Descrição do Processo</label>
+                <textarea id="procDescription" rows="3" placeholder="Descrição do processo...">${tr.objetivo || ''}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Prazo para Recebimento de Propostas</label>
+                <input type="datetime-local" id="procDeadline" min="${new Date().toISOString().slice(0,16)}">
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="saveProcessFromTR(${trId})">💾 Criar Processo</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+            </div>
+        `;
+        
+        openModal('📁 Criar Processo', modalContent);
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('❌ Erro', 'Erro ao carregar TR');
+    }
+}
+
+async function saveProcessFromTR(trId) {
+    const title = document.getElementById('procTitle').value;
+    const description = document.getElementById('procDescription').value;
+    const deadline = document.getElementById('procDeadline').value;
+    
+    if (!title) {
+        alert('Título do processo é obrigatório');
+        return;
+    }
+    
+    try {
+        const response = await fetchAPI('/procurement/from-tr', {
+            method: 'POST',
+            body: JSON.stringify({
+                tr_id: trId,
+                title: title,
+                description: description,
+                deadline_proposals: deadline
+            })
+        });
+        
+        if (response.ok) {
+            showNotification('✅ Sucesso', 'Processo criado com sucesso!');
+            closeModal();
+            loadPendingTRs();
+            loadProcurements();
+        } else {
+            const error = await response.json();
+            showNotification('❌ Erro', error.error || 'Erro ao criar processo');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('❌ Erro', 'Erro ao criar processo');
+    }
+}
+
+async function reviewTR(trId) {
+    try {
+        const tr = await fetchAPI(`/tr/${trId}`).then(r => r.json());
+        
+        const modalContent = `
+            <div style="max-height: 70vh; overflow-y: auto;">
+                <h4>📋 Análise do Termo de Referência</h4>
+                
+                <div class="form-group">
+                    <label><strong>Título:</strong></label>
+                    <p>${tr.titulo || 'Sem título'}</p>
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label><strong>Orçamento Estimado:</strong></label>
+                        <p>R$ ${(tr.orcamento_estimado || 0).toLocaleString('pt-BR')}</p>
+                    </div>
+                    <div class="form-group">
+                        <label><strong>Prazo Máximo:</strong></label>
+                        <p>${tr.prazo_maximo_execucao || 'Não especificado'}</p>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Objetivo:</strong></label>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px;">
+                        ${tr.objetivo || 'Não informado'}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Descrição dos Serviços:</strong></label>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px;">
+                        ${tr.descricao_servicos || 'Não informado'}
+                    </div>
+                </div>
+                
+                ${tr.service_items && tr.service_items.length > 0 ? `
+                    <h5>Planilha de Serviços</h5>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Descrição</th>
+                                <th>Unid</th>
+                                <th>Qtd</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tr.service_items.map(item => `
+                                <tr>
+                                    <td>${item.item_ordem}</td>
+                                    <td>${item.descricao}</td>
+                                    <td>${item.unid}</td>
+                                    <td>${item.qtde}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                ` : ''}
+                
+                <hr>
+                
+                <div class="form-group">
+                    <label>Parecer do Comprador</label>
+                    <textarea id="approvalComments" rows="3" placeholder="Comentários sobre o TR..."></textarea>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="approveTR(${tr.id})">✅ Aprovar TR</button>
+                    <button class="btn btn-danger" onclick="rejectTR(${tr.id})">❌ Rejeitar</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                </div>
+            </div>
+        `;
+        
+        openModal('📋 Análise de TR', modalContent);
+    } catch (error) {
+        console.error('Error loading TR:', error);
+        showNotification('❌ Erro', 'Erro ao carregar TR');
+    }
+}
+
+async function approveTR(trId) {
+    const comments = document.getElementById('approvalComments').value;
+    
+    try {
+        const response = await fetchAPI(`/tr/${trId}/approve`, {
+            method: 'POST',
+            body: JSON.stringify({
+                approved: true,
+                comments: comments || ''
+            })
+        });
+        
+        if (response.ok) {
+            showNotification('✅ Sucesso', 'TR aprovado! Agora você pode criar o processo.');
+            closeModal();
+            loadPendingTRs();
+        } else {
+            const error = await response.json();
+            showNotification('❌ Erro', error.error || 'Erro ao aprovar TR');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('❌ Erro', 'Erro ao aprovar TR');
+    }
+}
+
+async function rejectTR(trId) {
+    const comments = document.getElementById('approvalComments').value;
+    
+    if (!comments) {
+        alert('Por favor, informe o motivo da rejeição');
+        return;
+    }
+    
+    if (confirm('Tem certeza que deseja rejeitar este TR?')) {
+        try {
+            const response = await fetchAPI(`/tr/${trId}/approve`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    approved: false,
+                    comments: comments
+                })
+            });
+            
+            if (response.ok) {
+                showNotification('✅ Sucesso', 'TR rejeitado');
+                closeModal();
+                loadPendingTRs();
+            } else {
+                const error = await response.json();
+                showNotification('❌ Erro', error.error || 'Erro ao rejeitar TR');
+            }
+        } catch (error) {
+            console.error('Error rejecting TR:', error);
+            showNotification('❌ Erro', 'Erro ao rejeitar TR');
+        }
+    }
+}
+
 async function loadProcurements() {
     const container = document.getElementById('procurements');
+    if (!container) return;
+    
     container.innerHTML = '<div class="spinner"></div>';
     
     try {
@@ -823,13 +1113,12 @@ async function loadProcurements() {
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">📁 Processos de Concorrência</h3>
-                    <button class="btn btn-primary" onclick="createProcurement()">➕ Novo Processo</button>
                 </div>
                 ${procurements.length === 0 ? `
                     <div class="empty-state">
                         <div class="empty-state-icon">📋</div>
                         <div class="empty-state-title">Nenhum processo encontrado</div>
-                        <div class="empty-state-text">Crie um novo processo para começar</div>
+                        <div class="empty-state-text">Aprove um TR e crie um processo na aba "TRs para Aprovar"</div>
                     </div>
                 ` : `
                     <table class="table">
@@ -838,8 +1127,8 @@ async function loadProcurements() {
                                 <th>ID</th>
                                 <th>Título</th>
                                 <th>Status</th>
-                                <th>TR</th>
-                                <th>Prazo</th>
+                                <th>Orçamento</th>
+                                <th>Prazo Propostas</th>
                                 <th>Criado em</th>
                                 <th>Ações</th>
                             </tr>
@@ -850,12 +1139,12 @@ async function loadProcurements() {
                                     <td>#${proc.id}</td>
                                     <td><strong>${proc.title}</strong></td>
                                     <td><span class="status-badge status-${proc.status.toLowerCase()}">${proc.status}</span></td>
-                                    <td>${proc.has_tr ? `<span class="status-badge status-${proc.tr_status.toLowerCase()}">${proc.tr_status}</span>` : '❌ Sem TR'}</td>
-                                    <td>${proc.deadline ? new Date(proc.deadline).toLocaleDateString('pt-BR') : '-'}</td>
+                                    <td>R$ ${(proc.orcamento_disponivel || 0).toLocaleString('pt-BR')}</td>
+                                    <td>${proc.deadline_proposals ? new Date(proc.deadline_proposals).toLocaleDateString('pt-BR') : '-'}</td>
                                     <td>${new Date(proc.created_at).toLocaleDateString('pt-BR')}</td>
                                     <td>
                                         <button class="btn btn-primary" onclick="viewProcurement(${proc.id})">👁️</button>
-                                        ${proc.tr_status === 'APROVADO' && proc.status === 'TR_APROVADO' ? 
+                                        ${proc.status === 'TR_APROVADO' ? 
                                             `<button class="btn btn-success" onclick="openProcurementModal(${proc.id})">📢 Abrir</button>` : ''}
                                         ${proc.status === 'ABERTO' ? 
                                             `<button class="btn btn-warning" onclick="closeProcurement(${proc.id})">🔒 Fechar</button>` : ''}
@@ -873,66 +1162,11 @@ async function loadProcurements() {
     }
 }
 
-async function createProcurement() {
-    const modalContent = `
-        <div class="form-group">
-            <label>Título do Processo *</label>
-            <input type="text" id="procTitle" placeholder="Ex: Contratação de Serviços de TI">
-        </div>
-        <div class="form-group">
-            <label>Descrição</label>
-            <textarea id="procDescription" rows="3" placeholder="Descreva o processo..."></textarea>
-        </div>
-        <div class="form-group">
-            <label>Orçamento Disponível</label>
-            <input type="number" id="procOrcamento" step="0.01" placeholder="Ex: 50000.00">
-        </div>
-        <div class="form-group">
-            <label>Prazo Máximo de Contratação</label>
-            <input type="text" id="procPrazoMax" placeholder="Ex: 30 dias ou 01/03/2025">
-        </div>
-        <div class="btn-group">
-            <button class="btn btn-primary" onclick="saveProcurement()">💾 Criar Processo</button>
-            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-        </div>
-    `;
-    
-    openModal('➕ Novo Processo', modalContent);
-}
-
-async function saveProcurement() {
-    const title = document.getElementById('procTitle').value;
-    const description = document.getElementById('procDescription').value;
-    
-    if (!title) {
-        alert('Título é obrigatório');
-        return;
-    }
-    
-    try {
-        const response = await fetchAPI('/procurements', {
-            method: 'POST',
-            body: JSON.stringify({ title, description })
-        });
-        
-        if (response.ok) {
-            showNotification('✅ Sucesso', 'Processo criado!');
-            closeModal();
-            loadProcurements();
-        } else {
-            const error = await response.json();
-            showNotification('❌ Erro', error.error || 'Erro ao criar processo');
-        }
-    } catch (error) {
-        console.error('Error creating procurement:', error);
-        showNotification('❌ Erro', 'Erro ao criar processo');
-    }
-}
-
+// Continua com resto das funções...
 async function openProcurementModal(procId) {
     const modalContent = `
         <div class="form-group">
-            <label>Prazo para Propostas</label>
+            <label>Prazo para Propostas (opcional)</label>
             <input type="datetime-local" id="procDeadline" min="${new Date().toISOString().slice(0,16)}">
         </div>
         <div class="btn-group">
@@ -946,12 +1180,6 @@ async function openProcurementModal(procId) {
 
 async function openProcurement(procId) {
     const deadline = document.getElementById('procDeadline').value;
-    
-    if (!deadline) {
-        if (!confirm('Deseja abrir o processo sem prazo definido?')) {
-            return;
-        }
-    }
     
     try {
         const response = await fetchAPI(`/procurements/${procId}/open`, {
@@ -994,54 +1222,6 @@ async function closeProcurement(procId) {
     }
 }
 
-async function loadPendingTRs() {
-    const container = document.getElementById('tr-approval');
-    if (!container) return;
-    
-    container.innerHTML = '<div class="spinner"></div>';
-    
-    try {
-        const procurements = await fetchAPI('/procurements').then(r => r.json());
-        const pendingTRs = procurements.filter(p => p.tr_status === 'SUBMETIDO');
-        
-        if (pendingTRs.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon">✅</div>
-                    <div class="empty-state-title">Nenhum TR pendente</div>
-                    <div class="empty-state-text">TRs submetidos aparecerão aqui para aprovação</div>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = `
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">✅ TRs Pendentes de Aprovação</h3>
-                </div>
-                <div class="grid">
-                    ${pendingTRs.map(proc => `
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">${proc.title}</div>
-                                <span class="status-badge status-submetido">AGUARDANDO</span>
-                            </div>
-                            <p><strong>Submetido em:</strong> ${new Date(proc.created_at).toLocaleDateString('pt-BR')}</p>
-                            <div class="btn-group">
-                                <button class="btn btn-primary" onclick="reviewTR(${proc.id})">📋 Analisar TR</button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error loading pending TRs:', error);
-        container.innerHTML = '<div class="error">Erro ao carregar TRs pendentes</div>';
-    }
-}
-
 async function loadInvitesManagement() {
     const container = document.getElementById('invites');
     if (!container) return;
@@ -1050,6 +1230,7 @@ async function loadInvitesManagement() {
     
     try {
         const procurements = await fetchAPI('/procurements').then(r => r.json());
+        const openProcs = procurements.filter(p => p.status === 'ABERTO');
         
         container.innerHTML = `
             <div class="card">
@@ -1059,8 +1240,8 @@ async function loadInvitesManagement() {
                 <div class="form-group">
                     <label>Selecione o Processo</label>
                     <select id="inviteProcurement" onchange="loadProcurementInvites()">
-                        <option value="">Selecione um processo...</option>
-                        ${procurements.map(p => `
+                        <option value="">Selecione um processo aberto...</option>
+                        ${openProcs.map(p => `
                             <option value="${p.id}">${p.title}</option>
                         `).join('')}
                     </select>
@@ -1071,6 +1252,98 @@ async function loadInvitesManagement() {
     } catch (error) {
         console.error('Error loading invites:', error);
         container.innerHTML = '<div class="error">Erro ao carregar convites</div>';
+    }
+}
+
+async function loadProcurementInvites() {
+    const procId = document.getElementById('inviteProcurement').value;
+    const container = document.getElementById('invitesList');
+    
+    if (!procId) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    try {
+        const invites = await fetchAPI(`/procurements/${procId}/invites`).then(r => r.json());
+        
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h4>Convites Enviados</h4>
+                    <button class="btn btn-primary" onclick="sendInviteModal(${procId})">📧 Enviar Convite</button>
+                </div>
+                ${invites.length === 0 ? 
+                    '<p>Nenhum convite enviado ainda</p>' :
+                    `<table class="table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Enviado em</th>
+                                <th>Aceito em</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${invites.map(inv => `
+                                <tr>
+                                    <td>${inv.email}</td>
+                                    <td><span class="status-badge status-${inv.accepted ? 'aprovado' : 'pendente'}">${inv.accepted ? 'Aceito' : 'Pendente'}</span></td>
+                                    <td>${new Date(inv.created_at).toLocaleDateString('pt-BR')}</td>
+                                    <td>${inv.accepted_at ? new Date(inv.accepted_at).toLocaleDateString('pt-BR') : '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>`
+                }
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading invites:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar convites</div>';
+    }
+}
+
+async function sendInviteModal(procId) {
+    const modalContent = `
+        <div class="form-group">
+            <label>Email do Fornecedor *</label>
+            <input type="email" id="inviteEmail" placeholder="fornecedor@empresa.com" required>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="sendInvite(${procId})">📧 Enviar Convite</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+    `;
+    
+    openModal('📧 Enviar Convite', modalContent);
+}
+
+async function sendInvite(procId) {
+    const email = document.getElementById('inviteEmail').value;
+    
+    if (!email) {
+        alert('Informe o email do fornecedor');
+        return;
+    }
+    
+    try {
+        const response = await fetchAPI(`/procurements/${procId}/invite`, {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        });
+        
+        if (response.ok) {
+            showNotification('✅ Sucesso', `Convite enviado para ${email}`);
+            closeModal();
+            loadProcurementInvites();
+        } else {
+            const error = await response.json();
+            showNotification('❌ Erro', error.error || 'Erro ao enviar convite');
+        }
+    } catch (error) {
+        console.error('Error sending invite:', error);
+        showNotification('❌ Erro', 'Erro ao enviar convite');
     }
 }
 
@@ -1085,7 +1358,7 @@ async function loadProposals() {
         
         let allProposals = [];
         for (const proc of procurements) {
-            if (proc.status === 'ABERTO' || proc.status === 'ANALISE_TECNICA') {
+            if (proc.status === 'ABERTO' || proc.status === 'ANALISE_TECNICA' || proc.status === 'ANALISE_COMERCIAL') {
                 try {
                     const proposals = await fetchAPI(`/procurements/${proc.id}/proposals`).then(r => r.json());
                     proposals.forEach(p => {
@@ -1137,6 +1410,8 @@ async function loadProposals() {
                                     <td>${prop.submitted_at ? new Date(prop.submitted_at).toLocaleDateString('pt-BR') : '-'}</td>
                                     <td>
                                         <button class="btn btn-primary" onclick="viewProposal(${prop.id})">👁️ Ver</button>
+                                        ${prop.status === 'ENVIADA' ? 
+                                            `<button class="btn btn-info" onclick="sendToTechnicalReview(${prop.procurement_id}, ${prop.id})">🔍 Enviar p/ Análise</button>` : ''}
                                     </td>
                                 </tr>
                             `).join('')}
