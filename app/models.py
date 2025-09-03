@@ -23,7 +23,7 @@ class ProcurementStatus(str, Enum):
     ANALISE_COMERCIAL = "ANALISE_COMERCIAL"
     FINALIZADO = "FINALIZADO"
     CANCELADO = "CANCELADO"
-
+    
 
 class TRStatus(str, Enum):
     RASCUNHO = "RASCUNHO"
@@ -73,6 +73,9 @@ class Procurement(db.Model):
     description = db.Column(db.Text)
     status = db.Column(db.Enum(ProcurementStatus), default=ProcurementStatus.TR_PENDENTE)
     org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=True)
+    orcamento_disponivel = db.Column(db.Numeric(18, 2))
+    prazo_maximo_contratacao = db.Column(db.String(100))
+    tr_origem_id = db.Column(db.Integer)
     
     # MUDANÇA IMPORTANTE: Adicionar campo requisitante_id
     requisitante_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
