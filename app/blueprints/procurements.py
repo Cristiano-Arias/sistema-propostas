@@ -14,6 +14,70 @@ from ..models import (
 from ..utils.auth import get_current_user
 bp = Blueprint("procurements", __name__)
 
+
+@bp.post("/procurement/from-tr")
+@jwt_required()
+def create_procurement_from_tr():
+    """Comprador cria processo baseado em TR aprovado"""
+    data = request.get_json() or {}
+    user = get_current_user()
+    
+    if user.role != Role.COMPRADOR:
+        return {"error": "Apenas compradores podem criar processos"}, 403
+    
+    tr_id = data.get("tr_id")
+    title = data.get("title", "").strip()
+    description = data.get("description", "")
+    deadline = data.get("deadline_proposals")
+    
+    if not tr_id or not title:
+        return {"error": "TR ID e título são obrigatórios"}, 400
+    
+    # Verificar se TR existe e está aprovado
+    tr = TR.query.get_or_404(tr_id)
+    if tr.status != TRStatus.APROVADO:
+        return {"error": "TR deve estar aprovado"}, 400
+    
+    if tr.procurement_id:
+        return {"error": "TR já possui processo associado"}, 400
+    
+    # Criar processo
+    proc = Procurement(
+        title=title,
+        description=description,
+        status=ProcurementStatus.TR_APROVADO,
+        created_by=user.id,
+        org_id=user.org_id,
+        orcamento_disponivel=tr.orcamento_estimado
+    )
+    
+    if deadline:
+        proc.deadline_proposals = datetime.fromisoformat(deadline)
+    
+    db.session.add(proc)
+    db.session.flush()
+    
+    # Associar TR ao processo
+    tr.procurement_id = proc.id
+    db.session.commit()
+    
+    # Notificar via WebSocket
+    socketio.emit("procurement.created", {
+        "procurement_id": proc.id,
+        "title": proc.title,
+        "created_by": user.full_name,
+        "tr_id": tr.id
+    }, to="role:COMPRADOR")
+    
+    return {
+        "id": proc.id,
+        "title": proc.title,
+        "status": proc.status.value,
+        "tr_id": tr.id,
+        "message": "Processo criado com sucesso"
+    }, 201
+
+
 @bp.get("/procurements")
 @jwt_required()
 def list_procurements():
@@ -21,11 +85,13 @@ def list_procurements():
     user = get_current_user()
     
     if not user:
-        return {"error": "Usuario nao encontrado"}, 404
+        return {"error": "Usuario não encontrado"}, 404
     
     if user.role == Role.REQUISITANTE:
-        # Requisitante vê apenas processos atribuídos a ele
-        procurements = Procurement.query.filter_by(requisitante_id=user.id).all()
+        # Requisitante vê processos dos seus TRs
+        procurements = db.session.query(Procurement).join(
+            TR, Procurement.id == TR.procurement_id
+        ).filter(TR.created_by == user.id).all()
     elif user.role == Role.COMPRADOR:
         # Comprador vê todos os processos
         procurements = Procurement.query.all()
@@ -44,15 +110,25 @@ def list_procurements():
     
     result = []
     for proc in procurements:
+        # Buscar dados do TR se existir
+        tr_data = None
+        if proc.tr:
+            tr_data = {
+                "id": proc.tr.id,
+                "status": proc.tr.status.value,
+                "orcamento_estimado": float(proc.tr.orcamento_estimado or 0)
+            }
+        
         result.append({
             "id": proc.id,
             "title": proc.title,
             "description": proc.description,
             "status": proc.status.value if proc.status else "TR_PENDENTE",
             "created_at": proc.created_at.isoformat() if proc.created_at else None,
-            "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None,
+            "deadline_proposals": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None,
+            "orcamento_disponivel": float(proc.orcamento_disponivel or 0),
             "has_tr": proc.tr is not None,
-            "tr_status": proc.tr.status.value if proc.tr else None
+            "tr": tr_data
         })
     
     return jsonify(result)
@@ -84,7 +160,8 @@ def get_procurement(proc_id: int):
         "status": proc.status.value,
         "created_at": proc.created_at.isoformat(),
         "updated_at": proc.updated_at.isoformat() if proc.updated_at else None,
-        "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None,
+        "deadline_proposals": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None,
+        "orcamento_disponivel": float(proc.orcamento_disponivel or 0),
         "organization": {
             "id": proc.org_id,
             "name": Organization.query.get(proc.org_id).name if proc.org_id else None
@@ -96,96 +173,26 @@ def get_procurement(proc_id: int):
         response["tr"] = {
             "id": proc.tr.id,
             "status": proc.tr.status.value,
+            "titulo": proc.tr.titulo,
+            "objetivo": proc.tr.objetivo,
+            "orcamento_estimado": float(proc.tr.orcamento_estimado or 0),
             "submitted_at": proc.tr.submitted_at.isoformat() if proc.tr.submitted_at else None,
             "approved_at": proc.tr.approved_at.isoformat() if proc.tr.approved_at else None
         }
     
-    # Adicionar contagem de propostas para compradores
+    # Adicionar contagens para compradores
     if user.role == Role.COMPRADOR:
         response["proposals_count"] = Proposal.query.filter_by(procurement_id=proc_id).count()
         response["invites_count"] = Invite.query.filter_by(procurement_id=proc_id).count()
+        
+        # Contar propostas aprovadas tecnicamente
+        approved_tech_count = Proposal.query.filter_by(
+            procurement_id=proc_id,
+            status=ProposalStatus.APROVADA_TECNICAMENTE
+        ).count()
+        response["approved_technical_count"] = approved_tech_count
     
     return jsonify(response)
-
-
-@bp.post("/procurements")
-@jwt_required()
-def create_procurement():
-    """Cria novo processo de concorrência - apenas COMPRADOR"""
-    data = request.get_json() or {}
-    user = get_current_user()
-    
-    # Verificar se é comprador
-    if user.role != Role.COMPRADOR:
-        return {"error": "Apenas compradores podem criar processos"}, 403
-    
-    title = data.get("title", "").strip()
-    description = data.get("description", "")
-    
-    if not title:
-        return {"error": "Título é obrigatório"}, 400
-    
-    # Buscar um requisitante para atribuir
-    requisitante = User.query.filter_by(role=Role.REQUISITANTE).first()
-    
-    proc = Procurement(
-        title=title,
-        description=description,
-        status=ProcurementStatus.TR_PENDENTE,
-        created_by=user.id,
-        requisitante_id=requisitante.id if requisitante else None,
-        org_id=user.org_id
-    )
-    db.session.add(proc)
-    db.session.commit()
-    
-    # Notificar via WebSocket
-    if requisitante:
-        socketio.emit("procurement.assigned", {
-            "procurement_id": proc.id,
-            "title": proc.title,
-            "message": f"Você foi designado para criar o TR do processo '{proc.title}'"
-        }, to=f"user:{requisitante.id}")
-    
-    socketio.emit("procurement.created", {
-        "procurement_id": proc.id,
-        "title": proc.title,
-        "created_by": user.full_name
-    }, to=f"org:{user.org_id}")
-    
-    return {
-        "id": proc.id,
-        "title": proc.title,
-        "status": proc.status.value,
-        "message": "Processo criado com sucesso"
-    }, 201
-
-
-@bp.put("/procurements/<int:proc_id>")
-@jwt_required()
-def update_procurement(proc_id: int):
-    """Atualiza informações do processo - apenas COMPRADOR"""
-    data = request.get_json() or {}
-    user = get_current_user()
-    
-    # Verificar se é comprador
-    if user.role != Role.COMPRADOR:
-        return {"error": "Apenas compradores podem atualizar processos"}, 403
-    
-    proc = Procurement.query.get_or_404(proc_id)
-    
-    # Atualizar campos permitidos
-    if "title" in data:
-        proc.title = data["title"]
-    if "description" in data:
-        proc.description = data["description"]
-    if "deadline_proposals" in data:
-        proc.deadline_proposals = datetime.fromisoformat(data["deadline_proposals"])
-    
-    proc.updated_at = datetime.utcnow()
-    db.session.commit()
-    
-    return {"message": "Processo atualizado", "procurement_id": proc.id}
 
 
 @bp.post("/procurements/<int:proc_id>/invites")
@@ -195,17 +202,19 @@ def send_invite(proc_id: int):
     data = request.get_json() or {}
     user = get_current_user()
     
-    # Verificar se é comprador
     if user.role != Role.COMPRADOR:
         return {"error": "Apenas compradores podem enviar convites"}, 403
     
     email = (data.get("email") or "").strip().lower()
-    message = data.get("message", "")
     
     if not email:
         return {"error": "Email é obrigatório"}, 400
     
     proc = Procurement.query.get_or_404(proc_id)
+    
+    # Verificar se TR está aprovado
+    if not proc.tr or proc.tr.status != TRStatus.APROVADO:
+        return {"error": "Processo deve ter TR aprovado para enviar convites"}, 400
     
     # Verificar se já foi convidado
     existing = Invite.query.filter_by(
@@ -232,7 +241,7 @@ def send_invite(proc_id: int):
         "procurement_id": proc_id,
         "email": email,
         "title": proc.title
-    }, to=f"proc:{proc_id}")
+    }, to="role:COMPRADOR")
     
     # Se o fornecedor já está cadastrado, notificar diretamente
     supplier = User.query.filter_by(email=email, role=Role.FORNECEDOR).first()
@@ -256,7 +265,6 @@ def list_invites(proc_id: int):
     """Lista convites enviados para o processo - apenas COMPRADOR"""
     user = get_current_user()
     
-    # Verificar se é comprador
     if user.role != Role.COMPRADOR:
         return {"error": "Apenas compradores podem ver convites"}, 403
     
@@ -284,7 +292,6 @@ def accept_invite(token: str):
     """Fornecedor aceita convite"""
     user = get_current_user()
     
-    # Verificar se é fornecedor
     if user.role != Role.FORNECEDOR:
         return {"error": "Apenas fornecedores podem aceitar convites"}, 403
     
@@ -307,7 +314,7 @@ def accept_invite(token: str):
         "procurement_id": invite.procurement_id,
         "supplier": user.full_name,
         "email": user.email
-    }, to=f"proc:{invite.procurement_id}")
+    }, to="role:COMPRADOR")
     
     return {
         "message": "Convite aceito com sucesso",
@@ -322,7 +329,6 @@ def open_procurement(proc_id: int):
     data = request.get_json() or {}
     user = get_current_user()
     
-    # Verificar se é comprador
     if user.role != Role.COMPRADOR:
         return {"error": "Apenas compradores podem abrir processos"}, 403
     
@@ -353,21 +359,14 @@ def open_procurement(proc_id: int):
             socketio.emit("procurement.opened", {
                 "procurement_id": proc.id,
                 "title": proc.title,
-                "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
+                "deadline_proposals": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
             }, to=f"user:{supplier.id}")
-    
-    # Notificar sala do processo
-    socketio.emit("procurement.opened", {
-        "procurement_id": proc.id,
-        "title": proc.title,
-        "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
-    }, to=f"proc:{proc.id}")
     
     return {
         "message": "Processo aberto para propostas",
         "procurement_id": proc.id,
         "status": proc.status.value,
-        "deadline": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
+        "deadline_proposals": proc.deadline_proposals.isoformat() if proc.deadline_proposals else None
     }
 
 
@@ -377,7 +376,6 @@ def close_procurement(proc_id: int):
     """Fecha processo para análise - apenas COMPRADOR"""
     user = get_current_user()
     
-    # Verificar se é comprador
     if user.role != Role.COMPRADOR:
         return {"error": "Apenas compradores podem fechar processos"}, 403
     
@@ -390,13 +388,28 @@ def close_procurement(proc_id: int):
     proc.updated_at = datetime.utcnow()
     db.session.commit()
     
+    # Notificar requisitante sobre as propostas para análise técnica
+    if proc.tr:
+        requisitante = User.query.get(proc.tr.created_by)
+        if requisitante:
+            proposals_count = Proposal.query.filter_by(
+                procurement_id=proc_id,
+                status=ProposalStatus.ENVIADA
+            ).count()
+            
+            socketio.emit("proposals.for_technical_review", {
+                "procurement_id": proc.id,
+                "title": proc.title,
+                "proposals_count": proposals_count
+            }, to=f"user:{requisitante.id}")
+    
     socketio.emit("procurement.closed", {
         "procurement_id": proc.id,
         "title": proc.title
     }, to=f"proc:{proc.id}")
     
     return {
-        "message": "Processo fechado para análise",
+        "message": "Processo fechado - propostas enviadas para análise técnica",
         "procurement_id": proc.id,
         "status": proc.status.value
     }
@@ -408,7 +421,6 @@ def get_proposals_comparison(proc_id: int):
     """Análise comparativa de propostas com IA - apenas COMPRADOR"""
     user = get_current_user()
     
-    # Verificar se é comprador
     if user.role != Role.COMPRADOR:
         return {"error": "Apenas compradores podem ver análise comparativa"}, 403
     
@@ -421,7 +433,7 @@ def get_proposals_comparison(proc_id: int):
     ).all()
     
     if not proposals:
-        return {"error": "Nenhuma proposta aprovada tecnicamente"}, 404
+        return {"error": "Nenhuma proposta aprovada tecnicamente encontrada"}, 404
     
     comparison = []
     for prop in proposals:
@@ -441,7 +453,7 @@ def get_proposals_comparison(proc_id: int):
                 
                 tr_item = TRServiceItem.query.get(service.service_item_id)
                 items_detail.append({
-                    "descricao": tr_item.descricao,
+                    "descricao": tr_item.descricao if tr_item else "Item não encontrado",
                     "qty": float(service.qty),
                     "unit_price": float(price.unit_price),
                     "total": item_total
@@ -536,7 +548,7 @@ def list_procurement_proposals(proc_id: int):
     
     result = []
     for prop in proposals:
-        # Requisitante não vê valores
+        # Requisitante não vê valores comerciais
         include_prices = user.role == Role.COMPRADOR
         
         prop_data = {
@@ -548,10 +560,11 @@ def list_procurement_proposals(proc_id: int):
             "status": prop.status.value,
             "technical_score": prop.technical_score,
             "technical_review": prop.technical_review,
-            "submitted_at": prop.technical_submitted_at.isoformat() if prop.technical_submitted_at else None
+            "technical_submitted_at": prop.technical_submitted_at.isoformat() if prop.technical_submitted_at else None,
+            "commercial_submitted_at": prop.commercial_submitted_at.isoformat() if prop.commercial_submitted_at else None
         }
         
-        if include_prices:
+        if include_prices and prop.status in [ProposalStatus.ENVIADA, ProposalStatus.APROVADA_TECNICAMENTE]:
             # Calcular total
             total = 0
             for service in prop.service_items:
@@ -565,6 +578,7 @@ def list_procurement_proposals(proc_id: int):
             prop_data["total_value"] = round(total, 2)
             prop_data["payment_conditions"] = prop.payment_conditions
             prop_data["delivery_time"] = prop.delivery_time
+            prop_data["warranty_terms"] = prop.warranty_terms
         
         result.append(prop_data)
     
