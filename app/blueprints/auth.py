@@ -55,21 +55,19 @@ def login():
     if not user or not verify_password(password, user.password_hash):
         return {"error": "credenciais invalidas"}, 401
     
-    # MUDANÇA IMPORTANTE: Criar token com apenas user_id como inteiro
-    # Em vez de um dicionário {"user_id": id, "role": role}
+    # IMPORTANTE: Use apenas o ID como string
     token = create_access_token(
-        identity=user.id,  # MUDANÇA: Apenas o ID, não um dicionário
+        identity=str(user.id),  # Converter para string
         expires_delta=timedelta(days=7)
     )
     
     return {
-        "access_token": token, 
+        "access_token": token,
         "user": {
-            "id": user.id, 
-            "email": user.email, 
-            "role": user.role.value, 
-            "full_name": user.full_name,
-            "organization": user.organization.name if user.organization else None
+            "id": user.id,
+            "email": user.email,
+            "role": user.role.value,
+            "full_name": user.full_name
         }
     }
 
