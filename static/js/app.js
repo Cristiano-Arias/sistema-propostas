@@ -250,28 +250,22 @@ function setupRequisitanteDashboard() {
 async function loadTRCreateForm() {
     const container = document.getElementById('tr-create');
     
-    // Load procurements for dropdown
+    // Buscar o processo atribuído ao requisitante
     const procurements = await fetchAPI('/procurements').then(r => r.json());
+    const currentProc = procurements.length > 0 ? procurements[0] : null;
     
     container.innerHTML = `
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">📝 Termo de Referência</h3>
+                ${currentProc ? `<span class="badge">Processo: ${currentProc.title}</span>` : ''}
                 <div>
                     <button class="btn btn-primary" onclick="saveTR()">💾 Salvar Rascunho</button>
                     <button class="btn btn-success" onclick="submitTR()">📤 Enviar para Aprovação</button>
                 </div>
             </div>
             <form id="trForm">
-                <div class="form-group">
-                    <label>Processo *</label>
-                    <select id="trProcurement" onchange="loadTR()" required>
-                        <option value="">Selecione um processo...</option>
-                        ${procurements.map(p => `
-                            <option value="${p.id}">${p.title}</option>
-                        `).join('')}
-                    </select>
-                </div>
+                <input type="hidden" id="trProcurement" value="${currentProc ? currentProc.id : ''}">
                 
                 <h4>📋 Informações Gerais</h4>
                 <div class="form-group">
