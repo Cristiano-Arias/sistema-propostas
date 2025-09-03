@@ -14,10 +14,12 @@ class Role(str, Enum):
 
 
 class ProcurementStatus(str, Enum):
-    RASCUNHO = "RASCUNHO"
-    TR_PENDENTE = "TR_PENDENTE"
-    TR_APROVADO = "TR_APROVADO"
-    ABERTO = "ABERTO"
+    TR_PENDENTE = "TR_PENDENTE"        # Aguardando criação do TR pelo requisitante
+    TR_CRIADO = "TR_CRIADO"            # TR foi criado mas não submetido
+    TR_SUBMETIDO = "TR_SUBMETIDO"      # TR aguardando aprovação do comprador
+    TR_APROVADO = "TR_APROVADO"        # TR aprovado, processo pode ser aberto
+    TR_REJEITADO = "TR_REJEITADO"      # TR rejeitado, precisa correções
+    ABERTO = "ABERTO"                  # Recebendo propostas
     ANALISE_TECNICA = "ANALISE_TECNICA"
     ANALISE_COMERCIAL = "ANALISE_COMERCIAL"
     FINALIZADO = "FINALIZADO"
@@ -70,15 +72,23 @@ class Procurement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    status = db.Column(db.Enum(ProcurementStatus), default=ProcurementStatus.RASCUNHO)
+    status = db.Column(db.Enum(ProcurementStatus), default=ProcurementStatus.TR_PENDENTE)
     org_id = db.Column(db.Integer, db.ForeignKey("organizations.id"), nullable=True)
+    
+    # MUDANÇA IMPORTANTE: Adicionar campo requisitante_id
+    requisitante_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     approved_by = db.Column(db.Integer, db.ForeignKey("users.id"))
+    
     deadline_proposals = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relacionamentos
+    requisitante = relationship("User", foreign_keys=[requisitante_id], backref="procurements_as_requisitante")
+    creator = relationship("User", foreign_keys=[created_by], backref="procurements_created")
+    approver = relationship("User", foreign_keys=[approved_by], backref="procurements_approved")
+    
     tr = relationship("TR", backref="procurement", uselist=False)
     proposals = relationship("Proposal", backref="procurement")
     invites = relationship("Invite", backref="procurement")
@@ -107,13 +117,14 @@ class TR(db.Model):
     credenciamento_observacoes = db.Column(db.Text)
     anexos_info = db.Column(db.Text)
     
-    # Novos campos para aprovação
+    # Campos para aprovação
     status = db.Column(db.Enum(TRStatus), default=TRStatus.RASCUNHO)
     submitted_at = db.Column(db.DateTime)
     approved_at = db.Column(db.DateTime)
     approved_by = db.Column(db.Integer, db.ForeignKey("users.id"))
     approval_comments = db.Column(db.Text)
     revision_requested = db.Column(db.Text)
+    rejection_reason = db.Column(db.Text)  # ADICIONAR: Motivo da rejeição
     
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -204,16 +215,3 @@ class ProposalPrice(db.Model):
     __table_args__ = (
         CheckConstraint("unit_price >= 0", name="chk_price_nonneg"),
     )
-
-
-class AuditLog(db.Model):
-    """Log de auditoria para todas as ações importantes"""
-    __tablename__ = "audit_logs"
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    action = db.Column(db.String(100), nullable=False)
-    entity_type = db.Column(db.String(50))
-    entity_id = db.Column(db.Integer)
-    details = db.Column(db.JSON)
-    ip_address = db.Column(db.String(45))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
