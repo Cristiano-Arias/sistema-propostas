@@ -539,15 +539,8 @@ async function loadMyTRs() {
     
     try {
         const response = await fetchAPI('/procurements');
-        if (!response.ok) {
-            throw new Error(`Falha ao carregar processos: ${response.status}`);
-        }
         const procurements = await response.json();
-        // Certifique-se de que a resposta é uma lista antes de filtrar
-        if (!Array.isArray(procurements)) {
-            console.error('Esperava uma lista de processos, recebeu:', procurements);
-            throw new Error('Formato inesperado de resposta');
-        }
+        
         const trsWithStatus = procurements.filter(p => p.has_tr);
         
         if (trsWithStatus.length === 0) {
@@ -606,22 +599,13 @@ async function loadTechnicalProposals() {
     
     try {
         // Get all procurements where user is requisitante
-        const procResp = await fetchAPI('/procurements');
-        if (!procResp.ok) {
-            throw new Error(`Falha ao carregar processos: ${procResp.status}`);
-        }
-        const procurements = await procResp.json();
-        if (!Array.isArray(procurements)) {
-            console.error('Esperava uma lista de processos, recebeu:', procurements);
-            throw new Error('Formato inesperado de resposta');
-        }
+        const procurements = await fetchAPI('/procurements').then(r => r.json());
+        
         let proposalsToReview = [];
+        
         for (const proc of procurements) {
             if (proc.status === 'ANALISE_TECNICA' || proc.status === 'ABERTO') {
-                const propResp = await fetchAPI(`/procurements/${proc.id}/proposals`);
-                if (!propResp.ok) continue;
-                const proposals = await propResp.json();
-                if (!Array.isArray(proposals)) continue;
+                const proposals = await fetchAPI(`/procurements/${proc.id}/proposals`).then(r => r.json());
                 proposals.forEach(prop => {
                     if (prop.status === 'ENVIADA' || prop.status === 'EM_ANALISE_TECNICA') {
                         proposalsToReview.push({
@@ -1409,40 +1393,21 @@ function refreshCurrentView() {
     }
 }
 
-/**
- * Wrapper for fetch() that injects a JWT token when available and centralizes
- * error handling. According to MDN, a 422 response means the server
- * understood the request but couldn't process it【756648219420134†L175-L183】; this
- * often happens with Flask‑JWT‑Extended when the Authorization header is
- * missing or the token is invalid. This function removes the token and
- * redirects to the login screen when that happens.
- *
- * @param {string} endpoint Relative API path (e.g. '/procurements')
- * @param {Object} options Additional fetch options
- * @returns {Promise<Response>} Response object
- */
 async function fetchAPI(endpoint, options = {}) {
     const token = localStorage.getItem('token');
-    const headers = {
-        'Content-Type': 'application/json'
+    
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
     };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    const defaultOptions = { headers };
+    
     if (options.body && typeof options.body !== 'string') {
         options.body = JSON.stringify(options.body);
     }
-    const response = await fetch(`${API_BASE}${endpoint}`, { ...defaultOptions, ...options });
-    // Handle unauthorized or unprocessable responses by logging out
-    if (response.status === 401 || response.status === 422) {
-        localStorage.removeItem('token');
-        showLogin();
-        const err = await response.json().catch(() => ({}));
-        const message = err.msg || err.error || 'Sessão expirada ou não autorizada';
-        throw new Error(message);
-    }
-    return response;
+    
+    return fetch(`${API_BASE}${endpoint}`, { ...defaultOptions, ...options });
 }
 
 // Stubs for missing functions
