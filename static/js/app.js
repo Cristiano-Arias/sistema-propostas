@@ -912,9 +912,6 @@ async function saveProcurement() {
 
 async function openProcurementModal(procId) {
     const modalContent = `
-        <div class
-async function openProcurementModal(procId) {
-    const modalContent = `
         <div class="form-group">
             <label>Prazo para Propostas</label>
             <input type="datetime-local" id="procDeadline" min="${new Date().toISOString().slice(0,16)}">
