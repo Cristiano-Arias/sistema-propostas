@@ -8,23 +8,22 @@ from flask_jwt_extended import get_jwt_identity
 from ..models import User
 
 def get_current_user():
-    """
-    Retorna o usuário atual baseado no JWT token
-    Funciona independente do formato do token (int ou dict)
-    """
     identity = get_jwt_identity()
     
-    # Se identity é um dicionário (formato antigo)
-    if isinstance(identity, dict):
-        user_id = identity.get("user_id")
-    # Se identity é um inteiro (formato novo)
-    else:
+    # Converter para int se for string
+    if isinstance(identity, str):
+        try:
+            user_id = int(identity)
+        except:
+            return None
+    elif isinstance(identity, int):
         user_id = identity
+    elif isinstance(identity, dict):
+        user_id = identity.get("user_id")
+    else:
+        return None
     
-    # Retorna o usuário ou None
-    if user_id:
-        return User.query.get(user_id)
-    return None
+    return User.query.get(user_id) if user_id else None
 
 
 def require_roles(*allowed_roles):
