@@ -172,8 +172,8 @@ export class FornecedorRouter {
      * Redireciona para o portal unificado
      */
     redirectToPortalUnificado() {
-        if (window.location.pathname !== '/static/portal-unico-inteligente.html') {
-            window.location.href = '/static/portal-unico-inteligente.html';
+        if (window.location.pathname !== '/static/portal_login_simples.html') {
+            window.location.href = '/static/portal_login_simples.html';
         }
     }
 
