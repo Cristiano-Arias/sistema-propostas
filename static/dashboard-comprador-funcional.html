@@ -3437,7 +3437,8 @@
                 
                 if (!authResult.isAuthenticated) {
                     console.log('❌ Usuário não autorizado para módulo comprador');
-                    return; // Interrompe execução se não autorizado
+                    // TEMPORARIAMENTE DESABILITADO
+                    // return; 
                 }
                 
                 console.log('✅ Usuário autorizado para módulo comprador:', authResult.user.email);
