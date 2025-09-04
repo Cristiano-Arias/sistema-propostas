@@ -390,11 +390,11 @@
             // Verificar URL atual
             const currentUrl = window.location.href;
             const referrer = document.referrer;
-            const searchParams = new URLSearchParams(window.location.search); // <- MUDANÇA: usar searchParams
-            const message = searchParams.get('message'); // <- MUDANÇA: usar searchParams
+            const searchParams = new URLSearchParams(window.location.search);
+            const message = searchParams.get('message');
             
-            // NOVA VERIFICAÇÃO: Parâmetro URL explícito
-            const redirectParam = searchParams.get('redirect'); // <- MUDANÇA: usar searchParams
+            // Parâmetro URL explícito
+            const redirectParam = searchParams.get('redirect');
             if (redirectParam === 'comprador') return 'Comprador';
             if (redirectParam === 'fornecedor') return 'Fornecedor';
             if (redirectParam === 'requisitante') return 'Requisitante';
@@ -412,7 +412,10 @@
             if (currentUrl.includes('comprador') || referrer.includes('login-comprador')) return 'Comprador';
             if (currentUrl.includes('fornecedor') || referrer.includes('login-fornecedor')) return 'Fornecedor';
             
-            // Default: Requisitante (mais usado)
+            // CORREÇÃO: Default baseado na mensagem de erro
+            if (message && message.toLowerCase().includes('inválido')) return 'Comprador';
+            
+            // Default: Requisitante
             return 'Requisitante';
         }
         
@@ -451,7 +454,7 @@
                 // Salvar no Firestore
                 await setDoc(doc(db, 'usuarios', uid), newUserData);
                 
-                showMessage('info', 'Novo usuário criado com perfil: Requisitante');
+                showMessage('info', `Novo usuário criado com perfil: ${detectarPerfilDestino()}`);
                 
                 return newUserData;
                 
