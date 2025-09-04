@@ -56,10 +56,10 @@ export const AUTH_CONFIG = {
     TOKEN_EXPIRY: 3600000, // 1 hora
     
     // URL de redirecionamento após logout
-    LOGOUT_REDIRECT: '/static/portal-unico-inteligente.html',
+    LOGOUT_REDIRECT: '/static/portal_login_simples.html',
     
     // URL de redirecionamento para login
-    LOGIN_REDIRECT: '/static/portal-unico-inteligente.html',
+    LOGIN_REDIRECT: '/static/portal_login_simples.html',
     
     // Endpoints da API
     API_ENDPOINTS: {
