@@ -293,6 +293,12 @@
             signInWithEmailAndPassword,
             onAuthStateChanged 
         } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
         // Configuração Firebase
         const firebaseConfig = {
@@ -307,6 +313,7 @@
         // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
 
         // Elementos DOM
         const form = document.getElementById('loginForm');
@@ -344,15 +351,16 @@
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // Detectar perfil baseado no email
-                const perfil = detectProfileFromEmail(email);
+                // Buscar perfil no Firestore
+                showMessage('info', 'Verificando perfil do usuário...');
+                const userProfile = await getUserProfile(user.uid, user.email);
                 
                 // Salvar dados de sessão
                 const sessionData = {
                     uid: user.uid,
                     email: user.email,
-                    nome: user.displayName || user.email.split('@')[0],
-                    perfil: perfil,
+                    nome: userProfile.nome || user.displayName || user.email.split('@')[0],
+                    perfil: userProfile.perfil,
                     dataLogin: new Date().toISOString()
                 };
 
@@ -360,14 +368,14 @@
                 const token = await user.getIdToken();
                 localStorage.setItem('userToken', token);
                 localStorage.setItem('userData', JSON.stringify(sessionData));
-                localStorage.setItem(`${perfil.toLowerCase()}_logado`, JSON.stringify(sessionData));
+                localStorage.setItem(`${userProfile.perfil.toLowerCase()}_logado`, JSON.stringify(sessionData));
 
                 // Mostrar sucesso
-                showMessage('success', `Login realizado! Perfil: ${perfil}`);
+                showMessage('success', `Login realizado! Perfil: ${userProfile.perfil}`);
 
                 // Redirecionar após delay
                 setTimeout(() => {
-                    redirectToDashboard(perfil.toLowerCase());
+                    redirectToDashboard(userProfile.perfil.toLowerCase());
                 }, 1500);
 
             } catch (error) {
@@ -378,31 +386,48 @@
             }
         }
 
-        // Detectar perfil baseado no email (versão melhorada)
-        function detectProfileFromEmail(email) {
-            const emailLower = email.toLowerCase();
-            
-            // Detecção por palavras-chave no email
-            if (emailLower.includes('fornecedor') || emailLower.includes('empresa') || emailLower.includes('supplier')) {
-                return 'Fornecedor';
+        // Buscar ou criar perfil do usuário no Firestore
+        async function getUserProfile(uid, email) {
+            try {
+                // Tentar buscar usuário por UID
+                const userDoc = await getDoc(doc(db, 'usuarios', uid));
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    console.log('Usuário encontrado no Firestore:', userData);
+                    return userData;
+                }
+                
+                // Se não existir, criar novo usuário com perfil padrão
+                console.log('Usuário não encontrado, criando novo...');
+                const newUserData = {
+                    uid: uid,
+                    email: email,
+                    nome: email.split('@')[0],
+                    perfil: 'Requisitante', // Perfil padrão
+                    ativo: true,
+                    criadoEm: new Date().toISOString()
+                };
+                
+                // Salvar no Firestore
+                await setDoc(doc(db, 'usuarios', uid), newUserData);
+                
+                showMessage('info', 'Novo usuário criado com perfil: Requisitante');
+                
+                return newUserData;
+                
+            } catch (error) {
+                console.error('Erro ao buscar/criar perfil:', error);
+                
+                // Fallback: retornar perfil padrão
+                return {
+                    uid: uid,
+                    email: email,
+                    nome: email.split('@')[0],
+                    perfil: 'Requisitante',
+                    ativo: true
+                };
             }
-            
-            if (emailLower.includes('comprador') || emailLower.includes('compras') || emailLower.includes('licitacao') || emailLower.includes('procurement')) {
-                return 'Comprador';
-            }
-            
-            if (emailLower.includes('requisitante') || emailLower.includes('solicitante') || emailLower.includes('requester')) {
-                return 'Requisitante';
-            }
-            
-            // Detecção por domínio comum
-            const domain = email.split('@')[1]?.toLowerCase() || '';
-            if (domain.includes('gov') || domain.includes('prefeitura') || domain.includes('municipal')) {
-                return 'Requisitante'; // Usuários governamentais geralmente são requisitantes
-            }
-            
-            // Padrão: Requisitante (perfil mais comum)
-            return 'Requisitante';
         }
 
         // Redirecionar para dashboard
