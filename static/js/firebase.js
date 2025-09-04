@@ -13,7 +13,16 @@ import {
   doc,
   getDoc,
   setDoc,
-  onSnapshot
+  onSnapshot,
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  limit
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ✅ Usar configuração centralizada
@@ -35,4 +44,22 @@ if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
 }
 
 // Re-exporta utilitários que o resto do app usa
-export { onAuthStateChanged, signInWithEmailAndPassword, signOut, doc, getDoc, setDoc, onSnapshot };
+export {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot,
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  limit
+};
+
