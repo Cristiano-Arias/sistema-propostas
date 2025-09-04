@@ -287,10 +287,11 @@
         // Inicialização da página com limpeza de sessão
         window.addEventListener('load', async () => {
             try {
-                // Limpar sessões anteriores
                 await signOut(auth);
-                clearUserSession();
                 console.log('✅ Sessões anteriores limpas');
+            } catch (error) {
+                console.log('ℹ️ Nenhuma sessão ativa para limpar');
+
             } catch (error) {
                 console.log('ℹ️ Nenhuma sessão ativa para limpar');
             }
@@ -358,25 +359,39 @@
             try {
                 console.log('🔐 Tentando login como fornecedor:', email);
                 
-                // Fazer login com perfil fixo de Fornecedor
-                const userData = await loginComPerfil(email, password, 'Fornecedor');
+                // Importar funções do Firebase
+                const { signInWithEmailAndPassword } = await import('/static/js/firebase.js');
+                const { db, doc, getDoc } = await import('/static/js/firebase.js');
                 
-                if (userData && userData.uid) {
-                    console.log('✅ Login realizado com sucesso:', userData.email);
-                    showSuccess('Login realizado com sucesso! Redirecionando...');
-                    
-                    // Redirecionar após um breve delay
-                    setTimeout(() => {
-                        redirectToDashboard();
-                    }, 1000);
-                } else {
-                    console.error('❌ Falha no login: dados de usuário inválidos');
-                    handleLoginError(new Error('Dados de usuário inválidos'));
+                // Login com Firebase Auth
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Buscar perfil no Firestore
+                const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
+                
+                if (!userDoc.exists()) {
+                    throw new Error('Usuário não encontrado no sistema');
                 }
+                
+                const userData = userDoc.data();
+                
+                if (userData.perfil !== 'fornecedor') {
+                    throw new Error('Esta área é exclusiva para fornecedores');
+                }
+                
+                console.log('✅ Login realizado com sucesso:', user.email);
+                showSuccess('Login realizado com sucesso! Redirecionando...');
+                
+                // Redirecionar após um breve delay
+                setTimeout(() => {
+                    redirectToDashboard();
+                }, 1000);
                 
             } catch (error) {
                 console.error('❌ Erro no login:', error);
                 handleLoginError(error);
+            }
             } finally {
                 setLoading(false);
             }
