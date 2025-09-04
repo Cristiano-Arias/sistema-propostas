@@ -174,7 +174,7 @@ async function logout() {
         localStorage.removeItem('authToken');
         
         // Redirecionar para página de login
-         window.location.href = '/static/portal-unico-inteligente.html';
+         window.location.href = '/static/portal_login_simples.html';
         
         return { success: true };
     } catch (error) {
