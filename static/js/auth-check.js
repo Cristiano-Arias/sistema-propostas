@@ -80,7 +80,7 @@ export function redirectToLogin(message = null) {
     clearUserSession();
     
     // Construir URL com mensagem se fornecida
-    let loginUrl = '/static/portal-unico-inteligente.html';
+    let loginUrl = '/static/portal_login_simples.html';
     if (message) {
         loginUrl += `?message=${encodeURIComponent(message)}`;
     }
