@@ -386,20 +386,18 @@
             }
         }
 
-        // Detectar perfil baseado na URL de origem ou destino
         function detectarPerfilDestino() {
-            // NOVA VERIFICAÇÃO: Parâmetro URL explícito
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirectParam = urlParams.get('redirect');
-            if (redirectParam === 'comprador') return 'Comprador';
-            if (redirectParam === 'fornecedor') return 'Fornecedor';
-            if (redirectParam === 'requisitante') return 'Requisitante';
-            
             // Verificar URL atual
             const currentUrl = window.location.href;
             const referrer = document.referrer;
-            const urlParams = new URLSearchParams(window.location.search);
-            const message = urlParams.get('message');
+            const searchParams = new URLSearchParams(window.location.search); // <- MUDANÇA: usar searchParams
+            const message = searchParams.get('message'); // <- MUDANÇA: usar searchParams
+            
+            // NOVA VERIFICAÇÃO: Parâmetro URL explícito
+            const redirectParam = searchParams.get('redirect'); // <- MUDANÇA: usar searchParams
+            if (redirectParam === 'comprador') return 'Comprador';
+            if (redirectParam === 'fornecedor') return 'Fornecedor';
+            if (redirectParam === 'requisitante') return 'Requisitante';
             
             // Se veio de um dashboard específico (referrer)
             if (referrer.includes('dashboard-comprador')) return 'Comprador';
