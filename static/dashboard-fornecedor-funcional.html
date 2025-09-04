@@ -2807,34 +2807,9 @@
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', async function() {
-            // VERIFICAÇÃO DE AUTENTICAÇÃO CRÍTICA
-            try {
-                // Importar módulo de verificação de autenticação com caminho correto
-                const { checkAuthentication } = await import('./js/auth-check.js');
-                
-                // Verificar se usuário está autenticado e tem perfil fornecedor
-                const authResult = await checkAuthentication('fornecedor', true);
-                
-                if (!authResult.isAuthenticated) {
-                    console.log('❌ Usuário não autorizado para módulo fornecedor');
-                    return; // Interrompe execução se não autorizado
-                }
-                
-                console.log('✅ Usuário autorizado para módulo fornecedor:', authResult.user.email);
-                
-            } catch (authError) {
-                console.error('❌ Erro na verificação de autenticação:', authError);
-                // Redirecionar para login em caso de erro
-                window.location.href = '/static/portal-unico-inteligente.html';
-                return;
-            }
-            
+                        
             // Verificar se já está logado
-            const fornecedorSalvo = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDOR_LOGADO);
-            if (fornecedorSalvo) {
-                fornecedorLogado = fornecedorSalvo;
-                mostrarDashboard();
-            }
+            console.log('📱 Dashboard fornecedor carregado - aguardando autenticação Firebase');
             
             // Login form
             document.getElementById('login-form')?.addEventListener('submit', async function(e) {
