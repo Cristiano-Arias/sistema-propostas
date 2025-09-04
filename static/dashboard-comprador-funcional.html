@@ -3444,9 +3444,9 @@
                 
             } catch (authError) {
                 console.error('❌ Erro na verificação de autenticação:', authError);
-                // Redirecionar para login em caso de erro
-                window.location.href = '/static/portal_login_simples.html?redirect=comprador';
-                return;
+                // TEMPORARIAMENTE COMENTADO PARA DEBUG
+                // window.location.href = '/static/portal_login_simples.html?message=Perfil%20de%20usuário%20inválido';
+                // return;
             }
             
             // Inicializar Azure AI
