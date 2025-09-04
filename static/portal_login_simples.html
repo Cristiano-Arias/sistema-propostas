@@ -359,10 +359,13 @@
                 const sessionData = {
                     uid: user.uid,
                     email: user.email,
-                    nome: userProfile.nome || user.displayName || user.email.split('@')[0],
+                    nome: userProfile.nome || user.email.split('@')[0],
                     perfil: userProfile.perfil,
-                    dataLogin: new Date().toISOString()
+                    profile: userProfile.perfil.toLowerCase(),
+                    dataLogin: new Date().toISOString(),
+                    loginTime: new Date().toISOString()
                 };
+                localStorage.setItem('userData', JSON.stringify(sessionData));
 
                 // Salvar tokens
                 const token = await user.getIdToken();
