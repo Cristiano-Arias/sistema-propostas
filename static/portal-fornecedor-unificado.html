@@ -294,108 +294,100 @@
             }
             
             // Verificar se já existe sessão ativa
-            checkExistingSession();
-        });
-        
-        // Verificar se já existe sessão ativa
-        function checkExistingSession() {
-            try {
-
-        // Verificar se já existe sessão ativa
-        function checkExistingSession() {
-            try {
-                // Verificar sessão de fornecedor específica
-                const fornecedorSession = sessionStorage.getItem('fornecedor_logado');
-                if (fornecedorSession) {
-                    try {
-                        const userData = JSON.parse(fornecedorSession);
-                        if (userData.token) {
-                            console.log('✅ Sessão de fornecedor ativa encontrada, redirecionando...');
-                            redirectToDashboard();
-                            return;
+            function checkExistingSession() {
+                try {
+                    // Verificar sessão de fornecedor específica
+                    const fornecedorSession = sessionStorage.getItem('fornecedor_logado');
+                    if (fornecedorSession) {
+                        try {
+                            const userData = JSON.parse(fornecedorSession);
+                            if (userData.token) {
+                                console.log('✅ Sessão de fornecedor ativa encontrada, redirecionando...');
+                                redirectToDashboard();
+                                return;
+                            }
+                        } catch (e) {
+                            console.log('⚠️ Sessão de fornecedor inválida, limpando...');
+                            sessionStorage.removeItem('fornecedor_logado');
                         }
-                    } catch (e) {
-                        console.log('⚠️ Sessão de fornecedor inválida, limpando...');
-                        sessionStorage.removeItem('fornecedor_logado');
                     }
-                }
-                
-                // Verificar sessão geral
-                const sessionData = sessionStorage.getItem('userData');
-                if (sessionData) {
-                    try {
-                        const userData = JSON.parse(sessionData);
-                        if (userData.profile === 'Fornecedor' && userData.token) {
-                            console.log('✅ Sessão geral de fornecedor encontrada, redirecionando...');
-                            redirectToDashboard();
-                            return;
+                    
+                    // Verificar sessão geral
+                    const sessionData = sessionStorage.getItem('userData');
+                    if (sessionData) {
+                        try {
+                            const userData = JSON.parse(sessionData);
+                            if (userData.profile === 'Fornecedor' && userData.token) {
+                                console.log('✅ Sessão geral de fornecedor encontrada, redirecionando...');
+                                redirectToDashboard();
+                                return;
+                            }
+                        } catch (e) {
+                            console.log('⚠️ Sessão geral inválida, limpando...');
+                            sessionStorage.removeItem('userData');
                         }
-                    } catch (e) {
-                        console.log('⚠️ Sessão geral inválida, limpando...');
-                        sessionStorage.removeItem('userData');
                     }
+                    
+                    console.log('ℹ️ Nenhuma sessão ativa encontrada');
+                } catch (error) {
+                    console.error('Erro ao verificar sessão:', error);
                 }
-                
-                console.log('ℹ️ Nenhuma sessão ativa encontrada');
-            } catch (error) {
-                console.error('Erro ao verificar sessão:', error);
-            }
-        }
-
-        // Event listener do formulário
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = emailEl.value.trim();
-            const password = passwordEl.value.trim();
-            
-            if (!email || !password) {
-                showError('Por favor, preencha todos os campos.');
-                return;
             }
             
-            setLoading(true);
-            hideMessages();
-            
-            try {
-                console.log('🔐 Tentando login como fornecedor:', email);
+            // Event listener do formulário
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
                 
-                // Importar funções do Firebase
-                const { signInWithEmailAndPassword } = await import('/static/js/firebase.js');
-                const { db, doc, getDoc } = await import('/static/js/firebase.js');
+                const email = emailEl.value.trim();
+                const password = passwordEl.value.trim();
                 
-                // Login com Firebase Auth
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                
-                // Buscar perfil no Firestore
-                const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
-                
-                if (!userDoc.exists()) {
-                    throw new Error('Usuário não encontrado no sistema');
+                if (!email || !password) {
+                    showError('Por favor, preencha todos os campos.');
+                    return;
                 }
                 
-                const userData = userDoc.data();
+                setLoading(true);
+                hideMessages();
                 
-                if (userData.perfil !== 'fornecedor') {
-                    throw new Error('Esta área é exclusiva para fornecedores');
-                }
-                
-                console.log('✅ Login realizado com sucesso:', user.email);
-                showSuccess('Login realizado com sucesso! Redirecionando...');
-                
-                // Redirecionar após um breve delay  
-                setTimeout(() => {
-                    redirectToDashboard(profile);
-                }, 1000);
-                
+                try {
+                    console.log('🔐 Tentando login como fornecedor:', email);
+                    
+                    // Importar funções do Firebase
+                    const { signInWithEmailAndPassword } = await import('/static/js/firebase.js');
+                    const { db, doc, getDoc } = await import('/static/js/firebase.js');
+                    
+                    // Login com Firebase Auth
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    
+                    // Buscar perfil no Firestore
+                    const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
+                    
+                    if (!userDoc.exists()) {
+                        throw new Error('Usuário não encontrado no sistema');
+                    }
+                    
+                    const userData = userDoc.data();
+                    
+                    if (userData.perfil !== 'fornecedor') {
+                        throw new Error('Esta área é exclusiva para fornecedores');
+                    }
+                    
+                    console.log('✅ Login realizado com sucesso:', user.email);
+                    showSuccess('Login realizado com sucesso! Redirecionando...');
+                    
+                    // Redirecionar após um breve delay  
+                    setTimeout(() => {
+                        redirectToDashboard();
+                    }, 1000);
+                    
                 } catch (error) {
                     console.error('❌ Erro no login:', error);
                     handleLoginError(error);
                 } finally {
                     setLoading(false);
                 }
-        });
+            });
 
         // Redirecionar para dashboard do fornecedor
         function redirectToDashboard() {
