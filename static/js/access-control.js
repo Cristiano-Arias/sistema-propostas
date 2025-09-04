@@ -1,10 +1,10 @@
 // access-control.js - Sistema de Controle de Acesso Centralizado
+// Versão SIMPLIFICADA - SEM MÓDULO ADMIN
 // Compatível com Firebase e Sistema Legado
 
 const AccessControl = {
-    // Configuração de permissões por perfil
+    // Configuração de permissões por perfil (SEM ADMIN)
     permissions: {
-        'admin': ['admin', 'requisitante', 'comprador', 'fornecedor'],
         'requisitante': ['requisitante'],
         'comprador': ['comprador'],
         'fornecedor': ['fornecedor']
@@ -55,11 +55,10 @@ const AccessControl = {
         return null;
     },
 
-    // Obter usuário do sistema legado
+    // Obter usuário do sistema legado (SEM ADMIN)
     getLegacyUser: function() {
-        // Verificar cada tipo de sessão legada
+        // Verificar cada tipo de sessão legada (REMOVIDO ADMIN)
         const sessions = [
-            { key: 'admin_logado', perfil: 'admin' },
             { key: 'requisitante_logado', perfil: 'requisitante' },
             { key: 'comprador_logado', perfil: 'comprador' },
             { key: 'fornecedor_logado', perfil: 'fornecedor' }
@@ -121,13 +120,13 @@ const AccessControl = {
     // Redirecionar para login apropriado
     redirectToLogin: function() {
         // Verificar se existe portal unificado
-        fetch('/static/portal-unificado.html', { method: 'HEAD' })
+        fetch('/static/portal-login-simples.html', { method: 'HEAD' })
             .then(response => {
                 if (response.ok) {
-                    window.location.href = '/static/portal-unificado.html';
+                    window.location.href = '/static/portal-login-simples.html';
                 } else {
-                    // Fallback para index
-                    window.location.href = '/static/index.html';
+                    // Fallback para portal unificado sem admin
+                    window.location.href = '/static/portal-unificado.html';
                 }
             })
             .catch(() => {
@@ -146,7 +145,7 @@ const AccessControl = {
         this.redirectToAllowedModule();
     },
 
-    // Redirecionar para módulo permitido
+    // Redirecionar para módulo permitido (SEM ADMIN)
     redirectToAllowedModule: function() {
         const auth = this.checkAuth();
         if (!auth.authenticated) {
@@ -157,9 +156,6 @@ const AccessControl = {
         const profile = auth.user.perfil?.toLowerCase() || 'requisitante';
         
         switch(profile) {
-            case 'admin':
-                window.location.href = '/static/admin-usuarios.html';
-                break;
             case 'requisitante':
                 window.location.href = '/static/dashboard-requisitante-funcional.html';
                 break;
@@ -180,13 +176,12 @@ const AccessControl = {
         return auth.authenticated ? auth.user : null;
     },
 
-    // Fazer logout
+    // Fazer logout (SEM ADMIN)
     logout: function() {
-        // Limpar todas as possíveis sessões
+        // Limpar todas as possíveis sessões (REMOVIDO ADMIN)
         const keysToRemove = [
             'userToken',
             'userData',
-            'admin_logado',
             'requisitante_logado',
             'comprador_logado',
             'fornecedor_logado'
@@ -244,7 +239,7 @@ const AccessControl = {
         const legacyUser = this.getLegacyUser();
         console.log('Sistema Legado:', legacyUser ? '✅ Ativo' : '❌ Inativo');
         
-        // Verificar localStorage keys
+        // Verificar localStorage keys (SEM ADMIN)
         const keys = Object.keys(localStorage);
         console.log('Chaves no localStorage:', keys);
         
