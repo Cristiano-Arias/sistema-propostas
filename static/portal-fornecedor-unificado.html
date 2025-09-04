@@ -291,10 +291,15 @@
                 console.log('✅ Sessões anteriores limpas');
             } catch (error) {
                 console.log('ℹ️ Nenhuma sessão ativa para limpar');
-
+            }
+            
             // Verificar se já existe sessão ativa
             checkExistingSession();
         });
+        
+        // Verificar se já existe sessão ativa
+        function checkExistingSession() {
+            try {
 
         // Verificar se já existe sessão ativa
         function checkExistingSession() {
