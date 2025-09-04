@@ -2839,13 +2839,6 @@
             document.getElementById('card-propostas')?.addEventListener('click', () => mostrarPagina('propostas'));
         }); // ← FECHA O DOMContentLoaded AQUI
         
-        // Atualizar estatísticas a cada 30 segundos (FORA do DOMContentLoaded)
-        setInterval(() => {
-            if (fornecedorLogado) {
-                carregarEstatisticas();
-            }
-        }, 30000);
-        
         // Expor funções globalmente (FORA do DOMContentLoaded)
         window.visualizarTR = visualizarTR;
         window.baixarTR = baixarTR;
