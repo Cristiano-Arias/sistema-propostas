@@ -1,6 +1,6 @@
 // ================================
 // realtime-sync.js - Versão Corrigida com Isolamento por Usuário
-// Sincroniza chaves de localStorage com Firestore em /localstorage/{key}_{uid}
+// SEM MÓDULO ADMIN - Sincroniza chaves de localStorage com Firestore
 // ================================
 
 import { doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -29,9 +29,9 @@ try {
 const db = getFirestore();
 const auth = getAuth();
 
-// Chaves sincronizadas (compatível com módulos existentes)
+// Chaves sincronizadas (compatível com módulos existentes - SEM ADMIN)
 const KEYS = [
-  "admin_logado",
+  // REMOVIDO: "admin_logado"
   "auth_token",
   "azure_ai_config",
   "comprador_logado",
@@ -53,27 +53,17 @@ const KEYS = [
   "propostas_liberadas_parecer",
   "propostas_para_requisitante",
   "requisitante_logado",
-  "sistema_analises_ia",
   "sistema_fornecedores",
   "sistema_processos",
   "sistema_propostas",
-  "sistema_propostas_completas",
   "sistema_trs",
-  "sistema_usuarios_fornecedores",
   "sistema_usuario_logado",
-  "sistema_estatisticas",
-  "sistema_vinculacoes_fornecedores",
-  "technical_analysis_draft",
-  "technical_analysis_final",
   "termos_referencia",
-  "tr_autosave",
-  "tr_rascunho",
-  "tr_rascunho_",
   "trs_aprovados",
   "trs_pendentes_aprovacao",
-  "userData",
+  "usuarios_fornecedores",
   "userToken",
-  "usuario_logado"
+  "userData"
 ];
 
 let unsubscribers = [];
@@ -82,26 +72,25 @@ let isApplyingRemote = false;
 function attachListeners() {
   detachListeners();
   
-  // ALTERAÇÃO 1: Verificar se há usuário autenticado
   const user = auth.currentUser;
   if (!user) {
-    console.warn('[realtime-sync] Sem usuário autenticado para anexar listeners');
+    console.warn('[realtime-sync] Sem usuário autenticado');
     return;
   }
   
   for (const key of KEYS) {
-    // ALTERAÇÃO 2: Usar chave composta com UID do usuário
+    // Usar chave composta com UID do usuário
     const docKey = `${key}_${user.uid}`;
     const ref = doc(db, "localstorage", docKey);
 
-    // Buscar valor inicial do Firestore
+    // Seed inicial
     getDoc(ref).then((snap) => {
       if (snap.exists()) {
         const data = snap.data() || {};
-        // ALTERAÇÃO 3: Verificar se o documento pertence ao usuário
+        // Verificar se o documento pertence ao usuário
         if (data.uid === user.uid && typeof data.value !== "undefined") {
           try { 
-            isApplyingRemote = true;
+            isApplyingRemote = true; 
             localStorage.setItem(key, data.value); 
             console.log(`📥 Carregado do Firebase: ${key}`);
           } finally { 
@@ -110,9 +99,9 @@ function attachListeners() {
         }
       }
     }).catch((e) => {
-      // Ignorar erros de permissão para documentos não existentes
+      // Ignorar erros de permissão esperados
       if (e.code !== 'permission-denied') {
-        console.warn("[realtime-sync] Erro ao buscar:", key, e.code || e.message);
+        console.warn("[realtime-sync] Erro ao carregar:", key, e.code || e.message);
       }
     });
 
@@ -121,7 +110,7 @@ function attachListeners() {
       if (!snap.exists()) return;
       
       const data = snap.data() || {};
-      // ALTERAÇÃO 4: Verificar se o documento pertence ao usuário
+      // Verificar se o documento pertence ao usuário
       if (data.uid === user.uid && typeof data.value !== "undefined") {
         try { 
           isApplyingRemote = true; 
@@ -175,11 +164,11 @@ localStorage.setItem = function(k, v) {
   // 2. Usuário estiver autenticado
   // 3. A chave estiver na lista de sincronização
   if (!isApplyingRemote && user && KEYS.includes(k)) {
-    // ALTERAÇÃO 5: Usar chave composta com UID do usuário
+    // Usar chave composta com UID do usuário
     const docKey = `${k}_${user.uid}`;
     const ref = doc(db, "localstorage", docKey);
     
-    // ALTERAÇÃO 6: Incluir UID no documento (OBRIGATÓRIO para as regras)
+    // Incluir UID no documento (OBRIGATÓRIO para as regras)
     setDoc(ref, { 
       value: v, 
       uid: user.uid,  // Campo obrigatório para as regras de segurança
@@ -207,7 +196,7 @@ localStorage.removeItem = function(k) {
   const user = auth.currentUser;
   
   if (!isApplyingRemote && user && KEYS.includes(k)) {
-    // ALTERAÇÃO 7: Usar chave composta com UID do usuário
+    // Usar chave composta com UID do usuário
     const docKey = `${k}_${user.uid}`;
     const ref = doc(db, "localstorage", docKey);
     
@@ -236,46 +225,25 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     console.log("[realtime-sync] ✅ Usuário autenticado:", user.email || user.uid);
     
-    // ALTERAÇÃO 8: Criar perfil de usuário se não existir (SEM SOBRESCREVER PERFIL EXISTENTE)
+    // Criar perfil de usuário se não existir
     const userRef = doc(db, "usuarios", user.uid);
     getDoc(userRef).then((docSnap) => {
       if (!docSnap.exists()) {
-        // Verificar se há perfil no localStorage antes de criar perfil padrão
-        const existingProfile = localStorage.getItem('comprador_logado') || 
-                               localStorage.getItem('fornecedor_logado') || 
-                               localStorage.getItem('requisitante_logado') || 
-                               localStorage.getItem('admin_logado');
-        
-        let userProfile = 'requisitante'; // Padrão
-        
-        if (existingProfile) {
-          try {
-            const profileData = JSON.parse(existingProfile);
-            if (profileData.perfil) {
-              userProfile = profileData.perfil;
-            }
-          } catch (e) {
-            console.warn('Erro ao parsear perfil existente:', e);
-          }
-        }
-        
         setDoc(userRef, {
           uid: user.uid,
           email: user.email,
           nome: user.displayName || user.email?.split('@')[0] || 'Usuário',
-          perfil: userProfile,
+          perfil: 'requisitante', // Perfil padrão
           dataCriacao: new Date().toISOString()
         }, { merge: true }).then(() => {
-          console.log('✅ Perfil de usuário criado com perfil:', userProfile);
+          console.log('✅ Perfil de usuário criado');
         }).catch((e) => {
           console.warn('Erro ao criar perfil:', e);
         });
-      } else {
-        console.log('✅ Perfil de usuário já existe:', docSnap.data().perfil);
       }
     });
     
-    // ALTERAÇÃO 9: Aguardar um momento para garantir autenticação completa
+    // Aguardar um momento para garantir autenticação completa
     setTimeout(() => {
       attachListeners();
     }, 1000);
@@ -326,7 +294,7 @@ window.realtimeSync = {
       if (auth.currentUser) attachListeners();
     }
   },
-  // ALTERAÇÃO 10: Adicionar função de debug
+  // Adicionar função de debug
   debugSync: () => {
     const user = auth.currentUser;
     if (user) {
@@ -335,12 +303,13 @@ window.realtimeSync = {
       console.log("User Email:", user.email);
       console.log("Keys monitoradas:", KEYS.length);
       console.log("Listeners ativos:", unsubscribers.length);
+      console.log("Módulo Admin:", "❌ REMOVIDO");
     } else {
       console.log("Nenhum usuário autenticado");
     }
   }
 };
 
-console.log("[realtime-sync] 🚀 Sistema de sincronização em tempo real inicializado");
-console.log("[realtime-sync] 📋 Monitorando", KEYS.length, "chaves");
+console.log("[realtime-sync] 🚀 Sistema de sincronização em tempo real inicializado - SEM ADMIN");
+console.log("[realtime-sync] 📋 Monitorando", KEYS.length, "chaves (admin removido)");
 console.log("[realtime-sync] ⏳ Aguardando autenticação...");
