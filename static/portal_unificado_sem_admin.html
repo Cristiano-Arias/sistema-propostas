@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Unificado - Sistema de Licitações</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            text-align: center;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            margin-bottom: 30px;
+        }
+
+        .logo i {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .logo h1 {
+            font-size: 26px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Login Card */
+        .login-card {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* User Info (após login) */
+        .user-info {
+            display: none;
+            margin-bottom: 25px;
+        }
+
+        .user-info-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-email {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            background: #c82333;
+        }
+
+        /* Módulos Grid */
+        .modules-container {
+            display: none;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .module-card {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            padding: 25px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            position: relative;
+        }
+
+        .module-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .module-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f8f9fa;
+        }
+
+        .module-card.disabled:hover {
+            transform: none;
+            border-color: #e1e5e9;
+            box-shadow: none;
+        }
+
+        .module-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .module-requisitante { color: #28a745; }
+        .module-comprador { color: #007bff; }
+        .module-fornecedor { color: #fd7e14; }
+
+        .module-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .module-desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .module-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-available {
+            color: #28a745;
+            background: #d4edda;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .status-blocked {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* Messages */
+        .message {
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1aeb5;
+        }
+
+        .message.info {
+            background: #cce7ff;
+            color: #004085;
+            border: 1px solid #91c9ff;
+        }
+
+        /* Acesso Clássico */
+        .classic-access {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e5e9;
+            display: none; /* Oculto no novo sistema */
+        }
+
+        .classic-access a {
+            display: inline-block;
+            color: #667eea;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .classic-access a:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* Responsividade */
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            .user-info-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <i class="fas fa-building"></i>
+            <h1>Sistema de Licitações</h1>
+            <p>Portal Unificado - Versão Simplificada</p>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <!-- Login Card -->
+        <div class="login-card" id="loginCard">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> E-mail
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        required 
+                        placeholder="seu@email.com"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Senha
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required 
+                        placeholder="••••••••"
+                    >
+                </div>
+
+                <button type="submit" class="login-btn" id="btnLogin">
+                    <span id="btnLoginText">Entrar</span>
+                    <div class="loading" id="loginLoading">
+                        <span class="spinner"></span> Autenticando...
+                    </div>
+                </button>
+            </form>
+        </div>
+
+        <!-- User Info (após login) -->
+        <div class="user-info" id="userInfo">
+            <div class="user-info-header">
+                <div class="user-details">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div>
+                        <div class="user-name" id="userName">Usuário</div>
+                        <div class="user-email" id="userEmail">email@exemplo.com</div>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+        </div>
+
+        <!-- Módulos Grid (sem Admin) -->
+        <div class="modules-container" id="modulesContainer">
+            <!-- Card Requisitante -->
+            <div class="module-card" id="moduleRequisitante" onclick="accessModule('requisitante')">
+                <i class="fas fa-user module-icon module-requisitante"></i>
+                <div class="module-title">Requisitante</div>
+                <div class="module-desc">Criar e gerenciar Termos de Referência</div>
+                <div class="module-status" id="statusRequisitante">
+                    <span class="status-blocked">Sem Acesso</span>
+                </div>
+            </div>
+
+            <!-- Card Comprador -->
+            <div class="module-card" id="moduleComprador" onclick="accessModule('comprador')">
+                <i class="fas fa-shopping-cart module-icon module-comprador"></i>
+                <div class="module-title">Comprador</div>
+                <div class="module-desc">Aprovar TRs e gerenciar licitações</div>
+                <div class="module-status" id="statusComprador">
+                    <span class="status-blocked">Sem Acesso</span>
+                </div>
+            </div>
+
+            <!-- Card Fornecedor -->
+            <div class="module-card" id="moduleFornecedor" onclick="accessModule('fornecedor')">
+                <i class="fas fa-truck module-icon module-fornecedor"></i>
+                <div class="module-title">Fornecedor</div>
+                <div class="module-desc">Participar de licitações e enviar propostas</div>
+                <div class="module-status" id="statusFornecedor">
+                    <span class="status-blocked">Sem Acesso</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase e Auth -->
+    <script type="module" src="/static/js/firebase.js"></script>
+    <script type="module" src="/static/js/auth-facade.js"></script>
+
+    <script type="module">
+        import { loginComPerfil } from '/static/js/auth-facade.js';
+
+        // Estado da aplicação
+        let currentUser = null;
+
+        // Elementos DOM
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const message = document.getElementById('message');
+
+        // Manipular login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!email || !password) {
+                showError('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            setLoading(true);
+            hideMessages();
+
+            try {
+                // Usar Firebase Auth com auto-detecção de perfil
+                showInfo('Autenticando...');
+                
+                // Tentar login e detectar perfil automaticamente
+                const user = await detectAndLogin(email, password);
+                
+                if (user) {
+                    currentUser = user;
+                    showSuccess(`Login realizado! Perfil: ${user.perfil}`);
+                    
+                    // Aguardar e mostrar módulos
+                    setTimeout(() => {
+                        showModules();
+                    }, 1000);
+                } else {
+                    showError('Não foi possível determinar o perfil do usuário.');
+                }
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                showError(error.message || 'Erro no login. Verifique suas credenciais.');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Detectar perfil e fazer login
+        async function detectAndLogin(email, password) {
+            try {
+                // Primeiro, tentar login direto baseado no domínio
+                let perfil = detectProfileFromEmail(email);
+                
+                if (perfil) {
+                    await loginComPerfil(email, password, perfil);
+                    return { email, perfil };
+                }
+
+                // Se não conseguiu detectar, tentar os 3 perfis
+                const profiles = ['Requisitante', 'Comprador', 'Fornecedor'];
+                
+                for (const profile of profiles) {
+                    try {
+                        await loginComPerfil(email, password, profile);
+                        return { email, perfil: profile };
+                    } catch (error) {
+                        // Continuar tentando outros perfis
+                        continue;
+                    }
+                }
+                
+                throw new Error('Credenciais inválidas ou perfil não encontrado');
+                
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Detectar perfil baseado no e-mail
+        function detectProfileFromEmail(email) {
+            const domain = email.split('@')[1]?.toLowerCase() || '';
+            const localPart = email.split('@')[0]?.toLowerCase() || '';
+            
+            // Detecção baseada no domínio
+            if (domain.includes('fornecedor') || domain.includes('empresa')) {
+                return 'Fornecedor';
+            }
+            
+            if (domain.includes('compras') || domain.includes('licitacao')) {
+                return 'Comprador';
+            }
+            
+            // Detecção baseada na parte local do e-mail
+            if (localPart.includes('fornecedor')) {
+                return 'Fornecedor';
+            }
+            
+            if (localPart.includes('comprador') || localPart.includes('compras')) {
+                return 'Comprador';
+            }
+            
+            if (localPart.includes('requisitante') || localPart.includes('requisicao')) {
+                return 'Requisitante';
+            }
+            
+            // Por padrão, requisitante
+            return 'Requisitante';
+        }
+
+        // Mostrar módulos após login
+        function showModules() {
+            if (!currentUser) return;
+
+            // Esconder login
+            document.getElementById('loginCard').style.display = 'none';
+            
+            // Mostrar info do usuário
+            const userInfo = document.getElementById('userInfo');
+            userInfo.style.display = 'block';
+            
+            const nome = currentUser.nome || currentUser.email.split('@')[0];
+            document.getElementById('userName').textContent = nome;
+            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('userAvatar').textContent = nome.charAt(0).toUpperCase();
+
+            // Mostrar container de módulos
+            document.getElementById('modulesContainer').style.display = 'grid';
+
+            // Configurar acesso aos módulos baseado no perfil
+            const perfil = currentUser.perfil || 'Requisitante';
+            
+            // Reset todos os módulos
+            ['Requisitante', 'Comprador', 'Fornecedor'].forEach(mod => {
+                const card = document.getElementById(`module${mod}`);
+                const status = document.getElementById(`status${mod}`);
+                card.classList.add('disabled');
+                status.innerHTML = '<span class="status-blocked">Sem Acesso</span>';
+            });
+
+            // Habilitar apenas o módulo do usuário
+            enableModule(perfil);
+
+            showInfo(`Bem-vindo! Você tem acesso ao perfil: ${perfil.toUpperCase()}`);
+        }
+
+        // Habilitar módulo
+        function enableModule(moduleName) {
+            const card = document.getElementById(`module${moduleName}`);
+            const status = document.getElementById(`status${moduleName}`);
+            card.classList.remove('disabled');
+            status.innerHTML = '<span class="status-available">Disponível</span>';
+        }
+
+        // Acessar módulo
+        window.accessModule = function(module) {
+            if (!currentUser) {
+                showError('Faça login primeiro');
+                return;
+            }
+
+            const perfil = currentUser.perfil?.toLowerCase() || 'requisitante';
+            
+            // Verificar permissão (apenas próprio módulo)
+            if (module !== perfil) {
+                showError(`Acesso negado. Seu perfil é: ${perfil}`);
+                return;
+            }
+
+            // Salvar sessão compatível com sistema legado
+            const sessionData = {
+                ...currentUser,
+                dataLogin: new Date().toISOString()
+            };
+
+            // Redirecionar para o dashboard apropriado
+            switch(module) {
+                case 'requisitante':
+                    localStorage.setItem('requisitante_logado', JSON.stringify(sessionData));
+                    window.location.href = '/static/dashboard-requisitante-funcional.html';
+                    break;
+                case 'comprador':
+                    localStorage.setItem('comprador_logado', JSON.stringify(sessionData));
+                    window.location.href = '/static/dashboard-comprador-funcional.html';
+                    break;
+                case 'fornecedor':
+                    localStorage.setItem('fornecedor_logado', JSON.stringify(sessionData));
+                    window.location.href = '/static/dashboard-fornecedor-funcional.html';
+                    break;
+            }
+        }
+
+        // Logout
+        window.logout = async function() {
+            try {
+                // Limpar todas as sessões (exceto admin)
+                localStorage.removeItem('userToken');
+                localStorage.removeItem('userData');
+                localStorage.removeItem('requisitante_logado');
+                localStorage.removeItem('comprador_logado');
+                localStorage.removeItem('fornecedor_logado');
+                
+                // Recarregar página
+                window.location.reload();
+            } catch (error) {
+                console.error('Erro no logout:', error);
+            }
+        }
+
+        // Funções auxiliares
+        function setLoading(loading) {
+            const btn = document.getElementById('btnLogin');
+            const btnText = document.getElementById('btnLoginText');
+            const loadingEl = document.getElementById('loginLoading');
+            
+            btn.disabled = loading;
+            btnText.style.display = loading ? 'none' : 'inline';
+            loadingEl.style.display = loading ? 'flex' : 'none';
+        }
+
+        function showError(message) {
+            showMessage('error', message);
+        }
+
+        function showSuccess(message) {
+            showMessage('success', message);
+        }
+
+        function showInfo(message) {
+            showMessage('info', message);
+        }
+
+        function showMessage(type, text) {
+            const msgEl = document.getElementById('message');
+            msgEl.className = `message ${type}`;
+            msgEl.textContent = text;
+            msgEl.style.display = 'block';
+        }
+
+        function hideMessages() {
+            document.getElementById('message').style.display = 'none';
+        }
+
+        // Focar no email ao carregar
+        emailInput.focus();
+    </script>
+</body>
+</html>
