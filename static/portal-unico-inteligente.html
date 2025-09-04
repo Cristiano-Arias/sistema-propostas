@@ -373,14 +373,12 @@
 
     <!-- Scripts -->
     <script type="module" src="/static/js/firebase.js"></script>
-    <script type="module" src="/static/js/auth-facade.js"></script>
         <script type="module">
             // Configuração da API
             const API_URL = window.location.hostname === 'localhost' 
                 ? 'http://localhost:5000' 
                 : window.location.origin;
             
-            import { loginComPerfil, clearUserSession } from '/static/js/auth-facade.js';
              import { auth, onAuthStateChanged, signOut } from '/static/js/firebase.js';
 
         // Elementos do DOM
@@ -396,9 +394,7 @@
             // Inicialização da página com limpeza de sessão
             window.addEventListener('load', async () => {
                 try {
-                    // Limpar sessões anteriores
                     await signOut(auth);
-                    clearUserSession();
                     console.log('✅ Sessões anteriores limpas');
                 } catch (error) {
                     console.log('ℹ️ Nenhuma sessão ativa para limpar');
@@ -482,22 +478,29 @@
             hideMessages();
 
             try {
-                // Detectar perfil do usuário
-                detectedProfile = await detectUserProfile(email);
+                // Importar funções do Firebase
+                const { signInWithEmailAndPassword } = await import('/static/js/firebase.js');
+                const { db, doc, getDoc } = await import('/static/js/firebase.js');
                 
-                if (detectedProfile) {
-                    // Login com perfil detectado
-                    await loginComPerfil(email, password, detectedProfile);
-                    showSuccess(`Login realizado! Perfil: ${detectedProfile}`);
-                    
-                    setTimeout(() => {
-                        redirectToDashboard(detectedProfile);
-                    }, 1500);
-                } else {
-                    // Fallback: mostrar seleção manual
-                    currentUser = { email, password };
-                    showProfileSelection();
+                // Login com Firebase Auth
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Buscar perfil no Firestore
+                const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
+                
+                if (!userDoc.exists()) {
+                    throw new Error('Usuário não encontrado no sistema');
                 }
+                
+                const userData = userDoc.data();
+                const profile = userData.perfil;
+                
+                showSuccess(`Login realizado! Perfil: ${profile}`);
+                
+                setTimeout(() => {
+                    redirectToDashboard(profile);
+                }, 1500);
                 
             } catch (error) {
                 console.error('Erro no login:', error);
@@ -582,13 +585,13 @@
         // Redirecionar para dashboard apropriado
         function redirectToDashboard(profile) {
             const dashboards = {
-                'Fornecedor': '/static/dashboard-fornecedor-funcional.html',
-                'Requisitante': '/static/dashboard-requisitante-funcional.html',
-                'Comprador': '/static/dashboard-comprador-funcional.html',
-                'Admin': '/static/admin-usuarios.html'
+                'fornecedor': '/static/dashboard-fornecedor-funcional.html',
+                'requisitante': '/static/dashboard-requisitante-funcional.html',
+                'comprador': '/static/dashboard-comprador-funcional.html',
+                'admin': '/static/admin-usuarios.html'
             };
-
-            const dashboard = dashboards[profile];
+        
+            const dashboard = dashboards[profile.toLowerCase()];
             if (dashboard) {
                 window.location.href = dashboard;
             } else {
