@@ -429,14 +429,6 @@
                     const userData = userDoc.data();
                     console.log('Usuário encontrado no Firestore:', userData);
                     
-                    // NOVA VERIFICAÇÃO: Se perfil não bate com destino, atualizar
-                    const perfilEsperado = detectarPerfilDestino();
-                    if (userData.perfil !== perfilEsperado) {
-                        console.log(`Atualizando perfil de ${userData.perfil} para ${perfilEsperado}`);
-                        userData.perfil = perfilEsperado;
-                        await setDoc(doc(db, 'usuarios', uid), userData, { merge: true });
-                    }
-                    
                     return userData;
                 }
                 
