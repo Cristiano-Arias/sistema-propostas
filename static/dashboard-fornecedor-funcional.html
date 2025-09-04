@@ -713,9 +713,10 @@
             getDocs,
             query,
             where,
-            orderBy
+            orderBy,
+            onAuthStateChanged
         } from '/static/js/firebase.js';
-
+        
         // Importar módulo Firestore personalizado com tratamento de erro
         let FirebaseFirestore;
         try {
@@ -728,7 +729,7 @@
             console.error('❌ Erro ao carregar FirebaseFirestore:', error);
             alert('Erro ao carregar módulo FirebaseFirestore: ' + error.message);
         }
-
+        
         // Tornar global para uso no código existente
         window.firebaseAuth = auth;
         window.firebaseDb = db;
@@ -740,117 +741,154 @@
         window.where = where;
         window.getDocs = getDocs;
         window.orderBy = orderBy;
-    </script>
-    
-    <script>
-        // Sistema de dados local
-        const SistemaLocal = {
-            // Chaves para localStorage
-            CHAVES: {
-                FORNECEDOR_LOGADO: 'fornecedor_logado',
-                FORNECEDORES_CADASTRADOS: 'fornecedores_cadastrados',
-                USUARIOS_FORNECEDORES: 'usuarios_fornecedores',
-                PROCESSOS_POR_FORNECEDOR: 'processos_por_fornecedor',
-                PROPOSTAS_FORNECEDORES: 'propostas_fornecedores',
-                TRS: 'sistema_trs',
-                PROCESSOS: 'processos_licitatorios'
-            },
-
-            // Salvar dados
-            salvar(chave, dados) {
-                try {
-                    localStorage.setItem(chave, JSON.stringify(dados));
-                    return true;
-                } catch (error) {
-                    console.error('Erro ao salvar dados:', error);
-                    return false;
-                }
-            },
-
-            // Carregar dados
-            carregar(chave, padrao = null) {
-                try {
-                    const dados = localStorage.getItem(chave);
-                    return dados ? JSON.parse(dados) : padrao;
-                } catch (error) {
-                    console.error('Erro ao carregar dados:', error);
-                    return padrao;
-                }
-            },
-
-            // Gerar ID único
-            gerarId() {
-                return Date.now().toString(36) + Math.random().toString(36).substr(2);
-            }
-        };
-
+        
         // Estado da aplicação
         let fornecedorLogado = null;
         
-        // Adicionar imports Firebase no início
-        (async function() {
-            // Importar a instância compartilhada do Firebase a partir do módulo central
-            const {
-                auth,
-                db,
-                doc,
-                getDoc,
-                onAuthStateChanged
-            } = await import('/static/js/firebase.js');
-
-            // Verificar autenticação com a instância compartilhada
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    // Não autenticado - redirecionar para login
+        // ✅ CORREÇÃO: Verificar autenticação usando APENAS Firestore
+        onAuthStateChanged(auth, async (user) => {
+            console.log('🔐 Verificando autenticação:', user ? user.email : 'não logado');
+            
+            if (!user) {
+                // Não autenticado - redirecionar para login
+                console.log('❌ Usuário não autenticado, redirecionando...');
+                window.location.href = '/static/portal-fornecedor-unificado.html';
+                return;
+            }
+        
+            try {
+                console.log('🔍 Buscando dados do usuário no Firestore...');
+                
+                // ✅ CORREÇÃO: Buscar dados do usuário DIRETAMENTE do Firestore
+                const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
+                
+                if (!userDoc.exists()) {
+                    console.error('❌ Usuário não encontrado no Firestore');
+                    alert('Usuário não encontrado no sistema');
+                    await signOut(auth);
                     window.location.href = '/static/portal-fornecedor-unificado.html';
                     return;
                 }
         
+                const userData = userDoc.data();
+                console.log('✅ Dados do usuário carregados:', userData);
+                
+                // Verificar se é fornecedor
+                if (userData.perfil !== 'fornecedor') {
+                    console.error('❌ Usuário não é fornecedor:', userData.perfil);
+                    alert('Acesso negado. Esta área é exclusiva para fornecedores.');
+                    await signOut(auth);
+                    window.location.href = '/static/portal-fornecedor-unificado.html';
+                    return;
+                }
+        
+                // ✅ CORREÇÃO: Configurar fornecedor logado com dados do Firestore
+                fornecedorLogado = {
+                    id: user.uid,
+                    razaoSocial: userData.nome || userData.nomeEmpresa || userData.razaoSocial || 'Fornecedor',
+                    cnpj: userData.cnpj || 'CNPJ não informado',
+                    email: userData.email || user.email,
+                    telefone: userData.telefone || '',
+                    endereco: userData.endereco || '',
+                    cidade: userData.cidade || '',
+                    // Dados adicionais que podem existir
+                    ativo: userData.ativo !== false, // Default true se não especificado
+                    criadoEm: userData.criadoEm,
+                    perfil: userData.perfil
+                };
+        
+                console.log('✅ Fornecedor logado configurado:', fornecedorLogado);
+        
+                // ✅ CORREÇÃO: Atualizar interface com dados corretos
+                const userNameEl = document.getElementById('user-name');
+                const userCnpjEl = document.getElementById('user-cnpj');
+                
+                if (userNameEl) {
+                    userNameEl.textContent = fornecedorLogado.razaoSocial;
+                }
+                
+                if (userCnpjEl) {
+                    userCnpjEl.textContent = `CNPJ: ${fornecedorLogado.cnpj}`;
+                }
+        
+                // Mostrar dashboard
+                const dashboardScreen = document.getElementById('dashboard-screen');
+                if (dashboardScreen) {
+                    dashboardScreen.style.display = 'flex';
+                }
+        
+                // ✅ CORREÇÃO: Carregar dados iniciais apenas após autenticação bem-sucedida
+                console.log('📊 Carregando dados do dashboard...');
+                await Promise.all([
+                    carregarEstatisticas(),
+                    carregarProcessos(),
+                    carregarPropostas()
+                ]);
+                
+                console.log('✅ Dashboard carregado com sucesso!');
+        
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados do usuário:', error);
+                
+                // Mostrar erro detalhado para debug
+                const errorMessage = error.code ? 
+                    `Erro ${error.code}: ${error.message}` : 
+                    error.message || 'Erro desconhecido';
+                    
+                alert(`Erro ao carregar dados: ${errorMessage}`);
+                
+                // Em caso de erro, fazer logout e redirecionar
                 try {
-                    // Buscar dados do usuário
-                    const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
+                    await signOut(auth);
+                } catch (signOutError) {
+                    console.error('Erro ao fazer logout:', signOutError);
+                }
+                
+                window.location.href = '/static/portal-fornecedor-unificado.html';
+            }
+        });
+        
+        // ✅ CORREÇÃO: Função de logout atualizada
+        async function logout() {
+            if (confirm('Deseja realmente sair do sistema?')) {
+                try {
+                    console.log('🚪 Fazendo logout...');
                     
-                    if (!userDoc.exists()) {
-                        alert('Usuário não encontrado no sistema');
-                        window.location.href = '/static/portal-fornecedor-unificado.html';
-                        return;
-                    }
-        
-                    const userData = userDoc.data();
+                    // Limpar dados locais
+                    sessionStorage.clear();
+                    localStorage.removeItem('fornecedor_logado');
+                    fornecedorLogado = null;
                     
-                    // Verificar se é fornecedor
-                    if (userData.perfil !== 'fornecedor') {
-                        alert('Acesso negado. Esta área é exclusiva para fornecedores.');
-                        window.location.href = '/static/portal-fornecedor-unificado.html';
-                        return;
-                    }
-        
-                    // Configurar fornecedor logado
-                    fornecedorLogado = {
-                        id: user.uid,
-                        razaoSocial: userData.nome || userData.nomeEmpresa || 'Fornecedor',
-                        cnpj: userData.cnpj || 'CNPJ não informado',
-                        email: userData.email,
-                        telefone: userData.telefone || '',
-                        endereco: userData.endereco || '',
-                        cidade: userData.cidade || ''
-                    };
-        
-                    // Atualizar interface
-                    document.getElementById('user-name').textContent = fornecedorLogado.razaoSocial;
-                    document.getElementById('user-cnpj').textContent = `CNPJ: ${fornecedorLogado.cnpj}`;
-        
-                    // Carregar dados iniciais
-                    carregarEstatisticas();
-                    carregarProcessos();
-        
+                    // Fazer logout do Firebase
+                    await signOut(auth);
+                    
+                    console.log('✅ Logout realizado com sucesso');
+                    
+                    // Redirecionar para login
+                    window.location.href = '/static/portal-fornecedor-unificado.html';
+                    
                 } catch (error) {
-                    console.error('Erro ao carregar dados do usuário:', error);
-                    alert('Erro ao carregar dados. Faça login novamente.');
+                    console.error('❌ Erro ao fazer logout:', error);
+                    // Forçar redirecionamento mesmo com erro
                     window.location.href = '/static/portal-fornecedor-unificado.html';
                 }
-            });
-        })();
+            }
+        }
+        
+        // ✅ CORREÇÃO: Função auxiliar para verificar se fornecedor está logado
+        function verificarFornecedorLogado() {
+            if (!fornecedorLogado || !fornecedorLogado.id) {
+                console.error('❌ Fornecedor não está logado');
+                alert('Sessão expirada. Faça login novamente.');
+                window.location.href = '/static/portal-fornecedor-unificado.html';
+                return false;
+            }
+            return true;
+        }
+        
+        // Tornar funções globais
+        window.logout = logout;
+        window.verificarFornecedorLogado = verificarFornecedorLogado;
                 
         // Função removida - dashboard já é mostrado diretamente
 
@@ -912,196 +950,163 @@
             }
         }
 
-        // Carregar estatísticas
-        function carregarEstatisticas() {
-            const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            
-            // Filtrar dados do fornecedor logado
-            const meusProcessos = vinculacoes.filter(v => v.fornecedorId === fornecedorLogado.id);
-            const minhasPropostas = propostas.filter(p => p.fornecedorId === fornecedorLogado.id);
-            
-            // Calcular estatísticas
-            const processosNovos = meusProcessos.filter(p => !minhasPropostas.some(prop => prop.processoId === p.processoId)).length;
-            const propostasEnviadas = minhasPropostas.filter(p => p.status === 'ENVIADA').length;
-            const propostasRascunho = minhasPropostas.filter(p => p.status === 'RASCUNHO').length;
-            
-            // Atualizar interface
-            document.getElementById('processos-novos').textContent = processosNovos;
-            document.getElementById('propostas-enviadas').textContent = propostasEnviadas;
-            document.getElementById('processos-total').textContent = meusProcessos.length;
-            document.getElementById('propostas-rascunho').textContent = propostasRascunho;
-            
-            // Atualizar badge
-            const badge = document.getElementById('processos-notification');
-            if (badge) {
-                if (processosNovos > 0) {
-                    badge.textContent = processosNovos;
-                    badge.style.display = 'flex';
-                } else {
-                    badge.style.display = 'none';
-                }
-            }
-        }
-
-        // Carregar processos
+        // ✅ FUNÇÃO CORRIGIDA: Carregar processos usando APENAS Firestore
         async function carregarProcessos() {
-            if (!fornecedorLogado) return;
-
+            if (!fornecedorLogado) {
+                console.log('⚠️ Fornecedor não logado, aguardando autenticação...');
+                return;
+            }
+        
             const container = document.getElementById('processos-list');
             if (!container) return;
-
-            // Variáveis para armazenar os processos e propostas do fornecedor
-            let meusProcessos = [];
-            let propostas = [];
-
+        
+            // Mostrar loading
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #666;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 20px;"></i>
+                    <h3>Carregando processos...</h3>
+                </div>
+            `;
+        
             try {
-                // Utilizar instância compartilhada do Firestore e helpers já definidos
-                const db = window.firebaseDb;
-                const collection = window.collection;
-                const query = window.query;
-                const where = window.where;
-                const getDocs = window.getDocs;
-                const docRef = window.doc;
-                const getDoc = window.getDoc;
-
-                // Buscar convites do fornecedor no Firestore
+                console.log('🔍 Buscando convites para fornecedor:', fornecedorLogado.email);
+        
+                // ✅ BUSCAR CONVITES DO FORNECEDOR NO FIRESTORE
                 const convitesQuery = query(
                     collection(db, 'convites_fornecedor'),
                     where('fornecedorEmail', '==', fornecedorLogado.email),
                     where('status', '==', 'pendente')
                 );
-
+        
                 const convitesSnapshot = await getDocs(convitesQuery);
-
+                let meusProcessos = [];
+        
+                console.log('📋 Convites encontrados:', convitesSnapshot.size);
+        
                 // Para cada convite, buscar dados do processo
                 for (const conviteDoc of convitesSnapshot.docs) {
                     const convite = conviteDoc.data();
-
-                    const processoRef = docRef(db, 'processos', convite.processoId);
-                    const processoDoc = await getDoc(processoRef);
-
-                    if (processoDoc.exists()) {
-                        meusProcessos.push({
-                            ...processoDoc.data(),
-                            id: processoDoc.id,
-                            processoId: processoDoc.id,
-                            conviteId: conviteDoc.id,
-                            ...convite
-                        });
-                    }
-                }
-
-                // Buscar propostas existentes para verificar status
-                const propostasQuery = query(
-                    collection(db, 'propostas'),
-                    where('fornecedorId', '==', fornecedorLogado.id)
-                );
-                const propostasSnapshot = await getDocs(propostasQuery);
-                propostas = [];
-                propostasSnapshot.forEach(docSnap => {
-                    propostas.push({
-                        id: docSnap.id,
-                        ...docSnap.data()
-                    });
-                });
-            } catch (error) {
-                console.warn('⚠️ Erro ao carregar processos do Firebase, usando dados locais:', error);
-
-                // Fallback: carregar dados locais a partir do localStorage
-                const vinculacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS_POR_FORNECEDOR, []);
-                const todosProcessos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-                const todosPropostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-
-                // Filtrar processos vinculados ao fornecedor logado
-                const meusVinculos = vinculacoes.filter(v =>
-                    v.fornecedorId === fornecedorLogado.id ||
-                    v.fornecedorCNPJ === fornecedorLogado.cnpj ||
-                    v.fornecedorEmail === fornecedorLogado.email
-                );
-
-                meusProcessos = meusVinculos
-                    .map(v => {
-                        const processo = todosProcessos.find(p =>
-                            p.id === v.processoId ||
-                            p.processoId === v.processoId
-                        );
-                        if (processo) {
-                            return {
-                                ...processo,
-                                processoId: processo.processoId || processo.id,
-                                conviteId: v.conviteId || '',
-                                ...v
-                            };
+                    console.log('🔍 Processando convite:', convite);
+        
+                    try {
+                        const processoRef = doc(db, 'processos', convite.processoId);
+                        const processoDoc = await getDoc(processoRef);
+        
+                        if (processoDoc.exists()) {
+                            const processoData = processoDoc.data();
+                            
+                            meusProcessos.push({
+                                ...processoData,
+                                id: processoDoc.id,
+                                processoId: processoDoc.id,
+                                conviteId: conviteDoc.id,
+                                // Dados do convite
+                                ...convite,
+                                // Normalizar dados
+                                numeroProcesso: processoData.numeroProcesso || processoData.numero || `PROC-${processoDoc.id.slice(-6)}`,
+                                trTitulo: processoData.objeto || processoData.titulo || processoData.trTitulo || 'Objeto não informado',
+                                modalidade: processoData.modalidade || 'Não informado',
+                                dataAbertura: processoData.dataAbertura || processoData.dataCriacao,
+                                dataLimite: processoData.dataLimite || processoData.prazoLimite,
+                                valorEstimado: processoData.valorEstimado || 0
+                            });
+                        } else {
+                            console.warn('⚠️ Processo não encontrado:', convite.processoId);
                         }
-                        return null;
-                    })
-                    .filter(Boolean);
-
-                // Filtrar propostas do fornecedor
-                propostas = todosPropostas.filter(p => p.fornecedorId === fornecedorLogado.id);
-            }
-
-            // Renderizar processos (tanto remotos quanto locais)
-            if (meusProcessos.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-inbox" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                        <h3>Nenhum processo disponível</h3>
-                        <p>Você será notificado quando for convidado para novos processos.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            let html = '';
-            meusProcessos.forEach(processo => {
-                const proposta = propostas.find(
-                    p => p.processoId === processo.processoId && p.fornecedorId === fornecedorLogado.id
-                );
-
-                let statusClass = 'novo';
-                let statusBadge = { cor: '#667eea', icone: 'fa-clock', label: 'Novo Processo' };
-
-                if (proposta) {
-                    if (proposta.status === 'ENVIADA') {
-                        statusClass = 'enviado';
-                        statusBadge = { cor: '#28a745', icone: 'fa-check-circle', label: 'Proposta Enviada' };
-                    } else {
-                        statusClass = 'analisando';
-                        statusBadge = { cor: '#ffc107', icone: 'fa-edit', label: 'Rascunho Salvo' };
+                    } catch (processoError) {
+                        console.error('❌ Erro ao buscar processo:', convite.processoId, processoError);
                     }
                 }
-
-                const dataAbertura = processo.dataAbertura
-                    ? new Date(processo.dataAbertura).toLocaleDateString('pt-BR')
-                    : 'Não informado';
-                const dataLimite = processo.dataLimite
-                    ? new Date(processo.dataLimite).toLocaleDateString('pt-BR')
-                    : 'Não informado';
-
-                html += `
+        
+                // ✅ BUSCAR PROPOSTAS EXISTENTES PARA VERIFICAR STATUS
+                let propostas = [];
+                try {
+                    if (window.FirebaseFirestore) {
+                        propostas = await window.FirebaseFirestore.buscarPropostas(
+                            { fornecedorId: fornecedorLogado.id },
+                            'dataCriacao',
+                            'desc'
+                        );
+                        console.log('📄 Propostas encontradas:', propostas.length);
+                    }
+                } catch (propostasError) {
+                    console.warn('⚠️ Erro ao buscar propostas:', propostasError);
+                    // Continuar sem propostas
+                }
+        
+                // ✅ RENDERIZAR PROCESSOS
+                if (meusProcessos.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-inbox" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
+                            <h3>Nenhum processo disponível</h3>
+                            <p>Você será notificado quando for convidado para novos processos.</p>
+                        </div>
+                    `;
+                    return;
+                }
+        
+                let html = '';
+                meusProcessos.forEach(processo => {
+                    const proposta = propostas.find(
+                        p => p.processoId === processo.processoId && p.fornecedorId === fornecedorLogado.id
+                    );
+        
+                    let statusClass = 'novo';
+                    let statusBadge = { cor: '#667eea', icone: 'fa-clock', label: 'Novo Processo' };
+        
+                    if (proposta) {
+                        if (proposta.status === 'ENVIADA') {
+                            statusClass = 'enviado';
+                            statusBadge = { cor: '#28a745', icone: 'fa-check-circle', label: 'Proposta Enviada' };
+                        } else {
+                            statusClass = 'analisando';
+                            statusBadge = { cor: '#ffc107', icone: 'fa-edit', label: 'Rascunho Salvo' };
+                        }
+                    }
+        
+                    // Formatação de datas segura
+                    const formatarData = (data) => {
+                        if (!data) return 'Não informado';
+                        try {
+                            if (data.seconds) {
+                                // Timestamp do Firestore
+                                return new Date(data.seconds * 1000).toLocaleDateString('pt-BR');
+                            } else if (typeof data === 'string' || data instanceof Date) {
+                                return new Date(data).toLocaleDateString('pt-BR');
+                            }
+                        } catch (e) {
+                            console.warn('Erro ao formatar data:', data, e);
+                        }
+                        return 'Não informado';
+                    };
+        
+                    const dataAbertura = formatarData(processo.dataAbertura);
+                    const dataLimite = formatarData(processo.dataLimite);
+        
+                    html += `
                         <div class="process-item ${statusClass}">
                             <div class="process-status-badge" style="background: ${statusBadge.cor};">
                                 <i class="fas ${statusBadge.icone}"></i> ${statusBadge.label}
                             </div>
-
-                            <div class="process-title">${processo.numeroProcesso || 'Processo sem número'}</div>
+        
+                            <div class="process-title">${processo.numeroProcesso}</div>
                             <div class="process-meta">
-                                <span><i class="fas fa-tag"></i> ${processo.modalidade || 'Não informado'}</span>
+                                <span><i class="fas fa-tag"></i> ${processo.modalidade}</span>
                                 <span><i class="fas fa-calendar"></i> Abertura: ${dataAbertura}</span>
                                 <span><i class="fas fa-clock"></i> Limite: ${dataLimite}</span>
                             </div>
                             <div class="process-description">
-                                <strong>TR:</strong> ${processo.trTitulo || 'Não informado'}<br>
+                                <strong>Objeto:</strong> ${processo.trTitulo}<br>
+                                ${processo.valorEstimado ? `<strong>Valor Estimado:</strong> R$ ${parseFloat(processo.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : ''}
                             </div>
-
+        
                             <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                <button class="btn btn-info" onclick="visualizarTR('${processo.processoId}')">
-                                    <i class="fas fa-eye"></i> Visualizar TR
+                                <button class="btn btn-info" onclick="visualizarProcesso('${processo.processoId}')">
+                                    <i class="fas fa-eye"></i> Visualizar Processo
                                 </button>
                                 <button class="btn btn-secondary" onclick="baixarTR('${processo.processoId}')">
-                                    <i class="fas fa-download"></i> Baixar TR
+                                    <i class="fas fa-download"></i> Baixar Documentos
                                 </button>
                                 ${
                                     !proposta || proposta.status === 'RASCUNHO'
@@ -1119,54 +1124,63 @@
                             </div>
                         </div>
                     `;
-            });
-
-            container.innerHTML = html;
+                });
+        
+                container.innerHTML = html;
+                console.log('✅ Processos renderizados com sucesso');
+        
+            } catch (error) {
+                console.error('❌ Erro ao carregar processos:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #dc3545;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 64px; margin-bottom: 20px;"></i>
+                        <h3>Erro ao carregar processos</h3>
+                        <p>Não foi possível conectar ao servidor. Tente novamente mais tarde.</p>
+                        <button class="btn btn-primary" onclick="carregarProcessos()" style="margin-top: 15px;">
+                            <i class="fas fa-refresh"></i> Tentar Novamente
+                        </button>
+                    </div>
+                `;
+            }
         }
         
-        // Carregar propostas
+        // ✅ FUNÇÃO CORRIGIDA: Carregar propostas usando APENAS Firestore
         async function carregarPropostas() {
-            if (!fornecedorLogado) return;
-
+            if (!fornecedorLogado) {
+                console.log('⚠️ Fornecedor não logado, aguardando autenticação...');
+                return;
+            }
+        
             const container = document.getElementById('propostas-list');
             if (!container) return;
-
-            let minhasPropostas = [];
-
+        
+            // Mostrar loading
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #666;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 20px;"></i>
+                    <h3>Carregando propostas...</h3>
+                </div>
+            `;
+        
             try {
-                // Tentar carregar do Firebase primeiro usando a instância global
-                // Sempre verifique window.FirebaseFirestore, pois a variável local pode não estar definida
-                if (fornecedorLogado.id && window.FirebaseFirestore) {
-                    console.log('🔥 Carregando propostas do Firebase para fornecedor:', fornecedorLogado.id);
-
+                let minhasPropostas = [];
+        
+                // ✅ BUSCAR PROPOSTAS NO FIRESTORE
+                if (window.FirebaseFirestore) {
+                    console.log('🔍 Buscando propostas para fornecedor:', fornecedorLogado.id);
+                    
                     minhasPropostas = await window.FirebaseFirestore.buscarPropostas(
-                        {
-                            fornecedorId: fornecedorLogado.id
-                        },
+                        { fornecedorId: fornecedorLogado.id },
                         'dataCriacao',
                         'desc'
                     );
-
-                    console.log('✅ Propostas carregadas do Firebase:', minhasPropostas.length);
+        
+                    console.log('✅ Propostas carregadas:', minhasPropostas.length);
                 } else {
-                    console.warn('⚠️ Firebase não disponível ou fornecedor sem ID, usando dados locais');
-                    throw new Error('Firebase não disponível');
+                    throw new Error('Firebase Firestore não disponível');
                 }
-            } catch (firebaseError) {
-                console.warn('⚠️ Erro ao carregar do Firebase, usando dados locais:', firebaseError);
-
-                // Fallback: usar dados locais
-                const propostasLocais = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-                minhasPropostas = propostasLocais.filter(
-                    p =>
-                        p.fornecedorId === fornecedorLogado.id ||
-                        p.fornecedorCNPJ === fornecedorLogado.cnpj
-                );
-            }
-
-            try {
-                
-                // Renderizar propostas
+        
+                // ✅ RENDERIZAR PROPOSTAS
                 if (minhasPropostas.length === 0) {
                     container.innerHTML = `
                         <div style="text-align: center; padding: 40px; color: #666;">
@@ -1177,28 +1191,41 @@
                     `;
                     return;
                 }
-                
+        
                 let html = '';
                 minhasPropostas.forEach(proposta => {
-                    const dataEnvio = proposta.dataEnvio ? 
-                        new Date(proposta.dataEnvio.seconds * 1000).toLocaleDateString('pt-BR') :
-                        (proposta.dataCriacao ? 
-                            new Date(proposta.dataCriacao.seconds * 1000).toLocaleDateString('pt-BR') : 
-                            'Data não informada');
+                    // Formatação de data segura
+                    const formatarDataProposta = (data) => {
+                        if (!data) return 'Data não informada';
+                        try {
+                            if (data.seconds) {
+                                return new Date(data.seconds * 1000).toLocaleString('pt-BR');
+                            } else if (typeof data === 'string' || data instanceof Date) {
+                                return new Date(data).toLocaleString('pt-BR');
+                            }
+                        } catch (e) {
+                            console.warn('Erro ao formatar data da proposta:', data, e);
+                        }
+                        return 'Data não informada';
+                    };
+        
+                    const dataEnvio = formatarDataProposta(proposta.dataEnvio || proposta.dataCriacao);
                     
                     const statusInfo = proposta.status === 'ENVIADA' 
                         ? { cor: '#28a745', icone: 'fa-check-circle', label: 'Enviada' }
                         : { cor: '#ffc107', icone: 'fa-edit', label: 'Rascunho' };
+                    
+                    const valorProposta = proposta.valor || proposta.valorTotal || 0;
                     
                     html += `
                         <div class="proposal-status-card ${proposta.status.toLowerCase()}">
                             <div style="display: flex; justify-content: space-between; align-items: start;">
                                 <div>
                                     <h4 style="color: #333; margin-bottom: 10px;">
-                                        Processo: ${proposta.numeroProcesso || 'Sem número'}
+                                        Processo: ${proposta.numeroProcesso || `PROC-${proposta.processoId?.slice(-6)}` || 'Sem número'}
                                     </h4>
                                     <div style="color: #666; font-size: 14px;">
-                                        <p><i class="fas fa-money-bill"></i> Valor: R$ ${parseFloat(proposta.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                        <p><i class="fas fa-money-bill"></i> Valor: R$ ${parseFloat(valorProposta).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
                                         <p><i class="fas fa-clock"></i> Prazo: ${proposta.prazoExecucao || 'Não informado'}</p>
                                         <p><i class="fas fa-calendar"></i> Data: ${dataEnvio}</p>
                                         ${proposta.protocolo ? `<p><i class="fas fa-receipt"></i> Protocolo: ${proposta.protocolo}</p>` : ''}
@@ -1224,6 +1251,9 @@
                                     <button class="btn btn-info" onclick="visualizarProposta('${proposta.id}')">
                                         <i class="fas fa-eye"></i> Visualizar Proposta
                                     </button>
+                                    <button class="btn btn-secondary" onclick="baixarComprovante('${proposta.id}')">
+                                        <i class="fas fa-download"></i> Baixar Comprovante
+                                    </button>
                                 ` : `
                                     <button class="btn btn-primary" onclick="abrirPortalPropostas('${proposta.processoId}')">
                                         <i class="fas fa-edit"></i> Continuar Edição
@@ -1238,18 +1268,96 @@
                 });
                 
                 container.innerHTML = html;
-                
+                console.log('✅ Propostas renderizadas com sucesso');
+        
             } catch (error) {
-                console.error('Erro ao carregar propostas:', error);
+                console.error('❌ Erro ao carregar propostas:', error);
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 64px; margin-bottom: 20px; color: #dc3545;"></i>
+                    <div style="text-align: center; padding: 40px; color: #dc3545;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 64px; margin-bottom: 20px;"></i>
                         <h3>Erro ao carregar propostas</h3>
                         <p>Não foi possível conectar ao servidor. Tente novamente mais tarde.</p>
+                        <button class="btn btn-primary" onclick="carregarPropostas()" style="margin-top: 15px;">
+                            <i class="fas fa-refresh"></i> Tentar Novamente
+                        </button>
                     </div>
                 `;
             }
         }
+        
+        // ✅ FUNÇÃO CORRIGIDA: Carregar estatísticas usando Firestore
+        async function carregarEstatisticas() {
+            if (!fornecedorLogado) return;
+        
+            try {
+                console.log('📊 Calculando estatísticas...');
+        
+                // Buscar convites pendentes
+                const convitesQuery = query(
+                    collection(db, 'convites_fornecedor'),
+                    where('fornecedorEmail', '==', fornecedorLogado.email),
+                    where('status', '==', 'pendente')
+                );
+                const convitesSnapshot = await getDocs(convitesQuery);
+                const totalProcessos = convitesSnapshot.size;
+        
+                // Buscar propostas do fornecedor
+                let propostas = [];
+                if (window.FirebaseFirestore) {
+                    propostas = await window.FirebaseFirestore.buscarPropostas(
+                        { fornecedorId: fornecedorLogado.id }
+                    );
+                }
+        
+                // Calcular estatísticas
+                const propostasEnviadas = propostas.filter(p => p.status === 'ENVIADA').length;
+                const propostasRascunho = propostas.filter(p => p.status === 'RASCUNHO').length;
+                const processosNovos = Math.max(0, totalProcessos - propostas.length);
+        
+                // Atualizar interface
+                const elementos = {
+                    'processos-novos': processosNovos,
+                    'propostas-enviadas': propostasEnviadas,
+                    'processos-total': totalProcessos,
+                    'propostas-rascunho': propostasRascunho
+                };
+        
+                Object.entries(elementos).forEach(([id, valor]) => {
+                    const elemento = document.getElementById(id);
+                    if (elemento) {
+                        elemento.textContent = valor;
+                    }
+                });
+        
+                // Atualizar badge de notificação
+                const badge = document.getElementById('processos-notification');
+                if (badge) {
+                    if (processosNovos > 0) {
+                        badge.textContent = processosNovos;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+        
+                console.log('✅ Estatísticas atualizadas:', elementos);
+        
+            } catch (error) {
+                console.error('❌ Erro ao carregar estatísticas:', error);
+                // Em caso de erro, mostrar valores padrão
+                ['processos-novos', 'propostas-enviadas', 'processos-total', 'propostas-rascunho'].forEach(id => {
+                    const elemento = document.getElementById(id);
+                    if (elemento) {
+                        elemento.textContent = '0';
+                    }
+                });
+            }
+        }
+        
+        // Tornar funções globais
+        window.carregarProcessos = carregarProcessos;
+        window.carregarPropostas = carregarPropostas;
+        window.carregarEstatisticas = carregarEstatisticas;
 
         // Função para mostrar aba no modal do fornecedor
         function mostrarAbaFornecedor(aba, botao) {
