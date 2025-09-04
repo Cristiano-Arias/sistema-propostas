@@ -455,13 +455,6 @@
             }
         }
 
-        // Corrigir perfil se necessário
-        if (profile.toLowerCase() !== detectarPerfilDestino().toLowerCase()) {
-            console.log(`Corrigindo perfil de ${profile} para ${detectarPerfilDestino()}`);
-            // Atualizar perfil no Firestore se necessário
-            // (implementação opcional)
-        }
-        
         // Redirecionar para dashboard
         function redirectToDashboard(perfil) {
             const dashboards = {
