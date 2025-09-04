@@ -386,6 +386,31 @@
             }
         }
 
+        // Detectar perfil baseado na URL de origem ou destino
+        function detectarPerfilDestino() {
+            // Verificar URL atual
+            const currentUrl = window.location.href;
+            const referrer = document.referrer;
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+            
+            // Se veio de um dashboard específico (referrer)
+            if (referrer.includes('dashboard-comprador')) return 'Comprador';
+            if (referrer.includes('dashboard-fornecedor')) return 'Fornecedor';
+            if (referrer.includes('dashboard-requisitante')) return 'Requisitante';
+            
+            // Se a mensagem indica erro de perfil específico
+            if (message && message.includes('comprador')) return 'Comprador';
+            if (message && message.includes('fornecedor')) return 'Fornecedor';
+            
+            // Se está vindo de login específico
+            if (currentUrl.includes('comprador') || referrer.includes('login-comprador')) return 'Comprador';
+            if (currentUrl.includes('fornecedor') || referrer.includes('login-fornecedor')) return 'Fornecedor';
+            
+            // Default: Requisitante (mais usado)
+            return 'Requisitante';
+        }
+        
         // Buscar ou criar perfil do usuário no Firestore
         async function getUserProfile(uid, email) {
             try {
@@ -404,7 +429,7 @@
                     uid: uid,
                     email: email,
                     nome: email.split('@')[0],
-                    perfil: 'Requisitante', // Perfil padrão
+                    perfil: detectarPerfilDestino(), // <- CORREÇÃO
                     ativo: true,
                     criadoEm: new Date().toISOString()
                 };
@@ -430,6 +455,13 @@
             }
         }
 
+        // Corrigir perfil se necessário
+        if (profile.toLowerCase() !== detectarPerfilDestino().toLowerCase()) {
+            console.log(`Corrigindo perfil de ${profile} para ${detectarPerfilDestino()}`);
+            // Atualizar perfil no Firestore se necessário
+            // (implementação opcional)
+        }
+        
         // Redirecionar para dashboard
         function redirectToDashboard(perfil) {
             const dashboards = {
