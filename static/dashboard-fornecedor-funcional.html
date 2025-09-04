@@ -692,25 +692,30 @@
     </div>
 
     <!-- INÍCIO DA INTEGRAÇÃO FIREBASE -->
+    <!--
+      A configuração abaixo foi unificada para reutilizar a mesma instância do Firebase
+      em todas as páginas. Em vez de inicializar uma nova aplicação com chaves de API
+      diferentes, importamos o módulo centralizado de Firebase que já foi
+      configurado em /static/js/firebase.js. Dessa forma, o estado de autenticação
+      permanece consistente entre o portal de login e o dashboard, evitando que o
+      usuário seja redirecionado de volta para a tela de login devido a instâncias
+      distintas do Firebase.
+    -->
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword,
-            onAuthStateChanged,
-            signOut 
-        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import { 
-            getFirestore, 
-            collection, 
-            doc, 
+        // Importa a instância compartilhada de Firebase e utilidades do módulo central.
+        import {
+            auth,
+            db,
+            signOut,
+            doc,
             getDoc,
+            collection,
             getDocs,
-            query, 
+            query,
             where,
             orderBy
-        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-        
+        } from '/static/js/firebase.js';
+
         // Importar módulo Firestore personalizado com tratamento de erro
         let FirebaseFirestore;
         try {
@@ -721,21 +726,7 @@
             console.error('❌ Erro ao carregar FirebaseFirestore:', error);
             alert('Erro ao carregar módulo FirebaseFirestore: ' + error.message);
         }
-    
-        // Configuração Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCqF366Ft7RkzHYaZb77HboNO3BPbmCjT8",
-            authDomain: "portal-de-proposta.firebaseapp.com",
-            projectId: "portal-de-proposta",
-            storageBucket: "portal-de-proposta.appspot.com",
-            messagingSenderId: "321036073908",
-            appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
-        };
-    
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-    
+
         // Tornar global para uso no código existente
         window.firebaseAuth = auth;
         window.firebaseDb = db;
@@ -796,26 +787,16 @@
         
         // Adicionar imports Firebase no início
         (async function() {
-            // Importar Firebase
-            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
-            const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-            const { getFirestore, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-        
-            // Configuração Firebase
-            const firebaseConfig = {
-                apiKey: "AIzaSyCqF366Ft7RkzHYaZb77HboNO3BPbmCjT8",
-                authDomain: "portal-de-proposta.firebaseapp.com",
-                projectId: "portal-de-proposta",
-                storageBucket: "portal-de-proposta.appspot.com",
-                messagingSenderId: "321036073908",
-                appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
-            };
-        
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-        
-            // Verificar autenticação
+            // Importar a instância compartilhada do Firebase a partir do módulo central
+            const {
+                auth,
+                db,
+                doc,
+                getDoc,
+                onAuthStateChanged
+            } = await import('/static/js/firebase.js');
+
+            // Verificar autenticação com a instância compartilhada
             onAuthStateChanged(auth, async (user) => {
                 if (!user) {
                     // Não autenticado - redirecionar para login
@@ -874,10 +855,9 @@
         async function logout() {
             if (confirm('Deseja realmente sair do sistema?')) {
                 try {
-                    // Importar signOut do Firebase
-                    const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-                    const auth = getAuth();
-                    
+                    // Importar signOut e auth do módulo centralizado
+                    const { auth, signOut } = await import('/static/js/firebase.js');
+                    // Executar logout
                     await signOut(auth);
                     sessionStorage.clear();
                     localStorage.clear();
