@@ -268,14 +268,12 @@
 
     <!-- Scripts -->
     <script type="module" src="/static/js/firebase.js"></script>
-    <script type="module" src="/static/js/auth-facade.js"></script>
     <script type="module">
         // Configuração da API
         const API_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:5000' 
             : window.location.origin;
         
-        import { loginComPerfil, clearUserSession } from '/static/js/auth-facade.js';
         import { auth, onAuthStateChanged, signOut } from '/static/js/firebase.js';
 
         // Elementos do DOM
