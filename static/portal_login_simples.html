@@ -375,7 +375,7 @@
 
                 // Redirecionar após delay
                 setTimeout(() => {
-                    redirectToDashboard(userProfile.perfil.toLowerCase());
+                    redirectToDashboard(userProfile.perfil);
                 }, 1500);
 
             } catch (error) {
@@ -472,19 +472,16 @@
         // Redirecionar para dashboard
         function redirectToDashboard(perfil) {
             const dashboards = {
-                'requisitante': '/static/dashboard-requisitante-funcional.html',
-                'comprador': '/static/dashboard-comprador-funcional.html',
-                'fornecedor': '/static/dashboard-fornecedor-funcional.html'
+                'Requisitante': '/static/dashboard-requisitante-funcional.html',
+                'Comprador': '/static/dashboard-comprador-funcional.html',
+                'Fornecedor': '/static/dashboard-fornecedor-funcional.html'
             };
-
-            const dashboard = dashboards[perfil];
+        
+            const dashboard = dashboards[perfil]; // Usar perfil como está (maiúscula)
             if (dashboard) {
                 window.location.href = dashboard;
             } else {
-                showMessage('error', 'Perfil não reconhecido. Usando perfil padrão (Requisitante).');
-                setTimeout(() => {
-                    window.location.href = '/static/dashboard-requisitante-funcional.html';
-                }, 2000);
+                showMessage('error', 'Perfil não reconhecido: ' + perfil);
             }
         }
 
