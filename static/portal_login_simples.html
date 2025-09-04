@@ -158,23 +158,6 @@
             border: 1px solid #91c9ff;
         }
 
-        .forgot-password {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e1e5e9;
-        }
-
-        .forgot-password a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.3s ease;
-        }
-
-        .forgot-password a:hover {
-            color: #764ba2;
-        }
-
         .system-info {
             margin-top: 30px;
             padding: 20px;
@@ -211,18 +194,6 @@
             font-size: 16px;
             margin-bottom: 5px;
             color: #667eea;
-        }
-
-        /* Responsividade */
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 30px 20px;
-                margin: 10px;
-            }
-            
-            .modules-grid {
-                grid-template-columns: 1fr;
-            }
         }
 
         /* Animações de entrada */
@@ -292,12 +263,6 @@
             </button>
         </form>
 
-        <div class="forgot-password">
-            <a href="#" onclick="resetPassword()">
-                <i class="fas fa-key"></i> Esqueci minha senha
-            </a>
-        </div>
-
         <div class="system-info">
             <h4><i class="fas fa-info-circle"></i> Módulos Disponíveis</h4>
             <p>Após o login, você será direcionado automaticamente para seu módulo:</p>
@@ -326,7 +291,6 @@
         import { 
             getAuth, 
             signInWithEmailAndPassword,
-            sendPasswordResetEmail,
             onAuthStateChanged 
         } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
@@ -353,21 +317,7 @@
         const btnLoading = document.getElementById('btnLoading');
         const message = document.getElementById('message');
 
-        // Estado da aplicação
         let isLoading = false;
-
-        // Verificar sessão existente
-        onAuthStateChanged(auth, async (user) => {
-            if (user && !isLoading) {
-                showMessage('info', 'Verificando sessão existente...');
-                try {
-                    await verifyAndRedirect(user);
-                } catch (error) {
-                    console.error('Erro ao verificar sessão:', error);
-                    hideMessage();
-                }
-            }
-        });
 
         // Manipular submit do formulário
         form.addEventListener('submit', async (e) => {
@@ -375,7 +325,7 @@
             await handleLogin();
         });
 
-        // Função de login
+        // Função de login principal
         async function handleLogin() {
             const email = emailInput.value.trim();
             const password = passwordInput.value.trim();
@@ -390,12 +340,35 @@
 
             try {
                 // Login com Firebase
-                showMessage('info', 'Autenticando com Firebase...');
+                showMessage('info', 'Autenticando...');
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // Verificar perfil e redirecionar
-                await verifyAndRedirect(user);
+                // Detectar perfil baseado no email
+                const perfil = detectProfileFromEmail(email);
+                
+                // Salvar dados de sessão
+                const sessionData = {
+                    uid: user.uid,
+                    email: user.email,
+                    nome: user.displayName || user.email.split('@')[0],
+                    perfil: perfil,
+                    dataLogin: new Date().toISOString()
+                };
+
+                // Salvar tokens
+                const token = await user.getIdToken();
+                localStorage.setItem('userToken', token);
+                localStorage.setItem('userData', JSON.stringify(sessionData));
+                localStorage.setItem(`${perfil.toLowerCase()}_logado`, JSON.stringify(sessionData));
+
+                // Mostrar sucesso
+                showMessage('success', `Login realizado! Perfil: ${perfil}`);
+
+                // Redirecionar após delay
+                setTimeout(() => {
+                    redirectToDashboard(perfil.toLowerCase());
+                }, 1500);
 
             } catch (error) {
                 console.error('Erro no login:', error);
@@ -405,58 +378,31 @@
             }
         }
 
-        // Verificar perfil e redirecionar
-        async function verifyAndRedirect(user) {
-            try {
-                showMessage('info', 'Identificando perfil do usuário...');
-
-                // Obter token
-                const token = await user.getIdToken();
-
-                // Verificar com backend
-                const response = await fetch('/auth/verify', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ token })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Erro do servidor: ${response.status}`);
-                }
-
-                const userData = await response.json();
-                const perfil = userData.perfil?.toLowerCase();
-
-                // Salvar dados compatíveis com sistema existente
-                const sessionData = {
-                    uid: user.uid,
-                    email: user.email,
-                    nome: userData.nome || user.displayName || user.email.split('@')[0],
-                    perfil: userData.perfil,
-                    dataLogin: new Date().toISOString()
-                };
-
-                // Salvar token e dados do usuário
-                localStorage.setItem('userToken', token);
-                localStorage.setItem('userData', JSON.stringify(userData));
-
-                // Salvar sessão específica do perfil (compatibilidade)
-                localStorage.setItem(`${perfil}_logado`, JSON.stringify(sessionData));
-
-                // Mostrar sucesso
-                showMessage('success', `✅ Login realizado! Perfil: ${userData.perfil}`);
-
-                // Redirecionar após delay
-                setTimeout(() => {
-                    redirectToDashboard(perfil);
-                }, 1500);
-
-            } catch (error) {
-                console.error('Erro na verificação:', error);
-                throw error;
+        // Detectar perfil baseado no email (versão melhorada)
+        function detectProfileFromEmail(email) {
+            const emailLower = email.toLowerCase();
+            
+            // Detecção por palavras-chave no email
+            if (emailLower.includes('fornecedor') || emailLower.includes('empresa') || emailLower.includes('supplier')) {
+                return 'Fornecedor';
             }
+            
+            if (emailLower.includes('comprador') || emailLower.includes('compras') || emailLower.includes('licitacao') || emailLower.includes('procurement')) {
+                return 'Comprador';
+            }
+            
+            if (emailLower.includes('requisitante') || emailLower.includes('solicitante') || emailLower.includes('requester')) {
+                return 'Requisitante';
+            }
+            
+            // Detecção por domínio comum
+            const domain = email.split('@')[1]?.toLowerCase() || '';
+            if (domain.includes('gov') || domain.includes('prefeitura') || domain.includes('municipal')) {
+                return 'Requisitante'; // Usuários governamentais geralmente são requisitantes
+            }
+            
+            // Padrão: Requisitante (perfil mais comum)
+            return 'Requisitante';
         }
 
         // Redirecionar para dashboard
@@ -471,7 +417,10 @@
             if (dashboard) {
                 window.location.href = dashboard;
             } else {
-                showMessage('error', 'Perfil não reconhecido. Entre em contato com o suporte.');
+                showMessage('error', 'Perfil não reconhecido. Usando perfil padrão (Requisitante).');
+                setTimeout(() => {
+                    window.location.href = '/static/dashboard-requisitante-funcional.html';
+                }, 2000);
             }
         }
 
@@ -501,31 +450,6 @@
 
             showMessage('error', errorMessage);
         }
-
-        // Resetar senha
-        window.resetPassword = async function() {
-            const email = emailInput.value.trim();
-            
-            if (!email) {
-                showMessage('error', 'Digite seu e-mail primeiro para recuperar a senha.');
-                emailInput.focus();
-                return;
-            }
-
-            try {
-                setLoading(true);
-                showMessage('info', 'Enviando e-mail de recuperação...');
-                
-                await sendPasswordResetEmail(auth, email);
-                
-                showMessage('success', `✅ E-mail de recuperação enviado para: ${email}`);
-            } catch (error) {
-                console.error('Erro ao resetar senha:', error);
-                showMessage('error', 'Erro ao enviar e-mail de recuperação. Tente novamente.');
-            } finally {
-                setLoading(false);
-            }
-        };
 
         // Utilitários de UI
         function setLoading(loading) {
