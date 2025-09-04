@@ -890,28 +890,6 @@
         window.logout = logout;
         window.verificarFornecedorLogado = verificarFornecedorLogado;
                 
-        // Função removida - dashboard já é mostrado diretamente
-
-        async function logout() {
-            if (confirm('Deseja realmente sair do sistema?')) {
-                try {
-                    // Importar signOut e auth do módulo centralizado
-                    const { auth, signOut } = await import('/static/js/firebase.js');
-                    // Executar logout
-                    await signOut(auth);
-                    sessionStorage.clear();
-                    localStorage.clear();
-                    
-                    // Redirecionar para login
-                    window.location.href = '/static/portal-fornecedor-unificado.html';
-                } catch (error) {
-                    console.error('Erro ao fazer logout:', error);
-                    // Forçar redirecionamento mesmo com erro
-                    window.location.href = '/static/portal-fornecedor-unificado.html';
-                }
-            }
-        }
-
         // Funções de navegação
         function mostrarPagina(pagina) {
             // Remover classe active de todos os itens
