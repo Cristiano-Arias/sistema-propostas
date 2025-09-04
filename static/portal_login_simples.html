@@ -388,6 +388,13 @@
 
         // Detectar perfil baseado na URL de origem ou destino
         function detectarPerfilDestino() {
+            // NOVA VERIFICAÇÃO: Parâmetro URL explícito
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectParam = urlParams.get('redirect');
+            if (redirectParam === 'comprador') return 'Comprador';
+            if (redirectParam === 'fornecedor') return 'Fornecedor';
+            if (redirectParam === 'requisitante') return 'Requisitante';
+            
             // Verificar URL atual
             const currentUrl = window.location.href;
             const referrer = document.referrer;
@@ -420,6 +427,15 @@
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     console.log('Usuário encontrado no Firestore:', userData);
+                    
+                    // NOVA VERIFICAÇÃO: Se perfil não bate com destino, atualizar
+                    const perfilEsperado = detectarPerfilDestino();
+                    if (userData.perfil !== perfilEsperado) {
+                        console.log(`Atualizando perfil de ${userData.perfil} para ${perfilEsperado}`);
+                        userData.perfil = perfilEsperado;
+                        await setDoc(doc(db, 'usuarios', uid), userData, { merge: true });
+                    }
+                    
                     return userData;
                 }
                 
