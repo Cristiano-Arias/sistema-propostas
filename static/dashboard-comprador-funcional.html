@@ -3296,60 +3296,7 @@ import {
             }
         }
 
-        /**
-         * Remove um fornecedor de um processo licitatório já existente.
-         * Atualiza tanto o armazenamento local quanto, se possível, o Firestore.
-         * @param {string} processoId ID do processo do qual o fornecedor será desvinculado.
-         * @param {string} fornecedorId ID único do fornecedor a remover.
-         */
-        async function removerFornecedorProcesso(processoId, fornecedorId) {
-            if (!confirm('Deseja remover este fornecedor deste processo?')) {
-                return;
-            }
-            // Carregar processos e localizar o processo alvo
-            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
-            const procIndex = processos.findIndex(p => p.id === processoId);
-            if (procIndex === -1) {
-                alert('Processo não encontrado.');
-                return;
-            }
-            const processo = processos[procIndex];
-            // Remover fornecedor da lista do processo
-            if (Array.isArray(processo.fornecedores)) {
-                processo.fornecedores = processo.fornecedores.filter(f => f.id !== fornecedorId);
-            }
-            processos[procIndex] = processo;
-            SistemaLocal.salvar(SistemaLocal.CHAVES.PROCESSOS, processos);
 
-            // Remover vinculação de processos_por_fornecedor
-            let vinculacoes = SistemaLocal.carregar('processos_por_fornecedor', []);
-            if (Array.isArray(vinculacoes)) {
-                vinculacoes = vinculacoes.filter(v => !(v.processoId === processoId && v.fornecedorId === fornecedorId));
-                SistemaLocal.salvar('processos_por_fornecedor', vinculacoes);
-            }
-
-            // Tentar remover ou atualizar convites no Firestore
-            try {
-                await SistemaLocal.inicializarFirebase();
-                if (SistemaLocal.db) {
-                    // Consultar convites por processoId e fornecedorId
-                    const convitesRef = collection(SistemaLocal.db, 'convites_fornecedor');
-                    const q = query(convitesRef, where('processoId', '==', processoId), where('fornecedorId', '==', fornecedorId));
-                    const convitesSnap = await getDocs(q);
-                    for (const docSnap of convitesSnap.docs) {
-                        // exclui convite; poderia atualizar status, mas exclusão evita duplicidade
-                        await deleteDoc(docSnap.ref);
-                    }
-                }
-            } catch (error) {
-                console.warn('⚠️ Não foi possível atualizar convite no Firestore:', error);
-            }
-            alert('Fornecedor removido do processo com sucesso!');
-            // Atualizar interface (reabrir modal de fornecedores)
-            if (typeof gerenciarFornecedores === 'function') {
-                gerenciarFornecedores(processoId);
-            }
-        }
 
         // Gerar relatório completo
         function gerarRelatorioCompleto(processoId) {
