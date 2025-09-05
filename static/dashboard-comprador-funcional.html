@@ -3056,6 +3056,184 @@
             alert('O download de anexos ainda não está implementado neste protótipo.');
         }
 
+        // Mostrar modal para adicionar fornecedor extra a um processo existente
+        function mostrarAdicionarFornecedor(processoId) {
+            // Criar elemento de sobreposição
+            const overlay = document.createElement('div');
+            overlay.classList.add('modal-overlay');
+            overlay.innerHTML = `
+                <div class="modal">
+                    <div class="modal-header">
+                        <h4>Adicionar Fornecedor</h4>
+                    </div>
+                    <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="form-group">
+                            <label for="novo-fornecedor-razao-social">Razão Social</label>
+                            <input type="text" id="novo-fornecedor-razao-social" class="form-control" placeholder="Nome da empresa">
+                        </div>
+                        <div class="form-group">
+                            <label for="novo-fornecedor-cnpj">CNPJ</label>
+                            <input type="text" id="novo-fornecedor-cnpj" class="form-control" placeholder="Somente números">
+                        </div>
+                        <div class="form-group">
+                            <label for="novo-fornecedor-email">E-mail</label>
+                            <input type="email" id="novo-fornecedor-email" class="form-control" placeholder="email@empresa.com">
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+                        <button class="btn btn-primary" onclick="adicionarFornecedorAoProcesso('${processoId}')">Adicionar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        // Função para efetivamente adicionar o fornecedor informado ao processo especificado
+        async function adicionarFornecedorAoProcesso(processoId) {
+            const razaoSocial = document.getElementById('novo-fornecedor-razao-social').value.trim();
+            const cnpj = document.getElementById('novo-fornecedor-cnpj').value.trim();
+            const email = document.getElementById('novo-fornecedor-email').value.trim();
+
+            if (!razaoSocial || !cnpj || !email) {
+                alert('Por favor, preencha Razão Social, CNPJ e E-mail.');
+                return;
+            }
+
+            // Carregar processos e localizar o processo específico
+            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
+            const processoIndex = processos.findIndex(p => p.id === processoId);
+            if (processoIndex === -1) {
+                alert('Processo não encontrado.');
+                return;
+            }
+            const processo = processos[processoIndex];
+
+            // Verificar se o CNPJ já está vinculado neste processo
+            if (processo.fornecedores && processo.fornecedores.some(f => f.cnpj === cnpj)) {
+                alert('Este CNPJ já está vinculado a este processo.');
+                return;
+            }
+
+            // Recuperar fornecedores cadastrados (novo e antigo)
+            let fornecedoresCadastrados = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES, []);
+            if (!Array.isArray(fornecedoresCadastrados) || fornecedoresCadastrados.length === 0) {
+                fornecedoresCadastrados = SistemaLocal.carregar(SistemaLocal.CHAVES.FORNECEDORES_ANTIGO, []);
+            }
+
+            let fornecedorExistente = null;
+            if (Array.isArray(fornecedoresCadastrados)) {
+                fornecedorExistente = fornecedoresCadastrados.find(f => f.cnpj === cnpj);
+            }
+
+            let fornecedor;
+            // Criar ou reutilizar fornecedor
+            if (fornecedorExistente) {
+                fornecedor = {
+                    id: fornecedorExistente.id,
+                    razaoSocial: fornecedorExistente.razaoSocial,
+                    cnpj: fornecedorExistente.cnpj,
+                    email: fornecedorExistente.email,
+                    usuario: fornecedorExistente.usuario,
+                    senha: fornecedorExistente.senha,
+                    dataConvite: new Date().toISOString(),
+                    dataCadastro: fornecedorExistente.dataCadastro,
+                    status: 'ativo'
+                };
+            } else {
+                // Novo fornecedor
+                fornecedor = {
+                    id: SistemaLocal.gerarId(),
+                    razaoSocial,
+                    cnpj,
+                    email,
+                    usuario: email,
+                    senha: '123456',
+                    dataConvite: new Date().toISOString(),
+                    dataCadastro: new Date().toISOString(),
+                    status: 'ativo'
+                };
+                // Salvar novo fornecedor nos cadastros
+                const novaLista = Array.isArray(fornecedoresCadastrados) ? [...fornecedoresCadastrados, fornecedor] : [fornecedor];
+                SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDORES, novaLista);
+                SistemaLocal.salvar(SistemaLocal.CHAVES.FORNECEDORES_ANTIGO, novaLista);
+                // Salvar credenciais
+                const usuariosFornecedores = SistemaLocal.carregar('usuarios_fornecedores', []);
+                const novaListaUsuarios = Array.isArray(usuariosFornecedores) ? [...usuariosFornecedores, { id: fornecedor.id, usuario: fornecedor.usuario, senha: fornecedor.senha, cnpj: fornecedor.cnpj, email: fornecedor.email, razaoSocial: fornecedor.razaoSocial }] : [{ id: fornecedor.id, usuario: fornecedor.usuario, senha: fornecedor.senha, cnpj: fornecedor.cnpj, email: fornecedor.email, razaoSocial: fornecedor.razaoSocial }];
+                SistemaLocal.salvar('usuarios_fornecedores', novaListaUsuarios);
+            }
+
+            // Criar objeto de fornecedor para o processo (processo.fornecedores)
+            const fornecedorProcesso = {
+                id: fornecedor.id,
+                razaoSocial: fornecedor.razaoSocial,
+                cnpj: fornecedor.cnpj,
+                email: fornecedor.email,
+                usuario: fornecedor.usuario,
+                senha: fornecedor.senha,
+                dataConvite: new Date().toISOString(),
+                dataCadastro: fornecedor.dataCadastro,
+                status: 'ativo'
+            };
+
+            // Garantir que a lista de fornecedores exista
+            if (!Array.isArray(processo.fornecedores)) {
+                processo.fornecedores = [];
+            }
+            processo.fornecedores.push(fornecedorProcesso);
+
+            // Persistir processo atualizado no localStorage
+            processos[processoIndex] = processo;
+            SistemaLocal.salvar(SistemaLocal.CHAVES.PROCESSOS, processos);
+
+            // Registrar vinculação específica do fornecedor com o processo
+            const vinculacoes = SistemaLocal.carregar('processos_por_fornecedor', []);
+            const tr = processo.trVinculado || {};
+            const vinculacao = {
+                id: SistemaLocal.gerarId(),
+                fornecedorId: fornecedor.id,
+                fornecedorEmail: fornecedor.email,
+                fornecedorCNPJ: fornecedor.cnpj,
+                fornecedorRazaoSocial: fornecedor.razaoSocial,
+                processoId: processo.id,
+                numeroProcesso: processo.numeroProcesso,
+                modalidade: processo.modalidade,
+                dataAbertura: processo.dataAbertura,
+                dataLimite: processo.dataLimite,
+                localAbertura: processo.localAbertura,
+                trTitulo: tr.titulo || '',
+                trNumero: tr.numeroTR || '',
+                valorEstimado: tr.valorEstimado || 0,
+                status: 'pendente',
+                dataConvite: new Date().toISOString(),
+                podeParticipar: true
+            };
+            vinculacoes.push(vinculacao);
+            SistemaLocal.salvar('processos_por_fornecedor', vinculacoes);
+
+            // Tentar salvar convite no Firestore
+            try {
+                await SistemaLocal.inicializarFirebase();
+                if (SistemaLocal.db) {
+                    await addDoc(collection(SistemaLocal.db, 'convites_fornecedor'), vinculacao);
+                    console.log('📩 Novo fornecedor convidado no Firestore:', fornecedor.email);
+                }
+            } catch (error) {
+                console.warn('⚠️ Não foi possível salvar convite no Firestore:', error);
+            }
+
+            // Remover modal
+            const overlay = document.querySelector('.modal-overlay');
+            if (overlay) overlay.remove();
+
+            // Feedback e atualização de interface
+            alert('Fornecedor adicionado ao processo com sucesso!');
+            // Atualizar visualização de fornecedores
+            if (typeof gerenciarFornecedores === 'function') {
+                gerenciarFornecedores(processoId);
+            }
+        }
+
         // Gerar relatório completo
         function gerarRelatorioCompleto(processoId) {
             const processo = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, [])
@@ -3616,6 +3794,7 @@
            window.downloadAnexo = downloadAnexo;
            window.enviarPropostaTecnicaRequisitante = enviarPropostaTecnicaRequisitante;
            window.mostrarAdicionarFornecedor = mostrarAdicionarFornecedor;
+           window.adicionarFornecedorAoProcesso = adicionarFornecedorAoProcesso;
            window.removerFornecedorProcesso = removerFornecedorProcesso;
            
            console.log('✅ Correções aplicadas e TODAS as funções expostas globalmente!');
