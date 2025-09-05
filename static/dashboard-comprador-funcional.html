@@ -998,14 +998,20 @@
     <script type="module">
         // Importar Firebase via CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            doc, 
-            getDoc, 
-            setDoc, 
-            getDocs 
-        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { 
+    getFirestore, 
+    collection, 
+    doc, 
+    getDoc, 
+    setDoc, 
+    getDocs,
+    addDoc,
+    deleteDoc,
+    updateDoc,
+    query,
+    where,
+    orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         
         // Importar módulo Firestore personalizado
         import FirebaseFirestore from './js/firebase-firestore.js';
@@ -3062,11 +3068,12 @@
             const overlay = document.createElement('div');
             overlay.classList.add('modal-overlay');
             overlay.innerHTML = `
-                <div class="modal">
+                <div class="modal-content">
                     <div class="modal-header">
                         <h4>Adicionar Fornecedor</h4>
+                        <button style="background:none;border:none;font-size:24px;cursor:pointer;" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                     </div>
-                    <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div class="modal-body" style="display:flex;flex-direction:column;gap:15px;padding:20px;">
                         <div class="form-group">
                             <label for="novo-fornecedor-razao-social">Razão Social</label>
                             <input type="text" id="novo-fornecedor-razao-social" class="form-control" placeholder="Nome da empresa">
@@ -3080,13 +3087,68 @@
                             <input type="email" id="novo-fornecedor-email" class="form-control" placeholder="email@empresa.com">
                         </div>
                     </div>
-                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:10px;padding:20px;">
                         <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
                         <button class="btn btn-primary" onclick="adicionarFornecedorAoProcesso('${processoId}')">Adicionar</button>
                     </div>
                 </div>
             `;
+            // Elevar o z-index para garantir que este modal fique acima de outros modais existentes
+            overlay.style.zIndex = '2000';
             document.body.appendChild(overlay);
+        }
+
+        // Remover fornecedor de um processo existente
+        async function removerFornecedorProcesso(processoId, fornecedorId) {
+            try {
+                if (!confirm('Tem certeza que deseja remover este fornecedor do processo?')) {
+                    return;
+                }
+                // Carregar lista de processos
+                const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
+                const processoIndex = processos.findIndex(p => p.id === processoId);
+                if (processoIndex === -1) {
+                    alert('Processo não encontrado.');
+                    return;
+                }
+                const processo = processos[processoIndex];
+                // Remover fornecedor da lista de fornecedores do processo
+                if (Array.isArray(processo.fornecedores)) {
+                    const fornecedorIndex = processo.fornecedores.findIndex(f => f.id === fornecedorId);
+                    if (fornecedorIndex !== -1) {
+                        processo.fornecedores.splice(fornecedorIndex, 1);
+                    }
+                }
+                // Salvar atualização no localStorage
+                processos[processoIndex] = processo;
+                SistemaLocal.salvar(SistemaLocal.CHAVES.PROCESSOS, processos);
+                // Remover vinculação específica do fornecedor no localStorage
+                const vinculacoes = SistemaLocal.carregar('processos_por_fornecedor', []);
+                const novaListaVinculacoes = Array.isArray(vinculacoes) ? vinculacoes.filter(v => !(v.processoId === processoId && v.fornecedorId === fornecedorId)) : [];
+                SistemaLocal.salvar('processos_por_fornecedor', novaListaVinculacoes);
+                // Tentar remover convite correspondente no Firestore
+                try {
+                    await SistemaLocal.inicializarFirebase();
+                    if (SistemaLocal.db) {
+                        const convitesRef = collection(SistemaLocal.db, 'convites_fornecedor');
+                        const q = query(convitesRef, where('processoId', '==', processoId), where('fornecedorId', '==', fornecedorId));
+                        const snapshot = await getDocs(q);
+                        for (const docSnap of snapshot.docs) {
+                            await deleteDoc(docSnap.ref);
+                        }
+                    }
+                } catch (err) {
+                    console.warn('⚠️ Não foi possível remover convite no Firestore:', err);
+                }
+                alert('Fornecedor removido do processo com sucesso!');
+                // Atualizar interface após remoção
+                if (typeof gerenciarFornecedores === 'function') {
+                    gerenciarFornecedores(processoId);
+                }
+            } catch (error) {
+                console.error('Erro ao remover fornecedor do processo:', error);
+                alert('Ocorreu um erro ao remover o fornecedor.');
+            }
         }
 
         // Função para efetivamente adicionar o fornecedor informado ao processo especificado
@@ -3229,6 +3291,61 @@
             // Feedback e atualização de interface
             alert('Fornecedor adicionado ao processo com sucesso!');
             // Atualizar visualização de fornecedores
+            if (typeof gerenciarFornecedores === 'function') {
+                gerenciarFornecedores(processoId);
+            }
+        }
+
+        /**
+         * Remove um fornecedor de um processo licitatório já existente.
+         * Atualiza tanto o armazenamento local quanto, se possível, o Firestore.
+         * @param {string} processoId ID do processo do qual o fornecedor será desvinculado.
+         * @param {string} fornecedorId ID único do fornecedor a remover.
+         */
+        async function removerFornecedorProcesso(processoId, fornecedorId) {
+            if (!confirm('Deseja remover este fornecedor deste processo?')) {
+                return;
+            }
+            // Carregar processos e localizar o processo alvo
+            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
+            const procIndex = processos.findIndex(p => p.id === processoId);
+            if (procIndex === -1) {
+                alert('Processo não encontrado.');
+                return;
+            }
+            const processo = processos[procIndex];
+            // Remover fornecedor da lista do processo
+            if (Array.isArray(processo.fornecedores)) {
+                processo.fornecedores = processo.fornecedores.filter(f => f.id !== fornecedorId);
+            }
+            processos[procIndex] = processo;
+            SistemaLocal.salvar(SistemaLocal.CHAVES.PROCESSOS, processos);
+
+            // Remover vinculação de processos_por_fornecedor
+            let vinculacoes = SistemaLocal.carregar('processos_por_fornecedor', []);
+            if (Array.isArray(vinculacoes)) {
+                vinculacoes = vinculacoes.filter(v => !(v.processoId === processoId && v.fornecedorId === fornecedorId));
+                SistemaLocal.salvar('processos_por_fornecedor', vinculacoes);
+            }
+
+            // Tentar remover ou atualizar convites no Firestore
+            try {
+                await SistemaLocal.inicializarFirebase();
+                if (SistemaLocal.db) {
+                    // Consultar convites por processoId e fornecedorId
+                    const convitesRef = collection(SistemaLocal.db, 'convites_fornecedor');
+                    const q = query(convitesRef, where('processoId', '==', processoId), where('fornecedorId', '==', fornecedorId));
+                    const convitesSnap = await getDocs(q);
+                    for (const docSnap of convitesSnap.docs) {
+                        // exclui convite; poderia atualizar status, mas exclusão evita duplicidade
+                        await deleteDoc(docSnap.ref);
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Não foi possível atualizar convite no Firestore:', error);
+            }
+            alert('Fornecedor removido do processo com sucesso!');
+            // Atualizar interface (reabrir modal de fornecedores)
             if (typeof gerenciarFornecedores === 'function') {
                 gerenciarFornecedores(processoId);
             }
