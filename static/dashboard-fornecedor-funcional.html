@@ -706,8 +706,23 @@
             signOut,
             doc,
             getDoc,
-            onAuthStateChanged
+            onAuthStateChanged,
+            // Importar utilitários adicionais do Firestore usados neste dashboard
+            collection,
+            query,
+            where,
+            getDocs,
+            addDoc,
+            updateDoc,
+            orderBy
         } from '/static/js/firebase.js';
+
+        // Importar o módulo auxiliar FirebaseFirestore para operações de propostas
+        import FirebaseFirestore from '/static/js/firebase-firestore.js';
+        // Garantir que a instância esteja disponível no escopo global
+        if (typeof window !== 'undefined') {
+            window.FirebaseFirestore = FirebaseFirestore;
+        }
         
         let fornecedorLogado = null;
         
