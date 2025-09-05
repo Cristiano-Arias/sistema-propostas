@@ -2084,9 +2084,14 @@
             const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
             const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
             
-            const vinculacao = vinculacoes.find(v => 
-                v.processoId === processoId && 
-                v.fornecedorId === fornecedorLogado.id
+            // Buscar vinculação pelo ID do processo e identificador do fornecedor (pode ser fornecedorId, email ou CNPJ)
+            const vinculacao = vinculacoes.find(v =>
+                v.processoId === processoId &&
+                (
+                    v.fornecedorId === fornecedorLogado.id ||
+                    v.fornecedorEmail === fornecedorLogado.email ||
+                    v.fornecedorCNPJ === fornecedorLogado.cnpj
+                )
             );
             
             // Alguns processos podem ter campos diferentes de identificação (id ou processoId).
