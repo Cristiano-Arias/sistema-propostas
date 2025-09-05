@@ -1994,6 +1994,14 @@
             const tr = processoAtual.trSelecionado;
             const dados = processoAtual.dadosProcesso;
 
+            // Garantir que o Firebase esteja inicializado antes de qualquer operação Firestore
+            try {
+                // A inicialização é idempotente: se já estiver inicializado, apenas marca firebaseReady como true
+                await SistemaLocal.inicializarFirebase();
+            } catch (initError) {
+                console.warn('⚠️ Erro ao inicializar Firebase antes de criar processo:', initError);
+            }
+
             // Construir objeto base do processo
             const novoProcesso = {
                 // ID será atribuído manualmente para localStorage, mas poderá ser sobrescrito pelo Firestore
@@ -2010,8 +2018,8 @@
                 criadoPor: SistemaLocal.obterUsuario().nome
             };
 
-            // Se o Firebase estiver pronto, persistir o processo no Firestore
-            if (SistemaLocal.firebaseReady && SistemaLocal.db) {
+            // Se o Firestore estiver disponível, persistir o processo no Firestore
+            if (SistemaLocal.db) {
                 try {
                     const processoFirestore = {
                         numeroProcesso: novoProcesso.numeroProcesso,
@@ -2079,7 +2087,7 @@
                     vinculacoesFornecedores.push(vinculacao);
 
                     // Também persistir cada convite no Firestore se possível
-                    if (SistemaLocal.firebaseReady && SistemaLocal.db) {
+                    if (SistemaLocal.db) {
                         try {
                             await addDoc(collection(SistemaLocal.db, 'convites_fornecedor'), vinculacao);
                             console.log('📩 Convite salvo no Firestore para fornecedor:', fornecedor.email);
@@ -3034,6 +3042,18 @@
                 link.click();
                 URL.revokeObjectURL(url);
             }
+        }
+
+        // Download de Anexo (placeholder)
+        // Alguns TRs e propostas podem ter anexos associados. Esta função serve como
+        // stub para evitar erros de referência quando a interface tenta baixar um
+        // anexo. Para implementar o download real, você deve localizar o anexo
+        // no TR ou proposta correspondente (por exemplo, em tr.anexos ou proposta.anexos)
+        // e então gerar um link de download para o arquivo. No protótipo atual
+        // exibimos um alerta informando que a funcionalidade não está disponível.
+        function downloadAnexo(anexoId) {
+            console.warn('downloadAnexo() chamado para ID:', anexoId);
+            alert('O download de anexos ainda não está implementado neste protótipo.');
         }
 
         // Gerar relatório completo
