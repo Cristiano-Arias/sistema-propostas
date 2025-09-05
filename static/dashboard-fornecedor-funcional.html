@@ -731,8 +731,7 @@
                 }
                 
                 const userData = userDoc.data();
-                if (userData.perfil !== 'fornecedor') {
-                    console.error('Perfil não é fornecedor:', userData.perfil);
+                if (userData.perfil.toLowerCase() !== 'fornecedor') {
                     await signOut(auth);
                     window.location.href = '/static/portal-fornecedor-unificado.html';
                     return;
