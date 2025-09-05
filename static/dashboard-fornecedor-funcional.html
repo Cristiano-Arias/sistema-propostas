@@ -714,7 +714,8 @@
             getDocs,
             addDoc,
             updateDoc,
-            orderBy
+            orderBy,
+            setDoc
         } from '/static/js/firebase.js';
 
         // Importar o módulo auxiliar FirebaseFirestore para operações de propostas
@@ -723,6 +724,109 @@
         if (typeof window !== 'undefined') {
             window.FirebaseFirestore = FirebaseFirestore;
         }
+
+        /*
+         * ====================================================================
+         * SistemaLocal para módulo Fornecedor
+         *
+         * Este objeto centraliza o acesso ao localStorage e, quando possível,
+         * sincroniza com o Firestore. Ele foi adaptado a partir do módulo do
+         * comprador, porém com um conjunto reduzido de chaves utilizadas pelo
+         * dashboard do fornecedor. O Firestore já está inicializado em
+         * /static/js/firebase.js, portanto reutilizamos a instância "db" aqui.
+         */
+        const SistemaLocal = {
+            // Chaves específicas do módulo fornecedor
+            CHAVES: {
+                PROCESSOS: 'sistema_processos',
+                PROCESSOS_POR_FORNECEDOR: 'processos_por_fornecedor',
+                PROPOSTAS_FORNECEDORES: 'propostas_fornecedores',
+                TRS: 'sistema_trs'
+            },
+            db: null,
+            firebaseReady: false,
+            async inicializarFirebase() {
+                try {
+                    // Reutilizar a instância já importada de Firestore
+                    this.db = db;
+                    this.firebaseReady = !!db;
+                    console.log('✅ Firebase inicializado para Fornecedor');
+                } catch (err) {
+                    console.warn('⚠️ Firebase não disponível no módulo fornecedor:', err);
+                    this.db = null;
+                    this.firebaseReady = false;
+                }
+            },
+            // Salvar no localStorage e, se possível, também no Firestore (coleção sistema_dados)
+            salvar(chave, dados) {
+                try {
+                    localStorage.setItem(chave, JSON.stringify(dados));
+                    if (this.firebaseReady && this.db) {
+                        const ref = doc(this.db, 'sistema_dados', chave);
+                        setDoc(ref, {
+                            dados: dados,
+                            timestamp: new Date().toISOString()
+                        }).catch((err) => {
+                            console.warn('⚠️ Erro ao salvar no Firestore (Fornecedor):', err);
+                        });
+                    }
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao salvar dados (Fornecedor):', error);
+                    return false;
+                }
+            },
+            // Carregar do localStorage e sincronizar com Firestore em background
+            carregar(chave, padrao = null) {
+                try {
+                    const dadosStr = localStorage.getItem(chave);
+                    let dadosLocal = dadosStr ? JSON.parse(dadosStr) : padrao;
+                    // Para chaves de array, garantir que sempre retorna array
+                    const arrayKeys = [
+                        this.CHAVES.PROCESSOS,
+                        this.CHAVES.PROCESSOS_POR_FORNECEDOR,
+                        this.CHAVES.PROPOSTAS_FORNECEDORES,
+                        this.CHAVES.TRS
+                    ];
+                    if (arrayKeys.includes(chave) && !Array.isArray(dadosLocal)) {
+                        dadosLocal = [];
+                        localStorage.setItem(chave, JSON.stringify([]));
+                    }
+                    // Sincronizar com Firestore em background se possível
+                    if (this.firebaseReady && this.db) {
+                        const ref = doc(this.db, 'sistema_dados', chave);
+                        getDoc(ref).then((docSnap) => {
+                            if (docSnap.exists()) {
+                                const dadosFirebase = docSnap.data().dados;
+                                localStorage.setItem(chave, JSON.stringify(dadosFirebase));
+                                console.log(`✅ Dados sincronizados do Firebase (Fornecedor): ${chave}`);
+                            }
+                        }).catch((err) => {
+                            console.warn('⚠️ Falha ao sincronizar do Firebase (Fornecedor):', err);
+                        });
+                    }
+                    return dadosLocal;
+                } catch (error) {
+                    console.error('Erro ao carregar dados (Fornecedor):', error);
+                    const arrayKeys = [
+                        this.CHAVES.PROCESSOS,
+                        this.CHAVES.PROCESSOS_POR_FORNECEDOR,
+                        this.CHAVES.PROPOSTAS_FORNECEDORES,
+                        this.CHAVES.TRS
+                    ];
+                    if (arrayKeys.includes(chave)) {
+                        return [];
+                    }
+                    return padrao;
+                }
+            },
+            // Gerar ID único simples
+            gerarId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+        };
+        // Inicializar Firebase para o módulo fornecedor
+        SistemaLocal.inicializarFirebase();
         
         let fornecedorLogado = null;
         
@@ -1920,6 +2024,58 @@
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
         }
+
+        // Visualizar detalhes do processo e TR vinculado
+        function visualizarProcesso(processoId) {
+            // Carregar processos do localStorage
+            const processos = SistemaLocal.carregar(SistemaLocal.CHAVES.PROCESSOS, []);
+            // Procurar por id ou processoId (há diferentes formatos)
+            let processo = processos.find(p => p.id === processoId || p.processoId === processoId);
+            if (!processo) {
+                alert('Processo não encontrado!');
+                return;
+            }
+            // Formatar datas
+            const formatarData = (data) => {
+                try {
+                    if (data && data.seconds) {
+                        return new Date(data.seconds * 1000).toLocaleString('pt-BR');
+                    } else if (typeof data === 'string' || data instanceof Date) {
+                        return new Date(data).toLocaleString('pt-BR');
+                    }
+                } catch (e) {
+                    console.warn('Erro ao formatar data:', data, e);
+                }
+                return 'Não informado';
+            };
+            // Montar HTML com informações do processo e TR
+            const dataAbertura = formatarData(processo.dataAbertura);
+            const dataLimite = formatarData(processo.dataLimite);
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 800px;">
+                    <div class="modal-header">
+                        <h3>Detalhes do Processo ${processo.numeroProcesso || processoId}</h3>
+                        <button style="background:none;border:none;font-size:24px;cursor:pointer;" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding:20px;">
+                        <p><strong>Modalidade:</strong> ${processo.modalidade || '-'}</p>
+                        <p><strong>Data de Abertura:</strong> ${dataAbertura}</p>
+                        <p><strong>Data Limite:</strong> ${dataLimite}</p>
+                        <p><strong>Objeto (TR):</strong> ${processo.trTitulo || processo.trVinculado?.titulo || '-'}</p>
+                        ${processo.valorEstimado ? `<p><strong>Valor Estimado:</strong> R$ ${parseFloat(processo.valorEstimado).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>` : ''}
+                        <p><strong>CNPJ convidado:</strong> ${processo.fornecedorCNPJ || '-'}</p>
+                        <p><strong>Status do Convite:</strong> ${processo.status || '-'}</p>
+                        <div style="margin-top:20px;">
+                            <button class="btn btn-secondary" onclick="baixarTR('${processo.id || processo.processoId}')"><i class="fas fa-download"></i> Baixar TR</button>
+                            <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i> Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
         
         // Abrir Portal de Propostas
         function abrirPortalPropostas(processoId) {
@@ -2747,6 +2903,7 @@
         window.logout = logout;                
         window.visualizarTR = visualizarTR;
         window.baixarTR = baixarTR;
+        window.visualizarProcesso = visualizarProcesso;
         window.abrirPortalPropostas = abrirPortalPropostas;
         window.visualizarProposta = visualizarProposta;
         window.abrirPropostaCompleta = abrirPropostaCompleta;
