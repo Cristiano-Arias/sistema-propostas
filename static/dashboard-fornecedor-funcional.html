@@ -2089,7 +2089,8 @@
                 v.fornecedorId === fornecedorLogado.id
             );
             
-            const processo = processos.find(p => p.id === processoId);
+            // Alguns processos podem ter campos diferentes de identificação (id ou processoId).
+            const processo = processos.find(p => p.id === processoId || p.processoId === processoId);
             
             if (!vinculacao || !processo) {
                 alert('Processo não encontrado!');
