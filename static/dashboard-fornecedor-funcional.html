@@ -2206,60 +2206,143 @@
             }
         }
 
-        // Visualizar proposta enviada - FUNÇÃO CORRIGIDA
-        function visualizarProposta(propostaId) {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const proposta = propostas.find(p => p.id === propostaId);
-            
+        // Visualizar proposta enviada - função atualizada para buscar no Firestore
+        async function visualizarProposta(propostaId) {
+            /**
+             * Tenta obter a proposta pelo ID utilizando o Firestore como fonte principal.
+             * Se não encontrado ou o módulo não estiver disponível, recorre ao localStorage.
+             */
+            let proposta = null;
+
+            // Buscar no Firestore se disponível
+            try {
+                if (window.FirebaseFirestore && typeof window.FirebaseFirestore.buscarPropostaPorId === 'function') {
+                    const propostaFirestore = await window.FirebaseFirestore.buscarPropostaPorId(propostaId);
+                    if (propostaFirestore) {
+                        proposta = { ...propostaFirestore };
+                        // Desserializar dadosCompletos se for string
+                        if (typeof proposta.dadosCompletos === 'string') {
+                            try {
+                                proposta.dadosCompletos = JSON.parse(proposta.dadosCompletos);
+                            } catch (e) {
+                                console.warn('Erro ao converter dadosCompletos:', e);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Falha ao buscar proposta no Firestore:', e);
+            }
+
+            // Fallback para localStorage
+            if (!proposta) {
+                const propostasLocal = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                proposta = propostasLocal.find(p => p.id === propostaId);
+            }
+
             if (!proposta) {
                 alert('Proposta não encontrada!');
                 return;
             }
-            
-            // Se a proposta tem dados completos do portal, usar eles
+
+            // Abrir visualização completa se houver dadosCompletos
             if (proposta.dadosCompletos) {
-                // Abrir proposta completa em nova janela com os dados salvos
-                sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
-                window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
+                try {
+                    sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
+                    window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
+                } catch (e) {
+                    console.error('Erro ao abrir proposta completa:', e);
+                    alert('Não foi possível abrir a proposta completa.');
+                }
             } else {
                 // Fallback para propostas antigas
-                alert(`
-                    PROPOSTA ENVIADA
-                    
-                    Protocolo: ${proposta.protocolo}
-                    Processo: ${proposta.numeroProcesso}
-                    Valor: R$ ${parseFloat(proposta.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                    Prazo: ${proposta.prazoExecucao}
-                    Data de Envio: ${new Date(proposta.dataEnvio).toLocaleString('pt-BR')}
-                    
-                    Status: ENVIADA ✓
-                `);
+                const valor = proposta.valor || proposta.valorTotal || 0;
+                const prazo = proposta.prazoExecucao || 'Não informado';
+                const dataEnvio = proposta.dataEnvio || proposta.dataCriacao;
+                const numeroProcesso = proposta.numeroProcesso || proposta.processoId || '---';
+                const protocolo = proposta.protocolo || '---';
+                const dataEnvioFmt = dataEnvio ? new Date(dataEnvio.seconds ? dataEnvio.seconds * 1000 : dataEnvio).toLocaleString('pt-BR') : '---';
+                alert(`PROPOSTA ENVIADA\n\nProtocolo: ${protocolo}\nProcesso: ${numeroProcesso}\nValor: R$ ${parseFloat(valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}\nPrazo: ${prazo}\nData de Envio: ${dataEnvioFmt}\n\nStatus: ENVIADA ✓`);
             }
         }
         // Função auxiliar para abrir proposta completa
-        function abrirPropostaCompleta(propostaId) {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const proposta = propostas.find(p => p.id === propostaId);
-            
+        async function abrirPropostaCompleta(propostaId) {
+            /**
+             * Recupera a proposta pelo ID e abre a visualização completa. Prioriza
+             * a leitura no Firestore e utiliza o armazenamento local como fallback.
+             */
+            let proposta = null;
+            try {
+                if (window.FirebaseFirestore && typeof window.FirebaseFirestore.buscarPropostaPorId === 'function') {
+                    const propostaFirestore = await window.FirebaseFirestore.buscarPropostaPorId(propostaId);
+                    if (propostaFirestore) {
+                        proposta = { ...propostaFirestore };
+                        if (typeof proposta.dadosCompletos === 'string') {
+                            try {
+                                proposta.dadosCompletos = JSON.parse(proposta.dadosCompletos);
+                            } catch (e) {
+                                console.warn('Erro ao converter dadosCompletos:', e);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Falha ao buscar proposta no Firestore:', e);
+            }
+            if (!proposta) {
+                const propostasLocal = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                proposta = propostasLocal.find(p => p.id === propostaId);
+            }
             if (proposta && proposta.dadosCompletos) {
-                sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
-                window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
+                try {
+                    sessionStorage.setItem('visualizar_proposta_portal', JSON.stringify(proposta.dadosCompletos));
+                    window.open('portal-propostas-novo.html?modo=visualizacao', '_blank');
+                } catch (e) {
+                    console.error('Erro ao abrir proposta completa:', e);
+                    alert('Não foi possível abrir a proposta completa.');
+                }
             }
         }
 
         // Função para baixar comprovante
-        function baixarComprovante(propostaId) {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const proposta = propostas.find(p => p.id === propostaId);
-            
+        async function baixarComprovante(propostaId) {
+            /**
+             * Gera um recibo em HTML contendo os dados da proposta. Tenta obter
+             * a proposta do Firestore e usa o armazenamento local como fallback.
+             */
+            let proposta = null;
+            try {
+                if (window.FirebaseFirestore && typeof window.FirebaseFirestore.buscarPropostaPorId === 'function') {
+                    const propostaFirestore = await window.FirebaseFirestore.buscarPropostaPorId(propostaId);
+                    if (propostaFirestore) {
+                        proposta = { ...propostaFirestore };
+                    }
+                }
+            } catch (e) {
+                console.warn('Falha ao buscar proposta no Firestore:', e);
+            }
+            if (!proposta) {
+                const propostasLocal = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                proposta = propostasLocal.find(p => p.id === propostaId);
+            }
             if (!proposta) return;
-            
+
+            // Preparar campos com valores seguros
+            const valor = proposta.valor || proposta.valorTotal || 0;
+            const prazo = proposta.prazoExecucao || 'Não informado';
+            const dataEnvio = proposta.dataEnvio || proposta.dataCriacao;
+            const numeroProcesso = proposta.numeroProcesso || proposta.processoId || '---';
+            const protocolo = proposta.protocolo || '---';
+            const razao = proposta.fornecedorRazaoSocial || '---';
+            const cnpj = proposta.fornecedorCNPJ || '---';
+            const dataEnvioFmt = dataEnvio ? new Date(dataEnvio.seconds ? dataEnvio.seconds * 1000 : dataEnvio).toLocaleString('pt-BR') : '---';
+
             const conteudoHTML = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <meta charset="UTF-8">
-                    <title>Comprovante - ${proposta.protocolo}</title>
+                    <title>Comprovante - ${protocolo}</title>
                     <style>
                         body { font-family: Arial, sans-serif; margin: 40px; }
                         .header { text-align: center; margin-bottom: 30px; }
@@ -2273,13 +2356,13 @@
                         <div class="header">
                             <h1>COMPROVANTE DE ENVIO DE PROPOSTA</h1>
                         </div>
-                        <div class="campo"><strong>Protocolo:</strong> ${proposta.protocolo}</div>
-                        <div class="campo"><strong>Data/Hora:</strong> ${new Date(proposta.dataEnvio).toLocaleString('pt-BR')}</div>
-                        <div class="campo"><strong>Processo:</strong> ${proposta.numeroProcesso}</div>
-                        <div class="campo"><strong>Fornecedor:</strong> ${proposta.fornecedorRazaoSocial}</div>
-                        <div class="campo"><strong>CNPJ:</strong> ${proposta.fornecedorCNPJ}</div>
-                        <div class="campo"><strong>Valor:</strong> R$ ${proposta.valor}</div>
-                        <div class="campo"><strong>Prazo:</strong> ${proposta.prazoExecucao}</div>
+                        <div class="campo"><strong>Protocolo:</strong> ${protocolo}</div>
+                        <div class="campo"><strong>Data/Hora:</strong> ${dataEnvioFmt}</div>
+                        <div class="campo"><strong>Processo:</strong> ${numeroProcesso}</div>
+                        <div class="campo"><strong>Fornecedor:</strong> ${razao}</div>
+                        <div class="campo"><strong>CNPJ:</strong> ${cnpj}</div>
+                        <div class="campo"><strong>Valor:</strong> R$ ${parseFloat(valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                        <div class="campo"><strong>Prazo:</strong> ${prazo}</div>
                         <div class="assinatura">
                             <p>Documento gerado eletronicamente</p>
                         </div>
@@ -2300,15 +2383,39 @@
         }
 
         // Adicionar esta nova função após a função baixarComprovante existente
-        function baixarPropostaCompleta(propostaId) {
-            const propostas = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
-            const proposta = propostas.find(p => p.id === propostaId);
-            
+        async function baixarPropostaCompleta(propostaId) {
+            /**
+             * Gera um documento completo da proposta (técnica e comercial).
+             * Prioriza a leitura da proposta no Firestore e utiliza o
+             * armazenamento local como fallback. Se a proposta ou seus dados
+             * completos não forem encontrados, exibe um alerta.
+             */
+            let proposta = null;
+            try {
+                if (window.FirebaseFirestore && typeof window.FirebaseFirestore.buscarPropostaPorId === 'function') {
+                    const propostaFirestore = await window.FirebaseFirestore.buscarPropostaPorId(propostaId);
+                    if (propostaFirestore) {
+                        proposta = { ...propostaFirestore };
+                        if (typeof proposta.dadosCompletos === 'string') {
+                            try {
+                                proposta.dadosCompletos = JSON.parse(proposta.dadosCompletos);
+                            } catch (e) {
+                                console.warn('Erro ao converter dadosCompletos:', e);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Falha ao buscar proposta no Firestore:', e);
+            }
+            if (!proposta) {
+                const propostasLocal = SistemaLocal.carregar(SistemaLocal.CHAVES.PROPOSTAS_FORNECEDORES, []);
+                proposta = propostasLocal.find(p => p.id === propostaId);
+            }
             if (!proposta || !proposta.dadosCompletos) {
                 alert('Proposta não encontrada ou dados incompletos!');
                 return;
             }
-            
             const dados = proposta.dadosCompletos;
             
             const conteudoHTML = `
