@@ -197,6 +197,69 @@ class FirebaseFirestore {
             throw error;
         }
     }
+
+    /**
+     * Salvar Termo de Referência (TR)
+     * @param {Object} tr - Dados do TR a ser salvo
+     * @returns {string} ID do TR salvo
+     */
+    static async salvarTR(tr) {
+        try {
+            console.log('💾 Salvando TR:', tr.id || 'novo');
+            // Se o TR possui ID, atualize o documento existente
+            if (tr.id) {
+                const trRef = doc(db, 'trs', tr.id);
+                await updateDoc(trRef, {
+                    ...tr,
+                    dataAtualizacao: new Date()
+                });
+                return tr.id;
+            } else {
+                // Criar um novo TR
+                const docRef = await addDoc(collection(db, 'trs'), {
+                    ...tr,
+                    dataCriacao: new Date(),
+                    dataAtualizacao: new Date()
+                });
+                return docRef.id;
+            }
+        } catch (error) {
+            console.error('❌ Erro ao salvar TR:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Buscar TRs com filtros opcionais
+     * @param {Object} filtros - Filtros para a busca (status, usuarioId, etc.)
+     * @returns {Array} Lista de TRs encontrados
+     */
+    static async buscarTRs(filtros = {}) {
+        try {
+            console.log('🔍 Buscando TRs com filtros:', filtros);
+            let q = collection(db, 'trs');
+            // Aplicar filtros dinamicamente
+            if (filtros.usuarioId) {
+                q = query(q, where('usuarioId', '==', filtros.usuarioId));
+            }
+            if (filtros.status) {
+                q = query(q, where('status', '==', filtros.status));
+            }
+            // Ordenar por data de criação
+            q = query(q, orderBy('dataCriacao', 'desc'));
+
+            const querySnapshot = await getDocs(q);
+            const trs = [];
+            querySnapshot.forEach((docSnap) => {
+                trs.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            console.log('✅ TRs encontrados:', trs.length);
+            return trs;
+        } catch (error) {
+            console.error('❌ Erro ao buscar TRs:', error);
+            throw error;
+        }
+    }
     
     /**
      * Escutar mudanças em tempo real
