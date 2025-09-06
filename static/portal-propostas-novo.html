@@ -1909,8 +1909,11 @@ async function enviarProposta() {
                     if (propostaParaFirestore.dadosCompletos) {
                         propostaParaFirestore.dadosCompletos = JSON.stringify(propostaParaFirestore.dadosCompletos);
                     }
+                    // Remover o id para forçar a criação de um novo documento no Firestore (addDoc)
+                    const propostaNova = { ...propostaParaFirestore };
+                    delete propostaNova.id;
                     await window.FirebaseFirestore.salvarProposta({
-                        ...propostaParaFirestore,
+                        ...propostaNova,
                         status: propostaParaSalvar.status || 'ENVIADA'
                     });
                     console.log('📤 Proposta salva no Firestore com sucesso');
