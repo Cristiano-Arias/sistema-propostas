@@ -1376,6 +1376,28 @@ import {
             }
         }
 
+        // Sincronizar TRs a partir do Firestore
+        async function sincronizarTrs() {
+            /**
+             * Busca todos os Termos de Referência (TRs) no Firestore e
+             * atualiza o localStorage com a chave 'sistema_trs'. A lista
+             * retornada inclui TRs de todos os usuários, permitindo que o
+             * módulo comprador aprove ou crie processos a partir deles.
+             */
+            try {
+                if (window.FirebaseFirestore && typeof window.FirebaseFirestore.buscarTRs === 'function') {
+                    console.log('🔄 Sincronizando TRs do Firestore para o comprador...');
+                    const trs = await window.FirebaseFirestore.buscarTRs();
+                    localStorage.setItem('sistema_trs', JSON.stringify(trs));
+                    console.log(`✅ ${trs.length} TRs sincronizados do Firestore`);
+                } else {
+                    console.warn('⚠️ FirebaseFirestore não disponível para sincronizar TRs.');
+                }
+            } catch (e) {
+                console.warn('⚠️ Erro ao sincronizar TRs do Firestore:', e);
+            }
+        }
+
         // Verificar notificações
         function verificarNotificacoes() {
             const notificacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.NOTIFICACOES_COMPRADOR, []);
@@ -3846,7 +3868,8 @@ import {
                }
            });
 
-           // Sincronizar processos e propostas com o Firestore antes de carregar o dashboard
+           // Sincronizar TRs, processos e propostas com o Firestore antes de carregar o dashboard
+           await sincronizarTrs();
            await sincronizarProcessos();
            await sincronizarPropostasFornecedores();
 
