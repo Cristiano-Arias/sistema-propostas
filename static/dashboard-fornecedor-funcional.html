@@ -835,6 +835,7 @@
             
             if (!user) {
                 console.log('Usuário não autenticado');
+                // redireciona para a tela de login inicial ao detectar ausência de usuário
                 window.location.href = '/static/portal_login_simples.html';
                 return;
             }
@@ -845,6 +846,7 @@
                 if (!userDoc.exists()) {
                     console.error('Usuário não encontrado no Firestore');
                     await signOut(auth);
+                    // se o usuário não existe, voltar para a tela de login inicial
                     window.location.href = '/static/portal_login_simples.html';
                     return;
                 }
@@ -852,6 +854,7 @@
                 const userData = userDoc.data();
                 if (userData.perfil.toLowerCase() !== 'fornecedor') {
                     await signOut(auth);
+                    // perfil incorreto: retornar ao login principal
                     window.location.href = '/static/portal_login_simples.html';
                     return;
                 }
@@ -872,6 +875,7 @@
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
                 await signOut(auth);
+                // em caso de erro inesperado, redirecionar para login
                 window.location.href = '/static/portal_login_simples.html';
             }
         });
@@ -889,8 +893,7 @@
             // Carregue as estatísticas imediatamente para apresentar feedback ao usuário
             // assim que o dashboard estiver pronto. A visibilidade imediata do estado do
             // sistema é recomendada por heurísticas de usabilidade, que sugerem
-            // fornecer retorno rápido ao usuário. Se a função de estatísticas
-            // estiver disponível, invoque-a agora.
+            // fornecer retorno rápido ao usuário【190845903971445†L79-L96】.
             if (typeof carregarEstatisticas === 'function') {
                 carregarEstatisticas();
             }
@@ -899,6 +902,8 @@
         async function logout() {
             if (confirm('Deseja sair do sistema?')) {
                 await signOut(auth);
+                // após o logout levar o usuário à página de login inicial
+                // o uso de window.location.href navega para a URL desejada【124727200135747†L185-L189】
                 window.location.href = '/static/portal_login_simples.html';
             }
         }
@@ -940,12 +945,13 @@
 
             // Carregar dados específicos
             if (pagina === 'dashboard') {
+                // Atualizar estatísticas quando o usuário visualizar o dashboard
                 carregarEstatisticas();
             } else if (pagina === 'processos') {
                 // Quando o usuário acessar a lista de processos, marque que ele já visualizou
-                // os convites pendentes. Isso remove a notificação vermelha e impede
+                // os processos pendentes. Isso remove a notificação vermelha e impede
                 // que os mesmos convites sejam contados como "novos" até que surjam
-                // novos convites. Em seguida, carregamos a lista e recalculamos as estatísticas.
+                // novos convites. Em seguida carregamos a lista e recalculamos as estatísticas.
                 try {
                     localStorage.setItem('processosNovosLidos', 'true');
                 } catch (e) {
@@ -1342,14 +1348,14 @@
                     'processos-total': totalProcessos,
                     'propostas-rascunho': propostasRascunho
                 };
-
+        
                 Object.entries(elementos).forEach(([id, valor]) => {
                     const elemento = document.getElementById(id);
                     if (elemento) {
                         elemento.textContent = valor;
                     }
                 });
-
+        
                 // Atualizar badge de notificação
                 const badge = document.getElementById('processos-notification');
                 if (badge) {
