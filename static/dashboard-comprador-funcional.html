@@ -1328,6 +1328,30 @@ import {
             }
         }
 
+        // Sincronizar propostas dos fornecedores a partir do Firestore
+        async function sincronizarPropostasFornecedores() {
+            /**
+             * Esta função busca todas as propostas cadastradas no Firestore e
+             * atualiza o localStorage com a chave 'propostas_fornecedores'.
+             * Isso garante que o módulo comprador enxergue as propostas
+             * enviadas pelo fornecedor, mesmo quando o armazenamento local
+             * original do fornecedor não está disponível para este usuário.
+             */
+            try {
+                if (window.FirebaseFirestore && typeof window.FirebaseFirestore.buscarPropostas === 'function') {
+                    console.log('🔄 Sincronizando propostas dos fornecedores para o comprador...');
+                    const propostas = await window.FirebaseFirestore.buscarPropostas();
+                    // Persistir no localStorage para compatibilidade com código existente
+                    localStorage.setItem('propostas_fornecedores', JSON.stringify(propostas));
+                    console.log(`✅ ${propostas.length} propostas sincronizadas do Firestore`);
+                } else {
+                    console.warn('⚠️ FirebaseFirestore não disponível para sincronizar propostas.');
+                }
+            } catch (e) {
+                console.warn('⚠️ Erro ao sincronizar propostas do Firestore:', e);
+            }
+        }
+
         // Verificar notificações
         function verificarNotificacoes() {
             const notificacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.NOTIFICACOES_COMPRADOR, []);
@@ -3788,6 +3812,9 @@ import {
                    }
                }
            });
+
+           // Sincronizar propostas dos fornecedores com o Firestore antes de carregar o dashboard
+           await sincronizarPropostasFornecedores();
 
            // Carregar dashboard inicial
            mostrarPagina('dashboard');
