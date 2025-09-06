@@ -1294,8 +1294,28 @@
             };
 
             trs.push(novoTR);
-            
-            if (window.SistemaLocal.salvar(window.SistemaLocal.CHAVES.TRS, trs)) {
+
+            const salvoLocal = window.SistemaLocal.salvar(window.SistemaLocal.CHAVES.TRS, trs);
+
+            // Tentar persistir o TR no Firestore para que outros módulos possam acessá-lo
+            if (window.FirebaseFirestore && typeof window.FirebaseFirestore.salvarTR === 'function') {
+                try {
+                    // Criar uma cópia do TR e remover o id para que o Firestore gere um novo ID próprio
+                    const trParaFirestore = { ...novoTR };
+                    delete trParaFirestore.id;
+                    window.FirebaseFirestore.salvarTR(trParaFirestore)
+                        .then((idGerado) => {
+                            console.log('📤 TR salvo no Firestore com ID:', idGerado);
+                        })
+                        .catch((err) => {
+                            console.warn('⚠️ Não foi possível salvar TR no Firestore:', err);
+                        });
+                } catch (e) {
+                    console.warn('⚠️ Erro ao tentar salvar TR no Firestore:', e);
+                }
+            }
+
+            if (salvoLocal) {
                 return { sucesso: true, id: novoTR.id };
             } else {
                 return { sucesso: false, erro: 'Erro ao salvar no localStorage' };
