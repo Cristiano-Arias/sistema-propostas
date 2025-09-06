@@ -586,14 +586,33 @@
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            loadTRs();
-            updateStats();
+            // Sincronizar TRs do Firestore antes de carregar dados locais
+            (async () => {
+                if (window.FirebaseFirestore && typeof window.FirebaseFirestore.buscarTRs === 'function') {
+                    try {
+                        const trsFirestore = await window.FirebaseFirestore.buscarTRs();
+                        // Persistir no localStorage para manter compatibilidade
+                        localStorage.setItem('sistema_trs', JSON.stringify(trsFirestore));
+                        console.log(`✅ ${trsFirestore.length} TRs sincronizados do Firestore para o comprador`);
+                    } catch (e) {
+                        console.warn('⚠️ Erro ao sincronizar TRs do Firestore:', e);
+                    }
+                }
+                loadTRs();
+                updateStats();
+            })();
         });
 
         function loadTRs() {
             // Usar sistema unificado em vez de localStorage direto
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            trsData = trs;
+            // Mapear status 'enviado' para 'PENDENTE_APROVACAO' para compatibilidade
+            trsData = (trs || []).map(tr => {
+                if (tr.status === 'enviado') {
+                    return { ...tr, status: 'PENDENTE_APROVACAO' };
+                }
+                return tr;
+            });
             
             renderTRList();
             updateNotificationBadge();
@@ -978,6 +997,7 @@
                 case 'PENDENTE_APROVACAO': return 'Pendente';
                 case 'APROVADO': return 'Aprovado';
                 case 'REPROVADO': return 'Reprovado';
+                case 'enviado': return 'Pendente';
                 default: return 'Pendente';
             }
         }
@@ -1267,6 +1287,7 @@
     <script type="module" src="/static/auth.js"></script>
 
 <script type="module" src="/static/js/firebase.js"></script>
+<script type="module" src="/static/js/firebase-firestore.js"></script>
 <script type="module" src="/static/js/realtime-sync.js"></script>
 </body>
 </html>
