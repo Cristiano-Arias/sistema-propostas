@@ -195,8 +195,14 @@ export class FornecedorRouter {
                 await auth.signOut();
             }
 
-            // Redirecionar para página de login
-            window.location.href = '/static/portal-fornecedor-unificado.html';
+            // Redirecionar para a página de login inicial
+            // O documento MDN sobre Location.href explica que definir a propriedade
+            // `href` navega para a URL fornecida, efetuando um redirecionamento
+            // imediato e persistindo o histórico de navegação【124727200135747†L185-L189】.
+            // Ao utilizar a página `portal_login_simples.html` garantimos que o
+            // logout do fornecedor volte para a tela inicial de login, em vez
+            // de permanecer no portal unificado do fornecedor.
+            window.location.href = '/static/portal_login_simples.html';
         } catch (error) {
             console.error('Erro no logout:', error);
             window.location.reload();
