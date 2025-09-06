@@ -1897,6 +1897,20 @@ async function enviarProposta() {
             
             propostasFiltradas.push(propostaParaSalvar);
             localStorage.setItem('propostas_fornecedores', JSON.stringify(propostasFiltradas));
+
+            // Também persistir a proposta no Firestore através do módulo FirebaseFirestore.
+            // Isso garante que a proposta fique disponível no dashboard do fornecedor e para o módulo do comprador.
+            if (window.FirebaseFirestore && typeof window.FirebaseFirestore.salvarProposta === 'function') {
+                try {
+                    await window.FirebaseFirestore.salvarProposta({
+                        ...propostaParaSalvar,
+                        status: propostaParaSalvar.status || 'ENVIADA'
+                    });
+                    console.log('📤 Proposta salva no Firestore com sucesso');
+                } catch (firestoreError) {
+                    console.warn('⚠️ Não foi possível salvar proposta no Firestore:', firestoreError);
+                }
+            }
         }
         
         // Salvar também em propostas_comparativo
@@ -3039,6 +3053,8 @@ if (typeof mostrarMensagem === 'undefined') {
 
     <!-- Carregue apenas os módulos necessários -->
     <script type="module" src="/static/js/firebase.js"></script>
+    <!-- Importar firestore helper para permitir salvar propostas no Firestore -->
+    <script type="module" src="/static/js/firebase-firestore.js"></script>
     <script type="module" src="/static/js/realtime-sync.js"></script>
 </body>
 </html>
