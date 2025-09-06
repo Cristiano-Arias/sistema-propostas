@@ -55,9 +55,18 @@ class FirebaseFirestore {
             const propostas = [];
             
             querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                // Se dadosCompletos for uma string (serializado), tente convertê-lo de volta para objeto.
+                if (data.dadosCompletos && typeof data.dadosCompletos === 'string') {
+                    try {
+                        data.dadosCompletos = JSON.parse(data.dadosCompletos);
+                    } catch (e) {
+                        console.warn('Não foi possível converter dadosCompletos para objeto:', e);
+                    }
+                }
                 propostas.push({
                     id: docSnap.id,
-                    ...docSnap.data()
+                    ...data
                 });
             });
             
