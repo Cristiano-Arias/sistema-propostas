@@ -1135,29 +1135,54 @@
         // Integração com outros módulos
         window.IntegracaoModulos = {
             enviarTRParaComprador: function(tr) {
+                /**
+                 * Atualiza o status do TR para pendente de aprovação e envia
+                 * uma notificação ao módulo do comprador. Além de salvar no
+                 * localStorage, também tenta persistir a mudança no Firestore.
+                 */
                 try {
                     const chaveTRS = window.SistemaLocal.CHAVES.TRS;
                     const trs = window.SistemaLocal.carregar(chaveTRS, []);
                     const trIndex = trs.findIndex(t => t.id === tr.id);
                     
                     if (trIndex !== -1) {
-                        trs[trIndex].status = 'enviado';
+                        // Atualizar status local para pendente de aprovação
+                        trs[trIndex].status = 'PENDENTE_APROVACAO';
                         trs[trIndex].dataEnvioAprovacao = new Date().toISOString();
                         
                         const salvoComSucesso = window.SistemaLocal.salvar(chaveTRS, trs);
                         
                         if (salvoComSucesso) {
+                            // Registrar notificação no localStorage
                             const notificacoes = window.SistemaLocal.carregar('notificacoes_comprador', []);
                             notificacoes.push({
                                 id: Date.now().toString(),
                                 tipo: 'novo_tr',
                                 titulo: 'Novo TR para Aprovação',
-                                mensagem: `TR "${tr.titulo}" enviado por ${tr.usuarioNome}`,
+                                mensagem: `TR \"${tr.titulo}\" enviado por ${tr.usuarioNome}`,
                                 data: new Date().toISOString(),
                                 lida: false,
                                 trId: tr.id
                             });
                             window.SistemaLocal.salvar('notificacoes_comprador', notificacoes);
+                            
+                            // Também tentar atualizar o TR no Firestore para que o comprador o receba
+                            if (window.FirebaseFirestore && typeof window.FirebaseFirestore.salvarTR === 'function') {
+                                try {
+                                    // Montar objeto para atualização no Firestore
+                                    const trParaFirestore = { ...trs[trIndex] };
+                                    // Persistir no Firestore com o mesmo ID
+                                    window.FirebaseFirestore.salvarTR(trParaFirestore)
+                                        .then(() => {
+                                            console.log('📤 TR atualizado no Firestore para status PENDENTE_APROVACAO');
+                                        })
+                                        .catch((err) => {
+                                            console.warn('⚠️ Não foi possível atualizar TR no Firestore:', err);
+                                        });
+                                } catch (e) {
+                                    console.warn('⚠️ Erro ao tentar salvar TR no Firestore:', e);
+                                }
+                            }
                             
                             console.log('✅ TR enviado com sucesso para comprador');
                             return true;
