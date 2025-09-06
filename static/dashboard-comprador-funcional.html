@@ -1352,6 +1352,30 @@ import {
             }
         }
 
+        // Sincronizar processos licitatórios a partir do Firestore
+        async function sincronizarProcessos() {
+            /**
+             * Busca todos os processos cadastrados no Firestore e atualiza o
+             * localStorage com a chave 'sistema_processos'. Caso existam
+             * processos armazenados na chave antiga 'processos_licitatorios',
+             * eles serão sobrescritos pelos dados mais recentes do banco.
+             */
+            try {
+                if (window.FirebaseFirestore && typeof window.FirebaseFirestore.buscarProcessos === 'function') {
+                    console.log('🔄 Sincronizando processos do Firestore para o comprador...');
+                    const processos = await window.FirebaseFirestore.buscarProcessos();
+                    localStorage.setItem('sistema_processos', JSON.stringify(processos));
+                    // Também atualizar a chave legada para compatibilidade
+                    localStorage.setItem('processos_licitatorios', JSON.stringify(processos));
+                    console.log(`✅ ${processos.length} processos sincronizados do Firestore`);
+                } else {
+                    console.warn('⚠️ FirebaseFirestore não disponível para sincronizar processos.');
+                }
+            } catch (e) {
+                console.warn('⚠️ Erro ao sincronizar processos do Firestore:', e);
+            }
+        }
+
         // Verificar notificações
         function verificarNotificacoes() {
             const notificacoes = SistemaLocal.carregar(SistemaLocal.CHAVES.NOTIFICACOES_COMPRADOR, []);
@@ -3731,9 +3755,18 @@ import {
        
         function abrirComparativo() {
        // Verificar se há processos com propostas no localStorage
-       const processos = JSON.parse(localStorage.getItem('processos_licitatorios') || '[]');
+       // Buscar processos nas chaves modernas e legadas
+       const processos = JSON.parse(
+           localStorage.getItem('sistema_processos') ||
+           localStorage.getItem('processos_licitatorios') || '[]'
+       );
+       // Propostas dos fornecedores são sincronizadas via Firestore em propostas_fornecedores
        const propostasFornecedores = JSON.parse(localStorage.getItem('propostas_fornecedores') || '[]');
-       const propostasCompletas = JSON.parse(localStorage.getItem('propostas_completas') || '[]');
+       // Propostas completas (se houver) podem estar na chave moderna ou legada
+       const propostasCompletas = JSON.parse(
+           localStorage.getItem('sistema_propostas_completas') ||
+           localStorage.getItem('propostas_completas') || '[]'
+       );
     
        // Filtrar processos que têm propostas
        const processosComPropostas = processos.filter(processo => {
@@ -3813,7 +3846,8 @@ import {
                }
            });
 
-           // Sincronizar propostas dos fornecedores com o Firestore antes de carregar o dashboard
+           // Sincronizar processos e propostas com o Firestore antes de carregar o dashboard
+           await sincronizarProcessos();
            await sincronizarPropostasFornecedores();
 
            // Carregar dashboard inicial
