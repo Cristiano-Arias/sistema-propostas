@@ -1898,12 +1898,19 @@ async function enviarProposta() {
             propostasFiltradas.push(propostaParaSalvar);
             localStorage.setItem('propostas_fornecedores', JSON.stringify(propostasFiltradas));
 
-            // Também persistir a proposta no Firestore através do módulo FirebaseFirestore.
-            // Isso garante que a proposta fique disponível no dashboard do fornecedor e para o módulo do comprador.
+            // Persistir a proposta no Firestore através do módulo FirebaseFirestore.
+            // Para evitar erros de "nested arrays" no Firestore (arrays dentro de arrays não são permitidas)
+            // vamos criar uma cópia sanitizada da proposta, serializando dadosCompletos em uma string.
             if (window.FirebaseFirestore && typeof window.FirebaseFirestore.salvarProposta === 'function') {
                 try {
+                    // Criar cópia da proposta para o Firestore sem estruturas aninhadas proibidas
+                    const propostaParaFirestore = { ...propostaParaSalvar };
+                    // Serializar dadosCompletos para evitar nested arrays no Firestore
+                    if (propostaParaFirestore.dadosCompletos) {
+                        propostaParaFirestore.dadosCompletos = JSON.stringify(propostaParaFirestore.dadosCompletos);
+                    }
                     await window.FirebaseFirestore.salvarProposta({
-                        ...propostaParaSalvar,
+                        ...propostaParaFirestore,
                         status: propostaParaSalvar.status || 'ENVIADA'
                     });
                     console.log('📤 Proposta salva no Firestore com sucesso');
@@ -3045,7 +3052,26 @@ if (typeof mostrarMensagem === 'undefined') {
                     });
                 } else {
                     // Adicionar nova linha
-                    adicionarLinhaTabela(tabelaId, item);
+                    // Use função genérica para adicionar linha se existir, caso contrário defina uma implementação.
+                    if (typeof adicionarLinhaTabela === 'function') {
+                        adicionarLinhaTabela(tabelaId, item);
+                    } else {
+                        // Fallback: clonar a primeira linha e preencher valores
+                        const tabela = document.getElementById(tabelaId);
+                        const tbody = tabela ? tabela.querySelector('tbody') : null;
+                        const templateRow = tbody ? tbody.querySelector('tr') : null;
+                        if (templateRow && tbody) {
+                            const newRow = templateRow.cloneNode(true);
+                            const inputs = newRow.querySelectorAll('input, select, textarea');
+                            const valores = Array.isArray(item) ? item : Object.values(item);
+                            inputs.forEach((input, idx) => {
+                                input.value = valores[idx] || '';
+                            });
+                            tbody.appendChild(newRow);
+                        } else {
+                            console.warn('Não foi possível adicionar linha: tabela ou linha modelo não encontrada');
+                        }
+                    }
                 }
             });
         }
