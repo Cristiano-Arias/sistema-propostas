@@ -835,7 +835,7 @@
             
             if (!user) {
                 console.log('Usuário não autenticado');
-                window.location.href = '/static/portal-fornecedor-unificado.html';
+                window.location.href = '/static/portal_login_simples.html';
                 return;
             }
             
@@ -845,14 +845,14 @@
                 if (!userDoc.exists()) {
                     console.error('Usuário não encontrado no Firestore');
                     await signOut(auth);
-                    window.location.href = '/static/portal-fornecedor-unificado.html';
+                    window.location.href = '/static/portal_login_simples.html';
                     return;
                 }
                 
                 const userData = userDoc.data();
                 if (userData.perfil.toLowerCase() !== 'fornecedor') {
                     await signOut(auth);
-                    window.location.href = '/static/portal-fornecedor-unificado.html';
+                    window.location.href = '/static/portal_login_simples.html';
                     return;
                 }
                 
@@ -872,33 +872,19 @@
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
                 await signOut(auth);
-                window.location.href = '/static/portal-fornecedor-unificado.html';
+                window.location.href = '/static/portal_login_simples.html';
             }
         });
         
         function carregarDadosIniciais() {
             console.log('Carregando dados iniciais...');
-            // Ao iniciar uma nova sessão, limpe o indicador de processos lidos
-            // Isso garante que notificações de novos processos sejam exibidas
-            // sempre que o usuário fizer login novamente.
-            try {
-                localStorage.removeItem('processosNovosLidos');
-            } catch (e) {
-                console.warn('Não foi possível limpar o indicador de processos lidos:', e);
-            }
-            // Carregue as estatísticas imediatamente para apresentar feedback ao usuário
-            // assim que o dashboard estiver pronto. A visibilidade imediata do estado do
-            // sistema é recomendada por heurísticas de usabilidade, que sugerem
-            // fornecer retorno rápido ao usuário【190845903971445†L79-L96】.
-            if (typeof carregarEstatisticas === 'function') {
-                carregarEstatisticas();
-            }
+            // Implementação básica sem fallbacks complexos
         }
         
         async function logout() {
             if (confirm('Deseja sair do sistema?')) {
                 await signOut(auth);
-                window.location.href = '/static/portal-fornecedor-unificado.html';
+                window.location.href = '/static/portal_login_simples.html';
             }
         }
         
@@ -939,20 +925,9 @@
 
             // Carregar dados específicos
             if (pagina === 'dashboard') {
-                // Atualizar estatísticas quando o usuário visualizar o dashboard
                 carregarEstatisticas();
             } else if (pagina === 'processos') {
-                // Quando o usuário acessar a lista de processos, marque que ele já visualizou
-                // os processos pendentes. Isso remove a notificação vermelha e impede
-                // que os mesmos convites sejam contados como "novos" até que surjam
-                // novos convites. Em seguida carregamos a lista e recalculamos as estatísticas.
-                try {
-                    localStorage.setItem('processosNovosLidos', 'true');
-                } catch (e) {
-                    console.warn('Não foi possível marcar processos como lidos:', e);
-                }
                 carregarProcessos();
-                carregarEstatisticas();
             } else if (pagina === 'propostas') {
                 carregarPropostas();
             }
@@ -1321,23 +1296,10 @@
                 const propostasEnviadas = propostas.filter(p => p.status === 'ENVIADA').length;
                 const propostasRascunho = propostas.filter(p => p.status === 'RASCUNHO').length;
                 const processosNovos = Math.max(0, totalProcessos - propostas.length);
-
-                // Permite que o usuário marque processos como "lidos" quando visita a
-                // página de processos. Se a flag estiver definida, não exibimos
-                // notificações de processos novos nem incrementamos o indicador.
-                let processosNovosParaExibir = processosNovos;
-                try {
-                    const flagLidos = localStorage.getItem('processosNovosLidos');
-                    if (flagLidos === 'true') {
-                        processosNovosParaExibir = 0;
-                    }
-                } catch (e) {
-                    console.warn('Não foi possível ler a flag de processos lidos:', e);
-                }
-
+        
                 // Atualizar interface
                 const elementos = {
-                    'processos-novos': processosNovosParaExibir,
+                    'processos-novos': processosNovos,
                     'propostas-enviadas': propostasEnviadas,
                     'processos-total': totalProcessos,
                     'propostas-rascunho': propostasRascunho
@@ -1353,8 +1315,8 @@
                 // Atualizar badge de notificação
                 const badge = document.getElementById('processos-notification');
                 if (badge) {
-                    if (processosNovosParaExibir > 0) {
-                        badge.textContent = processosNovosParaExibir;
+                    if (processosNovos > 0) {
+                        badge.textContent = processosNovos;
                         badge.style.display = 'flex';
                     } else {
                         badge.style.display = 'none';
