@@ -591,7 +591,6 @@
                 if (window.FirebaseFirestore && typeof window.FirebaseFirestore.buscarTRs === 'function') {
                     try {
                         const trsFirestore = await window.FirebaseFirestore.buscarTRs();
-                        // Persistir no localStorage para manter compatibilidade
                         localStorage.setItem('sistema_trs', JSON.stringify(trsFirestore));
                         console.log(`✅ ${trsFirestore.length} TRs sincronizados do Firestore para o comprador`);
                     } catch (e) {
