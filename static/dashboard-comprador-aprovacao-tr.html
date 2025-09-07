@@ -1077,7 +1077,13 @@
         const SistemaLocal = {
             // Chaves compatíveis com sistema existente
             CHAVES: {
-                TRS: 'termos_referencia',  // ← Mantém compatibilidade
+                // Usar a mesma chave utilizada pelos demais módulos (requisitante
+                // e sincronização) para armazenar os Termos de Referência. A
+                // chave antiga 'termos_referencia' não é mais utilizada para
+                // gravação, por isso definimos TRS como 'sistema_trs' para que o
+                // módulo do comprador consiga enxergar os TRs enviados pelo
+                // requisitante.
+                TRS: 'sistema_trs',
                 NOTIFICACOES: 'notificacoes_comprador',
                 PROCESSOS: 'processos_licitatorios',
                 FORNECEDORES: 'fornecedores_cadastrados',
