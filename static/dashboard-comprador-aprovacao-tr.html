@@ -607,7 +607,8 @@
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             // Mapear status 'enviado' para 'PENDENTE_APROVACAO' para compatibilidade
             trsData = (trs || []).map(tr => {
-                if (tr.status === 'enviado') {
+                // Mapeia status antigos para o novo status utilizado na aprovação
+                if (tr.status === 'enviado' || tr.status === 'PENDENTE' || tr.status === 'ELABORADO') {
                     return { ...tr, status: 'PENDENTE_APROVACAO' };
                 }
                 return tr;
@@ -997,6 +998,8 @@
                 case 'APROVADO': return 'Aprovado';
                 case 'REPROVADO': return 'Reprovado';
                 case 'enviado': return 'Pendente';
+                case 'PENDENTE': return 'Pendente';
+                case 'ELABORADO': return 'Pendente';
                 default: return 'Pendente';
             }
         }
