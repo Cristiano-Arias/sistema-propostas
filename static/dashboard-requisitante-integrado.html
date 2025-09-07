@@ -967,7 +967,8 @@
                     id: Date.now(),
                     numeroTR: `TR-${Date.now()}`,
                     ...dadosTR,
-                    status: 'PENDENTE',
+                    // Ao criar um TR, definir o status como pendente de aprovação
+                    status: 'PENDENTE_APROVACAO',
                     criadoPor: 'Requisitante',
                     dataCriacao: new Date().toISOString(),
                     modulo: 'requisitante'
@@ -983,6 +984,24 @@
                     
                     // Notificar comprador
                     notificarComprador(novoTR);
+
+                    // Persistir TR no Firestore para que outros módulos possam acessá-lo
+                    if (window.FirebaseFirestore && typeof window.FirebaseFirestore.salvarTR === 'function') {
+                        try {
+                            const trParaFirestore = { ...novoTR };
+                            // Remover id para que o Firestore gere seu próprio identificador
+                            delete trParaFirestore.id;
+                            window.FirebaseFirestore.salvarTR(trParaFirestore)
+                                .then((idGerado) => {
+                                    console.log('📤 TR salvo no Firestore com ID:', idGerado);
+                                })
+                                .catch((err) => {
+                                    console.warn('⚠️ Não foi possível salvar TR no Firestore:', err);
+                                });
+                        } catch (e) {
+                            console.warn('⚠️ Erro ao tentar salvar TR no Firestore:', e);
+                        }
+                    }
                     
                     return novoTR;
                 } else {
@@ -1028,8 +1047,11 @@
                 const trs = carregarTRs();
                 
                 const totalTRs = trs.length;
-                const trsElaborados = trs.filter(tr => tr.status === 'ELABORADO' || tr.status === 'PENDENTE').length;
-                const enviadosCompras = trs.filter(tr => tr.status === 'APROVADO').length;
+                // Contar TRs que estão em elaboração ou pendentes de aprovação
+                const trsElaborados = trs.filter(tr => tr.status === 'ELABORADO' || tr.status === 'PENDENTE_APROVACAO').length;
+                // Contar TRs enviados (pendentes de aprovação) para estatística de encaminhados
+                const enviadosCompras = trs.filter(tr => tr.status === 'PENDENTE_APROVACAO').length;
+                // Contar TRs aprovados
                 const trsAprovados = trs.filter(tr => tr.status === 'APROVADO').length;
                 
                 // Atualizar interface
