@@ -806,7 +806,8 @@
         const SistemaLocal = {
             // Chaves compatíveis com sistema existente
             CHAVES: {
-                TRS: 'termos_referencia',  // ← Compatibilidade com Comprador
+                // Armazenar TRs na chave unificada utilizada pelo módulo do comprador
+                TRS: 'sistema_trs',
                 NOTIFICACOES: 'notificacoes_requisitante',
                 PARECERES: 'pareceres_tecnicos',
                 USUARIO: 'usuario_requisitante'
