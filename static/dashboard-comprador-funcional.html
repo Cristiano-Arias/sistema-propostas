@@ -1176,7 +1176,11 @@ import {
         const StatusTR = {
             RASCUNHO: 'rascunho',
             ELABORADO: 'elaborado',
-            ENVIADO: 'enviado',
+            // Mapear o status "enviado" para o novo valor utilizado pelos
+            // requisitantes (PENDENTE_APROVACAO). Ainda assim, mantemos
+            // compatibilidade ao tratar "enviado" como pendente nas
+            // filtragens mais adiante.
+            ENVIADO: 'PENDENTE_APROVACAO',
             APROVADO: 'aprovado',
             REPROVADO: 'reprovado'
         };
@@ -1303,9 +1307,13 @@ import {
             const propostasFornecedor = SistemaLocal.carregar('propostas_fornecedores', []);
             
             // Calcular estatísticas corretas
+            // Considerar como pendente tanto o status configurado em StatusTR.ENVIADO
+            // quanto valores antigos ("enviado", "PENDENTE_APROVACAO" ou "pendente").
+            const pendenteStatuses = [StatusTR.ENVIADO, 'enviado', 'PENDENTE_APROVACAO', 'pendente'];
             const estatisticas = {
-                trsPendentes: trs.filter(tr => tr.status === StatusTR.ENVIADO).length,
-                trsAprovados: trs.filter(tr => tr.status === StatusTR.APROVADO).length,
+                trsPendentes: trs.filter(tr => pendenteStatuses.includes(tr.status)).length,
+                // Considerar "aprovado" em letras minúsculas e maiúsculas
+                trsAprovados: trs.filter(tr => tr.status === StatusTR.APROVADO || tr.status === 'APROVADO' || tr.status === 'aprovado').length,
                 processosAtivos: processos.filter(p => p.status === 'ATIVO').length,
                 propostasRecebidas: propostasFornecedor.length
             };
@@ -1443,7 +1451,9 @@ import {
         // Carregar TRs pendentes de aprovação
         function carregarTRsPendentes() {
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const trsPendentes = trs.filter(tr => tr.status === StatusTR.ENVIADO);
+            // Filtrar TRs pendentes considerando diferentes nomenclaturas de status
+            const pendenteStatuses = [StatusTR.ENVIADO, 'enviado', 'PENDENTE_APROVACAO', 'pendente'];
+            const trsPendentes = trs.filter(tr => pendenteStatuses.includes(tr.status));
 
             const container = document.getElementById('tr-list');
             if (!container) return;
@@ -1505,7 +1515,8 @@ import {
         function carregarTRsAprovados() {
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             // Filtrar apenas TRs aprovados que ainda não foram usados em processos
-            const trsAprovados = trs.filter(tr => tr.status === StatusTR.APROVADO && !tr.processoVinculado);
+            // Filtrar TRs aprovados considerando variações de caixa
+            const trsAprovados = trs.filter(tr => (tr.status === StatusTR.APROVADO || tr.status === 'APROVADO' || tr.status === 'aprovado') && !tr.processoVinculado);
 
             const container = document.getElementById('trs-aprovados-list');
             if (!container) return;
