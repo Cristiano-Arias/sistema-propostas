@@ -1099,6 +1099,12 @@
             REPROVADO: 'reprovado'
         };
 
+        // Variável global utilizada para controlar o modo de edição. Quando
+        // contém o ID de um TR existente, o formulário salvará os dados
+        // no registro correspondente em vez de criar um novo. Ao finalizar
+        // a edição, essa variável deve ser resetada para null.
+        window.trEditandoId = null;
+
         window.StatusConfig = {
             rascunho: {
                 label: 'Em Rascunho',
@@ -1275,9 +1281,79 @@
 
         // Salvar TR
         window.salvarTR = function(dados, status = window.StatusTR.ELABORADO) {
+            // Carregar TRs existentes
             const trs = window.SistemaLocal.carregar(window.SistemaLocal.CHAVES.TRS, []);
             const usuario = window.SistemaLocal.obterUsuario();
 
+            // Verificar se estamos editando um TR existente
+            if (window.trEditandoId) {
+                const index = trs.findIndex(t => t.id === window.trEditandoId);
+                if (index !== -1) {
+                    // Atualizar campos do TR existente, preservando campos não editáveis
+                    const trAntigo = trs[index];
+                    const trAtualizado = {
+                        ...trAntigo,
+                        titulo: dados.titulo,
+                        modalidade: dados.modalidade,
+                        objetivo: dados.objetivo,
+                        conformidade: dados.conformidade,
+                        visitaLocal: dados.visitaLocal,
+                        local: dados.local,
+                        escopo: dados.escopo,
+                        situacaoAtual: dados.situacaoAtual,
+                        situacaoProposta: dados.situacaoProposta,
+                        especificacao: dados.especificacao,
+                        premissas: dados.premissas,
+                        planilhaQuantidade: dados.planilhaQuantidade,
+                        servicos: dados.servicos,
+                        escopoGeral: dados.escopoGeral,
+                        prazo: dados.prazos,
+                        prazoExecucao: dados.prazos,
+                        matrizResponsabilidade: dados.matrizResponsabilidade,
+                        mobilizacao: dados.mobilizacao,
+                        canteiro: dados.canteiro,
+                        credenciamento: dados.credenciamento,
+                        meioAmbiente: dados.meioAmbiente,
+                        engenharia: dados.engenharia,
+                        aquisicoes: dados.aquisicoes,
+                        planejamentoGestao: dados.planejamentoGestao,
+                        planejamentoExecutivo: dados.planejamentoExecutivo,
+                        testes: dados.testes,
+                        encerramento: dados.encerramento,
+                        cap: dados.cap,
+                        caf: dados.caf,
+                        garantia: dados.garantia,
+                        criterios: dados.criterios,
+                        anexos: dados.anexos,
+                        dataAtualizacao: new Date().toISOString()
+                    };
+                    trs[index] = trAtualizado;
+                    const salvoLocalEdit = window.SistemaLocal.salvar(window.SistemaLocal.CHAVES.TRS, trs);
+                    // Resetar flag de edição
+                    window.trEditandoId = null;
+                    // Persistir alterações no Firestore, se possível
+                    if (window.FirebaseFirestore && typeof window.FirebaseFirestore.salvarTR === 'function') {
+                        try {
+                            // Remover o campo id para Firestore gerar um novo id ou sobrescrever
+                            const trParaFirestore = { ...trAtualizado };
+                            delete trParaFirestore.id;
+                            window.FirebaseFirestore.salvarTR(trParaFirestore)
+                                .catch((err) => {
+                                    console.warn('⚠️ Não foi possível atualizar TR no Firestore:', err);
+                                });
+                        } catch (e) {
+                            console.warn('⚠️ Erro ao tentar atualizar TR no Firestore:', e);
+                        }
+                    }
+                    if (salvoLocalEdit) {
+                        return { sucesso: true, id: trAtualizado.id };
+                    }
+                    return { sucesso: false, erro: 'Erro ao salvar alterações' };
+                }
+                // Se não encontrou, continuaremos como novo TR
+            }
+
+            // Criar novo TR
             const novoTR = {
                 id: window.SistemaLocal.gerarId(),
                 numeroTR: `TR-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`,
@@ -1316,19 +1392,21 @@
                 criterios: dados.criterios,
                 anexos: dados.anexos,
                 valorEstimado: 0,
-                status: status,
+                // Sempre iniciar novo TR como "elaborado" para permitir edição
+                // mesmo quando um status customizado seja passado de fora.  O
+                // valor padrão do argumento já é window.StatusTR.ELABORADO,
+                // contudo garantir explicitamente evita que um valor
+                // inesperado seja propagado para a persistência.
+                status: window.StatusTR.ELABORADO,
                 dataCriacao: new Date().toISOString(),
                 dataAtualizacao: new Date().toISOString()
             };
-
             trs.push(novoTR);
 
             const salvoLocal = window.SistemaLocal.salvar(window.SistemaLocal.CHAVES.TRS, trs);
-
             // Tentar persistir o TR no Firestore para que outros módulos possam acessá-lo
             if (window.FirebaseFirestore && typeof window.FirebaseFirestore.salvarTR === 'function') {
                 try {
-                    // Criar uma cópia do TR e remover o id para que o Firestore gere um novo ID próprio
                     const trParaFirestore = { ...novoTR };
                     delete trParaFirestore.id;
                     window.FirebaseFirestore.salvarTR(trParaFirestore)
@@ -1342,7 +1420,6 @@
                     console.warn('⚠️ Erro ao tentar salvar TR no Firestore:', e);
                 }
             }
-
             if (salvoLocal) {
                 return { sucesso: true, id: novoTR.id };
             } else {
@@ -1511,6 +1588,153 @@
                 row.remove();
             } else {
                 alert('Deve haver pelo menos um item na matriz de responsabilidade.');
+            }
+        };
+
+        /**
+         * Abre o formulário em modo de edição para um TR existente.
+         * Carrega os dados do TR indicado pelo ID e preenche os campos do
+         * formulário de criação. Se encontrado, define a variável
+         * `window.trEditandoId` para que o salvamento substitua o registro ao
+         * invés de criar um novo.
+         * @param {string} trId ID do TR a ser editado
+         */
+        window.editarTR = function(trId) {
+            const trs = window.SistemaLocal.carregar(window.SistemaLocal.CHAVES.TRS, []);
+            const tr = trs.find(t => t.id === trId);
+            if (!tr) {
+                alert('TR não encontrado!');
+                return;
+            }
+            // Definir a flag de edição
+            window.trEditandoId = trId;
+            // Navegar para a página de criação/edição
+            if (typeof window.mostrarPagina === 'function') {
+                window.mostrarPagina('criar-tr');
+            }
+            // Preencher campos básicos
+            document.getElementById('tr-titulo').value = tr.titulo || '';
+            document.getElementById('tr-modalidade').value = tr.modalidade || '';
+            document.getElementById('tr-objetivo').value = tr.objetivo || '';
+            document.getElementById('tr-conformidade').value = tr.conformidade || '';
+            document.getElementById('tr-visita-local').value = tr.visitaLocal || '';
+            document.getElementById('tr-local').value = tr.local || '';
+            document.getElementById('tr-escopo').value = tr.escopo || '';
+            document.getElementById('tr-situacao-atual').value = tr.situacaoAtual || '';
+            document.getElementById('tr-situacao-proposta').value = tr.situacaoProposta || '';
+            document.getElementById('tr-especificacao').value = tr.especificacao || '';
+            document.getElementById('tr-premissas').value = tr.premissas || '';
+            document.getElementById('tr-planilha-quantidade').value = tr.planilhaQuantidade || '';
+            document.getElementById('tr-escopo-geral').value = tr.escopoGeral || '';
+            document.getElementById('tr-prazos').value = tr.prazo || tr.prazoExecucao || '';
+            document.getElementById('tr-mobilizacao').value = tr.mobilizacao || '';
+            document.getElementById('tr-canteiro').value = tr.canteiro || '';
+            document.getElementById('tr-credenciamento').value = tr.credenciamento || '';
+            document.getElementById('tr-meio-ambiente').value = tr.meioAmbiente || '';
+            document.getElementById('tr-engenharia').value = tr.engenharia || '';
+            document.getElementById('tr-aquisicoes').value = tr.aquisicoes || '';
+            document.getElementById('tr-planejamento-gestao').value = tr.planejamentoGestao || '';
+            document.getElementById('tr-planejamento-executivo').value = tr.planejamentoExecutivo || '';
+            document.getElementById('tr-testes').value = tr.testes || '';
+            document.getElementById('tr-encerramento').value = tr.encerramento || '';
+            document.getElementById('tr-cap').value = tr.cap || '';
+            document.getElementById('tr-caf').value = tr.caf || '';
+            document.getElementById('tr-garantia').value = tr.garantia || '';
+            document.getElementById('tr-criterios').value = tr.criterios || '';
+            document.getElementById('tr-anexos').value = tr.anexos || '';
+
+            // Preencher serviços na tabela
+            try {
+                const tbodyServ = document.querySelector('#tabela-servicos tbody');
+                tbodyServ.innerHTML = '';
+                if (Array.isArray(tr.servicos) && tr.servicos.length > 0) {
+                    tr.servicos.forEach((servico, idx) => {
+                        const newRow = tbodyServ.insertRow();
+                        newRow.innerHTML = `
+                            <td>${idx + 1}</td>
+                            <td><input type="text" name="servico_descricao[]" required value="${servico.descricao || ''}"></td>
+                            <td>
+                                <select name="servico_unidade[]" required>
+                                    <option value="UN" ${servico.unidade === 'UN' ? 'selected' : ''}>UN</option>
+                                    <option value="M²" ${servico.unidade === 'M²' ? 'selected' : ''}>M²</option>
+                                    <option value="M³" ${servico.unidade === 'M³' ? 'selected' : ''}>M³</option>
+                                    <option value="ML" ${servico.unidade === 'ML' ? 'selected' : ''}>ML</option>
+                                    <option value="KG" ${servico.unidade === 'KG' ? 'selected' : ''}>KG</option>
+                                    <option value="VB" ${servico.unidade === 'VB' ? 'selected' : ''}>VB</option>
+                                </select>
+                            </td>
+                            <td><input type="number" name="servico_quantidade[]" required min="1" value="${servico.quantidade || ''}"></td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="removerServico(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                    });
+                } else {
+                    // garantir pelo menos uma linha vazia
+                    const newRow = tbodyServ.insertRow();
+                    newRow.innerHTML = `
+                        <td>1</td>
+                        <td><input type="text" name="servico_descricao[]" required></td>
+                        <td>
+                            <select name="servico_unidade[]" required>
+                                <option value="UN">UN</option>
+                                <option value="M²">M²</option>
+                                <option value="M³">M³</option>
+                                <option value="ML">ML</option>
+                                <option value="KG">KG</option>
+                                <option value="VB">VB</option>
+                            </select>
+                        </td>
+                        <td><input type="number" name="servico_quantidade[]" required min="1"></td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removerServico(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                }
+            } catch (e) {
+                console.warn('Erro ao preencher serviços para edição:', e);
+            }
+
+            // Preencher matriz de responsabilidade
+            try {
+                const tbodyResp = document.querySelector('#tabela-responsabilidades tbody');
+                tbodyResp.innerHTML = '';
+                if (Array.isArray(tr.matrizResponsabilidade) && tr.matrizResponsabilidade.length > 0) {
+                    tr.matrizResponsabilidade.forEach((item, idx) => {
+                        const radioName = `resp_tipo_${idx}`;
+                        const newRow = tbodyResp.insertRow();
+                        newRow.innerHTML = `
+                            <td><input type="text" name="resp_item[]" required value="${item.item || ''}"></td>
+                            <td style="text-align: center;"><input type="radio" name="${radioName}" value="contratada" ${item.responsavel === 'contratada' ? 'checked' : ''}></td>
+                            <td style="text-align: center;"><input type="radio" name="${radioName}" value="contratante" ${item.responsavel === 'contratante' ? 'checked' : ''}></td>
+                            <td style="text-align: center;"><input type="radio" name="${radioName}" value="na" ${!item.responsavel || item.responsavel === 'na' ? 'checked' : ''}></td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="removerResponsabilidade(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                    });
+                } else {
+                    const newRow = tbodyResp.insertRow();
+                    newRow.innerHTML = `
+                        <td><input type="text" name="resp_item[]" required></td>
+                        <td style="text-align: center;"><input type="radio" name="resp_tipo_0" value="contratada"></td>
+                        <td style="text-align: center;"><input type="radio" name="resp_tipo_0" value="contratante"></td>
+                        <td style="text-align: center;"><input type="radio" name="resp_tipo_0" value="na" checked></td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removerResponsabilidade(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                }
+            } catch (e) {
+                console.warn('Erro ao preencher matriz de responsabilidade para edição:', e);
             }
         };
 
@@ -2473,6 +2697,11 @@
                         trs[trIndex].dataAtualizacao = new Date().toISOString();
                         window.SistemaLocal.salvar(window.SistemaLocal.CHAVES.TRS, trs);
                         window.carregarMeusTRs();
+                    }
+                } else if (action === 'editar') {
+                    // Abrir o formulário em modo de edição preenchendo os dados do TR selecionado
+                    if (typeof window.editarTR === 'function') {
+                        window.editarTR(id);
                     }
                 }
             });
