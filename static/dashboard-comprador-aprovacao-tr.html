@@ -985,6 +985,14 @@
             reprovarTR();
         }
 
+        // Expor os atalhos de aprovação ao objeto global para evitar problemas
+        // de escopo causados por múltiplas inclusões deste arquivo. Sem esta
+        // atribuição, pode haver momentos em que os botões no HTML não
+        // encontram a função quando são clicados. Ao anexar às propriedades
+        // do window, garantimos que estejam sempre acessíveis.
+        window.quickApprove = quickApprove;
+        window.quickReject = quickReject;
+
         function updateStats() {
             const pending = trsData.filter(tr => {
                 const s = ((tr.status || '') + '').toUpperCase().trim();
@@ -1276,7 +1284,18 @@
                     trs = [];
                 }
             }
-            trsData = trs;
+            // Normalizar status de TRs para que as telas de aprovação e os
+            // contadores considerem "enviado", "pendente" e "elaborado" como
+            // pendentes de aprovação.  Sem esta normalização os itens
+            // apareceriam como "enviado" apenas no dashboard e não seriam
+            // listados para aprovação.
+            trsData = (trs || []).map(tr => {
+                const s = ((tr.status || '') + '').toUpperCase().trim();
+                if (s === 'ENVIADO' || s === 'PENDENTE' || s === 'ELABORADO') {
+                    return { ...tr, status: 'PENDENTE_APROVACAO' };
+                }
+                return tr;
+            });
             
             renderTRList();
             updateNotificationBadge();
