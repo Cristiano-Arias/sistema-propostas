@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Fornecedor - CDN Only</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .info-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .info-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .btn {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Dashboard Fornecedor</h1>
+            <p>Versão CDN Only - Teste de Produção</p>
+        </div>
+        
+        <div class="content">
+            <div id="status" class="status loading">
+                🔄 Carregando módulos Firebase...
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>📦 Módulos Carregados</h3>
+                    <p id="modules-info">Verificando...</p>
+                </div>
+                
+                <div class="info-card">
+                    <h3>🔐 Autenticação</h3>
+                    <p id="auth-info">Verificando...</p>
+                </div>
+                
+                <div class="info-card">
+                    <h3>🗄️ Firestore</h3>
+                    <p id="firestore-info">Verificando...</p>
+                </div>
+                
+                <div class="info-card">
+                    <h3>🌐 Ambiente</h3>
+                    <p id="env-info">Verificando...</p>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button id="test-firestore" class="btn" disabled>Testar Firestore</button>
+                <button id="test-auth" class="btn" disabled>Testar Autenticação</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Configuração Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+            authDomain: "portal-de-proposta.firebaseapp.com",
+            projectId: "portal-de-proposta",
+            storageBucket: "portal-de-proposta.firebasestorage.app",
+            messagingSenderId: "321036073908",
+            appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+        };
+
+        let app, auth, db;
+        
+        async function initializeFirebase() {
+            try {
+                // Importar módulos Firebase do CDN
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+                const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+                const { getFirestore, collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                
+                updateStatus('success', '✅ Módulos Firebase carregados com sucesso!');
+                updateModulesInfo('✅ App, Auth, Firestore carregados do CDN');
+                
+                // Inicializar Firebase
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                updateFirestoreInfo('✅ Firestore inicializado');
+                updateAuthInfo('✅ Auth inicializado');
+                updateEnvInfo(`Hostname: ${window.location.hostname}<br>Protocol: ${window.location.protocol}`);
+                
+                // Habilitar botões de teste
+                document.getElementById('test-firestore').disabled = false;
+                document.getElementById('test-auth').disabled = false;
+                
+                // Configurar eventos
+                setupEventListeners();
+                
+                console.log('🚀 Firebase inicializado com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ Erro ao inicializar Firebase:', error);
+                updateStatus('error', `❌ Erro: ${error.message}`);
+                updateModulesInfo(`❌ Erro: ${error.message}`);
+            }
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('test-firestore').addEventListener('click', async () => {
+                try {
+                    updateFirestoreInfo('🔄 Testando conexão...');
+                    const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                    
+                    // Tentar ler uma coleção
+                    const testCollection = collection(db, 'test');
+                    const snapshot = await getDocs(testCollection);
+                    
+                    updateFirestoreInfo(`✅ Conexão OK! Docs encontrados: ${snapshot.size}`);
+                } catch (error) {
+                    updateFirestoreInfo(`❌ Erro: ${error.message}`);
+                }
+            });
+            
+            document.getElementById('test-auth').addEventListener('click', async () => {
+                try {
+                    updateAuthInfo('🔄 Testando autenticação...');
+                    const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+                    
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            updateAuthInfo(`✅ Usuário logado: ${user.email}`);
+                        } else {
+                            updateAuthInfo('ℹ️ Nenhum usuário logado');
+                        }
+                    });
+                } catch (error) {
+                    updateAuthInfo(`❌ Erro: ${error.message}`);
+                }
+            });
+        }
+        
+        function updateStatus(type, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+        }
+        
+        function updateModulesInfo(message) {
+            document.getElementById('modules-info').innerHTML = message;
+        }
+        
+        function updateAuthInfo(message) {
+            document.getElementById('auth-info').innerHTML = message;
+        }
+        
+        function updateFirestoreInfo(message) {
+            document.getElementById('firestore-info').innerHTML = message;
+        }
+        
+        function updateEnvInfo(message) {
+            document.getElementById('env-info').innerHTML = message;
+        }
+        
+        // Inicializar quando a página carregar
+        initializeFirebase();
+    </script>
+</body>
+</html>

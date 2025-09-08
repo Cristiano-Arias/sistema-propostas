@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Licitações - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        .logo {
+            margin-bottom: 30px;
+        }
+
+        .logo i {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1aeb5;
+        }
+
+        .message.info {
+            background: #cce7ff;
+            color: #004085;
+            border: 1px solid #91c9ff;
+        }
+
+        .system-info {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .system-info h4 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .module-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            font-size: 11px;
+        }
+
+        .module-item i {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+
+        /* Animações de entrada */
+        .login-container {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-building"></i>
+            <h1>Sistema de Licitações</h1>
+            <p>Portal Unificado de Acesso</p>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">
+                    <i class="fas fa-envelope"></i> E-mail
+                </label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required 
+                    placeholder="seu@email.com"
+                    autocomplete="email"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-lock"></i> Senha
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    required 
+                    placeholder="••••••••"
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                <span id="btnText">
+                    <i class="fas fa-sign-in-alt"></i> Entrar no Sistema
+                </span>
+                <div class="loading" id="btnLoading">
+                    <span class="spinner"></span>
+                    Autenticando...
+                </div>
+            </button>
+        </form>
+
+        <div class="system-info">
+            <h4><i class="fas fa-info-circle"></i> Módulos Disponíveis</h4>
+            <p>Após o login, você será direcionado automaticamente para seu módulo:</p>
+            
+            <div class="modules-grid">
+                <div class="module-item">
+                    <i class="fas fa-user"></i>
+                    <span>Requisitante</span>
+                </div>
+                <div class="module-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Comprador</span>
+                </div>
+                <div class="module-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Fornecedor</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Firebase -->
+    <script type="module">
+        // Importar Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword,
+            onAuthStateChanged 
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc
+        } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        // Configuração Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgF366Ft7RkZHYaZb77HboNO3BPbmCjT8",
+            authDomain: "portal-de-proposta.firebaseapp.com",
+            projectId: "portal-de-proposta",
+            storageBucket: "portal-de-proposta.firebasestorage.app",
+            messagingSenderId: "321036073908",
+            appId: "1:321036073908:web:3149b9ea2cb77a704890e1"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Elementos DOM
+        const form = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const btnText = document.getElementById('btnText');
+        const btnLoading = document.getElementById('btnLoading');
+        const message = document.getElementById('message');
+
+        let isLoading = false;
+
+        // Manipular submit do formulário
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleLogin();
+        });
+
+        // Função de login principal
+        async function handleLogin() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!email || !password) {
+                showMessage('error', 'Por favor, preencha todos os campos.');
+                return;
+            }
+
+            setLoading(true);
+            hideMessage();
+
+            try {
+                // Login com Firebase
+                showMessage('info', 'Autenticando...');
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Buscar perfil no Firestore
+                showMessage('info', 'Verificando perfil do usuário...');
+                const userProfile = await getUserProfile(user.uid, user.email);
+                
+                // Salvar dados de sessão
+                const sessionData = {
+                    uid: user.uid,
+                    email: user.email,
+                    nome: userProfile.nome || user.email.split('@')[0],
+                    perfil: userProfile.perfil,
+                    profile: userProfile.perfil.toLowerCase(),
+                    dataLogin: new Date().toISOString(),
+                    loginTime: new Date().toISOString()
+                };
+                localStorage.setItem('userData', JSON.stringify(sessionData));
+
+                // Salvar tokens
+                const token = await user.getIdToken();
+                localStorage.setItem('userToken', token);
+                localStorage.setItem('userData', JSON.stringify(sessionData));
+                localStorage.setItem(`${userProfile.perfil.toLowerCase()}_logado`, JSON.stringify(sessionData));
+
+                // Mostrar sucesso
+                showMessage('success', `Login realizado! Perfil: ${userProfile.perfil}`);
+
+                // Redirecionar após delay
+                setTimeout(() => {
+                    redirectToDashboard(userProfile.perfil);
+                }, 1500);
+
+            } catch (error) {
+                console.error('Erro no login:', error);
+                handleLoginError(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function detectarPerfilDestino() {
+            // Verificar URL atual
+            const currentUrl = window.location.href;
+            const referrer = document.referrer;
+            const searchParams = new URLSearchParams(window.location.search);
+            const message = searchParams.get('message');
+            
+            // Parâmetro URL explícito
+            const redirectParam = searchParams.get('redirect');
+            if (redirectParam === 'comprador') return 'Comprador';
+            if (redirectParam === 'fornecedor') return 'Fornecedor';
+            if (redirectParam === 'requisitante') return 'Requisitante';
+            
+            // Se veio de um dashboard específico (referrer)
+            if (referrer.includes('dashboard-comprador')) return 'Comprador';
+            if (referrer.includes('dashboard-fornecedor')) return 'Fornecedor';
+            if (referrer.includes('dashboard-requisitante')) return 'Requisitante';
+            
+            // Se a mensagem indica erro de perfil específico
+            if (message && message.includes('comprador')) return 'Comprador';
+            if (message && message.includes('fornecedor')) return 'Fornecedor';
+            
+            // Se está vindo de login específico
+            if (currentUrl.includes('comprador') || referrer.includes('login-comprador')) return 'Comprador';
+            if (currentUrl.includes('fornecedor') || referrer.includes('login-fornecedor')) return 'Fornecedor';
+            
+            // CORREÇÃO: Default baseado na mensagem de erro
+            if (message && message.toLowerCase().includes('inválido')) return 'Comprador';
+            
+            // Default: Requisitante
+            return 'Requisitante';
+        }
+        
+        // Buscar ou criar perfil do usuário no Firestore
+        async function getUserProfile(uid, email) {
+            try {
+                // Tentar buscar usuário por UID
+                const userDoc = await getDoc(doc(db, 'usuarios', uid));
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    console.log('Usuário encontrado no Firestore:', userData);
+                    
+                    return userData;
+                }
+                
+                // Se não existir, criar novo usuário com perfil padrão
+                console.log('Usuário não encontrado, criando novo...');
+                const newUserData = {
+                    uid: uid,
+                    email: email,
+                    nome: email.split('@')[0],
+                    perfil: detectarPerfilDestino(), // <- CORREÇÃO
+                    ativo: true,
+                    criadoEm: new Date().toISOString()
+                };
+                
+                // Salvar no Firestore
+                await setDoc(doc(db, 'usuarios', uid), newUserData);
+                
+                showMessage('info', `Novo usuário criado com perfil: ${detectarPerfilDestino()}`);
+                
+                return newUserData;
+                
+            } catch (error) {
+                console.error('Erro ao buscar/criar perfil:', error);
+                
+                // Fallback: retornar perfil padrão
+                return {
+                    uid: uid,
+                    email: email,
+                    nome: email.split('@')[0],
+                    perfil: 'Requisitante',
+                    ativo: true
+                };
+            }
+        }
+
+        // Redirecionar para dashboard
+        function redirectToDashboard(perfil) {
+            const dashboards = {
+                'Requisitante': '/static/dashboard-requisitante-funcional.html',
+                'Comprador': '/static/dashboard-comprador-funcional.html',
+                'Fornecedor': '/static/dashboard-fornecedor-funcional.html'
+            };
+        
+            const dashboard = dashboards[perfil]; // Usar perfil como está (maiúscula)
+            if (dashboard) {
+                window.location.href = dashboard;
+            } else {
+                showMessage('error', 'Perfil não reconhecido: ' + perfil);
+            }
+        }
+
+        // Tratar erros de login
+        function handleLoginError(error) {
+            let errorMessage = 'Erro no login. Verifique suas credenciais.';
+
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    errorMessage = 'Usuário não encontrado. Verifique o e-mail informado.';
+                    break;
+                case 'auth/wrong-password':
+                    errorMessage = 'Senha incorreta. Tente novamente.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'E-mail inválido. Verifique o formato.';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = 'Muitas tentativas de login. Tente novamente mais tarde.';
+                    break;
+                case 'auth/network-request-failed':
+                    errorMessage = 'Erro de conexão. Verifique sua internet.';
+                    break;
+                default:
+                    errorMessage = `Erro: ${error.message}`;
+            }
+
+            showMessage('error', errorMessage);
+        }
+
+        // Utilitários de UI
+        function setLoading(loading) {
+            isLoading = loading;
+            loginBtn.disabled = loading;
+            btnText.style.display = loading ? 'none' : 'flex';
+            btnLoading.style.display = loading ? 'flex' : 'none';
+        }
+
+        function showMessage(type, text) {
+            message.className = `message ${type}`;
+            message.textContent = text;
+            message.style.display = 'block';
+        }
+
+        function hideMessage() {
+            message.style.display = 'none';
+        }
+
+        // Focar no campo email ao carregar
+        emailInput.focus();
+    </script>
+</body>
+</html>
