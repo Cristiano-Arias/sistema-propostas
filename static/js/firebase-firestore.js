@@ -206,16 +206,19 @@ class FirebaseFirestore {
     static async salvarTR(tr) {
         try {
             console.log('💾 Salvando TR:', tr.id || 'novo');
-            // Se o TR possui ID, atualize o documento existente
+            // Se o TR possui ID, criar ou atualizar o documento com merge.
+            // Usamos setDoc com merge para que, caso o documento não exista,
+            // ele seja criado, evitando o erro "No document to update".
             if (tr.id) {
-                const trRef = doc(db, 'trs', tr.id);
-                await updateDoc(trRef, {
+                const trId = tr.id.toString();
+                const trRef = doc(db, 'trs', trId);
+                await setDoc(trRef, {
                     ...tr,
                     dataAtualizacao: new Date()
-                });
-                return tr.id;
+                }, { merge: true });
+                return trId;
             } else {
-                // Criar um novo TR
+                // Criar um novo TR sem ID definido
                 const docRef = await addDoc(collection(db, 'trs'), {
                     ...tr,
                     dataCriacao: new Date(),
