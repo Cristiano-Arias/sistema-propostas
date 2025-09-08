@@ -1146,8 +1146,11 @@
                     const trIndex = trs.findIndex(t => t.id === tr.id);
                     
                     if (trIndex !== -1) {
-                        // Atualizar status local para pendente de aprovação
-                        trs[trIndex].status = 'PENDENTE_APROVACAO';
+                        // Atualizar status local para pendente de aprovação.
+                        // Para manter compatibilidade com o painel requisitante, usamos o
+                        // status "enviado" em vez de "PENDENTE_APROVACAO". O módulo do
+                        // comprador já trata ambos como pendentes.
+                        trs[trIndex].status = window.StatusTR.ENVIADO;
                         trs[trIndex].dataEnvioAprovacao = new Date().toISOString();
                         
                         const salvoComSucesso = window.SistemaLocal.salvar(chaveTRS, trs);
