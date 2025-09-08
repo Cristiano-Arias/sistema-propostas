@@ -1318,22 +1318,18 @@ import {
             const propostasFornecedor = SistemaLocal.carregar('propostas_fornecedores', []);
             
             // Calcular estatísticas corretas
-            // Considerar como pendente tanto o status configurado em StatusTR.ENVIADO
-            // quanto valores antigos ("enviado", "PENDENTE_APROVACAO" ou "pendente").
-            // Lista de status considerados pendentes. Incluir variações em
-            // caixa alta e baixa para compatibilidade.
-            const pendenteStatuses = [
-                StatusTR.ENVIADO,
-                'enviado',
-                'ENVIADO',
-                'PENDENTE_APROVACAO',
-                'pendente',
-                'PENDENTE'
-            ];
+            // Calcular estatísticas considerando variações de caixa nos status
+            const trsPendentesCount = trs.filter(tr => {
+                const s = (tr.status || '').toUpperCase();
+                return s === 'PENDENTE_APROVACAO' || s === 'ENVIADO' || s === 'PENDENTE';
+            }).length;
+            const trsAprovadosCount = trs.filter(tr => {
+                const s = (tr.status || '').toUpperCase();
+                return s === 'APROVADO';
+            }).length;
             const estatisticas = {
-                trsPendentes: trs.filter(tr => pendenteStatuses.includes(tr.status)).length,
-                // Considerar "aprovado" em letras minúsculas e maiúsculas
-                trsAprovados: trs.filter(tr => tr.status === StatusTR.APROVADO || tr.status === 'APROVADO' || tr.status === 'aprovado').length,
+                trsPendentes: trsPendentesCount,
+                trsAprovados: trsAprovadosCount,
                 processosAtivos: processos.filter(p => p.status === 'ATIVO').length,
                 propostasRecebidas: propostasFornecedor.length
             };
@@ -1482,17 +1478,12 @@ import {
                 }
             }
             // Filtrar TRs pendentes considerando diferentes nomenclaturas de status
-            // Lista de status considerados pendentes. Incluir variações de caixa
-            // para compatibilidade com versões antigas.
-            const pendenteStatuses = [
-                StatusTR.ENVIADO,
-                'enviado',
-                'ENVIADO',
-                'PENDENTE_APROVACAO',
-                'pendente',
-                'PENDENTE'
-            ];
-            const trsPendentes = trs.filter(tr => pendenteStatuses.includes(tr.status));
+            // Determinar pendência convertendo o status para caixa alta e
+            // comparando com os valores conhecidos.
+            const trsPendentes = trs.filter(tr => {
+                const s = (tr.status || '').toUpperCase();
+                return s === 'PENDENTE_APROVACAO' || s === 'ENVIADO' || s === 'PENDENTE';
+            });
 
             const container = document.getElementById('tr-list');
             if (!container) return;
