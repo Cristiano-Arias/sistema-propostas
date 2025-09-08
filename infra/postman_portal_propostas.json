@@ -1,0 +1,176 @@
+{
+  "info": {
+    "name": "Portal Propostas - Produção",
+    "_postman_id": "248f07d5-38f3-4f0e-a50e-23959a2276fb",
+    "description": "Coleção de testes para API em produção",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Verify Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/verify",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "verify"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"token\": \"{{idToken}}\"}"
+        }
+      }
+    },
+    {
+      "name": "TR - Criar (requisitante)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{idToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/termos-referencia",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "termos-referencia"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"titulo\": \"TR - Obra Aeroportuária\", \"descricao\": \"Serviços EPC\", \"status\": \"rascunho\"}"
+        }
+      }
+    },
+    {
+      "name": "Processo - Criar (comprador)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{idToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/processos",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "processos"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"tr_id\": \"{{trId}}\", \"modalidade\": \"Pregão Eletrônico\"}"
+        }
+      }
+    },
+    {
+      "name": "Proposta - Enviar (fornecedor)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{idToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/propostas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "propostas"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"processo_id\": \"{{processoId}}\", \"valor\": 123456.78, \"prazo_entrega\": \"90 dias\", \"observacoes\": \"Conforme TR\"}"
+        }
+      }
+    },
+    {
+      "name": "Processo - Publicar Técnica (comprador)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{idToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/processos/{{processoId}}/publicar-tecnica",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "processos",
+            "{{processoId}}",
+            "publicar-tecnica"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "idToken",
+      "value": ""
+    },
+    {
+      "key": "trId",
+      "value": ""
+    },
+    {
+      "key": "processoId",
+      "value": ""
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: portal-proposta
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn backend_render_fix:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: FIREBASE_CREDENTIALS       # Conteúdo JSON do service account OU caminho
+        sync: false
+      - key: FIREBASE_CREDENTIALS_FILE  # Alternativa: /etc/secrets/credentials.json
+        sync: false
+      - key: AZURE_OPENAI_ENDPOINT
+        sync: false
+      - key: AZURE_OPENAI_KEY
+        sync: false
+      - key: AZURE_OPENAI_DEPLOYMENT
+        sync: false
+      - key: AZURE_OPENAI_API_VERSION
+        value: 2024-08-01-preview
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://seu-dominio.com,https://www.seu-dominio.com
