@@ -1533,7 +1533,7 @@ import {
                             <button class="btn btn-info" data-action="visualizar" data-id="${tr.id}">
                                 <i class="fas fa-eye"></i> Visualizar
                             </button>
-                            <button class="btn btn-info" onclick="downloadTR('${tr.id}')">
+                            <button class="btn btn-info" data-action="download" data-id="${tr.id}">
                                 <i class="fas fa-download"></i> Download TR
                             </button>
                             <button class="btn btn-success" data-action="aprovar" data-id="${tr.id}">
@@ -1617,7 +1617,8 @@ import {
         // Selecionar TR para processo
         function selecionarTRParaProcesso(trId) {
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const tr = trs.find(t => t.id === trId);
+            // Procurar TR pelo id ou numeroTR (compatibilidade)
+            const tr = trs.find(t => (t.id || t.numeroTR) === trId);
             
             if (!tr) {
                 alert('TR não encontrado!');
@@ -2434,8 +2435,9 @@ import {
         // Visualizar TR
         window.visualizarTR = function(trId) {
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const tr = trs.find(t => t.id === trId);
-            
+            // Procurar o TR pelo id ou numeroTR (compatibilidade com dados legados)
+            const tr = trs.find(t => (t.id || t.numeroTR) === trId);
+
             if (!tr) {
                 alert('TR não encontrado!');
                 return;
@@ -2725,7 +2727,9 @@ import {
             if (!confirm('Deseja aprovar este Termo de Referência?')) return;
             
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const tr = trs.find(t => t.id === trId);
+            // Localizar o TR usando id ou numeroTR. Alguns TRs antigos podem
+            // usar numeroTR como identificador principal.
+            const tr = trs.find(t => (t.id || t.numeroTR) === trId);
             
             if (tr) {
                 tr.status = StatusTR.APROVADO;
@@ -2762,7 +2766,8 @@ import {
             }
             
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const tr = trs.find(t => t.id === trId);
+            // Procurar o TR pelo id ou numeroTR para suportar dados legados
+            const tr = trs.find(t => (t.id || t.numeroTR) === trId);
             
             if (tr) {
                 tr.status = StatusTR.REPROVADO;
@@ -3148,15 +3153,17 @@ import {
         // Download do TR
         function downloadTR(trId) {
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            const tr = trs.find(t => t.id === trId);
-            
+            // Localizar o TR usando id ou numeroTR como chave, pois alguns
+            // registros antigos podem não possuir id ou numeroTR.
+            const tr = trs.find(t => (t.id || t.numeroTR) === trId);
             if (tr) {
                 const dataStr = JSON.stringify(tr, null, 2);
-                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
                 const url = URL.createObjectURL(dataBlob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `TR_${tr.numeroTR}.json`;
+                // Usa numeroTR ou id para nomear o arquivo
+                link.download = `TR_${tr.numeroTR || tr.id}.json`;
                 link.click();
                 URL.revokeObjectURL(url);
             }
@@ -3906,26 +3913,34 @@ import {
            document.getElementById('card-criar-processo').addEventListener('click', () => mostrarPagina('criar-processo'));
            document.getElementById('card-processos').addEventListener('click', () => mostrarPagina('processos'));
 
-           // Delegar eventos para botões dinâmicos
-           document.addEventListener('click', function(e) {
-               const target = e.target.closest('[data-action]');
-               if (target) {
-                   const action = target.getAttribute('data-action');
-                   const id = target.getAttribute('data-id');
-                   
-                   switch(action) {
-                       case 'visualizar':
-                           visualizarTR(id);
-                           break;
-                       case 'aprovar':
-                           aprovarTR(id);
-                           break;
-                       case 'reprovar':
-                           reprovarTR(id);
-                           break;
+           // Delegar eventos para botões dinâmicos: instalar uma única vez com captura
+           if (!window.__compradorDelegationInstalled) {
+               document.addEventListener('click', function(e) {
+                   const target = e.target.closest('[data-action]');
+                   if (target) {
+                       const action = target.getAttribute('data-action');
+                       const id = target.getAttribute('data-id');
+                       switch(action) {
+                           case 'visualizar':
+                               visualizarTR(id);
+                               break;
+                           case 'aprovar':
+                               aprovarTR(id);
+                               break;
+                           case 'reprovar':
+                               reprovarTR(id);
+                               break;
+                           case 'download':
+                               // Encaminhar para a função global de download, se definida
+                               if (typeof downloadTR === 'function') {
+                                   downloadTR(id);
+                               }
+                               break;
+                       }
                    }
-               }
-           });
+               }, true);
+               window.__compradorDelegationInstalled = true;
+           }
 
            // Sincronizar TRs, processos e propostas com o Firestore antes de carregar o dashboard
            await sincronizarTrs();
