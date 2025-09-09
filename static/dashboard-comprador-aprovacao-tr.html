@@ -284,6 +284,16 @@
             background: #c82333;
         }
 
+        /* Estilo do botão de download de TR */
+        .btn-download {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #0069d9;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -672,6 +682,9 @@
                         <button class="btn btn-view" onclick="viewTR('${tr.numeroTR}')">
                             👁️ Visualizar
                         </button>
+                        <button class="btn btn-download" onclick="downloadTR('${tr.numeroTR}')">
+                            📥 Download TR
+                        </button>
                         ${(() => {
                             // Normalizar status removendo espaços e convertendo para caixa alta
                             const s = ((tr.status || '') + '').toUpperCase().trim();
@@ -865,58 +878,30 @@ function selectTR(evt, numeroTR) {
             currentTR = null;
         }
 
-        // SUBSTITUIR TODA A FUNÇÃO POR:
+        // Função para aprovar o TR atual. Atualiza o status, registra o parecer,
+        // salva as alterações por meio do sistema unificado e notifica o requisitante.
         function aprovarTR() {
+            // Certifica-se de que há um TR selecionado
             if (!currentTR) return;
-
+            // Obtém o parecer digitado pelo comprador
             const parecer = document.getElementById('parecerComprador').value.trim();
             if (!parecer) {
                 alert('Por favor, adicione um comentário sobre a aprovação do TR.');
                 return;
             }
-
+            // Confirma com o usuário antes de prosseguir
             if (!confirm('Tem certeza que deseja APROVAR este TR? Esta ação não pode ser desfeita.')) {
                 return;
             }
-
-            // Usar a nova função de integração
-            const tr = IntegracaoModulos.aprovarTRComprador(currentTR.id, parecer);
-    
-            if (tr) {
-                alert('TR aprovado com sucesso!');
-        
-                if (confirm('Deseja criar um processo de compra agora?')) {
-                    // Salvar TR aprovado no sessionStorage para usar na criação do processo
-                    sessionStorage.setItem('tr_para_processo', JSON.stringify(tr));
-                    window.location.href = 'dashboard-comprador-criar-processo.html';
-                } else {
-                    closeModal();
-                    loadTRs();
-                    updateStats();
-                }
-            }
-        }
-
-            const parecer = document.getElementById('parecerComprador').value.trim();
-            if (!parecer) {
-                alert('Por favor, adicione um comentário sobre a aprovação do TR.');
-                return;
-            }
-
-            if (!confirm('Tem certeza que deseja APROVAR este TR? Esta ação não pode ser desfeita.')) {
-                return;
-            }
-
-            // Atualizar TR
+            // Atualiza campos do TR
             currentTR.status = 'APROVADO';
             currentTR.parecerComprador = parecer;
             currentTR.dataAprovacao = new Date().toISOString();
-            currentTR.aprovadoPor = 'Comprador'; // Em um sistema real, seria o usuário logado
-
-            // Salvar no sistema unificado
+            // Em um sistema real, utilizar o nome do usuário logado
+            currentTR.aprovadoPor = 'Comprador';
+            // Persiste o TR utilizando a API do sistema unificado
             salvarTRAprovado(currentTR);
-
-            // Notificar requisitante usando sistema unificado
+            // Gera uma notificação para o requisitante
             salvarNotificacao({
                 id: Date.now(),
                 tipo: 'TR_APROVADO',
@@ -926,38 +911,49 @@ function selectTR(evt, numeroTR) {
                 lida: false,
                 tr_id: currentTR.numeroTR
             });
-
+            // Feedback visual para o usuário
             alert('TR aprovado com sucesso!');
+            // Pergunta se deseja abrir imediatamente a criação do processo de compra
+            if (confirm('Deseja criar um processo de compra agora?')) {
+                // Persistir TR para a próxima tela
+                sessionStorage.setItem('tr_para_processo', JSON.stringify(currentTR));
+                window.location.href = 'dashboard-comprador-criar-processo.html';
+                return;
+            }
+            // Caso contrário, fecha o modal e recarrega a lista
             closeModal();
             loadTRs();
             updateStats();
         }
 
+        /* código legado removido - lógica de aprovação está concentrada em aprovarTR() */
+        }
+
         function reprovarTR() {
             if (!currentTR) return;
 
+            // Captura o parecer do comprador
             const parecer = document.getElementById('parecerComprador').value.trim();
             if (!parecer) {
                 alert('Por favor, adicione comentários explicando os motivos da reprovação.');
                 return;
             }
 
+            // Confirmação antes de reprovar
             if (!confirm('Tem certeza que deseja REPROVAR este TR? O requisitante precisará fazer correções.')) {
                 return;
             }
 
-            // Atualizar TR
+            // Atualiza campos do TR
             currentTR.status = 'REPROVADO';
             currentTR.parecerComprador = parecer;
             currentTR.dataReprovacao = new Date().toISOString();
-            currentTR.reprovadoPor = 'Comprador'; // Em um sistema real, seria o usuário logado
+            currentTR.reprovadoPor = 'Comprador';
 
-            // Salvar no sistema unificado
+            // Persiste TR reprovado
             salvarTRAprovado(currentTR);
-
-            // Notificar requisitante
-            const notificacoes = JSON.parse(localStorage.getItem('notificacoes_requisitante') || '[]');
-            notificacoes.push({
+            // Notifica o requisitante através do sistema unificado
+            salvarNotificacao({
                 id: Date.now(),
                 tipo: 'TR_REPROVADO',
                 titulo: 'TR Reprovado',
@@ -966,9 +962,9 @@ function selectTR(evt, numeroTR) {
                 lida: false,
                 tr_id: currentTR.numeroTR
             });
-            localStorage.setItem('notificacoes_requisitante', JSON.stringify(notificacoes));
 
             alert('TR reprovado. O requisitante foi notificado para fazer as correções necessárias.');
+            // Finaliza e recarrega
             closeModal();
             loadTRs();
             updateStats();
@@ -996,6 +992,20 @@ function selectTR(evt, numeroTR) {
             currentTR = tr;
             document.getElementById('parecerComprador').value = parecer;
             reprovarTR();
+        }
+
+        // Permite ao comprador exportar um TR individual como arquivo JSON para análise ou armazenamento.
+        function downloadTR(numeroTR) {
+            const tr = trsData.find(t => t.numeroTR === numeroTR);
+            if (!tr) return;
+            const dataStr = JSON.stringify(tr, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `TR_${tr.numeroTR}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
         }
 
         // Expor os atalhos de aprovação ao objeto global para evitar problemas
@@ -1364,6 +1374,7 @@ function selectTR(evt, numeroTR) {
         window.reprovarTR = reprovarTR;
         window.quickApprove = quickApprove;
         window.quickReject = quickReject;
+        window.downloadTR = downloadTR;
 
         </script>
 
