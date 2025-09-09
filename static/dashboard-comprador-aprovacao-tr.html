@@ -594,6 +594,26 @@
         let currentTR = null;
         let trsData = [];
 
+        // Normalize TR records to ensure both `id` and `numeroTR` exist.  Many
+        // older TRs were created without an explicit `id`, so we fall back to
+        // `numeroTR` in that case.  Likewise, if a TR is missing a
+        // `numeroTR` we derive it from the `id`.  This helper is used
+        // throughout the dashboard to keep identifiers consistent.
+        function normalizeTR(tr) {
+            return {
+                ...tr,
+                id: tr.id || tr.numeroTR,
+                numeroTR: tr.numeroTR || tr.id
+            };
+        }
+
+        // Lookup a TR by its identifier (either `id` or `numeroTR`).  This
+        // helper abstracts the legacy dual-key lookup logic so that other
+        // functions can simply call `getTRById()`.
+        function getTRById(id) {
+            return (trsData || []).find(t => (t.id || t.numeroTR) === id);
+        }
+
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             // Sincronizar TRs do Firestore antes de carregar dados locais
@@ -610,6 +630,35 @@
                 loadTRs();
                 updateStats();
             })();
+        // Delegação de eventos: manipular cliques nos botões de ação dos cards de TR.
+        // Cada botão possui um atributo data-action e data-id que nos permite
+        // encaminhar a ação correta sem depender de atributos onclick
+        // embutidos ou de escopo global.  Isto melhora a robustez da
+        // interface, pois os manipuladores permanecem disponíveis mesmo que
+        // o arquivo seja incluído várias vezes ou em diferentes contextos.
+        const trList = document.getElementById('trListContainer');
+        if (trList) {
+            trList.addEventListener('click', function(e) {
+                const btn = e.target.closest('button[data-action]');
+                if (!btn) return;
+                const action = btn.getAttribute('data-action');
+                const id = btn.getAttribute('data-id');
+                switch (action) {
+                    case 'view':
+                        viewTR(id);
+                        break;
+                    case 'download':
+                        downloadTR(id);
+                        break;
+                    case 'approve':
+                        quickApprove(id);
+                        break;
+                    case 'reject':
+                        quickReject(id);
+                        break;
+                }
+            });
+        }
         });
 
         function loadTRs() {
@@ -625,14 +674,21 @@
                 }
             }
             // Mapear status 'enviado', 'PENDENTE' ou 'ELABORADO' para 'PENDENTE_APROVACAO'
-            trsData = (trs || []).map(tr => {
-                // Normalizar status removendo espaços e convertendo para caixa alta
-                const s = ((tr.status || '') + '').toUpperCase().trim();
-                if (s === 'ENVIADO' || s === 'PENDENTE' || s === 'ELABORADO') {
-                    return { ...tr, status: 'PENDENTE_APROVACAO' };
-                }
-                return tr;
-            });
+            trsData = (trs || [])
+                // Primeiro normalizamos os TRs para garantir que tenham `id` e `numeroTR`
+                .map(normalizeTR)
+                // Em seguida ajustamos o status: os estados "ENVIADO", "PENDENTE" e
+                // "ELABORADO" são todos tratados como "PENDENTE_APROVACAO" para fins
+                // de exibição e contagem nesta página.  Ao manter outras
+                // propriedades do TR, garantimos que os dados originais não se
+                // percam.
+                .map(tr => {
+                    const s = ((tr.status || '') + '').toUpperCase().trim();
+                    if (s === 'ENVIADO' || s === 'PENDENTE' || s === 'ELABORADO') {
+                        return { ...tr, status: 'PENDENTE_APROVACAO' };
+                    }
+                    return tr;
+                });
 
             renderTRList();
             updateNotificationBadge();
@@ -652,7 +708,7 @@
             emptyState.style.display = 'none';
             
             container.innerHTML = trsData.map(tr => `
-                <div class="tr-card" onclick="selectTR(event, '${tr.numeroTR}')">
+                <div class="tr-card" data-id="${tr.id}" onclick="selectTR(event, '${tr.id}')">
                     <div class="tr-header">
                         <div class="tr-number">${tr.numeroTR}</div>
                         <div class="tr-date">${formatDate(tr.dataCreacao)}</div>
@@ -679,20 +735,20 @@
                     </div>
                     
                     <div class="tr-actions" onclick="event.stopPropagation()">
-                        <button class="btn btn-view" onclick="viewTR('${tr.numeroTR}')">
+                        <button class="btn btn-view" data-action="view" data-id="${tr.id}">
                             👁️ Visualizar
                         </button>
-                        <button class="btn btn-download" onclick="downloadTR('${tr.numeroTR}')">
+                        <button class="btn btn-download" data-action="download" data-id="${tr.id}">
                             📥 Download TR
                         </button>
                         ${(() => {
                             // Normalizar status removendo espaços e convertendo para caixa alta
                             const s = ((tr.status || '') + '').toUpperCase().trim();
                             return (s === 'PENDENTE_APROVACAO' || s === 'ENVIADO' || s === 'PENDENTE' || s === 'ELABORADO') ? `
-                            <button class="btn btn-approve" onclick="quickApprove('${tr.numeroTR}')">
+                            <button class="btn btn-approve" data-action="approve" data-id="${tr.id}">
                                 ✅ Aprovar
                             </button>
-                            <button class="btn btn-reject" onclick="quickReject('${tr.numeroTR}')">
+                            <button class="btn btn-reject" data-action="reject" data-id="${tr.id}">
                                 ❌ Reprovar
                             </button>
                         ` : '';
@@ -703,43 +759,39 @@
         }
 
 // Aceitar o objeto de evento como primeiro parâmetro para obter o elemento clicado.
-function selectTR(evt, numeroTR) {
-            // Remover seleção anterior
+function selectTR(evt, trId) {
+            // Remove a seleção anterior de todos os cards
             document.querySelectorAll('.tr-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            
-            // Adicionar seleção atual
-            // Usamos o evento passado para identificar o card clicado. Caso o evento não exista,
-            // localizamos o card pelo número do TR.
+
+            // Seleciona o card correspondente.  Se um evento foi passado, usamos o
+            // próprio elemento do card; caso contrário procuramos o card
+            // associado ao id.
             if (evt && evt.currentTarget) {
                 evt.currentTarget.classList.add('selected');
             } else {
-                const cards = document.querySelectorAll('.tr-card');
-                cards.forEach(card => {
-                    const numberElem = card.querySelector('.tr-number');
-                    if (numberElem && numberElem.textContent.trim() === numeroTR) {
-                        card.classList.add('selected');
-                    }
-                });
+                const card = document.querySelector(`.tr-card[data-id="${trId}"]`);
+                if (card) card.classList.add('selected');
             }
-            currentTR = trsData.find(tr => tr.numeroTR === numeroTR);
+            // Define o TR atual usando nosso helper para pesquisar pelo id
+            currentTR = getTRById(trId);
         }
 
-        function viewTR(numeroTR) {
-            const tr = trsData.find(t => t.numeroTR === numeroTR);
+function viewTR(trId) {
+            const tr = getTRById(trId);
             if (!tr) return;
 
             currentTR = tr;
-            document.getElementById('modalTitle').textContent = `Análise de TR - ${tr.numeroTR}`;
-            
+            document.getElementById('modalTitle').textContent = `Análise de TR - ${tr.numeroTR || tr.id}`;
+
             // Renderizar preview do TR
             document.getElementById('trPreview').innerHTML = generateTRPreview(tr);
-            
-            // Limpar formulário de parecer
+
+            // Carregar parecer pré-existente, se houver
             document.getElementById('parecerComprador').value = tr.parecerComprador || '';
-            
-            // Mostrar modal
+
+            // Exibir o modal
             document.getElementById('trModal').classList.add('show');
         }
 
@@ -906,10 +958,10 @@ function selectTR(evt, numeroTR) {
                 id: Date.now(),
                 tipo: 'TR_APROVADO',
                 titulo: 'TR Aprovado',
-                mensagem: `TR ${currentTR.numeroTR} foi aprovado pelo comprador`,
+                mensagem: `TR ${currentTR.numeroTR || currentTR.id} foi aprovado pelo comprador`,
                 data: new Date().toISOString(),
                 lida: false,
-                tr_id: currentTR.numeroTR
+                tr_id: currentTR.numeroTR || currentTR.id
             });
             // Feedback visual para o usuário
             alert('TR aprovado com sucesso!');
@@ -925,9 +977,7 @@ function selectTR(evt, numeroTR) {
             loadTRs();
             updateStats();
         }
-
-        /* código legado removido - lógica de aprovação está concentrada em aprovarTR() */
-        }
+        
 
         function reprovarTR() {
             if (!currentTR) return;
@@ -957,10 +1007,10 @@ function selectTR(evt, numeroTR) {
                 id: Date.now(),
                 tipo: 'TR_REPROVADO',
                 titulo: 'TR Reprovado',
-                mensagem: `TR ${currentTR.numeroTR} foi reprovado pelo comprador`,
+                mensagem: `TR ${currentTR.numeroTR || currentTR.id} foi reprovado pelo comprador`,
                 data: new Date().toISOString(),
                 lida: false,
-                tr_id: currentTR.numeroTR
+                tr_id: currentTR.numeroTR || currentTR.id
             });
 
             alert('TR reprovado. O requisitante foi notificado para fazer as correções necessárias.');
@@ -970,8 +1020,8 @@ function selectTR(evt, numeroTR) {
             updateStats();
         }
 
-        function quickApprove(numeroTR) {
-            const tr = trsData.find(t => t.numeroTR === numeroTR);
+function quickApprove(trId) {
+            const tr = getTRById(trId);
             if (!tr) return;
 
             const parecer = prompt('Adicione um comentário sobre a aprovação:');
@@ -982,8 +1032,8 @@ function selectTR(evt, numeroTR) {
             aprovarTR();
         }
 
-        function quickReject(numeroTR) {
-            const tr = trsData.find(t => t.numeroTR === numeroTR);
+function quickReject(trId) {
+            const tr = getTRById(trId);
             if (!tr) return;
 
             const parecer = prompt('Explique os motivos da reprovação:');
@@ -995,15 +1045,15 @@ function selectTR(evt, numeroTR) {
         }
 
         // Permite ao comprador exportar um TR individual como arquivo JSON para análise ou armazenamento.
-        function downloadTR(numeroTR) {
-            const tr = trsData.find(t => t.numeroTR === numeroTR);
+function downloadTR(trId) {
+            const tr = getTRById(trId);
             if (!tr) return;
             const dataStr = JSON.stringify(tr, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `TR_${tr.numeroTR}.json`;
+            link.download = `TR_${tr.numeroTR || tr.id}.json`;
             link.click();
             URL.revokeObjectURL(url);
         }
@@ -1013,8 +1063,6 @@ function selectTR(evt, numeroTR) {
         // atribuição, pode haver momentos em que os botões no HTML não
         // encontram a função quando são clicados. Ao anexar às propriedades
         // do window, garantimos que estejam sempre acessíveis.
-        window.quickApprove = quickApprove;
-        window.quickReject = quickReject;
 
         function updateStats() {
             const pending = trsData.filter(tr => {
@@ -1289,35 +1337,11 @@ function selectTR(evt, numeroTR) {
 
         // ===== SUBSTITUIR FUNÇÕES EXISTENTES PARA USAR SISTEMA UNIFICADO =====
         
-        // Substituir função loadTRs existente
-        function loadTRs() {
-            // Usar sistema unificado em vez de localStorage direto
-            let trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
-            // Compatibilidade: se a lista estiver vazia, tentar carregar da chave legada
-            if (!Array.isArray(trs) || trs.length === 0) {
-                try {
-                    const legacy = localStorage.getItem('termos_referencia');
-                    trs = legacy ? JSON.parse(legacy) : [];
-                } catch (_) {
-                    trs = [];
-                }
-            }
-            // Normalizar status de TRs para que as telas de aprovação e os
-            // contadores considerem "enviado", "pendente" e "elaborado" como
-            // pendentes de aprovação.  Sem esta normalização os itens
-            // apareceriam como "enviado" apenas no dashboard e não seriam
-            // listados para aprovação.
-            trsData = (trs || []).map(tr => {
-                const s = ((tr.status || '') + '').toUpperCase().trim();
-                if (s === 'ENVIADO' || s === 'PENDENTE' || s === 'ELABORADO') {
-                    return { ...tr, status: 'PENDENTE_APROVACAO' };
-                }
-                return tr;
-            });
-            
-            renderTRList();
-            updateNotificationBadge();
-        }
+        // A antiga redefinição de loadTRs() foi removida.  A função loadTRs
+        // principal, definida anteriormente neste arquivo, agora trata da
+        // normalização de TRs e sincronização de status.  Esta seção é
+        // mantida apenas para documentação e para evitar múltiplas
+        // definições da mesma função.
 
         // Função para salvar TR aprovado (substituir localStorage direto)
         function salvarTRAprovado(tr) {
