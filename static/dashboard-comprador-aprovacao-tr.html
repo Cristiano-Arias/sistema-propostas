@@ -1096,19 +1096,14 @@
         }
     </script>
 
-         function logout() {
-            if (confirm('Deseja sair do sistema?')) {
-                localStorage.removeItem('user_session');
-                window.location.href = 'index.html';
-            }
-        }
-    </script>
+        <!-- Removed duplicate logout function and stray closing script -->
         <!-- Scripts de Integração - Adicionar APÓS os scripts existentes -->
         <script src="js/auth.js"></script>
         <script src="js/api-client.js"></script>
         <script src="js/integration.js"></script>
         <script src="js/integracao-modulos.js"></script>
 
+        <script>
         // ===== SISTEMA DE DADOS COM FIREBASE + LOCALSTORAGE =====
         const SistemaLocal = {
             // Chaves compatíveis com sistema existente
@@ -1346,6 +1341,18 @@
             
             console.log('✅ Dashboard Comprador inicializado com Firebase!');
         });
+
+        // Expor funções globalmente para os manipuladores onclick funcionarem
+        // As funções definidas acima precisam estar acessíveis no escopo global
+        // pois os elementos HTML usam onclick="..." para chamá-las diretamente.
+        window.viewTR = viewTR;
+        window.selectTR = selectTR;
+        window.aprovarTR = aprovarTR;
+        window.reprovarTR = reprovarTR;
+        window.quickApprove = quickApprove;
+        window.quickReject = quickReject;
+
+        </script>
 
     <script type="module" src="/static/firebase.js"></script>
     <script type="module" src="/static/auth.js"></script>
