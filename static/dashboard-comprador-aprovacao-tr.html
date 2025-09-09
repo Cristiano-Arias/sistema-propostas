@@ -642,7 +642,7 @@
             emptyState.style.display = 'none';
             
             container.innerHTML = trsData.map(tr => `
-                <div class="tr-card" onclick="selectTR('${tr.numeroTR}')">
+                <div class="tr-card" onclick="selectTR(event, '${tr.numeroTR}')">
                     <div class="tr-header">
                         <div class="tr-number">${tr.numeroTR}</div>
                         <div class="tr-date">${formatDate(tr.dataCreacao)}</div>
@@ -689,14 +689,27 @@
             `).join('');
         }
 
-        function selectTR(numeroTR) {
+// Aceitar o objeto de evento como primeiro parâmetro para obter o elemento clicado.
+function selectTR(evt, numeroTR) {
             // Remover seleção anterior
             document.querySelectorAll('.tr-card').forEach(card => {
                 card.classList.remove('selected');
             });
             
             // Adicionar seleção atual
-            event.currentTarget.classList.add('selected');
+            // Usamos o evento passado para identificar o card clicado. Caso o evento não exista,
+            // localizamos o card pelo número do TR.
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add('selected');
+            } else {
+                const cards = document.querySelectorAll('.tr-card');
+                cards.forEach(card => {
+                    const numberElem = card.querySelector('.tr-number');
+                    if (numberElem && numberElem.textContent.trim() === numeroTR) {
+                        card.classList.add('selected');
+                    }
+                });
+            }
             currentTR = trsData.find(tr => tr.numeroTR === numeroTR);
         }
 
