@@ -643,7 +643,11 @@
         // internos. Também guardamos um marcador global para evitar
         // múltiplas instalações caso o script seja carregado mais de
         // uma vez.
-        if (trList && !window.__trDelegationInstalled) {
+        // Instala sempre o listener nesta página, usando uma flag específica
+        // para evitar colisões com outros módulos.  A flag antiga
+        // __trDelegationInstalled poderia vir de outra página (funcional) e
+        // impedir a instalação aqui.
+        if (trList && !window.__aprovacaoTrDelegationInstalled) {
             trList.addEventListener('click', function(e) {
                 const btn = e.target.closest('button[data-action]');
                 if (!btn) return;
@@ -660,7 +664,7 @@
                     quickReject(id);
                 }
             }, true);
-            window.__trDelegationInstalled = true;
+            window.__aprovacaoTrDelegationInstalled = true;
         }
         });
 
