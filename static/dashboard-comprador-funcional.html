@@ -1514,7 +1514,7 @@ import {
                 const config = StatusConfig.enviado;
                 
                 html += `
-                    <div class="tr-item pendente">
+                    <div class="tr-item pendente" data-key="${tr.id || tr.numeroTR}">
                         <div class="tr-status-badge" style="background: ${config.cor};">
                             <i class="fas ${config.icone}"></i> ${config.label}
                         </div>
@@ -1530,16 +1530,16 @@ import {
                         <div class="tr-objective">${tr.objetivo}</div>
                         
                         <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-info" data-action="visualizar" data-id="${tr.id}">
+                            <button type="button" class="btn btn-info" data-action="visualizar" data-id="${tr.id || tr.numeroTR}">
                                 <i class="fas fa-eye"></i> Visualizar
                             </button>
-                            <button class="btn btn-info" data-action="download" data-id="${tr.id}">
+                            <button type="button" class="btn btn-info" data-action="download" data-id="${tr.id || tr.numeroTR}">
                                 <i class="fas fa-download"></i> Download TR
                             </button>
-                            <button class="btn btn-success" data-action="aprovar" data-id="${tr.id}">
+                            <button type="button" class="btn btn-success" data-action="aprovar" data-id="${tr.id || tr.numeroTR}">
                                 <i class="fas fa-check"></i> Aprovar
                             </button>
-                            <button class="btn btn-danger" data-action="reprovar" data-id="${tr.id}">
+                            <button type="button" class="btn btn-danger" data-action="reprovar" data-id="${tr.id || tr.numeroTR}">
                                 <i class="fas fa-times"></i> Reprovar
                             </button>
                         </div>
@@ -3919,7 +3919,13 @@ import {
                    const target = e.target.closest('[data-action]');
                    if (target) {
                        const action = target.getAttribute('data-action');
-                       const id = target.getAttribute('data-id');
+                       // Buscar o id do TR a partir do atributo data-id ou do contêiner do card (data-key)
+                       let id = target.getAttribute('data-id');
+                       if (!id) {
+                           const card = target.closest('.tr-item');
+                           id = card ? card.getAttribute('data-key') : null;
+                       }
+                       if (!id) return;
                        switch(action) {
                            case 'visualizar':
                                visualizarTR(id);
