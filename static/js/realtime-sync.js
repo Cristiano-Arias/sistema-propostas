@@ -1,4 +1,4 @@
-/ ================================
+// ================================
 // realtime-sync.js - Versão Corrigida com Isolamento por Usuário
 // SEM MÓDULO ADMIN - Sincroniza chaves de localStorage com Firestore
 // ================================
