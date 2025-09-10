@@ -1,4 +1,4 @@
-// ================================
+/ ================================
 // realtime-sync.js - Versão Corrigida com Isolamento por Usuário
 // SEM MÓDULO ADMIN - Sincroniza chaves de localStorage com Firestore
 // ================================
@@ -114,7 +114,23 @@ function attachListeners() {
       if (data.uid === user.uid && typeof data.value !== "undefined") {
         try { 
           isApplyingRemote = true; 
-          localStorage.setItem(key, data.value); 
+          let valueToStore = data.value;
+          // Se estivermos sincronizando a chave de TRs, garantir normalização dos objetos
+          if (key === 'sistema_trs') {
+            try {
+              const arr = JSON.parse(data.value) || [];
+              if (Array.isArray(arr)) {
+                valueToStore = JSON.stringify(arr.map(tr => ({
+                  ...tr,
+                  id: tr.id || tr.numeroTR,
+                  numeroTR: tr.numeroTR || tr.id
+                })));
+              }
+            } catch (e) {
+              // se parse falhar, salva valor original sem alteração
+            }
+          }
+          localStorage.setItem(key, valueToStore); 
           console.log(`🔄 Atualizado do Firebase: ${key}`);
           
           // Disparar evento customizado para notificar a aplicação
@@ -124,15 +140,39 @@ function attachListeners() {
           
           // Atualizar UI específica se as funções estiverem disponíveis
           if (key === 'sistema_trs') {
-            // Quando a lista de TRs muda, é importante atualizar todas as visões
-            // relevantes. Chamamos carregarMeusTRs (módulo requisitante),
-            // carregarEstatisticas (dashboard comprador), e também as funções
-            // específicas do módulo comprador que constroem a listagem de TRs
-            // pendentes e aprovados, se estiverem disponíveis. Isso evita
-            // inconsistências em que o dashboard exibe contadores atualizados
-            // mas a lista de TRs não é recriada.  As chamadas são
-            // encapsuladas em verificações para manter compatibilidade com
-            // módulos que não definem estas funções.
+            // Para evitar sobrescrever atualizações locais com dados antigos,
+            // fazemos um merge por updatedAt.  Se o remoto é mais antigo que
+            // o local, mantemos o local; se é mais novo, aplicamos o remoto.
+            try {
+              const remoteArr = JSON.parse(data.value) || [];
+              const localArr  = JSON.parse(localStorage.getItem(key) || '[]');
+              // Indexar por id/numeroTR
+              const byKey = (arr) => {
+                const map = {};
+                arr.forEach(tr => {
+                  const k = tr.id || tr.numeroTR;
+                  if (k) map[k] = tr;
+                });
+                return map;
+              };
+              const L = byKey(localArr);
+              const R = byKey(remoteArr);
+              const merged = [];
+              const keysSet = new Set([...Object.keys(L), ...Object.keys(R)]);
+              keysSet.forEach(k => {
+                const l = L[k];
+                const r = R[k];
+                if (!l) return merged.push(r);
+                if (!r) return merged.push(l);
+                const lu = Number(l.updatedAt) || 0;
+                const ru = Number(r.updatedAt) || 0;
+                merged.push(ru > lu ? r : l);
+              });
+              valueToStore = JSON.stringify(merged);
+            } catch (e) {
+              // se der erro no merge, continua com valueToStore original
+            }
+            // Quando a lista de TRs muda, atualizar as listas e contadores
             if (window.carregarMeusTRs) window.carregarMeusTRs();
             if (window.carregarEstatisticas) window.carregarEstatisticas();
             if (window.carregarTRsPendentes) window.carregarTRsPendentes();
@@ -185,8 +225,32 @@ localStorage.setItem = function(k, v) {
     const ref = doc(db, "localstorage", docKey);
     
     // Incluir UID no documento (OBRIGATÓRIO para as regras)
+    // Normalizar dados de TRs antes de enviar ao Firebase e adicionar updatedAt.
+    let valueToSave = v;
+    if (k === 'sistema_trs') {
+      try {
+        const arr = JSON.parse(v);
+        if (Array.isArray(arr)) {
+          const now = Date.now();
+          const normalized = arr.map(tr => {
+            const id = tr.id || tr.numeroTR;
+            const numeroTR = tr.numeroTR || tr.id;
+            const updatedAt = tr.updatedAt ? Number(tr.updatedAt) : 0;
+            return {
+              ...tr,
+              id: id,
+              numeroTR: numeroTR,
+              updatedAt: updatedAt || now
+            };
+          });
+          valueToSave = JSON.stringify(normalized);
+        }
+      } catch (_) {
+        // If parsing fails, leave valueToSave as original v
+      }
+    }
     setDoc(ref, { 
-      value: v, 
+      value: valueToSave, 
       uid: user.uid,  // Campo obrigatório para as regras de segurança
       updatedAt: new Date().toISOString(),
       userEmail: user.email || 'unknown',
