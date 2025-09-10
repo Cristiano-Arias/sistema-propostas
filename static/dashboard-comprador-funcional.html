@@ -1101,7 +1101,7 @@ import {
                     // SEMPRE usar localStorage primeiro (compatibilidade)
                     const dados = localStorage.getItem(chave);
                     let dadosLocal = dados ? JSON.parse(dados) : padrao;
-                    
+
                     // CORREÇÃO CRÍTICA: Garantir que arrays sempre retornam array
                     const arrayKeys = [
                         this.CHAVES.TRS, 
@@ -1119,7 +1119,17 @@ import {
                         // Salvar array vazio no localStorage
                         localStorage.setItem(chave, JSON.stringify([]));
                     }
-                    
+
+                    // ============ HOTFIX ===================
+                    // Se o realtime-sync estiver ativo e estivermos carregando sistema_trs,
+                    // evite buscar do caminho legado em 'sistema_dados'. O realtime-sync já gerencia a sincronização
+                    // e, caso façamos getDoc aqui, corremos o risco de sobrescrever os dados locais imediatamente
+                    // após uma atualização (ping-pong). Portanto, retornamos os dados locais como estão.
+                    if (chave === this.CHAVES.TRS && window.realtimeSync && typeof window.realtimeSync.isConnected === 'function' && window.realtimeSync.isConnected()) {
+                        return dadosLocal;
+                    }
+                    // ========================================
+
                     // Tentar sincronizar com Firebase em background (sem bloquear)
                     if (this.firebaseReady && this.db) {
                         const docRef = doc(this.db, 'sistema_dados', chave);
@@ -1134,9 +1144,9 @@ import {
                             console.warn('⚠️ Erro ao sincronizar do Firebase:', firebaseError);
                         });
                     }
-                    
+
                     return dadosLocal;
-                    
+
                 } catch (error) {
                     console.error('Erro ao carregar dados:', error);
                     // CORREÇÃO: Se for chave de array e houver erro, retornar array vazio
