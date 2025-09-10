@@ -1564,7 +1564,10 @@ import {
             }
             // Filtrar apenas TRs aprovados que ainda não foram usados em processos
             // Filtrar TRs aprovados considerando variações de caixa
-            const trsAprovados = trs.filter(tr => (tr.status === StatusTR.APROVADO || tr.status === 'APROVADO' || tr.status === 'aprovado') && !tr.processoVinculado);
+            const trsAprovados = trs.filter(tr => {
+                const s = ((tr.status || '') + '').toUpperCase().trim();
+                return s === 'APROVADO';
+            }).filter(tr => !tr.processoVinculado);
 
             const container = document.getElementById('trs-aprovados-list');
             if (!container) return;
@@ -2724,18 +2727,23 @@ import {
 
         // Aprovar TR
         window.aprovarTR = function(trId) {
+            // Confirmação de aprovação
             if (!confirm('Deseja aprovar este Termo de Referência?')) return;
-            
+
+            // Carregar lista de TRs da memória (localStorage)
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             // Localizar o TR usando id ou numeroTR. Alguns TRs antigos podem
             // usar numeroTR como identificador principal.
             const tr = trs.find(t => (t.id || t.numeroTR) === trId);
-            
+
             if (tr) {
-                tr.status = StatusTR.APROVADO;
+                // Atualizar o status para APROVADO em caixa alta para garantir
+                // consistência com filtros e sincronização.
+                tr.status = 'APROVADO';
                 tr.dataAprovacao = new Date().toISOString();
                 tr.aprovadoPor = SistemaLocal.obterUsuario().nome;
-                
+
+                // Persistir alterações localmente e no Firebase
                 if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
                     // Adicionar notificação para requisitante
                     const notificacoesRequisitante = SistemaLocal.carregar('notificacoes_requisitante', []);
@@ -2749,32 +2757,37 @@ import {
                         usuarioId: tr.usuarioId
                     });
                     SistemaLocal.salvar('notificacoes_requisitante', notificacoesRequisitante);
-                    
+
+                    // Exibir mensagem de sucesso e atualizar listagem de pendentes
                     mostrarMensagem('TR aprovado com sucesso!', 'success');
                     carregarTRsPendentes();
+                    // Atualizar listagem de aprovados se existir
+                    if (typeof carregarTRsAprovados === 'function') carregarTRsAprovados();
                 }
             }
         };
 
         // Reprovar TR
         window.reprovarTR = function(trId) {
+            // Pergunta o motivo da reprovação
             const motivo = prompt('Informe o motivo da reprovação:');
-            
             if (!motivo) {
                 alert('É necessário informar o motivo da reprovação.');
                 return;
             }
-            
+
+            // Carregar lista de TRs
             const trs = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
             // Procurar o TR pelo id ou numeroTR para suportar dados legados
             const tr = trs.find(t => (t.id || t.numeroTR) === trId);
-            
+
             if (tr) {
-                tr.status = StatusTR.REPROVADO;
+                // Usar status em caixa alta para consistência
+                tr.status = 'REPROVADO';
                 tr.dataReprovacao = new Date().toISOString();
                 tr.reprovadoPor = SistemaLocal.obterUsuario().nome;
                 tr.motivoReprovacao = motivo;
-                
+
                 if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
                     // Adicionar notificação para requisitante
                     const notificacoesRequisitante = SistemaLocal.carregar('notificacoes_requisitante', []);
@@ -2788,9 +2801,11 @@ import {
                         usuarioId: tr.usuarioId
                     });
                     SistemaLocal.salvar('notificacoes_requisitante', notificacoesRequisitante);
-                    
+
+                    // Exibir mensagem de erro e atualizar listagens
                     mostrarMensagem('TR reprovado. Requisitante foi notificado.', 'error');
                     carregarTRsPendentes();
+                    if (typeof carregarTRsAprovados === 'function') carregarTRsAprovados();
                 }
             }
         };
