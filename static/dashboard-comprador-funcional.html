@@ -1259,10 +1259,22 @@ import {
                 carregarEstatisticas();
                 verificarNotificacoes();
             } else if (pagina === 'aprovacao-tr') {
-                // Sincronizar TRs antes de carregar pendentes para garantir que os dados do Firestore estejam atualizados
+                /*
+                 * Anteriormente, sempre chamávamos `sincronizarTrs()` ao entrar na
+                 * página de aprovação para garantir dados atualizados do Firestore.
+                 * No entanto, isso ocasionava um efeito de "ping‑pong" em que
+                 * alterações locais (aprovações/reprovações recém-realizadas)
+                 * eram sobrescritas por versões antigas dos TRs retornadas do
+                 * Firestore (devido à latência de escrita). Para evitar que os
+                 * status sejam revertidos ao navegar de volta para a tela, a
+                 * sincronização é feita apenas quando a lista local está vazia.
+                 */
                 try {
                     if (typeof sincronizarTrs === 'function') {
-                        await sincronizarTrs();
+                        const listaLocal = SistemaLocal.carregar(SistemaLocal.CHAVES.TRS, []);
+                        if (!Array.isArray(listaLocal) || listaLocal.length === 0) {
+                            await sincronizarTrs();
+                        }
                     }
                 } catch (e) {
                     console.warn('⚠️ Erro ao sincronizar TRs antes da aprovação:', e);
@@ -2736,7 +2748,7 @@ import {
         };
 
         // Aprovar TR
-        window.aprovarTR = function(trId) {
+        window.aprovarTR = async function(trId) {
             // Confirmação de aprovação
             if (!confirm('Deseja aprovar este Termo de Referência?')) return;
 
@@ -2752,9 +2764,19 @@ import {
                 tr.status = 'APROVADO';
                 tr.dataAprovacao = new Date().toISOString();
                 tr.aprovadoPor = SistemaLocal.obterUsuario().nome;
+                // Atualizar timestamp local para resolução de conflitos
+                tr.updatedAt = Date.now();
 
-                // Persistir alterações localmente e no Firebase
+                // Persistir alterações localmente
                 if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
+                    // Persistir no Firestore ('trs')
+                    try {
+                        const idAtual = tr.id || tr.numeroTR;
+                        await FirebaseFirestore.salvarTR({ ...tr, id: idAtual });
+                    } catch (e) {
+                        console.warn('⚠️ Falha ao salvar TR no Firestore:', e);
+                    }
+
                     // Adicionar notificação para requisitante
                     const notificacoesRequisitante = SistemaLocal.carregar('notificacoes_requisitante', []);
                     notificacoesRequisitante.push({
@@ -2768,17 +2790,16 @@ import {
                     });
                     SistemaLocal.salvar('notificacoes_requisitante', notificacoesRequisitante);
 
-                    // Exibir mensagem de sucesso e atualizar listagem de pendentes
+                    // Exibir mensagem de sucesso e atualizar listagens
                     mostrarMensagem('TR aprovado com sucesso!', 'success');
-                    carregarTRsPendentes();
-                    // Atualizar listagem de aprovados se existir
+                    if (typeof carregarTRsPendentes === 'function') carregarTRsPendentes();
                     if (typeof carregarTRsAprovados === 'function') carregarTRsAprovados();
                 }
             }
         };
 
         // Reprovar TR
-        window.reprovarTR = function(trId) {
+        window.reprovarTR = async function(trId) {
             // Pergunta o motivo da reprovação
             const motivo = prompt('Informe o motivo da reprovação:');
             if (!motivo) {
@@ -2797,8 +2818,18 @@ import {
                 tr.dataReprovacao = new Date().toISOString();
                 tr.reprovadoPor = SistemaLocal.obterUsuario().nome;
                 tr.motivoReprovacao = motivo;
+                // Atualizar timestamp local para resolução de conflitos
+                tr.updatedAt = Date.now();
 
                 if (SistemaLocal.salvar(SistemaLocal.CHAVES.TRS, trs)) {
+                    // Persistir no Firestore ('trs')
+                    try {
+                        const idAtual = tr.id || tr.numeroTR;
+                        await FirebaseFirestore.salvarTR({ ...tr, id: idAtual });
+                    } catch (e) {
+                        console.warn('⚠️ Falha ao salvar TR no Firestore:', e);
+                    }
+
                     // Adicionar notificação para requisitante
                     const notificacoesRequisitante = SistemaLocal.carregar('notificacoes_requisitante', []);
                     notificacoesRequisitante.push({
@@ -2812,9 +2843,9 @@ import {
                     });
                     SistemaLocal.salvar('notificacoes_requisitante', notificacoesRequisitante);
 
-                    // Exibir mensagem de erro e atualizar listagens
+                    // Exibir mensagem e atualizar listagens
                     mostrarMensagem('TR reprovado. Requisitante foi notificado.', 'error');
-                    carregarTRsPendentes();
+                    if (typeof carregarTRsPendentes === 'function') carregarTRsPendentes();
                     if (typeof carregarTRsAprovados === 'function') carregarTRsAprovados();
                 }
             }
