@@ -715,7 +715,14 @@
             emptyState.style.display = 'none';
             
             container.innerHTML = trsData.map(tr => `
-                <div class="tr-card" data-id="${tr.id}" onclick="selectTR(event, '${tr.id}')">
+                <!--
+                  Cada cartão de TR deve expor um identificador consistente. Alguns objetos
+                  recebidos do Firestore possuem apenas a propriedade numeroTR (sem id).
+                  Para garantir que os botões funcionem sempre, usamos (tr.id || tr.numeroTR)
+                  para preencher data-id e o parâmetro de selectTR. Assim os handlers
+                  conseguem recuperar o TR mesmo se o campo id estiver ausente.
+                -->
+                <div class="tr-card" data-id="${tr.id || tr.numeroTR}" onclick="selectTR(event, '${tr.id || tr.numeroTR}')">
                     <div class="tr-header">
                         <div class="tr-number">${tr.numeroTR}</div>
                         <div class="tr-date">${formatDate(tr.dataCreacao)}</div>
@@ -742,20 +749,20 @@
                     </div>
                     
                     <div class="tr-actions" onclick="event.stopPropagation()">
-                        <button class="btn btn-view" data-action="view" data-id="${tr.id}">
+                        <button class="btn btn-view" data-action="view" data-id="${tr.id || tr.numeroTR}">
                             👁️ Visualizar
                         </button>
-                        <button class="btn btn-download" data-action="download" data-id="${tr.id}">
+                        <button class="btn btn-download" data-action="download" data-id="${tr.id || tr.numeroTR}">
                             📥 Download TR
                         </button>
                         ${(() => {
                             // Normalizar status removendo espaços e convertendo para caixa alta
                             const s = ((tr.status || '') + '').toUpperCase().trim();
                             return (s === 'PENDENTE_APROVACAO' || s === 'ENVIADO' || s === 'PENDENTE' || s === 'ELABORADO') ? `
-                            <button class="btn btn-approve" data-action="approve" data-id="${tr.id}">
+                            <button class="btn btn-approve" data-action="approve" data-id="${tr.id || tr.numeroTR}">
                                 ✅ Aprovar
                             </button>
-                            <button class="btn btn-reject" data-action="reject" data-id="${tr.id}">
+                            <button class="btn btn-reject" data-action="reject" data-id="${tr.id || tr.numeroTR}">
                                 ❌ Reprovar
                             </button>
                         ` : '';
