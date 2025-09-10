@@ -1,7 +1,9 @@
-// ================================
-// realtime-sync.js - Versão Corrigida com Isolamento por Usuário
-// SEM MÓDULO ADMIN - Sincroniza chaves de localStorage com Firestore
-// ================================
+/*
+ * realtime-sync.js - Versão Corrigida com Isolamento por Usuário
+ * SEM MÓDULO ADMIN - Sincroniza chaves de localStorage com Firestore
+ * Este cabeçalho usa comentários de bloco para evitar que
+ * qualquer minificador trate barras iniciais como regex.
+ */
 
 import { doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
