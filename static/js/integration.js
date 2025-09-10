@@ -255,10 +255,10 @@ if (window.location.pathname.includes('dashboard-comprador')) {
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-success" onclick="aprovarTR(${tr.id})">
+                            <button class="btn btn-success" onclick="aprovarTR(${tr.id || tr.numeroTR})">
                                 <i class="fas fa-check"></i> Aprovar TR
                             </button>
-                            <button class="btn btn-danger" onclick="reprovarTR(${tr.id})">
+                            <button class="btn btn-danger" onclick="reprovarTR(${tr.id || tr.numeroTR})">
                                 <i class="fas fa-times"></i> Reprovar TR
                             </button>
                             <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancelar</button>
