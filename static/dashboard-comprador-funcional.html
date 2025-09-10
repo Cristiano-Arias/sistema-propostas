@@ -3903,95 +3903,75 @@ import {
             document.getElementById('btn-dashboard').addEventListener('click', () => mostrarPagina('dashboard'));
             document.getElementById('btn-aprovacao-tr').addEventListener('click', () => mostrarPagina('aprovacao-tr'));
             document.getElementById('btn-criar-processo').addEventListener('click', () => mostrarPagina('criar-processo'));
-            document.getElementById('btn-processos').addEventListener('click', () => mostrarPagina('processos'));
-            document.getElementById('btn-relatorios').addEventListener('click', () => mostrarPagina('relatorios'));
-            document.getElementById('btn-voltar').addEventListener('click', voltarSistema);
-            document.getElementById('btn-logout').addEventListener('click', logout);
-        
-            // Cards do dashboard
-            document.getElementById('card-aprovacao-tr').addEventListener('click', () => mostrarPagina('aprovacao-tr'));
-            document.getElementById('card-criar-processo').addEventListener('click', () => mostrarPagina('criar-processo'));
-            document.getElementById('card-processos').addEventListener('click', () => mostrarPagina('processos'));
-        
-            // ===== DELEGAÇÃO DE EVENTOS CORRIGIDA =====
-            if (!window.__compradorDelegationInstalled) {
-                document.addEventListener('click', function(e) {
-                    const target = e.target.closest('button[data-action]');
-                    if (!target) return;
-                    
-                    const action = target.getAttribute('data-action');
-                    const id = target.getAttribute('data-id');
-                    
-                    if (!action || !id) return;
-                    
-                    // Prevenir comportamento padrão e propagação
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    console.log(`🔄 Ação delegada: ${action} para ID: ${id}`);
-                    
-                    switch(action) {
-                        case 'visualizar':
-                            if (typeof visualizarTR === 'function') {
-                                visualizarTR(id);
-                            } else {
-                                console.error('Função visualizarTR não encontrada');
-                            }
-                            break;
-                        case 'aprovar':
-                            if (typeof aprovarTR === 'function') {
-                                aprovarTR(id);
-                            } else {
-                                console.error('Função aprovarTR não encontrada');
-                            }
-                            break;
-                        case 'reprovar':
-                            if (typeof reprovarTR === 'function') {
-                                reprovarTR(id);
-                            } else {
-                                console.error('Função reprovarTR não encontrada');
-                            }
-                            break;
-                        case 'download':
-                            if (typeof downloadTR === 'function') {
-                                downloadTR(id);
-                            } else {
-                                console.error('Função downloadTR não encontrada');
-                            }
-                            break;
-                        default:
-                            console.warn(`Ação não reconhecida: ${action}`);
-                    }
-                }, true);
-                
-                window.__compradorDelegationInstalled = true;
-                console.log('✅ Delegação de eventos do Comprador instalada');
-            }
-        
-            // Sincronizar TRs, processos e propostas com o Firestore antes de carregar o dashboard
-            await sincronizarTrs();
-            await sincronizarProcessos();
-            await sincronizarPropostasFornecedores();
-        
-            // Carregar dashboard inicial
-            mostrarPagina('dashboard');
-            
-            // Adicionar botões AI após 2 segundos
-            setTimeout(() => {
-                adicionarBotaoAnaliseIA();
-                
-                // Observar mudanças no DOM para adicionar botões em novos elementos
-                const observer = new MutationObserver(() => {
-                    adicionarBotaoAnaliseIA();
-                });
-                
-                const targetNode = document.getElementById('processos-list');
-                if (targetNode) {
-                    observer.observe(targetNode, { childList: true, subtree: true });
-                }
-            }, 2000);
-        });
-        
+           document.getElementById('btn-processos').addEventListener('click', () => mostrarPagina('processos'));
+           document.getElementById('btn-relatorios').addEventListener('click', () => mostrarPagina('relatorios'));
+           document.getElementById('btn-voltar').addEventListener('click', voltarSistema);
+           document.getElementById('btn-logout').addEventListener('click', logout);
+
+           // Cards do dashboard
+           document.getElementById('card-aprovacao-tr').addEventListener('click', () => mostrarPagina('aprovacao-tr'));
+           document.getElementById('card-criar-processo').addEventListener('click', () => mostrarPagina('criar-processo'));
+           document.getElementById('card-processos').addEventListener('click', () => mostrarPagina('processos'));
+
+           // Delegar eventos para botões dinâmicos: instalar uma única vez com captura
+           if (!window.__compradorDelegationInstalled) {
+               document.addEventListener('click', function(e) {
+                   const target = e.target.closest('[data-action]');
+                   if (target) {
+                       const action = target.getAttribute('data-action');
+                       // Buscar o id do TR a partir do atributo data-id ou do contêiner do card (data-key)
+                       let id = target.getAttribute('data-id');
+                       if (!id) {
+                           const card = target.closest('.tr-item');
+                           id = card ? card.getAttribute('data-key') : null;
+                       }
+                       if (!id) return;
+                       switch(action) {
+                           case 'visualizar':
+                               visualizarTR(id);
+                               break;
+                           case 'aprovar':
+                               aprovarTR(id);
+                               break;
+                           case 'reprovar':
+                               reprovarTR(id);
+                               break;
+                           case 'download':
+                               // Encaminhar para a função global de download, se definida
+                               if (typeof downloadTR === 'function') {
+                                   downloadTR(id);
+                               }
+                               break;
+                       }
+                   }
+               }, true);
+               window.__compradorDelegationInstalled = true;
+           }
+
+           // Sincronizar TRs, processos e propostas com o Firestore antes de carregar o dashboard
+           await sincronizarTrs();
+           await sincronizarProcessos();
+           await sincronizarPropostasFornecedores();
+
+           // Carregar dashboard inicial
+           mostrarPagina('dashboard');
+           
+           // Adicionar botões AI após 2 segundos
+           setTimeout(() => {
+               adicionarBotaoAnaliseIA();
+               
+               // Observar mudanças no DOM para adicionar botões em novos elementos
+               const observer = new MutationObserver(() => {
+                   adicionarBotaoAnaliseIA();
+               });
+               
+               const targetNode = document.getElementById('processos-list');
+               if (targetNode) {
+                   observer.observe(targetNode, { childList: true, subtree: true });
+               }
+           }, 2000);
+       });
+
        // Aplicar correções quando o módulo for carregado
        console.log('Sistema de comprador carregado!');
        
