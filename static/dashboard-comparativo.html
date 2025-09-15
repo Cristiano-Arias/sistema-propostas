@@ -529,6 +529,11 @@
             <select class="process-select" id="processSelect">
                 <option value="">Selecione um processo para análise...</option>
             </select>
+            <!-- Botão para enviar o comparativo técnico ao requisitante -->
+            <button class="btn btn-success" id="btn-enviar-comparativo-tecnico" style="margin-top: 10px;">
+                <i class="fas fa-share-square"></i>
+                Enviar Comparativo Técnico
+            </button>
         </div>
 
         <!-- Analysis Type Tabs -->
@@ -2551,6 +2556,129 @@ function inicializarAzureIAComparativo() {
         }
     }
 }
+
+// Função para enviar o comparativo técnico ao requisitante
+function enviarComparativoTecnicoParaRequisitante() {
+    try {
+        const comparativo = window.comparativoReal;
+        if (!comparativo || !comparativo.currentProcess) {
+            alert('Selecione um processo com comparativo antes de enviar.');
+            return;
+        }
+        const processoId = comparativo.currentProcess;
+        const propostas = comparativo.proposals || [];
+        if (!Array.isArray(propostas) || propostas.length === 0) {
+            alert('Nenhuma proposta disponível para enviar o comparativo.');
+            return;
+        }
+        // Determinar título do processo
+        let processoTitulo = '';
+        try {
+            const processosLocal = JSON.parse(localStorage.getItem('sistema_processos') || localStorage.getItem('processos_licitatorios') || '[]');
+            const processo = processosLocal.find(p => p.id == processoId || p.processoId == processoId);
+            if (processo) {
+                const numProc = processo.numeroProcesso || processo.numero || processoId;
+                const tituloTR = (processo.trVinculado && (processo.trVinculado.titulo || processo.trVinculado.objeto)) || processo.objeto || '';
+                processoTitulo = numProc + (tituloTR ? ' - ' + tituloTR : '');
+            } else {
+                processoTitulo = 'Processo ' + processoId;
+            }
+        } catch (e) {
+            processoTitulo = 'Processo ' + processoId;
+        }
+        // Determinar comprador responsável
+        let compradorResponsavel = '';
+        try {
+            const comprador = JSON.parse(localStorage.getItem('usuario_comprador') || localStorage.getItem('comprador_logado') || '{}');
+            compradorResponsavel = comprador.nome || comprador.email || '';
+        } catch (e) {
+            compradorResponsavel = '';
+        }
+        // Selecionar fornecedor de menor valor
+        let idxMenorValor = 0;
+        for (let i = 1; i < propostas.length; i++) {
+            const valAtual = parseFloat(propostas[i]?.resumoFinanceiro?.valorTotal) || 0;
+            const valMin = parseFloat(propostas[idxMenorValor]?.resumoFinanceiro?.valorTotal) || 0;
+            if (valAtual < valMin) idxMenorValor = i;
+        }
+        const melhorValor = propostas[idxMenorValor];
+        // Selecionar fornecedor de menor prazo
+        let idxMenorPrazo = 0;
+        for (let i = 1; i < propostas.length; i++) {
+            const prazoAtualStr = propostas[i]?.propostaTecnica?.prazoExecucao || '';
+            const prazoMinStr = propostas[idxMenorPrazo]?.propostaTecnica?.prazoExecucao || '';
+            const prazoAtual = parseInt(String(prazoAtualStr).replace(/\D/g, ''), 10) || Number.MAX_SAFE_INTEGER;
+            const prazoMin = parseInt(String(prazoMinStr).replace(/\D/g, ''), 10) || Number.MAX_SAFE_INTEGER;
+            if (prazoAtual < prazoMin) idxMenorPrazo = i;
+        }
+        const melhorPrazo = propostas[idxMenorPrazo];
+        const prazoStr = melhorPrazo?.propostaTecnica?.prazoExecucao || '';
+        // Construir objeto de resumo
+        const comparativoResumo = {
+            melhorValorFornecedor: melhorValor?.dadosCadastrais?.razaoSocial || '',
+            melhorPrazoFornecedor: melhorPrazo?.dadosCadastrais?.razaoSocial || '',
+            menorValor: parseFloat(melhorValor?.resumoFinanceiro?.valorTotal) || 0,
+            menorPrazo: prazoStr
+        };
+        // Construir objeto de comparativo
+        const comparativoTecnico = {
+            proposals: propostas,
+            resumo: comparativoResumo
+        };
+        // Criar proposta para o requisitante
+        const propostaEnvio = {
+            id: Date.now(),
+            processo_id: processoId,
+            processo_titulo: processoTitulo,
+            fornecedor_cnpj: melhorValor?.dadosCadastrais?.cnpj || '',
+            prazo: prazoStr.replace(/\D/g, '') || '',
+            data_envio_requisitante: new Date().toLocaleDateString('pt-BR'),
+            comprador_responsavel: compradorResponsavel,
+            descricao_tecnica: 'Comparativo Técnico de Propostas',
+            parecer_comprador: `Fornecedor de menor valor: ${comparativoResumo.melhorValorFornecedor}. Menor prazo: ${comparativoResumo.melhorPrazoFornecedor}.`,
+            status: 'PENDENTE_PARECER',
+            comparativo_tecnico: comparativoTecnico
+        };
+        // Atualizar lista de propostas para requisitante
+        let propostasRequisitante = [];
+        try {
+            propostasRequisitante = JSON.parse(localStorage.getItem('propostas_para_requisitante') || '[]');
+        } catch (e) {
+            propostasRequisitante = [];
+        }
+        // Remover comparativos técnicos anteriores deste processo
+        propostasRequisitante = propostasRequisitante.filter(p => !(p.processo_id == processoId && p.comparativo_tecnico));
+        propostasRequisitante.push(propostaEnvio);
+        localStorage.setItem('propostas_para_requisitante', JSON.stringify(propostasRequisitante));
+        // Gerar notificação ao requisitante
+        let notificacoes = [];
+        try {
+            notificacoes = JSON.parse(localStorage.getItem('notificacoes_requisitante') || '[]');
+        } catch (e) {
+            notificacoes = [];
+        }
+        notificacoes.push({
+            id: Date.now(),
+            titulo: 'Comparativo Técnico de Propostas',
+            mensagem: `O comparativo técnico do processo ${processoTitulo} foi enviado para seu parecer.`,
+            data: new Date().toLocaleDateString('pt-BR'),
+            lida: false
+        });
+        localStorage.setItem('notificacoes_requisitante', JSON.stringify(notificacoes));
+        alert('Comparativo técnico enviado ao requisitante para parecer!');
+    } catch (erro) {
+        console.warn('Erro ao enviar comparativo técnico:', erro);
+        alert('Não foi possível enviar o comparativo técnico. Verifique os dados e tente novamente.');
+    }
+}
+
+// Adicionar listener para o botão de envio (deve existir no DOM)
+document.addEventListener('DOMContentLoaded', function() {
+    const btnEnviar = document.getElementById('btn-enviar-comparativo-tecnico');
+    if (btnEnviar) {
+        btnEnviar.addEventListener('click', enviarComparativoTecnicoParaRequisitante);
+    }
+});
 
 // Inicializar quando DOM estiver pronto
 document.addEventListener('DOMContentLoaded', function() {
