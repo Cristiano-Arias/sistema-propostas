@@ -1814,34 +1814,39 @@
 
         // Renderizar timeline
         window.renderizarTimeline = function(status) {
+            /**
+             * Renderiza a linha do tempo de status de um TR.  Para que valores
+             * gravados em caixa alta (ex.: "APROVADO") sejam tratados
+             * corretamente, normalizamos o status para minúsculo antes de
+             * compará-lo com as chaves definidas em `etapas`.
+             */
+            const statusNormalized = (status || '').toString().toLowerCase();
             const etapas = [
                 { key: 'rascunho', label: 'Rascunho' },
                 { key: 'elaborado', label: 'Elaborado' },
-                { key: 'enviado', label: 'Enviado' },
-                { key: 'aprovado', label: 'Aprovado' }
+                { key: 'enviado',   label: 'Enviado' },
+                { key: 'aprovado',  label: 'Aprovado' }
             ];
 
-            let statusIndex = etapas.findIndex(e => e.key === status);
-            if (status === 'reprovado') statusIndex = 2;
+            let statusIndex = etapas.findIndex(e => e.key === statusNormalized);
+            // se for reprovado, a etapa ativa fica na posição 'enviado'
+            if (statusNormalized === 'reprovado') statusIndex = 2;
 
             let html = '<div class="tr-timeline">';
             etapas.forEach((etapa, index) => {
                 const isCompleted = index < statusIndex;
-                const isActive = index === statusIndex;
-                
+                const isActive    = index === statusIndex;
                 html += `
                     <div class="timeline-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}">
                         <i class="fas ${isCompleted ? 'fa-check-circle' : isActive ? 'fa-circle' : 'fa-circle-o'}"></i>
                         ${etapa.label}
                     </div>
                 `;
-                
                 if (index < etapas.length - 1) {
                     html += '<div class="timeline-separator"></div>';
                 }
             });
             html += '</div>';
-            
             return html;
         };
 
@@ -1882,10 +1887,12 @@
             let html = '';
             meusTRs.forEach(tr => {
                 const dataFormatada = new Date(tr.dataCriacao).toLocaleDateString('pt-BR');
-                const config = window.StatusConfig[tr.status] || window.StatusConfig.elaborado;
+                // Normalizar o status para minúsculo antes de consultar o StatusConfig
+                const statusKey = (tr.status || '').toString().toLowerCase();
+                const config = window.StatusConfig[statusKey] || window.StatusConfig.elaborado;
                 
                 html += `
-                    <div class="tr-item ${tr.status}" style="position: relative;">
+                    <div class="tr-item ${statusKey}" style="position: relative;">
                         <div class="tr-status-badge" style="background: ${config.cor};">
                             <i class="fas ${config.icone}"></i> ${config.label}
                         </div>
@@ -1899,7 +1906,7 @@
                         </div>
                         <div class="tr-objective">${tr.objetivo}</div>
                         
-                        ${window.renderizarTimeline(tr.status)}
+                        ${window.renderizarTimeline(statusKey)}
                         
                         ${tr.parecerComprador ? `
                             <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #2196f3;">
@@ -1927,7 +1934,9 @@
 
         // Renderizar botões baseado no status
         window.renderizarBotoes = function(tr) {
-            const config = window.StatusConfig[tr.status] || window.StatusConfig.elaborado;
+            // Normalizar o status para minúsculo para encontrar corretamente a configuração
+            const statusKey = (tr.status || '').toString().toLowerCase();
+            const config = window.StatusConfig[statusKey] || window.StatusConfig.elaborado;
             let botoes = '';
 
             if (config.acoes.includes('visualizar')) {
@@ -1985,7 +1994,9 @@
                 return;
             }
             
-            const config = window.StatusConfig[tr.status] || window.StatusConfig.elaborado;
+            // Normalizar o status para minúsculo para encontrar a configuração correta
+            const statusKey = (tr.status || '').toString().toLowerCase();
+            const config = window.StatusConfig[statusKey] || window.StatusConfig.elaborado;
             
             // Renderizar tabela de serviços
             let tabelaServicos = '';
