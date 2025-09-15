@@ -1082,11 +1082,43 @@
 
             // Obter usuário logado
             obterUsuario: function() {
-                return this.carregar(this.CHAVES.USUARIO, { 
-                    id: 1, 
-                    nome: 'Admin', 
-                    email: 'admin@sistema.com' 
-                });
+                /**
+                 * Recupera os dados do usuário logado a partir do localStorage
+                 * ou da sessionStorage. A autenticação moderna armazena os
+                 * dados principalmente na sessionStorage, portanto este método
+                 * verifica ambas as fontes.
+                 *
+                 * Caso um objeto de usuário seja encontrado, normaliza a
+                 * propriedade `id` utilizando o campo `uid` quando presente
+                 * (UID do Firebase). Para compatibilidade com dados legados,
+                 * mantém `id` caso ele exista. Se nenhum dado for
+                 * encontrado, retorna um usuário padrão.
+                 */
+                try {
+                    let dados = localStorage.getItem(this.CHAVES.USUARIO);
+                    if (!dados) {
+                        // Tentar recuperar do sessionStorage, onde o auth-facade
+                        // salva os dados do usuário durante o login
+                        dados = sessionStorage.getItem(this.CHAVES.USUARIO);
+                    }
+                    if (dados) {
+                        const obj = JSON.parse(dados);
+                        const uid = obj.uid || obj.id;
+                        return {
+                            id: uid || 1,
+                            nome: obj.nome || obj.displayName || (obj.email ? obj.email.split('@')[0] : 'Usuário'),
+                            email: obj.email || 'admin@sistema.com'
+                        };
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Erro ao obter usuário do storage:', e);
+                }
+                // Valor padrão caso nenhum usuário esteja logado ou em caso de erro
+                return {
+                    id: 1,
+                    nome: 'Admin',
+                    email: 'admin@sistema.com'
+                };
             }
         };
 
@@ -1263,20 +1295,29 @@
         window.carregarEstatisticas = function() {
             const trs = window.SistemaLocal.carregar(window.SistemaLocal.CHAVES.TRS, []);
             const usuario = window.SistemaLocal.obterUsuario();
-            
-            const meusTRs = trs.filter(tr => tr.usuarioId === usuario.id);
-            
+
+            // Selecionar apenas os TRs do usuário atual com comparação relaxada para
+            // tratar valores numéricos ou em string. TRs sem usuarioId definido
+            // também são considerados do usuário atual.
+            const meusTRs = trs.filter(tr => {
+                if (typeof tr.usuarioId === 'undefined' || tr.usuarioId === null) return true;
+                return tr.usuarioId == usuario.id;
+            });
+
+            // Normalizar status para minúsculo antes de comparar, permitindo que
+            // valores em caixa alta como "APROVADO" ou "ENVIADO" também
+            // contabilizem corretamente.
             const estatisticas = {
                 total: meusTRs.length,
-                elaborados: meusTRs.filter(tr => tr.status === window.StatusTR.ELABORADO).length,
-                enviados: meusTRs.filter(tr => tr.status === window.StatusTR.ENVIADO).length,
-                aprovados: meusTRs.filter(tr => tr.status === window.StatusTR.APROVADO).length
+                elaborados: meusTRs.filter(tr => ((tr.status || '').toString().toLowerCase()) === window.StatusTR.ELABORADO).length,
+                enviados:   meusTRs.filter(tr => ((tr.status || '').toString().toLowerCase()) === window.StatusTR.ENVIADO).length,
+                aprovados:  meusTRs.filter(tr => ((tr.status || '').toString().toLowerCase()) === window.StatusTR.APROVADO).length
             };
 
-            document.getElementById('trs-total').textContent = estatisticas.total;
+            document.getElementById('trs-total').textContent     = estatisticas.total;
             document.getElementById('trs-elaborados').textContent = estatisticas.elaborados;
-            document.getElementById('trs-enviados').textContent = estatisticas.enviados;
-            document.getElementById('trs-aprovados').textContent = estatisticas.aprovados;
+            document.getElementById('trs-enviados').textContent   = estatisticas.enviados;
+            document.getElementById('trs-aprovados').textContent  = estatisticas.aprovados;
         };
 
         // Salvar TR
@@ -1808,7 +1849,18 @@
         window.carregarMeusTRs = function() {
             const trs = window.SistemaLocal.carregar(window.SistemaLocal.CHAVES.TRS, []);
             const usuario = window.SistemaLocal.obterUsuario();
-            const meusTRs = trs.filter(tr => tr.usuarioId === usuario.id);
+            // Filtrar TRs cujo identificador de usuário corresponda ao usuário atual.
+            // Alguns TRs legados podem armazenar o campo usuarioId como número ou
+            // string "1". Para manter compatibilidade, usamos comparação
+            // relaxada (==) ao invés de estrita (===), permitindo que valores
+            // como 1 e "1" sejam considerados equivalentes.  O id do usuário
+            // retornado por obterUsuario pode ser numérico ou string (uid do
+            // Firebase).
+            const meusTRs = trs.filter(tr => {
+                // Se o TR não define usuarioId, considera-se que pertence ao usuário atual
+                if (typeof tr.usuarioId === 'undefined' || tr.usuarioId === null) return true;
+                return tr.usuarioId == usuario.id;
+            });
 
             const container = document.getElementById('tr-list');
             if (!container) return;
