@@ -81,8 +81,16 @@ function attachListeners() {
   }
   
   for (const key of KEYS) {
-    // Usar chave composta com UID do usuário
-    const docKey = `${key}_${user.uid}`;
+    // Usar chave composta com UID do usuário + isolamento por perfil
+    let docKey = `${key}_${user.uid}`;
+    
+    // CORREÇÃO: Isolar TRs por perfil para evitar conflito entre módulos
+    if (key === 'sistema_trs') {
+        const userEmail = user.email || '';
+        const perfil = userEmail.includes('suprimentos') ? 'comprador' : 'requisitante';
+        docKey = `${key}_${perfil}_${user.uid}`;
+    }
+    
     const ref = doc(db, "localstorage", docKey);
 
     // Seed inicial
