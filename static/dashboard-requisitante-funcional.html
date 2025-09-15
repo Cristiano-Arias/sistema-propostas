@@ -2764,10 +2764,18 @@
             }
             
             for (const key of KEYS) {
-                // IMPORTANTE: Usar chave composta com UID
-                const docKey = `${key}_${user.uid}`;
+                // CORREÇÃO: Isolar dados por perfil para evitar conflito entre módulos
+                let docKey = `${key}_${user.uid}`;
+                
+                // Identificar perfil do usuário para isolamento de TRs
+                if (key === 'sistema_trs') {
+                    const userEmail = user.email || '';
+                    const perfil = userEmail.includes('suprimentos') ? 'comprador' : 'requisitante';
+                    docKey = `${key}_${perfil}_${user.uid}`;
+                }
+                
                 const ref = doc(db, "localstorage", docKey);
-    
+            
                 // Seed inicial
                 getDoc(ref).then((snap) => {
                     if (snap.exists()) {
@@ -2789,7 +2797,7 @@
                         console.warn("[realtime-sync] erro ao buscar:", key, e.code || e.message);
                     }
                 });
-    
+            
                 // Listener em tempo real
                 const unsub = onSnapshot(ref, (snap) => {
                     if (!snap.exists()) return;
@@ -2819,7 +2827,7 @@
                         console.warn("[realtime-sync] erro no listener:", key, err.code || err.message);
                     }
                 });
-    
+            
                 unsubscribers.push(unsub);
             }
             
