@@ -569,8 +569,8 @@
 
         .proposta-analise {
             /* Cartões mais largos para melhor leitura das tabelas */
-            flex: 0 0 400px;
-            min-width: 400px;
+            flex: 0 0 450px;
+            min-width: 450px;
         }
 
         /* ===== Estilos adicionais para lista de propostas e modal de parecer ===== */
@@ -1711,9 +1711,33 @@
                         if (!Array.isArray(arr) || arr.length === 0) {
                             return `<p style="margin-top:10px; color:#666;">Nenhum dado informado.</p>`;
                         }
-                        const header = `<tr>${cols.map(c => `<th style="font-weight:bold; text-align:left; padding:4px 8px;">${c.label}</th>`).join('')}</tr>`;
+                        // Se colunas não especificadas, determinar dinamicamente com base nas chaves dos itens
+                        let colDefs = cols;
+                        if (!Array.isArray(colDefs) || colDefs.length === 0) {
+                            const keysSet = new Set();
+                            arr.forEach(item => {
+                                Object.keys(item).forEach(key => {
+                                    const val = item[key];
+                                    if (val === null || typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
+                                        keysSet.add(key);
+                                    }
+                                });
+                            });
+                            colDefs = Array.from(keysSet).map(key => {
+                                // Converter camelCase ou snake_case para rótulo legível
+                                const label = key
+                                    .replace(/_/g, ' ')
+                                    .replace(/([A-Z])/g, ' $1')
+                                    .replace(/^./, m => m.toUpperCase());
+                                return { label, key };
+                            });
+                        }
+                        const header = `<tr>${colDefs.map(c => `<th style="font-weight:bold; text-align:left; padding:4px 8px;">${c.label}</th>`).join('')}</tr>`;
                         const rows = arr.map(item => {
-                            return `<tr>${cols.map(c => `<td style="padding:4px 8px;">${(item[c.key] !== undefined && item[c.key] !== null) ? item[c.key] : '-'}</td>`).join('')}</tr>`;
+                            return `<tr>${colDefs.map(c => {
+                                const value = item[c.key];
+                                return `<td style="padding:4px 8px;">${(value !== undefined && value !== null && value !== '') ? value : '-'}</td>`;
+                            }).join('')}</tr>`;
                         }).join('');
                         return `<table style="width:100%; border-collapse: collapse; margin-top: 10px;">${header}${rows}</table>`;
                     };
@@ -1727,32 +1751,13 @@
                                 <h5 style="margin-top:15px; color:#6c63ff;">Proposta Técnica</h5>
                                 ${criarTabela(propTec)}
                                 <h5 style="margin-top:15px; color:#6c63ff;">Serviços (Quantidades)</h5>
-                                ${criarTabelaArray(prop.servicosTecnica || [], [
-                                    { label: 'Serviço', key: 'descricao' },
-                                    { label: 'Unidade', key: 'unidade' },
-                                    { label: 'Quantidade', key: 'quantidade' }
-                                ])}
+                                ${criarTabelaArray(prop.servicosTecnica || [])}
                                 <h5 style="margin-top:15px; color:#6c63ff;">Mão de Obra</h5>
-                                ${criarTabelaArray(prop.maoObraTecnica || [], [
-                                    { label: 'Função', key: 'funcao' },
-                                    { label: 'Quantidade', key: 'quantidade' },
-                                    { label: 'Tempo', key: 'tempo' }
-                                ])}
+                                ${criarTabelaArray(prop.maoObraTecnica || [])}
                                 <h5 style="margin-top:15px; color:#6c63ff;">Materiais</h5>
-                                ${criarTabelaArray(prop.materiaisTecnica || [], [
-                                    { label: 'Material', key: 'material' },
-                                    { label: 'Especificação', key: 'especificacao' },
-                                    { label: 'Unidade', key: 'unidade' },
-                                    { label: 'Quantidade', key: 'quantidade' }
-                                ])}
+                                ${criarTabelaArray(prop.materiaisTecnica || [])}
                                 <h5 style="margin-top:15px; color:#6c63ff;">Equipamentos</h5>
-                                ${criarTabelaArray(prop.equipamentosTecnica || [], [
-                                    { label: 'Equipamento', key: 'equipamento' },
-                                    { label: 'Especificação', key: 'especificacao' },
-                                    { label: 'Unidade', key: 'unidade' },
-                                    { label: 'Quantidade', key: 'quantidade' },
-                                    { label: 'Tempo', key: 'tempo' }
-                                ])}
+                                ${criarTabelaArray(prop.equipamentosTecnica || [])}
                             </div>
                             <div class="form-group" style="margin-top:15px;">
                                 <label for="parecer-analise-${index}">Comentário do Requisitante</label>
