@@ -1584,7 +1584,12 @@ class ComparativoPropostasIntegrado {
             { label: 'Garantias Oferecidas', key: 'garantias', type: 'text' },
             { label: 'Estrutura do Canteiro', key: 'estruturaCanteiro', type: 'text' },
             { label: 'Obrigações da Contratada', key: 'obrigacoesContratada', type: 'text' },
-            { label: 'Obrigações da Contratante', key: 'obrigacoesContratante', type: 'text' }
+            { label: 'Obrigações da Contratante', key: 'obrigacoesContratante', type: 'text' },
+            // Campos adicionados para exibir o parecer do requisitante. Esses valores são
+            // preenchidos pelo módulo requisitante no objeto propostaTecnica usando
+            // as chaves parecerRequisitante e recomendacaoRequisitante.
+            { label: 'Recomendação do Requisitante', key: 'recomendacaoRequisitante', type: 'text' },
+            { label: 'Parecer do Requisitante', key: 'parecerRequisitante', type: 'text' }
         ];
 
         this.buildTable(tableBody, items, 'propostaTecnica');
