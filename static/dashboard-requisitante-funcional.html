@@ -559,6 +559,19 @@
             }
         }
 
+        /* Exibição lado a lado das propostas técnicas dentro do modal de análise */
+        #analise-container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 20px;
+            overflow-x: auto;
+        }
+
+        .proposta-analise {
+            flex: 0 0 350px;
+            min-width: 350px;
+        }
+
         /* ===== Estilos adicionais para lista de propostas e modal de parecer ===== */
         .propostas-container {
             margin-top: 10px;
@@ -1147,6 +1160,18 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Modal para análise de todas as propostas técnicas -->
+            <div id="modal-analise" class="modal">
+                <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+                    <h3>Analisar Propostas Técnicas</h3>
+                    <div id="analise-container" style="margin-top: 15px;"></div>
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" id="btn-cancelar-analise">Cancelar</button>
+                        <button type="button" class="btn" id="btn-salvar-analise">Salvar Parecer</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1506,6 +1531,10 @@
 
             container.innerHTML = propostas.map(p => {
                 const statusClass = 'status-pendente';
+                // Determinar ação e rótulo do botão baseado na presença de comparativo_tecnico
+                const isComparativo = !!p.comparativo_tecnico;
+                const buttonLabel = isComparativo ? 'Analisar Propostas' : 'Emitir Parecer';
+                const buttonAction = isComparativo ? `window.abrirAnalisePropostas(${p.id})` : `window.emitirParecer(${p.id})`;
                 return `
                     <div class="proposta-card">
                         <div class="proposta-header">
@@ -1530,7 +1559,7 @@
                                 <span class="info-value">${p.data_envio_requisitante || '-'}</span>
                             </div>
                         </div>
-                        <button class="btn" onclick="window.emitirParecer(${p.id})">Emitir Parecer</button>
+                        <button class="btn" onclick="${buttonAction}">${buttonLabel}</button>
                     </div>
                 `;
             }).join('');
@@ -1626,6 +1655,131 @@
                     alert('Parecer técnico emitido com sucesso!');
                     document.getElementById('modal-parecer').classList.remove('active');
                     window.renderizarPropostasParaParecer();
+                });
+            }
+        });
+
+        /**
+         * =========================
+         *  ANÁLISE DE PROPOSTAS TÉCNICAS COMPARATIVAS
+         * =========================
+         * Para propostas com múltiplos fornecedores (comparativo_tecnico),
+         * o requisitante deve analisar cada proposta separadamente,
+         * aprovando ou solicitando ajustes com comentários. As funções
+         * abaixo constroem a interface de análise e salvam os pareceres
+         * individualmente no objeto comparativo.
+         */
+
+        // ID do comparativo atualmente em análise
+        let analisePropostaId = null;
+
+        // Abrir modal de análise para todas as propostas de um comparativo
+        window.abrirAnalisePropostas = function(propostaId) {
+            analisePropostaId = propostaId;
+            try {
+                const propostasRaw = localStorage.getItem('propostas_para_requisitante') || '[]';
+                const propostas = JSON.parse(propostasRaw);
+                const proposta = propostas.find(p => p.id == propostaId);
+                if (!proposta || !proposta.comparativo_tecnico) {
+                    console.warn('Comparativo técnico não encontrado');
+                    return;
+                }
+                const listaPropostas = proposta.comparativo_tecnico.proposals || [];
+                const container = document.getElementById('analise-container');
+                if (!container) return;
+                container.innerHTML = '';
+                // Gerar conteúdo para cada proposta
+                listaPropostas.forEach((prop, index) => {
+                    const dadosCad = prop.dadosCadastrais || {};
+                    const propTec = prop.propostaTecnica || {};
+                    // Função auxiliar para criar tabela a partir de objeto de dados
+                    const criarTabela = (obj) => {
+                        const rows = Object.keys(obj).map(key => {
+                            const valor = obj[key];
+                            // Ignorar objetos ou arrays complexos
+                            if (valor && typeof valor === 'object') return '';
+                            const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, m => m.toUpperCase());
+                            return `<tr><td style="font-weight:bold; padding:4px 8px;">${label}</td><td style="padding:4px 8px;">${valor || '-'}</td></tr>`;
+                        }).join('');
+                        return `<table style="width:100%; border-collapse: collapse; margin-top: 10px;">${rows}</table>`;
+                    };
+                    // Construir HTML da proposta
+                    const html = `
+                        <div class="proposta-analise" style="border:1px solid #e0e0e0; border-radius:8px; padding:15px; margin-bottom:15px; background:#fefefe;">
+                            <h4 style="margin-bottom:10px; color:#333;">${dadosCad.razaoSocial || dadosCad.cnpj || 'Fornecedor'}</h4>
+                            <div>
+                                <h5 style="margin-top:5px; color:#6c63ff;">Dados Cadastrais</h5>
+                                ${criarTabela(dadosCad)}
+                                <h5 style="margin-top:15px; color:#6c63ff;">Proposta Técnica</h5>
+                                ${criarTabela(propTec)}
+                            </div>
+                            <div class="form-group" style="margin-top:15px;">
+                                <label for="parecer-analise-${index}">Comentário do Requisitante</label>
+                                <textarea id="parecer-analise-${index}" data-index="${index}" class="parecer-analise" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="recomendacao-analise-${index}">Recomendação</label>
+                                <select id="recomendacao-analise-${index}" data-index="${index}" class="recomendacao-analise" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                                    <option value="">Selecione...</option>
+                                    <option value="aprovado">Aprovar</option>
+                                    <option value="ajuste">Solicitar Ajuste</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                });
+                // Abrir modal
+                document.getElementById('modal-analise').classList.add('active');
+            } catch (error) {
+                console.error('Erro ao abrir modal de análise:', error);
+            }
+        };
+
+        // Salvar pareceres de todas as propostas analisadas
+        window.salvarAnalisePropostas = function() {
+            if (!analisePropostaId) return;
+            try {
+                const propostasRaw = localStorage.getItem('propostas_para_requisitante') || '[]';
+                const propostas = JSON.parse(propostasRaw);
+                const proposta = propostas.find(p => p.id == analisePropostaId);
+                if (!proposta || !proposta.comparativo_tecnico) return;
+                const listaPropostas = proposta.comparativo_tecnico.proposals || [];
+                listaPropostas.forEach((prop, index) => {
+                    const parecer = document.getElementById(`parecer-analise-${index}`).value;
+                    const recomendacao = document.getElementById(`recomendacao-analise-${index}`).value;
+                    if (!recomendacao) return;
+                    prop.parecer_requisitante = parecer;
+                    prop.recomendacao_requisitante = recomendacao;
+                    prop.data_parecer_requisitante = new Date().toLocaleDateString('pt-BR');
+                });
+                // Marcar comparativo como analisado para não mais aparecer na lista pendente
+                proposta.parecer_requisitante = 'analise_realizada';
+                // Atualizar localStorage
+                localStorage.setItem('propostas_para_requisitante', JSON.stringify(propostas));
+                // Fechar modal e recarregar lista
+                document.getElementById('modal-analise').classList.remove('active');
+                analisePropostaId = null;
+                window.renderizarPropostasParaParecer();
+                alert('Pareceres salvos com sucesso!');
+            } catch (error) {
+                console.error('Erro ao salvar análises de propostas:', error);
+            }
+        };
+
+        // Event listeners para botões do modal de análise
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnCancelarAnalise = document.getElementById('btn-cancelar-analise');
+            const btnSalvarAnalise = document.getElementById('btn-salvar-analise');
+            if (btnCancelarAnalise) {
+                btnCancelarAnalise.addEventListener('click', function() {
+                    document.getElementById('modal-analise').classList.remove('active');
+                    analisePropostaId = null;
+                });
+            }
+            if (btnSalvarAnalise) {
+                btnSalvarAnalise.addEventListener('click', function() {
+                    window.salvarAnalisePropostas();
                 });
             }
         });
