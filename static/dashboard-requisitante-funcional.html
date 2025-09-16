@@ -568,8 +568,9 @@
         }
 
         .proposta-analise {
-            flex: 0 0 350px;
-            min-width: 350px;
+            /* Cartões mais largos para melhor leitura das tabelas */
+            flex: 0 0 400px;
+            min-width: 400px;
         }
 
         /* ===== Estilos adicionais para lista de propostas e modal de parecer ===== */
@@ -649,11 +650,13 @@
         }
         .modal-content {
             background-color: #ffffff;
-            margin: 5% auto;
+            /* Reduzir a margem para mais área útil */
+            margin: 3% auto;
             padding: 20px;
             border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
+            /* Expandir o modal para acomodar várias propostas lado a lado */
+            width: 95vw;
+            max-width: 95vw;
         }
         .form-group {
             margin-bottom: 15px;
@@ -1692,7 +1695,7 @@
                 listaPropostas.forEach((prop, index) => {
                     const dadosCad = prop.dadosCadastrais || {};
                     const propTec = prop.propostaTecnica || {};
-                    // Função auxiliar para criar tabela a partir de objeto de dados
+                    // Função auxiliar para criar tabela a partir de objeto de dados simples
                     const criarTabela = (obj) => {
                         const rows = Object.keys(obj).map(key => {
                             const valor = obj[key];
@@ -1703,7 +1706,18 @@
                         }).join('');
                         return `<table style="width:100%; border-collapse: collapse; margin-top: 10px;">${rows}</table>`;
                     };
-                    // Construir HTML da proposta
+                    // Função auxiliar para criar tabela a partir de array de objetos
+                    const criarTabelaArray = (arr, cols) => {
+                        if (!Array.isArray(arr) || arr.length === 0) {
+                            return `<p style="margin-top:10px; color:#666;">Nenhum dado informado.</p>`;
+                        }
+                        const header = `<tr>${cols.map(c => `<th style="font-weight:bold; text-align:left; padding:4px 8px;">${c.label}</th>`).join('')}</tr>`;
+                        const rows = arr.map(item => {
+                            return `<tr>${cols.map(c => `<td style="padding:4px 8px;">${(item[c.key] !== undefined && item[c.key] !== null) ? item[c.key] : '-'}</td>`).join('')}</tr>`;
+                        }).join('');
+                        return `<table style="width:100%; border-collapse: collapse; margin-top: 10px;">${header}${rows}</table>`;
+                    };
+                    // Construir HTML da proposta, incluindo tabelas detalhadas
                     const html = `
                         <div class="proposta-analise" style="border:1px solid #e0e0e0; border-radius:8px; padding:15px; margin-bottom:15px; background:#fefefe;">
                             <h4 style="margin-bottom:10px; color:#333;">${dadosCad.razaoSocial || dadosCad.cnpj || 'Fornecedor'}</h4>
@@ -1712,6 +1726,33 @@
                                 ${criarTabela(dadosCad)}
                                 <h5 style="margin-top:15px; color:#6c63ff;">Proposta Técnica</h5>
                                 ${criarTabela(propTec)}
+                                <h5 style="margin-top:15px; color:#6c63ff;">Serviços (Quantidades)</h5>
+                                ${criarTabelaArray(prop.servicosTecnica || [], [
+                                    { label: 'Serviço', key: 'descricao' },
+                                    { label: 'Unidade', key: 'unidade' },
+                                    { label: 'Quantidade', key: 'quantidade' }
+                                ])}
+                                <h5 style="margin-top:15px; color:#6c63ff;">Mão de Obra</h5>
+                                ${criarTabelaArray(prop.maoObraTecnica || [], [
+                                    { label: 'Função', key: 'funcao' },
+                                    { label: 'Quantidade', key: 'quantidade' },
+                                    { label: 'Tempo', key: 'tempo' }
+                                ])}
+                                <h5 style="margin-top:15px; color:#6c63ff;">Materiais</h5>
+                                ${criarTabelaArray(prop.materiaisTecnica || [], [
+                                    { label: 'Material', key: 'material' },
+                                    { label: 'Especificação', key: 'especificacao' },
+                                    { label: 'Unidade', key: 'unidade' },
+                                    { label: 'Quantidade', key: 'quantidade' }
+                                ])}
+                                <h5 style="margin-top:15px; color:#6c63ff;">Equipamentos</h5>
+                                ${criarTabelaArray(prop.equipamentosTecnica || [], [
+                                    { label: 'Equipamento', key: 'equipamento' },
+                                    { label: 'Especificação', key: 'especificacao' },
+                                    { label: 'Unidade', key: 'unidade' },
+                                    { label: 'Quantidade', key: 'quantidade' },
+                                    { label: 'Tempo', key: 'tempo' }
+                                ])}
                             </div>
                             <div class="form-group" style="margin-top:15px;">
                                 <label for="parecer-analise-${index}">Comentário do Requisitante</label>
