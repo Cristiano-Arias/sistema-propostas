@@ -1588,7 +1588,7 @@ class ComparativoPropostasIntegrado {
             // Campos adicionados para exibir o parecer do requisitante. Esses valores são
             // preenchidos pelo módulo requisitante no objeto propostaTecnica usando
             // as chaves parecerRequisitante e recomendacaoRequisitante.
-            { label: 'Recomendação do Requisitante', key: 'recomendacaoRequisitante', type: 'text' },
+            { label: 'Recomendação do Requisitante', key: 'recomendacaoRequisitante', type: 'status' },
             { label: 'Parecer do Requisitante', key: 'parecerRequisitante', type: 'text' }
         ];
 
@@ -2304,6 +2304,22 @@ class ComparativoPropostasIntegrado {
                 return `<span class="value-percentage">${value}%</span>`;
             case 'quantity':
                 return `<span class="value-quantity">${value}</span>`;
+            case 'status': {
+                // Exibir recomendação do requisitante com cores diferentes conforme status
+                const labelMap = {
+                    'aprovada_tecnicamente': 'Aprovada Tecnicamente',
+                    'ajuste': 'Solicitar Ajuste',
+                    'reprovada_tecnicamente': 'Reprovada Tecnicamente'
+                };
+                const colorMap = {
+                    'aprovada_tecnicamente': '#0066cc', // azul
+                    'ajuste': '#e6a600',                 // amarelo
+                    'reprovada_tecnicamente': '#cc0000'  // vermelho
+                };
+                const label = labelMap[value] || value;
+                const color = colorMap[value] || '#333';
+                return `<span class="value-status" style="color:${color}; font-weight:600;">${label}</span>`;
+            }
             case 'text':
             default:
                 return `<span class="value-text">${value}</span>`;
