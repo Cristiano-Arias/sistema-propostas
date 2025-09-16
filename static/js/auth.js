@@ -1,15 +1,20 @@
 // static/auth.js - Sistema de Autenticação Integrado
+// Importa funcionalidades principais do Firebase centralizado.
+// Não importamos createUserWithEmailAndPassword aqui, pois a versão de firebase.js
+// fornecida pelo servidor em alguns ambientes não exporta essa função,
+// gerando erros de importação. Para garantir compatibilidade,
+// importamos createUserWithEmailAndPassword diretamente do SDK Firebase Auth.
 import { 
   auth, 
   db, 
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
   doc,
   setDoc,
   getDoc
 } from './firebase.js';
+import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
 class AuthSystem {
   constructor() {
