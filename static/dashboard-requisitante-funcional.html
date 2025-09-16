@@ -1152,8 +1152,10 @@
                             <label for="parecer-recomendacao">Recomendação</label>
                             <select id="parecer-recomendacao" required>
                                 <option value="">Selecione...</option>
-                                <option value="aprovado">Aprovar</option>
-                                <option value="reprovado">Reprovar</option>
+                                <!-- Recomendações técnicas unificadas -->
+                                <option value="aprovada_tecnicamente">Aprovada Tecnicamente</option>
+                                <option value="ajuste">Solicitar Ajuste</option>
+                                <option value="reprovada_tecnicamente">Reprovada Tecnicamente</option>
                             </select>
                         </div>
                         <div style="text-align: right; margin-top: 20px;">
@@ -1538,6 +1540,21 @@
                 const isComparativo = !!p.comparativo_tecnico;
                 const buttonLabel = isComparativo ? 'Analisar Propostas' : 'Emitir Parecer';
                 const buttonAction = isComparativo ? `window.abrirAnalisePropostas(${p.id})` : `window.emitirParecer(${p.id})`;
+                // Campos dinâmicos de exibição. Para comparativos, mostrar quantidade de propostas e placeholders para valor/prazo
+                let fornecedorInfo;
+                let valorInfo;
+                let prazoInfo;
+                if (isComparativo) {
+                    const count = Array.isArray(p.comparativo_tecnico?.proposals) ? p.comparativo_tecnico.proposals.length : 0;
+                    fornecedorInfo = `${count} proposta${count === 1 ? '' : 's'}`;
+                    valorInfo = '-';
+                    prazoInfo = '-';
+                } else {
+                    fornecedorInfo = p.fornecedor_nome || p.fornecedor_cnpj || '—';
+                    valorInfo = p.valor_proposta || p.valor || '-';
+                    prazoInfo = p.prazo || '-';
+                }
+                const dataEnvio = p.data_envio_requisitante || '-';
                 return `
                     <div class="proposta-card">
                         <div class="proposta-header">
@@ -1546,20 +1563,20 @@
                         </div>
                         <div class="proposta-info">
                             <div class="info-item">
-                                <span class="info-label">Fornecedor:</span>
-                                <span class="info-value">${p.fornecedor_nome || p.fornecedor_cnpj || '—'}</span>
+                                <span class="info-label">${isComparativo ? 'Total de Propostas:' : 'Fornecedor:'}</span>
+                                <span class="info-value">${fornecedorInfo}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Valor:</span>
-                                <span class="info-value">${p.valor_proposta || p.valor || '-'}</span>
+                                <span class="info-value">${valorInfo}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Prazo:</span>
-                                <span class="info-value">${p.prazo || '-'}</span>
+                                <span class="info-value">${prazoInfo}</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Data de envio:</span>
-                                <span class="info-value">${p.data_envio_requisitante || '-'}</span>
+                                <span class="info-value">${dataEnvio}</span>
                             </div>
                         </div>
                         <button class="btn" onclick="${buttonAction}">${buttonLabel}</button>
@@ -1824,8 +1841,10 @@
                                 <label for="recomendacao-analise-${index}">Recomendação</label>
                                 <select id="recomendacao-analise-${index}" data-index="${index}" class="recomendacao-analise" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
                                     <option value="">Selecione...</option>
-                                    <option value="aprovado">Aprovar</option>
+                                    <!-- Recomendações alinhadas ao fluxo técnico -->
+                                    <option value="aprovada_tecnicamente">Aprovada Tecnicamente</option>
                                     <option value="ajuste">Solicitar Ajuste</option>
+                                    <option value="reprovada_tecnicamente">Reprovada Tecnicamente</option>
                                 </select>
                             </div>
                         </div>
