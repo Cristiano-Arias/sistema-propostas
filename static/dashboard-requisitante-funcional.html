@@ -558,6 +558,106 @@
                 display: inline-flex;
             }
         }
+
+        /* ===== Estilos adicionais para lista de propostas e modal de parecer ===== */
+        .propostas-container {
+            margin-top: 10px;
+        }
+        .proposta-card {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.2s ease;
+        }
+        .proposta-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+        .proposta-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .proposta-titulo {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .proposta-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pendente {
+            background: #ffc107;
+            color: #333;
+        }
+        .status-aprovado {
+            background: #28a745;
+            color: #fff;
+        }
+        .status-reprovado {
+            background: #dc3545;
+            color: #fff;
+        }
+        .proposta-info {
+            margin-bottom: 10px;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .info-label {
+            color: #666;
+        }
+        .info-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.active {
+            display: block;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -1001,11 +1101,51 @@
             <div class="section-title">
                 <i class="fas fa-file-alt"></i> Emitir Parecer Técnico
             </div>
-
-            <div style="text-align: center; padding: 40px; color: #666;">
-                <i class="fas fa-tools" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
-                <h3>Funcionalidade em Desenvolvimento</h3>
-                <p>A funcionalidade de emissão de pareceres técnicos estará disponível em breve.</p>
+            <!-- Lista de propostas para parecer -->
+            <div id="lista-propostas" class="propostas-container">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Carregando propostas...</div>
+            </div>
+            <!-- Modal para emissão de parecer -->
+            <div id="modal-parecer" class="modal">
+                <div class="modal-content">
+                    <h3>Emitir Parecer Técnico</h3>
+                    <form id="form-parecer" style="margin-top: 15px;">
+                        <!-- Campos ocultos -->
+                        <input type="hidden" id="parecer-proposta-id">
+                        <div class="form-group">
+                            <label for="parecer-proc-titulo">Processo</label>
+                            <input type="text" id="parecer-proc-titulo" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="parecer-fornecedor">Fornecedor</label>
+                            <input type="text" id="parecer-fornecedor" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="parecer-descricao">Descrição Técnica</label>
+                            <textarea id="parecer-descricao" readonly></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="parecer-comprador-msg">Parecer do Comprador</label>
+                            <textarea id="parecer-comprador-msg" readonly></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="parecer-requisitante">Parecer do Requisitante</label>
+                            <textarea id="parecer-requisitante" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="parecer-recomendacao">Recomendação</label>
+                            <select id="parecer-recomendacao" required>
+                                <option value="">Selecione...</option>
+                                <option value="aprovado">Aprovar</option>
+                                <option value="reprovado">Reprovar</option>
+                            </select>
+                        </div>
+                        <div style="text-align: right; margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary" id="btn-cancelar-parecer">Cancelar</button>
+                            <button type="submit" class="btn">Enviar Parecer</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -1275,6 +1415,11 @@
                 window.carregarEstatisticas();
             } else if (pagina === 'meus-trs') {
                 window.carregarMeusTRs();
+            } else if (pagina === 'emitir-parecer') {
+                // Carregar propostas para parecer quando a seção for exibida
+                if (typeof window.renderizarPropostasParaParecer === 'function') {
+                    window.renderizarPropostasParaParecer();
+                }
             }
         };
 
@@ -1319,6 +1464,171 @@
             document.getElementById('trs-enviados').textContent   = estatisticas.enviados;
             document.getElementById('trs-aprovados').textContent  = estatisticas.aprovados;
         };
+
+        /**
+         * =========================
+         *  PARECER TÉCNICO - COMPARATIVO
+         * =========================
+         *
+         * Estas funções fornecem suporte ao envio de pareceres técnicos
+         * sobre propostas comparativas enviadas pelo módulo comprador.
+         * A implementação reutiliza localStorage para armazenar propostas
+         * em 'propostas_para_requisitante' e registrar pareceres em
+         * 'pareceres_requisitante'. Os dados são automaticamente
+         * sincronizados com o Firebase pelo realtime-sync.js quando a chave
+         * está listada em KEYS.
+         */
+
+        // Buscar todas as propostas pendentes de parecer
+        window.buscarPropostasParaParecer = function() {
+            try {
+                const propostasRaw = localStorage.getItem('propostas_para_requisitante');
+                if (!propostasRaw) return [];
+                const propostas = JSON.parse(propostasRaw);
+                // Filtrar apenas propostas sem parecer do requisitante
+                return propostas.filter(p => !p.parecer_requisitante);
+            } catch (error) {
+                console.error('Erro ao buscar propostas:', error);
+                return [];
+            }
+        };
+
+        // Renderizar lista de propostas para parecer
+        window.renderizarPropostasParaParecer = function() {
+            const container = document.getElementById('lista-propostas');
+            if (!container) return;
+            const propostas = window.buscarPropostasParaParecer();
+
+            if (!propostas || propostas.length === 0) {
+                container.innerHTML = '<div class="loading">Nenhuma proposta aguardando parecer.</div>';
+                return;
+            }
+
+            container.innerHTML = propostas.map(p => {
+                const statusClass = 'status-pendente';
+                return `
+                    <div class="proposta-card">
+                        <div class="proposta-header">
+                            <div class="proposta-titulo">${p.processo_titulo || 'Processo'}</div>
+                            <div class="proposta-status ${statusClass}">PENDENTE</div>
+                        </div>
+                        <div class="proposta-info">
+                            <div class="info-item">
+                                <span class="info-label">Fornecedor:</span>
+                                <span class="info-value">${p.fornecedor_nome || p.fornecedor_cnpj || '—'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Valor:</span>
+                                <span class="info-value">${p.valor_proposta || p.valor || '-'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Prazo:</span>
+                                <span class="info-value">${p.prazo || '-'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Data de envio:</span>
+                                <span class="info-value">${p.data_envio_requisitante || '-'}</span>
+                            </div>
+                        </div>
+                        <button class="btn" onclick="window.emitirParecer(${p.id})">Emitir Parecer</button>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        // Abrir modal e preencher dados da proposta selecionada
+        window.emitirParecer = function(propostaId) {
+            const propostas = window.buscarPropostasParaParecer();
+            const proposta = propostas.find(p => p.id == propostaId);
+            if (!proposta) return;
+
+            document.getElementById('parecer-proposta-id').value = propostaId;
+            document.getElementById('parecer-proc-titulo').value = proposta.processo_titulo || '';
+            document.getElementById('parecer-fornecedor').value = proposta.fornecedor_nome || proposta.fornecedor_cnpj || '';
+            document.getElementById('parecer-descricao').value = proposta.descricao_tecnica || '';
+            document.getElementById('parecer-comprador-msg').value = proposta.parecer_comprador || '';
+            document.getElementById('parecer-requisitante').value = '';
+            document.getElementById('parecer-recomendacao').value = '';
+            // Mostrar modal
+            document.getElementById('modal-parecer').classList.add('active');
+        };
+
+        // Salvar parecer do requisitante em localStorage
+        window.salvarParecerRequisitante = function(propostaId, parecer, recomendacao) {
+            try {
+                const pareceresRaw = localStorage.getItem('pareceres_requisitante') || '[]';
+                const pareceres = JSON.parse(pareceresRaw);
+
+                const propostas = window.buscarPropostasParaParecer();
+                const proposta = propostas.find(p => p.id == propostaId);
+
+                const usuario = window.SistemaLocal.obterUsuario?.() || { nome: 'Requisitante' };
+
+                const novoParecer = {
+                    proposta_id: propostaId,
+                    processo_titulo: proposta.processo_titulo || '',
+                    parecer: parecer,
+                    recomendacao: recomendacao,
+                    requisitante: usuario.nome || usuario.email || 'requisitante',
+                    data_parecer: new Date().toLocaleDateString('pt-BR')
+                };
+
+                pareceres.push(novoParecer);
+                localStorage.setItem('pareceres_requisitante', JSON.stringify(pareceres));
+            } catch (error) {
+                console.error('Erro ao salvar parecer:', error);
+            }
+        };
+
+        // Atualizar proposta com parecer e salvar de volta no localStorage
+        window.atualizarPropostaComParecer = function(propostaId, parecer, recomendacao) {
+            try {
+                const propostasRaw = localStorage.getItem('propostas_para_requisitante') || '[]';
+                const propostas = JSON.parse(propostasRaw);
+                const proposta = propostas.find(p => p.id == propostaId);
+                if (proposta) {
+                    proposta.parecer_requisitante = parecer;
+                    proposta.recomendacao_requisitante = recomendacao;
+                    proposta.data_parecer_requisitante = new Date().toLocaleDateString('pt-BR');
+                    proposta.status_requisitante = recomendacao;
+                    localStorage.setItem('propostas_para_requisitante', JSON.stringify(propostas));
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar proposta:', error);
+            }
+        };
+
+        // Cancelar modal de parecer ao clicar no botão de cancelar
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnCancelar = document.getElementById('btn-cancelar-parecer');
+            if (btnCancelar) {
+                btnCancelar.addEventListener('click', function() {
+                    document.getElementById('modal-parecer').classList.remove('active');
+                });
+            }
+        });
+
+        // Manipular envio do formulário de parecer
+        document.addEventListener('DOMContentLoaded', function() {
+            const formParecer = document.getElementById('form-parecer');
+            if (formParecer) {
+                formParecer.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const propostaId = document.getElementById('parecer-proposta-id').value;
+                    const parecer = document.getElementById('parecer-requisitante').value;
+                    const recomendacao = document.getElementById('parecer-recomendacao').value;
+                    if (!parecer || !recomendacao) {
+                        alert('Preencha o parecer e a recomendação.');
+                        return;
+                    }
+                    window.salvarParecerRequisitante(propostaId, parecer, recomendacao);
+                    window.atualizarPropostaComParecer(propostaId, parecer, recomendacao);
+                    alert('Parecer técnico emitido com sucesso!');
+                    document.getElementById('modal-parecer').classList.remove('active');
+                    window.renderizarPropostasParaParecer();
+                });
+            }
+        });
 
         // Salvar TR
         window.salvarTR = function(dados, status = window.StatusTR.ELABORADO) {
