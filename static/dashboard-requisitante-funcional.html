@@ -680,6 +680,54 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+
+        /* Estilos de impressão para a tela de análise de propostas técnicas */
+        @media print {
+            /* Quando a classe print-analise está aplicada ao body, ocultar todo o resto */
+            body.print-analise * {
+                visibility: hidden !important;
+            }
+            /* Manter visíveis apenas o modal de análise e seu conteúdo */
+            body.print-analise #modal-analise,
+            body.print-analise #modal-analise * {
+                visibility: visible !important;
+            }
+            /* Ajustar o modal para ocupar toda a largura e remover margens */
+            body.print-analise #modal-analise {
+                position: static !important;
+                width: 100% !important;
+                height: auto !important;
+                background-color: white !important;
+            }
+            body.print-analise .modal-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            /* Ocultar botões e elementos de interação no modo de impressão */
+            body.print-analise #modal-analise button,
+            body.print-analise #modal-analise .btn {
+                display: none !important;
+            }
+            /* Linearizar o contêiner de análise para uma melhor disposição na página impressa */
+            body.print-analise #analise-container {
+                display: block !important;
+                overflow-x: visible !important;
+            }
+            /* Cada proposta impressa ocupa toda a largura, evita quebras internas e inicia nova página */
+            body.print-analise .proposta-analise {
+                flex: 0 0 auto !important;
+                width: 100% !important;
+                page-break-inside: avoid !important;
+                page-break-after: always !important;
+                margin-bottom: 20px !important;
+            }
+            /* Evitar quebra de página após a última proposta */
+            body.print-analise .proposta-analise:last-child {
+                page-break-after: auto !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1184,6 +1232,8 @@
                     <div id="analise-container" style="margin-top: 15px;"></div>
                     <div style="text-align: right; margin-top: 20px;">
                         <button type="button" class="btn btn-secondary" id="btn-cancelar-analise">Cancelar</button>
+                        <!-- Botão para imprimir a análise de propostas -->
+                        <button type='button' class='btn' id='btn-imprimir-analise'><i class='fas fa-print'></i> Imprimir</button>
                         <button type="button" class="btn" id="btn-salvar-analise">Salvar Parecer</button>
                     </div>
                 </div>
@@ -2082,6 +2132,21 @@
                     window.salvarAnalisePropostas();
                 });
             }
+
+    // Botão para imprimir a análise de propostas técnicas
+    const btnImprimirAnalise = document.getElementById('btn-imprimir-analise');
+    if (btnImprimirAnalise) {
+        btnImprimirAnalise.addEventListener('click', function() {
+            // Adicionar classe ao body para aplicar estilos de impressão específicos
+            document.body.classList.add('print-analise');
+            // Pequeno atraso para garantir que o estilo seja aplicado antes da impressão
+            setTimeout(() => {
+                window.print();
+                // Remover a classe após a impressão
+                document.body.classList.remove('print-analise');
+            }, 100);
+        });
+    }
         });
 
         // Salvar TR
