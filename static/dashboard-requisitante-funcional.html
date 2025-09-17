@@ -1728,7 +1728,8 @@
                 const proposta = propostas.find(p => p.id == propostaId);
                 if (proposta) {
                     // Atualizar campos principais
-                    proposta.parecer_requisitante = parecer;
+                    proposta.parecer_requisitante = 'analise_realizada';
+                    proposta.parecer_texto = parecer;
                     proposta.recomendacao_requisitante = recomendacao;
                     proposta.data_parecer_requisitante = new Date().toLocaleDateString('pt-BR');
                     proposta.status_requisitante = recomendacao;
