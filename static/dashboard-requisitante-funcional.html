@@ -559,18 +559,24 @@
             }
         }
 
-        /* Exibição lado a lado das propostas técnicas dentro do modal de análise */
+        /* Exibição lado a lado das propostas técnicas dentro do modal de análise.
+           Ao permitir quebra de linha (flex-wrap: wrap), os cartões de proposta
+           são distribuídos em colunas. Cada cartão ocupa aproximadamente metade
+           da largura disponível. O overflow-x continua ativado para garantir
+           acessibilidade em telas menores. */
         #analise-container {
             display: flex;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             gap: 20px;
             overflow-x: auto;
         }
 
         .proposta-analise {
-            /* Cartões mais largos para melhor leitura das tabelas */
-            flex: 0 0 550px;
-            min-width: 550px;
+            /* Cada cartão ocupa cerca de 48% da largura total, permitindo
+               apresentação lado a lado. A largura mínima garante a legibilidade
+               das tabelas em dispositivos de menor resolução. */
+            flex: 0 0 48%;
+            min-width: 450px;
         }
 
         /* ===== Estilos adicionais para lista de propostas e modal de parecer ===== */
@@ -656,13 +662,19 @@
         }
         .modal-content {
             background-color: #ffffff;
-            /* Reduzir a margem para mais área útil */
-            margin: 3% auto;
+            /* Ajuste das margens para ampliar a área útil do modal. A margem menor
+               mantém o conteúdo afastado das bordas sem desperdiçar espaço. */
+            margin: 1% auto;
             padding: 20px;
             border-radius: 10px;
-            /* Expandir o modal para acomodar várias propostas lado a lado */
-            width: 95vw;
-            max-width: 95vw;
+            /* Expandir o modal para praticamente toda a largura da janela,
+               permitindo colocar duas propostas lado a lado de forma confortável. */
+            width: 98vw;
+            max-width: 98vw;
+            /* Limitar a altura máxima para evitar que o modal extrapole a viewport,
+               facilitando a leitura das informações sem rolagem excessiva. */
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .form-group {
             margin-bottom: 15px;
@@ -749,6 +761,19 @@
                informações da proposta técnica. */
             body.print-analise .proposta-analise table {
                 display: table !important;
+            }
+
+            /* Ocultar campos de comentário e recomendação no modo de impressão.  
+               Dessa forma, o relatório impresso contém apenas os dados técnicos,
+               sem os campos interativos de entrada. */
+            body.print-analise .proposta-analise .form-group {
+                display: none !important;
+            }
+
+            /* Ocultar o título do modal de análise na impressão para um visual
+               mais limpo e profissional. */
+            body.print-analise #modal-analise h3 {
+                display: none !important;
             }
         }
     </style>
