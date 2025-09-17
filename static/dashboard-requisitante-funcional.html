@@ -2242,6 +2242,113 @@
             }
         };
 
+        /**
+         * Monta a visualização comparativa em tela cheia a partir das propostas
+         * carregadas no contêiner de análise. Esta função coleta todos os
+         * tópicos existentes nas propostas, organiza-os em uma tabela com
+         * cada tópico em uma linha e cada proposta em uma coluna, e exibe o
+         * resultado dentro do contêiner #analise-full. O modal de análise
+         * não é exibido quando esta função é utilizada.
+         */
+        window.montarComparativoTelaCheia = function() {
+            try {
+                const modal = document.getElementById('modal-analise');
+                const full = document.getElementById('analise-full');
+                const container = document.getElementById('analise-container');
+                const fullContainer = document.getElementById('analise-full-container');
+                if (!container || !fullContainer) return;
+                // Selecionar propostas do contêiner
+                const cards = container.querySelectorAll('.proposta-analise');
+                if (!cards || cards.length === 0) return;
+                // Mapear seções para cada proposta, armazenando elementos de comentário e recomendação
+                const cardSections = [];
+                cards.forEach((card) => {
+                    const secMap = {};
+                    // título principal
+                    const titleElem = card.querySelector('h4');
+                    const title = titleElem ? titleElem.textContent.trim() : 'Proposta';
+                    secMap['__title__'] = title;
+                    // Processar cada heading (h5)
+                    const headings = card.querySelectorAll('h5');
+                    headings.forEach((heading) => {
+                        const topic = heading.textContent.trim();
+                        let contentHTML = '';
+                        let sibling = heading.nextElementSibling;
+                        // Coletar HTML até o próximo heading
+                        while (sibling && sibling.tagName.toLowerCase() !== 'h5') {
+                            contentHTML += sibling.outerHTML;
+                            sibling = sibling.nextElementSibling;
+                        }
+                        secMap[topic] = contentHTML;
+                    });
+                    // Obter referência aos elementos de comentário e recomendação, movendo-os posteriormente
+                    const comentario = card.querySelector('textarea');
+                    if (comentario) {
+                        secMap['Comentário do Requisitante'] = comentario;
+                    }
+                    const recomend = card.querySelector('select');
+                    if (recomend) {
+                        secMap['Recomendação'] = recomend;
+                    }
+                    cardSections.push(secMap);
+                });
+                // Obter todos os tópicos
+                const allTopicsSet = new Set();
+                cardSections.forEach((sec) => {
+                    Object.keys(sec).forEach((key) => {
+                        if (key !== '__title__') allTopicsSet.add(key);
+                    });
+                });
+                const allTopics = Array.from(allTopicsSet);
+                // Construir tabela usando DOM para mover elementos de comentários e recomendações
+                const table = document.createElement('table');
+                table.className = 'comparativo-tecnico';
+                // Cabeçalho
+                const theadEl = document.createElement('thead');
+                const trHead = document.createElement('tr');
+                const thTopico = document.createElement('th');
+                thTopico.textContent = 'Tópico';
+                trHead.appendChild(thTopico);
+                cardSections.forEach((sec) => {
+                    const th = document.createElement('th');
+                    th.textContent = sec['__title__'] || 'Proposta';
+                    trHead.appendChild(th);
+                });
+                theadEl.appendChild(trHead);
+                table.appendChild(theadEl);
+                // Corpo da tabela
+                const tbodyEl = document.createElement('tbody');
+                allTopics.forEach((topic) => {
+                    const tr = document.createElement('tr');
+                    const th = document.createElement('th');
+                    th.textContent = topic;
+                    tr.appendChild(th);
+                    cardSections.forEach((sec) => {
+                        const td = document.createElement('td');
+                        const content = sec[topic];
+                        if (content instanceof HTMLElement) {
+                            // Mover o elemento (textarea ou select) para o novo TD
+                            td.appendChild(content);
+                        } else {
+                            td.innerHTML = content || '';
+                        }
+                        tr.appendChild(td);
+                    });
+                    tbodyEl.appendChild(tr);
+                });
+                table.appendChild(tbodyEl);
+                // Inserir na tela cheia
+                fullContainer.innerHTML = '';
+                fullContainer.appendChild(table);
+                // Ocultar modal se estiver ativo
+                if (modal) modal.classList.remove('active');
+                // Exibir tela cheia
+                full.classList.add('active');
+            } catch (err) {
+                console.error('Erro ao montar comparativo em tela cheia:', err);
+            }
+        };
+
         // Event listeners para botões do modal de análise
         document.addEventListener('DOMContentLoaded', function() {
             const btnCancelarAnalise = document.getElementById('btn-cancelar-analise');
@@ -2405,88 +2512,6 @@
         }
         });
 
-        /**
-         * Monta a visualização comparativa em tela cheia a partir das propostas
-         * carregadas no contêiner de análise. Esta função coleta todos os
-         * tópicos existentes nas propostas, organiza-os em uma tabela com
-         * cada tópico em uma linha e cada proposta em uma coluna, e exibe o
-         * resultado dentro do contêiner #analise-full. O modal de análise
-         * não é exibido quando esta função é utilizada.
-         */
-        window.montarComparativoTelaCheia = function() {
-            try {
-                const modal = document.getElementById('modal-analise');
-                const full = document.getElementById('analise-full');
-                const container = document.getElementById('analise-container');
-                const fullContainer = document.getElementById('analise-full-container');
-                if (!container || !fullContainer) return;
-                // Selecionar propostas do contêiner
-                const cards = container.querySelectorAll('.proposta-analise');
-                if (!cards || cards.length === 0) return;
-                // Mapear seções para cada proposta
-                const cardSections = [];
-                cards.forEach((card) => {
-                    const secMap = {};
-                    // título principal
-                    const titleElem = card.querySelector('h4');
-                    const title = titleElem ? titleElem.textContent.trim() : 'Proposta';
-                    secMap['__title__'] = title;
-                    const headings = card.querySelectorAll('h5');
-                    headings.forEach((heading) => {
-                        const topic = heading.textContent.trim();
-                        let contentHTML = '';
-                        let sibling = heading.nextElementSibling;
-                        while (sibling && sibling.tagName.toLowerCase() !== 'h5') {
-                            contentHTML += sibling.outerHTML;
-                            sibling = sibling.nextElementSibling;
-                        }
-                        secMap[topic] = contentHTML;
-                    });
-                    // comentários e recomendações
-                    const comentario = card.querySelector('textarea');
-                    if (comentario) {
-                        secMap['Comentário do Requisitante'] = comentario.outerHTML;
-                    }
-                    const recomend = card.querySelector('select');
-                    if (recomend) {
-                        secMap['Recomendação'] = recomend.outerHTML;
-                    }
-                    cardSections.push(secMap);
-                });
-                // Obter todos os tópicos
-                const allTopicsSet = new Set();
-                cardSections.forEach((sec) => {
-                    Object.keys(sec).forEach((key) => {
-                        if (key !== '__title__') allTopicsSet.add(key);
-                    });
-                });
-                const allTopics = Array.from(allTopicsSet);
-                // Construir tabela
-                let htmlTable = '<table class="comparativo-tecnico"><thead><tr><th>Tópico</th>';
-                cardSections.forEach((sec) => {
-                    const title = sec['__title__'] || 'Proposta';
-                    htmlTable += `<th>${title}</th>`;
-                });
-                htmlTable += '</tr></thead><tbody>';
-                allTopics.forEach((topic) => {
-                    htmlTable += `<tr><th>${topic}</th>`;
-                    cardSections.forEach((sec) => {
-                        const cell = sec[topic] || '';
-                        htmlTable += `<td>${cell}</td>`;
-                    });
-                    htmlTable += '</tr>';
-                });
-                htmlTable += '</tbody></table>';
-                // Inserir na tela cheia
-                fullContainer.innerHTML = htmlTable;
-                // Ocultar modal se estiver ativo
-                if (modal) modal.classList.remove('active');
-                // Exibir tela cheia
-                full.classList.add('active');
-            } catch (err) {
-                console.error('Erro ao montar comparativo em tela cheia:', err);
-            }
-        };
 
         // Salvar TR
         window.salvarTR = function(dados, status = window.StatusTR.ELABORADO) {
