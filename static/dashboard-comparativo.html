@@ -1398,8 +1398,15 @@ class ComparativoPropostasIntegrado {
                     if (pCnpj && pCnpj === cnpj) {
                         // Copiar recomendação e parecer para a proposta
                         prop.propostaTecnica = prop.propostaTecnica || {};
-                        prop.propostaTecnica.recomendacaoRequisitante = pr.recomendacao_requisitante || pr.propostaTecnica?.recomendacaoRequisitante || '';
-                        prop.propostaTecnica.parecerRequisitante = pr.parecer_requisitante || pr.propostaTecnica?.parecerRequisitante || '';
+                        // Se houver histórico de pareceres na proposta, usar a última entrada
+                        if (Array.isArray(pr.pareceres) && pr.pareceres.length > 0) {
+                            const last = pr.pareceres[pr.pareceres.length - 1];
+                            prop.propostaTecnica.recomendacaoRequisitante = last.recomendacao || '';
+                            prop.propostaTecnica.parecerRequisitante = last.parecer || '';
+                        } else {
+                            prop.propostaTecnica.recomendacaoRequisitante = pr.recomendacao_requisitante || pr.propostaTecnica?.recomendacaoRequisitante || '';
+                            prop.propostaTecnica.parecerRequisitante = pr.parecer_requisitante || pr.propostaTecnica?.parecerRequisitante || '';
+                        }
                     }
                 });
             });
