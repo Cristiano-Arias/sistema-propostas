@@ -2801,6 +2801,38 @@ function enviarComparativoTecnicoParaRequisitante() {
             menorValor: parseFloat(melhorValor?.resumoFinanceiro?.valorTotal) || 0,
             menorPrazo: prazoStr
         };
+        // Se existir um comparativo técnico anterior deste processo no localStorage,
+        // copiar os pareceres já emitidos para os novos fornecedores antes de
+        // construir o objeto. Isso evita perder o histórico quando o comprador
+        // gera uma nova versão do comparativo.
+        let propostasRequisitantePrev = [];
+        try {
+            propostasRequisitantePrev = JSON.parse(localStorage.getItem('propostas_para_requisitante') || '[]');
+        } catch (e) {
+            propostasRequisitantePrev = [];
+        }
+        const comparativoAnterior = propostasRequisitantePrev.find(p => p.processo_id == processoId && p.comparativo_tecnico);
+        if (comparativoAnterior && comparativoAnterior.comparativo_tecnico) {
+            const prevList = comparativoAnterior.comparativo_tecnico.proposals || [];
+            // Copiar pareceres para cada fornecedor
+            proposals.forEach(nov => {
+                const cnpjNov = nov.dadosCadastrais?.cnpj || nov.cnpj;
+                const prev = prevList.find(pr => {
+                    const cnpjPrev = pr.dadosCadastrais?.cnpj || pr.cnpj;
+                    return cnpjPrev && cnpjPrev === cnpjNov;
+                });
+                if (prev) {
+                    // copiar histórico de pareceres e campos individuais
+                    if (Array.isArray(prev.pareceres)) {
+                        nov.pareceres = JSON.parse(JSON.stringify(prev.pareceres));
+                    }
+                    if (prev.parecer_requisitante) nov.parecer_requisitante = prev.parecer_requisitante;
+                    if (prev.recomendacao_requisitante) nov.recomendacao_requisitante = prev.recomendacao_requisitante;
+                    if (prev.data_parecer_requisitante) nov.data_parecer_requisitante = prev.data_parecer_requisitante;
+                    if (prev.status_requisitante) nov.status_requisitante = prev.status_requisitante;
+                }
+            });
+        }
         // Construir objeto de comparativo
         const comparativoTecnico = {
             proposals: propostas,
