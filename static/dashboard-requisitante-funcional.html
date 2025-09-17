@@ -1343,7 +1343,8 @@
                         <!-- Botão para imprimir a análise de propostas -->
                         <button type="button" class="btn" id="btn-imprimir-analise"><i class="fas fa-print"></i> Imprimir</button>
                         <!-- Botão para abrir comparativo de propostas em tela cheia (não utilizado quando fullscreen é padrão) -->
-                        <button type="button" class="btn" id="btn-tela-cheia" style="display:none;"><i class="fas fa-expand"></i> Tela Cheia</button>
+                        <!-- Botão para abrir o comparativo em tela cheia agora visível -->
+                        <button type="button" class="btn" id="btn-tela-cheia"><i class="fas fa-expand"></i> Tela Cheia</button>
                         <button type="button" class="btn" id="btn-salvar-analise">Salvar Parecer</button>
                     </div>
                 </div>
@@ -1795,14 +1796,14 @@
         };
 
         // Função para download de propostas na visão do requisitante
-        // Esta função cria um arquivo JSON contendo todos os detalhes da proposta
-        // e dispara o download automaticamente usando URL.createObjectURL().
-        // A documentação da MDN explica que URL.createObjectURL() cria uma URL
-        // temporária para um objeto Blob que pode ser usada para download e que
-        // deve ser revogada com URL.revokeObjectURL() após o uso para liberar
-        // recursos【552156173897195†L188-L221】. O Blob representa dados brutos em
-        // formato de arquivo【270228860712759†L188-L192】, permitindo serializar
-        // a proposta em um JSON estruturado.
+        // Esta função gera um arquivo Word (.doc) contendo todos os detalhes
+        // da proposta em formato de texto legível e dispara o download
+        // automaticamente usando URL.createObjectURL(). A documentação da MDN
+        // explica que URL.createObjectURL() cria uma URL temporária para um
+        // objeto Blob que pode ser usada para download e deve ser revogada
+        // com URL.revokeObjectURL() após o uso【552156173897195†L188-L221】.
+        // Um Blob representa dados brutos que podem ser salvos como arquivo【270228860712759†L188-L192】; aqui
+        // usamos o tipo application/msword para que o arquivo seja aberto no Word.
         window.downloadPropostaRequisitante = function(propostaId) {
             try {
                 // Carregar todas as propostas disponíveis para parecer do requisitante
@@ -1814,10 +1815,14 @@
                     alert('Proposta não encontrada para download.');
                     return;
                 }
-                // Gerar conteúdo JSON formatado
+                // Gerar conteúdo no formato de texto para Word
+                // Optamos por criar um arquivo .doc simples contendo o JSON
+                // formatado em texto legível. Word é capaz de abrir arquivos
+                // de texto com extensão .doc sem problemas.
                 const dataStr = JSON.stringify(proposta, null, 2);
-                // Criar um Blob com o conteúdo JSON e tipo apropriado
-                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const conteudoDoc = `Proposta de ${proposta.fornecedor_nome || proposta.fornecedor_cnpj || ''}\n\n${dataStr}`;
+                // Criar Blob com tipo de documento Word
+                const dataBlob = new Blob([conteudoDoc], { type: 'application/msword' });
                 // Gerar URL temporária para download
                 const url = URL.createObjectURL(dataBlob);
                 // Criar elemento de âncora para iniciar o download
@@ -1826,7 +1831,7 @@
                 // Utilizar informação do fornecedor e data para nome do arquivo
                 const fornecedorNome = proposta.fornecedor_nome || proposta.fornecedor_cnpj || 'proposta';
                 const dataArquivo = new Date().toISOString().split('T')[0];
-                link.download = `Proposta_${fornecedorNome}_${dataArquivo}.json`;
+                link.download = `Proposta_${fornecedorNome}_${dataArquivo}.doc`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
