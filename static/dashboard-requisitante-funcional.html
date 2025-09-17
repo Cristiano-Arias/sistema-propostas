@@ -1787,9 +1787,55 @@
                             </div>
                         </div>
                         <button class="btn" onclick="${buttonAction}">${buttonLabel}</button>
+                        <!-- Botão para download da proposta como arquivo JSON -->
+                        <button class="btn btn-info" onclick="window.downloadPropostaRequisitante(${p.id})" style="background:#17a2b8; color:white; margin-top:6px;"><i class="fas fa-download"></i> Download</button>
                     </div>
                 `;
             }).join('');
+        };
+
+        // Função para download de propostas na visão do requisitante
+        // Esta função cria um arquivo JSON contendo todos os detalhes da proposta
+        // e dispara o download automaticamente usando URL.createObjectURL().
+        // A documentação da MDN explica que URL.createObjectURL() cria uma URL
+        // temporária para um objeto Blob que pode ser usada para download e que
+        // deve ser revogada com URL.revokeObjectURL() após o uso para liberar
+        // recursos【552156173897195†L188-L221】. O Blob representa dados brutos em
+        // formato de arquivo【270228860712759†L188-L192】, permitindo serializar
+        // a proposta em um JSON estruturado.
+        window.downloadPropostaRequisitante = function(propostaId) {
+            try {
+                // Carregar todas as propostas disponíveis para parecer do requisitante
+                const propostasRaw = localStorage.getItem('propostas_para_requisitante') || '[]';
+                const propostas = JSON.parse(propostasRaw);
+                // Localizar a proposta desejada pelo ID
+                const proposta = propostas.find(p => p.id == propostaId);
+                if (!proposta) {
+                    alert('Proposta não encontrada para download.');
+                    return;
+                }
+                // Gerar conteúdo JSON formatado
+                const dataStr = JSON.stringify(proposta, null, 2);
+                // Criar um Blob com o conteúdo JSON e tipo apropriado
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                // Gerar URL temporária para download
+                const url = URL.createObjectURL(dataBlob);
+                // Criar elemento de âncora para iniciar o download
+                const link = document.createElement('a');
+                link.href = url;
+                // Utilizar informação do fornecedor e data para nome do arquivo
+                const fornecedorNome = proposta.fornecedor_nome || proposta.fornecedor_cnpj || 'proposta';
+                const dataArquivo = new Date().toISOString().split('T')[0];
+                link.download = `Proposta_${fornecedorNome}_${dataArquivo}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                // Revogar a URL para liberar memória
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Erro ao fazer download da proposta:', error);
+                alert('Não foi possível gerar o download da proposta.');
+            }
         };
 
         // Abrir modal e preencher dados da proposta selecionada
