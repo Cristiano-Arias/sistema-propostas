@@ -2208,26 +2208,85 @@
         if (btnTelaCheia) {
             btnTelaCheia.addEventListener('click', function() {
                 try {
-                    // Obter o conteúdo do contêiner de análise atual
                     const container = document.getElementById('analise-container');
                     if (!container) return;
-                    const content = container.innerHTML;
-                    // Abrir uma nova janela para exibir as propostas em tela cheia
+                    // Selecionar todas as propostas já renderizadas no modal
+                    const cards = container.querySelectorAll('.proposta-analise');
+                    if (!cards || cards.length === 0) return;
+                    // Extrair seções por proposta: cada entrada será um objeto com chave = nome do tópico e valor = HTML do conteúdo
+                    const cardSections = [];
+                    cards.forEach((card) => {
+                        const sectionsMap = {};
+                        // Título (h4)
+                        const titleElem = card.querySelector('h4');
+                        const title = titleElem ? titleElem.textContent.trim() : 'Proposta';
+                        sectionsMap['__title__'] = title;
+                        // Processar cada heading (h5) e coletar o conteúdo até o próximo h5
+                        const headings = card.querySelectorAll('h5');
+                        headings.forEach((heading) => {
+                            const topic = heading.textContent.trim();
+                            let contentHTML = '';
+                            let sibling = heading.nextElementSibling;
+                            // Acumular HTML até encontrar o próximo h5 ou fim do container
+                            while (sibling && sibling.tagName.toLowerCase() !== 'h5') {
+                                contentHTML += sibling.outerHTML;
+                                sibling = sibling.nextElementSibling;
+                            }
+                            sectionsMap[topic] = contentHTML;
+                        });
+                        // Incluir campos de comentário e recomendação se existirem
+                        const comentario = card.querySelector('textarea');
+                        if (comentario) {
+                            sectionsMap['Comentário do Requisitante'] = comentario.outerHTML;
+                        }
+                        const recomendacao = card.querySelector('select');
+                        if (recomendacao) {
+                            sectionsMap['Recomendação'] = recomendacao.outerHTML;
+                        }
+                        cardSections.push(sectionsMap);
+                    });
+                    // Coletar todos os tópicos existentes
+                    const allTopicsSet = new Set();
+                    cardSections.forEach((sec) => {
+                        Object.keys(sec).forEach((key) => {
+                            if (key !== '__title__') allTopicsSet.add(key);
+                        });
+                    });
+                    const allTopics = Array.from(allTopicsSet);
+                    // Construir a tabela comparativa
+                    let comparativoHTML = '<table class="comparativo-tecnico" style="width:100%; border-collapse: collapse;">';
+                    // Cabeçalho
+                    comparativoHTML += '<thead><tr><th style="padding:8px; border:1px solid #ccc; background:#f0f0f0;">Tópico</th>';
+                    cardSections.forEach((sec) => {
+                        const title = sec['__title__'] || 'Proposta';
+                        comparativoHTML += `<th style="padding:8px; border:1px solid #ccc; background:#f0f0f0;">${title}</th>`;
+                    });
+                    comparativoHTML += '</tr></thead><tbody>';
+                    // Linhas de tópicos
+                    allTopics.forEach((topic) => {
+                        comparativoHTML += `<tr><th style="padding:8px; border:1px solid #ccc; text-align:left; background:#f9f9f9; vertical-align:top; width:200px;">${topic}</th>`;
+                        cardSections.forEach((sec) => {
+                            const cell = sec[topic] || '';
+                            comparativoHTML += `<td style="padding:8px; border:1px solid #ccc; vertical-align:top;">${cell}</td>`;
+                        });
+                        comparativoHTML += '</tr>';
+                    });
+                    comparativoHTML += '</tbody></table>';
+                    // Abrir nova janela e injetar a tabela
                     const w = window.open('', '_blank');
                     if (!w) return;
-                    // Escrever HTML básico na nova janela
                     w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Comparativo de Propostas Técnicas</title>
                     <style>
                         body { margin: 0; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; }
                         h3 { margin-bottom: 20px; color: #333; }
-                        #analise-container-full { display: flex; flex-wrap: nowrap; gap: 20px; overflow-x: auto; }
-                        .proposta-analise { flex: 0 0 450px; min-width: 450px; max-width: 450px; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background: #fff; }
-                        .proposta-analise h4 { min-height: 2.5rem; display: flex; align-items: center; margin-bottom: 10px; color: #333; }
+                        .comparativo-tecnico th, .comparativo-tecnico td { font-size: 12px; }
+                        .comparativo-tecnico thead th { position: sticky; top: 0; z-index: 1; }
+                        .comparativo-wrapper { overflow-x: auto; }
                     </style>
                     </head><body>
                         <h3>Comparativo de Propostas Técnicas</h3>
-                        <div id="analise-container-full">
-                            ${content}
+                        <div class="comparativo-wrapper">
+                            ${comparativoHTML}
                         </div>
                     </body></html>`);
                     w.document.close();
