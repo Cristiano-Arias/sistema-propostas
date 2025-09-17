@@ -498,6 +498,30 @@
             table {
                 page-break-inside: avoid;
             }
+
+    /* Resumo do parecer do requisitante */
+    .parecer-resumo {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: var(--shadow);
+    }
+    .parecer-resumo table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    .parecer-resumo th {
+        background: var(--primary-color);
+        color: white;
+        padding: 10px;
+        text-align: left;
+    }
+    .parecer-resumo td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
         }
         
             .comparison-container {
@@ -535,6 +559,9 @@
                 Enviar Comparativo Técnico
             </button>
         </div>
+
+    <!-- Resumo do Parecer do Requisitante (renderizado quando existir) -->
+    <div id="parecerResumo" class="parecer-resumo" style="display:none; margin-top: 20px;"></div>
 
         <!-- Analysis Type Tabs -->
         <div class="analysis-tabs">
@@ -1341,6 +1368,119 @@ class ComparativoPropostasIntegrado {
         return proposta; // Já está no formato correto
     }
 
+    /**
+     * Aplicar pareceres do requisitante às propostas carregadas para um processo.
+     * Essa função lê a chave 'propostas_para_requisitante' do localStorage, localiza
+     * um comparativo técnico já analisado pelo requisitante (parecer_requisitante === 'analise_realizada')
+     * e, para cada fornecedor, copia a recomendação e o parecer do requisitante para
+     * dentro do objeto propostaTecnica da proposta correspondente. O vínculo é feito
+     * pelo CNPJ do fornecedor.
+     *
+     * @param {string|number} processId - ID do processo atualmente selecionado
+     */
+    aplicarParecerRequisitante(processId) {
+        try {
+            const propostasReqRaw = localStorage.getItem('propostas_para_requisitante');
+            if (!propostasReqRaw) return;
+            const propostasReq = JSON.parse(propostasReqRaw);
+            // Procurar o comparativo técnico deste processo que já tenha sido analisado
+            const comp = propostasReq.find(p => {
+                return p.processo_id == processId && p.comparativo_tecnico && p.parecer_requisitante === 'analise_realizada';
+            });
+            if (!comp || !comp.comparativo_tecnico) return;
+            const lista = comp.comparativo_tecnico.proposals || [];
+            // Mapear recomendações para as propostas carregadas
+            lista.forEach(pr => {
+                const cnpj = pr.dadosCadastrais?.cnpj || pr.cnpj;
+                if (!cnpj) return;
+                this.proposals.forEach(prop => {
+                    const pCnpj = prop.dadosCadastrais?.cnpj || prop.cnpj;
+                    if (pCnpj && pCnpj === cnpj) {
+                        // Copiar recomendação e parecer para a proposta
+                        prop.propostaTecnica = prop.propostaTecnica || {};
+                        prop.propostaTecnica.recomendacaoRequisitante = pr.recomendacao_requisitante || pr.propostaTecnica?.recomendacaoRequisitante || '';
+                        prop.propostaTecnica.parecerRequisitante = pr.parecer_requisitante || pr.propostaTecnica?.parecerRequisitante || '';
+                    }
+                });
+            });
+        } catch (error) {
+            console.error('Erro ao aplicar pareceres do requisitante:', error);
+        }
+    }
+
+    /**
+     * Renderizar um resumo dos pareceres do requisitante para o processo atual.
+     * Este método procura em `propostas_para_requisitante` um comparativo técnico
+     * que já tenha sido analisado pelo requisitante (parecer_requisitante ===
+     * 'analise_realizada') e, se encontrado, monta uma tabela com a
+     * recomendação e o parecer do requisitante para cada fornecedor.
+     * O resumo é exibido no elemento com id `parecerResumo`. Se nenhum
+     * parecer for encontrado, o contêiner é ocultado.
+     *
+     * @param {string|number} processId - ID do processo atualmente selecionado
+     */
+    renderParecerResumo(processId) {
+        const resumoContainer = document.getElementById('parecerResumo');
+        if (!resumoContainer) return;
+        // Limpar conteúdo existente
+        resumoContainer.innerHTML = '';
+        resumoContainer.style.display = 'none';
+
+        try {
+            const propostasReqRaw = localStorage.getItem('propostas_para_requisitante');
+            if (!propostasReqRaw) return;
+            const propostasReq = JSON.parse(propostasReqRaw);
+            // Localizar o comparativo deste processo que já tenha sido analisado
+            const comp = propostasReq.find(p => {
+                return p.processo_id == processId && p.comparativo_tecnico && p.parecer_requisitante === 'analise_realizada';
+            });
+            if (!comp || !comp.comparativo_tecnico) {
+                return;
+            }
+            const list = comp.comparativo_tecnico.proposals || [];
+            if (!list.length) return;
+            // Construir mapa de cores e labels para as recomendações
+            const labelMap = {
+                'aprovada_tecnicamente': 'Aprovada Tecnicamente',
+                'ajuste': 'Solicitar Ajuste',
+                'reprovada_tecnicamente': 'Reprovada Tecnicamente'
+            };
+            const colorMap = {
+                'aprovada_tecnicamente': '#0066cc', // azul
+                'ajuste': '#e6a600',                 // amarelo
+                'reprovada_tecnicamente': '#cc0000'  // vermelho
+            };
+            // Cabeçalho
+            let html = '<h3 style="margin-bottom: 15px;">Parecer do Requisitante</h3>';
+            html += '<table style="width:100%; border-collapse: collapse;">';
+            html += '<thead><tr>';
+            html += '<th style="text-align:left; padding:8px; border-bottom:1px solid #e2e8f0;">Fornecedor</th>';
+            html += '<th style="text-align:left; padding:8px; border-bottom:1px solid #e2e8f0;">Recomendação</th>';
+            html += '<th style="text-align:left; padding:8px; border-bottom:1px solid #e2e8f0;">Parecer</th>';
+            html += '</tr></thead><tbody>';
+            // Linhas
+            list.forEach(pr => {
+                // Nome e CNPJ do fornecedor
+                const razao = pr.dadosCadastrais?.razaoSocial || pr.razaoSocial || pr.fornecedorRazaoSocial || 'Fornecedor';
+                const recomend = pr.recomendacao_requisitante || pr.propostaTecnica?.recomendacaoRequisitante || '';
+                const parecer = pr.parecer_requisitante || pr.propostaTecnica?.parecerRequisitante || '';
+                if (!recomend && !parecer) return; // Ignorar se não houver info
+                const label = labelMap[recomend] || recomend || 'Não informado';
+                const color = colorMap[recomend] || '#333';
+                html += '<tr>';
+                html += `<td style="padding:8px; border-bottom:1px solid #e2e8f0;"><strong>${razao}</strong></td>`;
+                html += `<td style="padding:8px; border-bottom:1px solid #e2e8f0; color:${color}; font-weight:600;">${label}</td>`;
+                html += `<td style="padding:8px; border-bottom:1px solid #e2e8f0;">${parecer || 'Não informado'}</td>`;
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            resumoContainer.innerHTML = html;
+            resumoContainer.style.display = 'block';
+        } catch (e) {
+            console.error('Erro ao renderizar parecer do requisitante:', e);
+        }
+    }
+
     // Gerar dados técnicos baseados na proposta
     gerarServicosTecnica(proposta) {
         // Se já tem dados detalhados, usar
@@ -1494,6 +1634,12 @@ class ComparativoPropostasIntegrado {
 
         // Buscar propostas do processo
         this.proposals = this.buscarPropostasDoProcesso(processId);
+        // Após carregar propostas, aplicar eventuais pareceres do requisitante presentes em propostas_para_requisitante
+        try {
+            this.aplicarParecerRequisitante(processId);
+        } catch (e) {
+            console.warn('Falha ao aplicar parecer do requisitante:', e);
+        }
         
         if (this.proposals.length === 0) {
             alert('Nenhuma proposta encontrada para este processo!');
@@ -1505,6 +1651,13 @@ class ComparativoPropostasIntegrado {
         this.updateCompanyHeaders();
         this.updateAllTables();
         this.updateAIInsights(this.currentTab);
+
+        // Após atualizar as tabelas, renderizar o resumo do parecer do requisitante, se houver
+        try {
+            this.renderParecerResumo(processId);
+        } catch (e) {
+            console.warn('Falha ao renderizar resumo do parecer do requisitante:', e);
+        }
         
         this.hideLoading();
     }
