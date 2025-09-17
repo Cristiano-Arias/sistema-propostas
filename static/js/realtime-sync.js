@@ -83,6 +83,14 @@ function attachListeners() {
   for (const key of KEYS) {
     // Usar chave composta com UID do usuário + isolamento por perfil
     let docKey = `${key}_${user.uid}`;
+
+// 🔧 COMPARTILHADO ENTRE REQUISITANTE E COMPRADOR:
+// Estas chaves precisam ser vistas pelos dois perfis, portanto
+// removemos o UID para sincronizar em um documento global.
+if (key === 'propostas_para_requisitante' || key === 'pareceres_requisitante') {
+    docKey = key; // documento global compartilhado
+}
+
     
     // CORREÇÃO: Isolar TRs por perfil para evitar conflito entre módulos
     if (key === 'sistema_trs') {
