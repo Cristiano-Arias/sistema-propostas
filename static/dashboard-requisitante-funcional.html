@@ -1631,11 +1631,17 @@
             document.getElementById('parecer-descricao').value = proposta.descricao_tecnica || '';
             document.getElementById('parecer-comprador-msg').value = proposta.parecer_comprador || '';
             // Preencher com último parecer salvo, se existir
-            const histRaw = localStorage.getItem('pareceres_requisitante') || '[]';
-            let historico = [];
-            try { historico = JSON.parse(histRaw); } catch(e) { historico = []; }
-            // Filtrar histórico desta proposta
-            const histProposta = historico.filter(pr => pr.proposta_id == propostaId);
+            // Primeiro, tentar recuperar histórico interno da proposta
+            let histProposta = [];
+            if (Array.isArray(proposta.pareceres)) {
+                histProposta = proposta.pareceres.slice();
+            } else {
+                // Fallback: recuperar do histórico global
+                const histRaw = localStorage.getItem('pareceres_requisitante') || '[]';
+                let historico = [];
+                try { historico = JSON.parse(histRaw); } catch(e) { historico = []; }
+                histProposta = historico.filter(pr => pr.proposta_id == propostaId);
+            }
             // Prefill campos com a última entrada ou com o parecer atual salvo na proposta
             let ultimo = null;
             if (histProposta.length > 0) {
@@ -1647,14 +1653,14 @@
             if (proposta.parecer_requisitante) {
                 parecerCampo.value = proposta.parecer_requisitante;
             } else if (ultimo) {
-                parecerCampo.value = ultimo.parecer;
+                parecerCampo.value = ultimo.parecer || ultimo.parecer_requisitante || '';
             } else {
                 parecerCampo.value = '';
             }
             if (proposta.recomendacao_requisitante) {
                 recomendacaoCampo.value = proposta.recomendacao_requisitante;
             } else if (ultimo) {
-                recomendacaoCampo.value = ultimo.recomendacao;
+                recomendacaoCampo.value = ultimo.recomendacao || ultimo.recomendacao_requisitante || '';
             } else {
                 recomendacaoCampo.value = '';
             }
@@ -1666,8 +1672,11 @@
                     historicoSection.style.display = 'block';
                     historicoContainer.innerHTML = histProposta.map((pr, idx) => {
                         const versao = pr.versao || (idx + 1);
-                        const recomendLabel = pr.recomendacao === 'aprovada_tecnicamente' ? 'Aprovada Tecnicamente' : pr.recomendacao === 'ajuste' ? 'Solicitar Ajuste' : pr.recomendacao === 'reprovada_tecnicamente' ? 'Reprovada Tecnicamente' : pr.recomendacao;
-                        return `<div style="margin-bottom:6px;"><strong>Parecer ${versao}:</strong> ${recomendLabel}<br><em>${pr.parecer || ''}</em> <span style="font-size:11px; color:#666;">(${pr.data_parecer})</span></div>`;
+                        const rec = pr.recomendacao || pr.recomendacao_requisitante || '';
+                        const recomendLabel = rec === 'aprovada_tecnicamente' ? 'Aprovada Tecnicamente' : rec === 'ajuste' ? 'Solicitar Ajuste' : rec === 'reprovada_tecnicamente' ? 'Reprovada Tecnicamente' : rec;
+                        const dataStr = pr.data || pr.data_parecer;
+                        const parStr = pr.parecer || pr.parecer_requisitante || '';
+                        return `<div style="margin-bottom:6px;"><strong>Parecer ${versao}:</strong> ${recomendLabel}<br><em>${parStr}</em> <span style="font-size:11px; color:#666;">(${dataStr || ''})</span></div>`;
                     }).join('');
                 } else {
                     historicoSection.style.display = 'none';
@@ -1718,10 +1727,24 @@
                 const propostas = JSON.parse(propostasRaw);
                 const proposta = propostas.find(p => p.id == propostaId);
                 if (proposta) {
+                    // Atualizar campos principais
                     proposta.parecer_requisitante = parecer;
                     proposta.recomendacao_requisitante = recomendacao;
                     proposta.data_parecer_requisitante = new Date().toLocaleDateString('pt-BR');
                     proposta.status_requisitante = recomendacao;
+                    // Registrar histórico de pareceres dentro da própria proposta
+                    if (!Array.isArray(proposta.pareceres)) {
+                        proposta.pareceres = [];
+                    }
+                    const versaoParecer = proposta.pareceres.length + 1;
+                    const usuarioAtual = window.SistemaLocal?.obterUsuario?.() || {};
+                    proposta.pareceres.push({
+                        versao: versaoParecer,
+                        parecer: parecer,
+                        recomendacao: recomendacao,
+                        requisitante: usuarioAtual.nome || usuarioAtual.email || 'requisitante',
+                        data: new Date().toLocaleDateString('pt-BR')
+                    });
                     localStorage.setItem('propostas_para_requisitante', JSON.stringify(propostas));
                 }
             } catch (error) {
@@ -1801,6 +1824,12 @@
                         // Usar valores diretamente da proposta caso existam
                         if (prop.parecer_requisitante) preParecer = prop.parecer_requisitante;
                         if (prop.recomendacao_requisitante) preRecomend = prop.recomendacao_requisitante;
+                        // Se a proposta tiver um histórico interno de pareceres, usar a última entrada
+                        if ((!preRecomend || !preParecer) && Array.isArray(prop.pareceres) && prop.pareceres.length > 0) {
+                            const lastHist = prop.pareceres[prop.pareceres.length - 1];
+                            preParecer = preParecer || lastHist.parecer || '';
+                            preRecomend = preRecomend || lastHist.recomendacao || '';
+                        }
                         // Caso contrário, buscar em pareceres_requisitante por versão mais recente
                         if (!preRecomend || !preParecer) {
                             const histRaw = localStorage.getItem('pareceres_requisitante') || '[]';
@@ -1986,7 +2015,9 @@
                     prop.parecer_requisitante = parecer;
                     prop.recomendacao_requisitante = recomendacao;
                     prop.data_parecer_requisitante = hoje;
-                    // Registrar histórico individual por fornecedor
+                    // Atualizar status na proposta (utilizado para exibir na lista)
+                    prop.status_requisitante = recomendacao;
+                    // Registrar histórico individual por fornecedor (global em pareceres_requisitante)
                     const cnpj = prop.dadosCadastrais?.cnpj || prop.cnpj;
                     const existentes = pareceres.filter(pr => pr.proposta_id == analisePropostaId && pr.fornecedor_cnpj == cnpj);
                     const versao = existentes.length + 1;
@@ -2001,6 +2032,18 @@
                         versao: versao
                     };
                     pareceres.push(novoParecer);
+                    // Registrar histórico dentro da própria proposta
+                    if (!Array.isArray(prop.pareceres)) {
+                        prop.pareceres = [];
+                    }
+                    const versaoProp = prop.pareceres.length + 1;
+                    prop.pareceres.push({
+                        versao: versaoProp,
+                        parecer: parecer,
+                        recomendacao: recomendacao,
+                        requisitante: usuario.nome || usuario.email || 'requisitante',
+                        data: hoje
+                    });
                 });
                 // Salvar histórico
                 localStorage.setItem('pareceres_requisitante', JSON.stringify(pareceres));
