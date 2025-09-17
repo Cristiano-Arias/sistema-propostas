@@ -2163,9 +2163,17 @@
                     `;
                     container.innerHTML += html;
                 });
-                // Construir tabela comparativa em tela cheia em vez de abrir modal
+                // Construir tabela comparativa em tela cheia em vez de abrir modal.
+                // Usamos `requestAnimationFrame` para garantir que o navegador
+                // finalize a renderização dos elementos recém-inseridos antes
+                // de tentar coletá‑los. Essa técnica agenda a função para
+                // execução no próximo ciclo de pintura, evitando que a
+                // consulta retorne 0 elementos e garantindo a abertura da
+                // visualização em tela cheia.
                 if (typeof window.montarComparativoTelaCheia === 'function') {
-                    window.montarComparativoTelaCheia();
+                    window.requestAnimationFrame(() => {
+                        window.montarComparativoTelaCheia();
+                    });
                 }
             } catch (error) {
                 console.error('Erro ao abrir modal de análise:', error);
