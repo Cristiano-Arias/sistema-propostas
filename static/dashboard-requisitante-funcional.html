@@ -566,17 +566,38 @@
            acessibilidade em telas menores. */
         #analise-container {
             display: flex;
-            flex-wrap: wrap;
+            /* Não permitir quebra de linha para que todas as propostas sejam exibidas
+               em uma única linha. Quando houver muitas propostas, surgirá uma
+               barra de rolagem horizontal. */
+            flex-wrap: nowrap;
             gap: 20px;
+            /* Permitir rolagem horizontal quando houver mais cartões do que a largura
+               da tela. */
             overflow-x: auto;
+            /* Garantir que todos os cartões comecem alinhados ao topo para que
+               os títulos fiquem na mesma linha, independentemente da altura
+               dos conteúdos internos. */
+            align-items: flex-start;
         }
 
         .proposta-analise {
-            /* Cada cartão ocupa cerca de 48% da largura total, permitindo
-               apresentação lado a lado. A largura mínima garante a legibilidade
-               das tabelas em dispositivos de menor resolução. */
-            flex: 0 0 48%;
+            /* Cada cartão possui largura fixa para que todas as propostas tenham
+               a mesma dimensão em uma única linha. O valor de 450px foi
+               escolhido para garantir legibilidade das tabelas em dispositivos
+               médios; ajuste conforme necessário. */
+            flex: 0 0 450px;
             min-width: 450px;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Definir altura mínima para o título de cada proposta, alinhando-os na
+           mesma linha quando exibidos lado a lado. */
+        .proposta-analise h4 {
+            min-height: 2.5rem;
+            display: flex;
+            align-items: center;
         }
 
         /* ===== Estilos adicionais para lista de propostas e modal de parecer ===== */
@@ -722,56 +743,40 @@
             body.print-analise #modal-analise .btn {
                 display: none !important;
             }
-            /* Linearizar o contêiner de análise para uma melhor disposição na página impressa */
-            body.print-analise #analise-container {
-                display: block !important;
-                overflow-x: visible !important;
-            }
-            /* Cada proposta impressa ocupa toda a largura, evita quebras internas e inicia nova página */
-            body.print-analise .proposta-analise {
-                flex: 0 0 auto !important;
-                width: 100% !important;
-                page-break-inside: avoid !important;
-                page-break-after: always !important;
-                margin-bottom: 20px !important;
-            }
-            /* Evitar quebra de página após a última proposta */
-            body.print-analise .proposta-analise:last-child {
-                page-break-after: auto !important;
-            }
-
-            /* Ajustar o contêiner de análise para permitir colunas lado a lado quando impresso. Utilizamos
-               flexbox com quebra de linha automática para que as propostas fiquem dispostas em até duas
-               colunas por página, permitindo um comparativo profissional. */
+            /* Ajustar layout para impressão
+               ------------------------------------
+               Quando a classe `print-analise` está no elemento <body>, o modal de análise
+               deverá assumir um formato de relatório comparativo. O contêiner das
+               propostas (analise-container) passa a ser um flexbox com quebra de linha
+               para exibir duas colunas de propostas por página, e os cartões de
+               proposta ocupam aproximadamente metade da largura da página. Também
+               removemos elementos interativos como botões e campos de comentários, e
+               escondemos o título do modal. Por fim, evitamos que cada proposta
+               seja quebrada no meio durante a impressão com page-break-inside: avoid. */
             body.print-analise #analise-container {
                 display: flex !important;
                 flex-wrap: wrap !important;
                 gap: 20px !important;
                 overflow: visible !important;
             }
-            /* Cada proposta ocupará aproximadamente metade da largura da página, permitindo duas colunas.
-               Evitamos quebras no meio de cada cartão com page-break-inside: avoid. */
             body.print-analise .proposta-analise {
                 flex: 0 0 48% !important;
                 width: 48% !important;
+                /* Remover restrições de largura fixa do modo padrão */
+                min-width: 0 !important;
+                max-width: 48% !important;
                 page-break-inside: avoid !important;
                 margin-bottom: 20px !important;
             }
-            /* Certificar de que as tabelas são exibidas normalmente na impressão, garantindo todas as
-               informações da proposta técnica. */
+            /* Exibir as tabelas normalmente na impressão */
             body.print-analise .proposta-analise table {
                 display: table !important;
             }
-
-            /* Ocultar campos de comentário e recomendação no modo de impressão.  
-               Dessa forma, o relatório impresso contém apenas os dados técnicos,
-               sem os campos interativos de entrada. */
+            /* Ocultar campos de comentário e recomendação no modo de impressão */
             body.print-analise .proposta-analise .form-group {
                 display: none !important;
             }
-
-            /* Ocultar o título do modal de análise na impressão para um visual
-               mais limpo e profissional. */
+            /* Ocultar o título do modal de análise na impressão */
             body.print-analise #modal-analise h3 {
                 display: none !important;
             }
