@@ -727,6 +727,29 @@
             body.print-analise .proposta-analise:last-child {
                 page-break-after: auto !important;
             }
+
+            /* Ajustar o contêiner de análise para permitir colunas lado a lado quando impresso. Utilizamos
+               flexbox com quebra de linha automática para que as propostas fiquem dispostas em até duas
+               colunas por página, permitindo um comparativo profissional. */
+            body.print-analise #analise-container {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 20px !important;
+                overflow: visible !important;
+            }
+            /* Cada proposta ocupará aproximadamente metade da largura da página, permitindo duas colunas.
+               Evitamos quebras no meio de cada cartão com page-break-inside: avoid. */
+            body.print-analise .proposta-analise {
+                flex: 0 0 48% !important;
+                width: 48% !important;
+                page-break-inside: avoid !important;
+                margin-bottom: 20px !important;
+            }
+            /* Certificar de que as tabelas são exibidas normalmente na impressão, garantindo todas as
+               informações da proposta técnica. */
+            body.print-analise .proposta-analise table {
+                display: table !important;
+            }
         }
     </style>
 </head>
