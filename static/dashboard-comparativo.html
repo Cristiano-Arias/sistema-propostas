@@ -1406,7 +1406,7 @@ class ComparativoPropostasIntegrado {
                         } else {
                             // Primeiro, copiar recomendações simples, se existirem
                             prop.propostaTecnica.recomendacaoRequisitante = pr.recomendacao_requisitante || pr.propostaTecnica?.recomendacaoRequisitante || '';
-                            prop.propostaTecnica.parecerRequisitante = pr.parecer_requisitante || pr.propostaTecnica?.parecerRequisitante || '';
+                            prop.propostaTecnica.parecerRequisitante = pr.parecer_texto || pr.parecer_requisitante || pr.propostaTecnica?.parecerRequisitante || '';
                             // Se ainda não houver recomendação, tentar buscar no histórico global (pareceres_requisitante)
                             if (!prop.propostaTecnica.recomendacaoRequisitante) {
                                 try {
