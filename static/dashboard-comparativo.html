@@ -560,8 +560,10 @@
             </button>
         </div>
 
-    <!-- Resumo do Parecer do Requisitante (renderizado quando existir) -->
-    <div id="parecerResumo" class="parecer-resumo" style="display:none; margin-top: 20px;"></div>
+    <!-- O resumo do parecer do requisitante foi removido. O parecer do requisitante
+         agora é mostrado apenas nas colunas de cada proposta na tabela de
+         Análise Técnica. -->
+    <!-- <div id="parecerResumo" class="parecer-resumo" style="display:none; margin-top: 20px;"></div> -->
 
         <!-- Analysis Type Tabs -->
         <div class="analysis-tabs">
@@ -1406,6 +1408,8 @@ class ComparativoPropostasIntegrado {
                         } else {
                             // Primeiro, copiar recomendações simples, se existirem
                             prop.propostaTecnica.recomendacaoRequisitante = pr.recomendacao_requisitante || pr.propostaTecnica?.recomendacaoRequisitante || '';
+                            // O texto do parecer fica em parecer_texto; se não existir, usar
+                            // a chave parecer_requisitante como fallback (podendo conter a flag)
                             prop.propostaTecnica.parecerRequisitante = pr.parecer_texto || pr.parecer_requisitante || pr.propostaTecnica?.parecerRequisitante || '';
                             // Se ainda não houver recomendação, tentar buscar no histórico global (pareceres_requisitante)
                             if (!prop.propostaTecnica.recomendacaoRequisitante) {
@@ -1675,12 +1679,10 @@ class ComparativoPropostasIntegrado {
         this.updateAllTables();
         this.updateAIInsights(this.currentTab);
 
-        // Após atualizar as tabelas, renderizar o resumo do parecer do requisitante, se houver
-        try {
-            this.renderParecerResumo(processId);
-        } catch (e) {
-            console.warn('Falha ao renderizar resumo do parecer do requisitante:', e);
-        }
+        // Antes havia um resumo separado do parecer do requisitante. Esse
+        // resumo foi removido porque o parecer agora é exibido somente nas
+        // colunas de cada proposta (Análise Técnica). Mantemos esta área
+        // sem chamadas adicionais para evitar duplicidade.
         
         this.hideLoading();
     }
