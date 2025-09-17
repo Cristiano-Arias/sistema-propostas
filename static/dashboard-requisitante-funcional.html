@@ -1549,7 +1549,21 @@
                 // Determinar se é comparativo
                 const isComparativo = !!p.comparativo_tecnico;
                 // Determinar status e classe com base no parecer existente
-                const statusRaw = p.recomendacao_requisitante || '';
+                let statusRaw = p.recomendacao_requisitante || '';
+                // Fallback: se for comparativo e não houver status salvo na proposta,
+                // tentar recuperar a última recomendação do histórico global (pareceres_requisitante)
+                if (!statusRaw && isComparativo) {
+                    try {
+                        const histRaw = localStorage.getItem('pareceres_requisitante') || '[]';
+                        const hist = JSON.parse(histRaw);
+                        // Filtrar por processo (proposta_id armazena o processId nos registros)
+                        const regs = hist.filter(r => r.proposta_id == (p.processo_id || p.id));
+                        if (regs && regs.length > 0) {
+                            const last = regs[regs.length - 1];
+                            statusRaw = last.recomendacao || '';
+                        }
+                    } catch (e) { /* ignore */ }
+                }
                 let statusClass = 'status-pendente';
                 let statusLabel = 'PENDENTE';
                 if (statusRaw) {
@@ -1728,8 +1742,7 @@
                 const proposta = propostas.find(p => p.id == propostaId);
                 if (proposta) {
                     // Atualizar campos principais
-                    proposta.parecer_requisitante = 'analise_realizada';
-                    proposta.parecer_texto = parecer;
+                    proposta.parecer_requisitante = parecer;
                     proposta.recomendacao_requisitante = recomendacao;
                     proposta.data_parecer_requisitante = new Date().toLocaleDateString('pt-BR');
                     proposta.status_requisitante = recomendacao;
