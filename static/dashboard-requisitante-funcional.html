@@ -697,6 +697,49 @@
             max-height: 90vh;
             overflow-y: auto;
         }
+
+        /* ===== Tela cheia para análise de propostas ===== */
+        #analise-full {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow-y: auto;
+            background: #ffffff;
+            z-index: 10000;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        #analise-full.active {
+            display: block;
+        }
+        #analise-full h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        #analise-full .comparativo-wrapper {
+            overflow-x: auto;
+        }
+        /* Tabela comparativa com tópicos alinhados */
+        #analise-full table.comparativo-tecnico {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #analise-full table.comparativo-tecnico th,
+        #analise-full table.comparativo-tecnico td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            font-size: 12px;
+            vertical-align: top;
+        }
+        #analise-full table.comparativo-tecnico thead th {
+            background: #f0f0f0;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
         .form-group {
             margin-bottom: 15px;
         }
@@ -779,6 +822,18 @@
             /* Ocultar o título do modal de análise na impressão */
             body.print-analise #modal-analise h3 {
                 display: none !important;
+            }
+
+            /* Ajustes para impressão em tela cheia: exibir a tabela comparativa e
+               ocultar botões e campos de interação. */
+            body.print-analise #analise-full {
+                display: block !important;
+            }
+            body.print-analise #analise-full button {
+                display: none !important;
+            }
+            body.print-analise #analise-full .comparativo-tecnico {
+                width: 100% !important;
             }
         }
     </style>
@@ -1287,10 +1342,23 @@
                         <button type="button" class="btn btn-secondary" id="btn-cancelar-analise">Cancelar</button>
                         <!-- Botão para imprimir a análise de propostas -->
                         <button type="button" class="btn" id="btn-imprimir-analise"><i class="fas fa-print"></i> Imprimir</button>
-                        <!-- Botão para abrir comparativo de propostas em tela cheia -->
-                        <button type="button" class="btn" id="btn-tela-cheia"><i class="fas fa-expand"></i> Tela Cheia</button>
+                        <!-- Botão para abrir comparativo de propostas em tela cheia (não utilizado quando fullscreen é padrão) -->
+                        <button type="button" class="btn" id="btn-tela-cheia" style="display:none;"><i class="fas fa-expand"></i> Tela Cheia</button>
                         <button type="button" class="btn" id="btn-salvar-analise">Salvar Parecer</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Contêiner de tela cheia para análise das propostas técnicas.
+                 Esta estrutura ocupa toda a viewport quando ativada, permitindo comparar
+                 cada tópico lado a lado. -->
+            <div id="analise-full">
+                <h3>Analisar Propostas Técnicas</h3>
+                <div id="analise-full-container" style="margin-top: 15px;"></div>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" id="btn-cancelar-full-analise">Cancelar</button>
+                    <button type="button" class="btn" id="btn-full-imprimir"><i class="fas fa-print"></i> Imprimir</button>
+                    <button type="button" class="btn" id="btn-full-salvar">Salvar Parecer</button>
                 </div>
             </div>
         </div>
@@ -2095,8 +2163,10 @@
                     `;
                     container.innerHTML += html;
                 });
-                // Abrir modal
-                document.getElementById('modal-analise').classList.add('active');
+                // Construir tabela comparativa em tela cheia em vez de abrir modal
+                if (typeof window.montarComparativoTelaCheia === 'function') {
+                    window.montarComparativoTelaCheia();
+                }
             } catch (error) {
                 console.error('Erro ao abrir modal de análise:', error);
             }
@@ -2295,7 +2365,128 @@
                 }
             });
         }
+
+        // ===================== Eventos da tela cheia =====================
+        // Cancelar na tela cheia: fecha a visualização em tela cheia e limpa seleção
+        const btnCancelarFull = document.getElementById('btn-cancelar-full-analise');
+        if (btnCancelarFull) {
+            btnCancelarFull.addEventListener('click', function() {
+                const full = document.getElementById('analise-full');
+                if (full) full.classList.remove('active');
+                // Resetar identificador e recarregar lista de propostas
+                analisePropostaId = null;
+                if (typeof window.renderizarPropostasParaParecer === 'function') {
+                    window.renderizarPropostasParaParecer();
+                }
+            });
+        }
+        // Salvar na tela cheia: reaproveita a função de salvar do modal
+        const btnFullSalvar = document.getElementById('btn-full-salvar');
+        if (btnFullSalvar) {
+            btnFullSalvar.addEventListener('click', function() {
+                if (typeof window.salvarAnalisePropostas === 'function') {
+                    window.salvarAnalisePropostas();
+                }
+                // Fechar tela cheia após salvar
+                const full = document.getElementById('analise-full');
+                if (full) full.classList.remove('active');
+            });
+        }
+        // Imprimir na tela cheia: aplica classe de impressão e chama print()
+        const btnFullImprimir = document.getElementById('btn-full-imprimir');
+        if (btnFullImprimir) {
+            btnFullImprimir.addEventListener('click', function() {
+                document.body.classList.add('print-analise');
+                setTimeout(() => {
+                    window.print();
+                    document.body.classList.remove('print-analise');
+                }, 100);
+            });
+        }
         });
+
+        /**
+         * Monta a visualização comparativa em tela cheia a partir das propostas
+         * carregadas no contêiner de análise. Esta função coleta todos os
+         * tópicos existentes nas propostas, organiza-os em uma tabela com
+         * cada tópico em uma linha e cada proposta em uma coluna, e exibe o
+         * resultado dentro do contêiner #analise-full. O modal de análise
+         * não é exibido quando esta função é utilizada.
+         */
+        window.montarComparativoTelaCheia = function() {
+            try {
+                const modal = document.getElementById('modal-analise');
+                const full = document.getElementById('analise-full');
+                const container = document.getElementById('analise-container');
+                const fullContainer = document.getElementById('analise-full-container');
+                if (!container || !fullContainer) return;
+                // Selecionar propostas do contêiner
+                const cards = container.querySelectorAll('.proposta-analise');
+                if (!cards || cards.length === 0) return;
+                // Mapear seções para cada proposta
+                const cardSections = [];
+                cards.forEach((card) => {
+                    const secMap = {};
+                    // título principal
+                    const titleElem = card.querySelector('h4');
+                    const title = titleElem ? titleElem.textContent.trim() : 'Proposta';
+                    secMap['__title__'] = title;
+                    const headings = card.querySelectorAll('h5');
+                    headings.forEach((heading) => {
+                        const topic = heading.textContent.trim();
+                        let contentHTML = '';
+                        let sibling = heading.nextElementSibling;
+                        while (sibling && sibling.tagName.toLowerCase() !== 'h5') {
+                            contentHTML += sibling.outerHTML;
+                            sibling = sibling.nextElementSibling;
+                        }
+                        secMap[topic] = contentHTML;
+                    });
+                    // comentários e recomendações
+                    const comentario = card.querySelector('textarea');
+                    if (comentario) {
+                        secMap['Comentário do Requisitante'] = comentario.outerHTML;
+                    }
+                    const recomend = card.querySelector('select');
+                    if (recomend) {
+                        secMap['Recomendação'] = recomend.outerHTML;
+                    }
+                    cardSections.push(secMap);
+                });
+                // Obter todos os tópicos
+                const allTopicsSet = new Set();
+                cardSections.forEach((sec) => {
+                    Object.keys(sec).forEach((key) => {
+                        if (key !== '__title__') allTopicsSet.add(key);
+                    });
+                });
+                const allTopics = Array.from(allTopicsSet);
+                // Construir tabela
+                let htmlTable = '<table class="comparativo-tecnico"><thead><tr><th>Tópico</th>';
+                cardSections.forEach((sec) => {
+                    const title = sec['__title__'] || 'Proposta';
+                    htmlTable += `<th>${title}</th>`;
+                });
+                htmlTable += '</tr></thead><tbody>';
+                allTopics.forEach((topic) => {
+                    htmlTable += `<tr><th>${topic}</th>`;
+                    cardSections.forEach((sec) => {
+                        const cell = sec[topic] || '';
+                        htmlTable += `<td>${cell}</td>`;
+                    });
+                    htmlTable += '</tr>';
+                });
+                htmlTable += '</tbody></table>';
+                // Inserir na tela cheia
+                fullContainer.innerHTML = htmlTable;
+                // Ocultar modal se estiver ativo
+                if (modal) modal.classList.remove('active');
+                // Exibir tela cheia
+                full.classList.add('active');
+            } catch (err) {
+                console.error('Erro ao montar comparativo em tela cheia:', err);
+            }
+        };
 
         // Salvar TR
         window.salvarTR = function(dados, status = window.StatusTR.ELABORADO) {
