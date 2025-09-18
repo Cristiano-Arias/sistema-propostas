@@ -715,6 +715,18 @@
         #analise-full.active {
             display: block;
         }
+
+        /*
+         * Quando a visualização de análise em tela cheia estiver ativa, queremos
+         * esconder completamente a coluna de navegação lateral. Isso garante
+         * que o comparativo ocupe a largura total do monitor, sem ficar
+         * restrito pela sidebar de 250px. A classe analise-full-active será
+         * aplicada ao body via JavaScript quando a tela cheia estiver aberta
+         * e removida ao fechá-la.
+         */
+        body.analise-full-active .sidebar {
+            display: none !important;
+        }
         #analise-full h3 {
             margin-bottom: 20px;
             color: #333;
@@ -2447,6 +2459,8 @@
                 if (modal) modal.classList.remove('active');
                 // Exibir tela cheia
                 full.classList.add('active');
+                // Adicionar classe ao body para esconder a sidebar
+                document.body.classList.add('analise-full-active');
             } catch (err) {
                 console.error('Erro ao montar comparativo em tela cheia:', err);
             }
@@ -2583,6 +2597,8 @@
             btnCancelarFull.addEventListener('click', function() {
                 const full = document.getElementById('analise-full');
                 if (full) full.classList.remove('active');
+                // Remover classe para reexibir a sidebar
+                document.body.classList.remove('analise-full-active');
                 // Resetar identificador e recarregar lista de propostas
                 analisePropostaId = null;
                 if (typeof window.renderizarPropostasParaParecer === 'function') {
@@ -2600,6 +2616,8 @@
                 // Fechar tela cheia após salvar
                 const full = document.getElementById('analise-full');
                 if (full) full.classList.remove('active');
+                // Remover classe para reexibir a sidebar
+                document.body.classList.remove('analise-full-active');
             });
         }
         // Imprimir na tela cheia: aplica classe de impressão e chama print()
