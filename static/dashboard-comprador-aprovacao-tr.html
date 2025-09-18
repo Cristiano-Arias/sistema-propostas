@@ -1062,12 +1062,36 @@ function quickReject(trId) {
 function downloadTR(trId) {
             const tr = getTRById(trId);
             if (!tr) return;
-            const dataStr = JSON.stringify(tr, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            // Serializar o TR como JSON com identação
+            const jsonStr = JSON.stringify(tr, null, 2);
+            // Escapar caracteres especiais para inserção em HTML
+            const escaped = jsonStr
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            // Criar um documento HTML completo com meta charset para que o Word
+            // reconheça a codificação. O JSON será exibido dentro de uma tag <pre>.
+            const htmlDoc = `<!DOCTYPE html>\n` +
+                `<html lang="pt-BR">\n` +
+                `<head>\n` +
+                `<meta charset="UTF-8">\n` +
+                `<title>TR ${tr.numeroTR || tr.id}</title>\n` +
+                `<style>\n` +
+                `body { font-family: Arial, sans-serif; margin: 20px; }\n` +
+                `h1 { font-size: 20px; margin-bottom: 10px; }\n` +
+                `pre { white-space: pre-wrap; font-family: Consolas, 'Courier New', monospace; }\n` +
+                `</style>\n` +
+                `</head>\n` +
+                `<body>\n` +
+                `<h1>TR ${tr.numeroTR || tr.id}</h1>\n` +
+                `<pre>${escaped}</pre>\n` +
+                `</body>\n` +
+                `</html>`;
+            const dataBlob = new Blob([htmlDoc], { type: 'application/msword' });
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `TR_${tr.numeroTR || tr.id}.json`;
+            link.download = `TR_${tr.numeroTR || tr.id}.doc`;
             link.click();
             URL.revokeObjectURL(url);
         }
