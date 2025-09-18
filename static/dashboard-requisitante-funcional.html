@@ -2024,6 +2024,29 @@
             }
         });
 
+        /**
+         * Atualizar a UI quando dados compartilhados forem sincronizados a partir
+         * do Firestore. O módulo realtime-sync despacha um evento
+         * "localStorage-sync" sempre que uma chave monitorada é atualizada
+         * remotamente. Aqui, escutamos esse evento para as chaves
+         * propostas_para_requisitante e pareceres_requisitante, disparando a
+         * renderização da lista de propostas para parecer quando necessário.
+         */
+        window.addEventListener('localStorage-sync', function(ev) {
+            try {
+                const detail = ev.detail || {};
+                const key = detail.key;
+                // Quando uma proposta ou parecer for atualizado remotamente, recarregar lista
+                if (key === 'propostas_para_requisitante' || key === 'pareceres_requisitante') {
+                    if (typeof window.renderizarPropostasParaParecer === 'function') {
+                        window.renderizarPropostasParaParecer();
+                    }
+                }
+            } catch (_) {
+                // Ignorar erros, UI se manterá estável
+            }
+        });
+
         // Manipular envio do formulário de parecer
         document.addEventListener('DOMContentLoaded', function() {
             const formParecer = document.getElementById('form-parecer');
