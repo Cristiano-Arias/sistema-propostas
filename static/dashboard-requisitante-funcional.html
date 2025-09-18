@@ -2214,13 +2214,14 @@
                     `;
                     container.innerHTML += html;
                 });
-                // Construir tabela comparativa em tela cheia em vez de abrir modal.
-                // Usamos `requestAnimationFrame` para garantir que o navegador
-                // finalize a renderização dos elementos recém-inseridos antes
-                // de tentar coletá‑los. Essa técnica agenda a função para
-                // execução no próximo ciclo de pintura, evitando que a
-                // consulta retorne 0 elementos e garantindo a abertura da
-                // visualização em tela cheia.
+                // Em vez de exibir o modal padrão com as propostas listadas, montamos
+                // imediatamente a visualização comparativa em tela cheia. Para
+                // garantir que todos os elementos recém-inseridos estejam no DOM
+                // quando o comparativo for gerado, utilizamos requestAnimationFrame,
+                // que agenda a execução para o próximo ciclo de pintura. Se a
+                // função montarComparativoTelaCheia estiver definida, ela
+                // montará a tabela comparativa no contêiner #analise-full,
+                // ocultando o modal de análise.
                 if (typeof window.montarComparativoTelaCheia === 'function') {
                     window.requestAnimationFrame(() => {
                         window.montarComparativoTelaCheia();
@@ -3908,17 +3909,22 @@
             `;
             
             // Criar blob e fazer download
-            const blob = new Blob([conteudoHTML], { type: 'text/html;charset=utf-8' });
+            // Para que o documento seja reconhecido pelo Microsoft Word, usamos o
+            // tipo MIME "application/msword". Word é capaz de abrir arquivos
+            // .doc contendo HTML diretamente. Por isso reutilizamos o HTML
+            // gerado anteriormente e apenas alteramos o tipo e a extensão do
+            // arquivo【270228860712759†L188-L192】.  A URL temporária é revogada após o uso.
+            const blob = new Blob([conteudoHTML], { type: 'application/msword' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${tr.numeroTR}_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}.html`;
+            a.download = `${tr.numeroTR}_${tr.titulo.replace(/[^a-z0-9]/gi, '_')}.doc`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
             
-            console.log('✅ Download do TR iniciado:', tr.numeroTR);
+            console.log('✅ Download do TR (Word) iniciado:', tr.numeroTR);
         };
 
         // Enviar TR para compras
@@ -3948,7 +3954,23 @@
             document.getElementById('btn-dashboard').addEventListener('click', () => window.mostrarPagina('dashboard'));
             document.getElementById('btn-criar-tr').addEventListener('click', () => window.mostrarPagina('criar-tr'));
             document.getElementById('btn-meus-trs').addEventListener('click', () => window.mostrarPagina('meus-trs'));
-            document.getElementById('btn-emitir-parecer').addEventListener('click', () => window.mostrarPagina('emitir-parecer'));
+            // Ao clicar no item de menu "Emitir parecer", além de navegar para
+            // a página de emissão de pareceres, solicitamos que o navegador
+            // entre em modo de tela cheia. O método requestFullscreen só é
+            // executado se o recurso estiver disponível no navegador e a
+            // chamada for originada de um gesto do usuário. Se a solicitação
+            // falhar (por exemplo, em navegadores que não suportam a API), o
+            // erro é capturado silenciosamente.
+            document.getElementById('btn-emitir-parecer').addEventListener('click', () => {
+                window.mostrarPagina('emitir-parecer');
+                try {
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen().catch(() => {});
+                    }
+                } catch (e) {
+                    // Ignorar falhas de tela cheia
+                }
+            });
             
             // Sistema
             document.getElementById('btn-voltar').addEventListener('click', window.voltarSistema);
@@ -3957,7 +3979,20 @@
             // Cards
             document.getElementById('card-criar-tr').addEventListener('click', () => window.mostrarPagina('criar-tr'));
             document.getElementById('card-meus-trs').addEventListener('click', () => window.mostrarPagina('meus-trs'));
-            document.getElementById('card-emitir-parecer').addEventListener('click', () => window.mostrarPagina('emitir-parecer'));
+            // A mesma lógica de tela cheia se aplica ao card do dashboard. Quando o
+            // usuário clica no card de "Emitir parecer", navegamos para a
+            // página correspondente e tentamos ativar o modo de tela cheia.
+            document.getElementById('card-emitir-parecer').addEventListener('click', () => {
+                window.mostrarPagina('emitir-parecer');
+                try {
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen().catch(() => {});
+                    }
+                } catch (e) {
+                    // Se ocorrer algum erro ao entrar em tela cheia, apenas
+                    // prosseguimos sem alterar o fluxo.
+                }
+            });
             
             // Formulário
             const form = document.getElementById('tr-form');
