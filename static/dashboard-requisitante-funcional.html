@@ -1747,7 +1747,11 @@
                 }
                 // Ação do botão
                 const buttonLabel = p.parecer_requisitante ? (isComparativo ? 'Revisar Propostas' : 'Revisar Parecer') : (isComparativo ? 'Analisar Propostas' : 'Emitir Parecer');
-                const buttonAction = isComparativo ? `window.abrirAnalisePropostas(${p.id})` : `window.emitirParecer(${p.id})`;
+                // Para comparativos, usamos um wrapper que solicita a tela cheia
+                // antes de abrir a análise de propostas. Isso garante que a
+                // requisição de tela cheia ocorra diretamente em resposta ao
+                // clique do usuário.
+                const buttonAction = isComparativo ? `window.abrirAnalisePropostasComTelaCheia(${p.id})` : `window.emitirParecer(${p.id})`;
                 // Informações dinâmicas
                 let fornecedorInfo;
                 let valorInfo;
@@ -2239,24 +2243,36 @@
                 // montará a tabela comparativa no contêiner #analise-full,
                 // ocultando o modal de análise.
                 if (typeof window.montarComparativoTelaCheia === 'function') {
-                    // Construir a visualização comparativa e, em seguida, tentar
-                    // colocar a aplicação em tela cheia. A chamada a
-                    // requestFullscreen só é permitida dentro de um gesto de
-                    // usuário e pode falhar silenciosamente em alguns navegadores.
+                    // Construir a visualização comparativa no próximo frame. A
+                    // lógica de tela cheia agora é tratada pelo wrapper
+                    // abrirAnalisePropostasComTelaCheia().
                     window.requestAnimationFrame(() => {
                         window.montarComparativoTelaCheia();
-                        try {
-                            if (document.documentElement.requestFullscreen) {
-                                document.documentElement.requestFullscreen().catch(() => {});
-                            }
-                        } catch (e) {
-                            // Ignorar erros de tela cheia
-                        }
                     });
                 }
             } catch (error) {
                 console.error('Erro ao abrir modal de análise:', error);
             }
+        };
+
+        /**
+         * Wrapper que solicita o modo de tela cheia diretamente no clique do usuário
+         * antes de chamar a função de análise de propostas. Segundo a
+         * documentação da API de tela cheia, a chamada requestFullscreen deve
+         * ser originada de um gesto do usuário e devolve uma Promise que só
+         * resolve se a permissão for concedida【198182652787250†L185-L193】.
+         */
+        window.abrirAnalisePropostasComTelaCheia = function(propostaId) {
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    // Solicitar tela cheia; se falhar, ignoramos o erro
+                    document.documentElement.requestFullscreen().catch(() => {});
+                }
+            } catch (e) {
+                // Nada a fazer se ocorrer erro ao entrar em tela cheia
+            }
+            // Chamar a função original de análise
+            window.abrirAnalisePropostas(propostaId);
         };
 
         // Salvar pareceres de todas as propostas analisadas
@@ -3989,14 +4005,10 @@
             // falhar (por exemplo, em navegadores que não suportam a API), o
             // erro é capturado silenciosamente.
             document.getElementById('btn-emitir-parecer').addEventListener('click', () => {
+                // Apenas navegar para a página de parecer; não solicitamos
+                // tela cheia aqui, pois a tela cheia agora é aplicada apenas
+                // na equalização das propostas.
                 window.mostrarPagina('emitir-parecer');
-                try {
-                    if (document.documentElement.requestFullscreen) {
-                        document.documentElement.requestFullscreen().catch(() => {});
-                    }
-                } catch (e) {
-                    // Ignorar falhas de tela cheia
-                }
             });
             
             // Sistema
@@ -4010,15 +4022,8 @@
             // usuário clica no card de "Emitir parecer", navegamos para a
             // página correspondente e tentamos ativar o modo de tela cheia.
             document.getElementById('card-emitir-parecer').addEventListener('click', () => {
+                // Navegar para a página de emissão de parecer sem entrar em tela cheia
                 window.mostrarPagina('emitir-parecer');
-                try {
-                    if (document.documentElement.requestFullscreen) {
-                        document.documentElement.requestFullscreen().catch(() => {});
-                    }
-                } catch (e) {
-                    // Se ocorrer algum erro ao entrar em tela cheia, apenas
-                    // prosseguimos sem alterar o fluxo.
-                }
             });
             
             // Formulário
