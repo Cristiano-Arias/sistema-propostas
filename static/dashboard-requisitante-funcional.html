@@ -1815,27 +1815,43 @@
                     alert('Proposta não encontrada para download.');
                     return;
                 }
-                // Gerar conteúdo no formato de texto para Word
-                // Optamos por criar um arquivo .doc simples contendo o JSON
-                // formatado em texto legível. Word é capaz de abrir arquivos
-                // de texto com extensão .doc sem problemas.
-                const dataStr = JSON.stringify(proposta, null, 2);
-                const conteudoDoc = `Proposta de ${proposta.fornecedor_nome || proposta.fornecedor_cnpj || ''}\n\n${dataStr}`;
-                // Criar Blob com tipo de documento Word
-                const dataBlob = new Blob([conteudoDoc], { type: 'application/msword' });
-                // Gerar URL temporária para download
-                const url = URL.createObjectURL(dataBlob);
-                // Criar elemento de âncora para iniciar o download
-                const link = document.createElement('a');
-                link.href = url;
-                // Utilizar informação do fornecedor e data para nome do arquivo
+                // Gerar conteúdo no formato HTML para Word. Para evitar a
+                // caixa de diálogo de conversão de codificação do Word,
+                // incluímos um cabeçalho HTML completo com meta charset UTF-8
+                // e envolvemos o JSON em uma tag <pre>. Além disso,
+                // escapamos caracteres especiais para manter a estrutura do
+                // JSON dentro do HTML.
+                const jsonStr = JSON.stringify(proposta, null, 2);
+                const escaped = jsonStr
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
                 const fornecedorNome = proposta.fornecedor_nome || proposta.fornecedor_cnpj || 'proposta';
                 const dataArquivo = new Date().toISOString().split('T')[0];
+                const htmlDoc = `<!DOCTYPE html>\n` +
+                    `<html lang="pt-BR">\n` +
+                    `<head>\n` +
+                    `<meta charset="UTF-8">\n` +
+                    `<title>Proposta ${fornecedorNome}</title>\n` +
+                    `<style>\n` +
+                    `body { font-family: Arial, sans-serif; margin: 20px; }\n` +
+                    `h1 { font-size: 20px; margin-bottom: 10px; }\n` +
+                    `pre { white-space: pre-wrap; font-family: Consolas, 'Courier New', monospace; }\n` +
+                    `</style>\n` +
+                    `</head>\n` +
+                    `<body>\n` +
+                    `<h1>Proposta de ${fornecedorNome}</h1>\n` +
+                    `<pre>${escaped}</pre>\n` +
+                    `</body>\n` +
+                    `</html>`;
+                const dataBlob = new Blob([htmlDoc], { type: 'application/msword' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
                 link.download = `Proposta_${fornecedorNome}_${dataArquivo}.doc`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                // Revogar a URL para liberar memória
                 URL.revokeObjectURL(url);
             } catch (error) {
                 console.error('Erro ao fazer download da proposta:', error);
@@ -2223,8 +2239,19 @@
                 // montará a tabela comparativa no contêiner #analise-full,
                 // ocultando o modal de análise.
                 if (typeof window.montarComparativoTelaCheia === 'function') {
+                    // Construir a visualização comparativa e, em seguida, tentar
+                    // colocar a aplicação em tela cheia. A chamada a
+                    // requestFullscreen só é permitida dentro de um gesto de
+                    // usuário e pode falhar silenciosamente em alguns navegadores.
                     window.requestAnimationFrame(() => {
                         window.montarComparativoTelaCheia();
+                        try {
+                            if (document.documentElement.requestFullscreen) {
+                                document.documentElement.requestFullscreen().catch(() => {});
+                            }
+                        } catch (e) {
+                            // Ignorar erros de tela cheia
+                        }
                     });
                 }
             } catch (error) {
