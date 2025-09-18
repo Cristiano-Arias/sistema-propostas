@@ -244,11 +244,23 @@ localStorage.setItem = function(k, v) {
   // 2. Usuário estiver autenticado
   // 3. A chave estiver na lista de sincronização
   if (!isApplyingRemote && user && KEYS.includes(k)) {
-    // Usar chave composta com UID do usuário
-    const docKey = `${k}_${user.uid}`;
+    let docKey;
+    // 🔧 Compartilhado entre requisitante e comprador: usar documento global
+    if (k === 'propostas_para_requisitante' || k === 'pareceres_requisitante') {
+      docKey = k;
+    } else if (k === 'sistema_trs') {
+      // Isolar TRs por perfil (comprador/requisitante)
+      const userEmail = user.email || '';
+      const perfil = userEmail.includes('suprimentos') ? 'comprador' : 'requisitante';
+      docKey = `${k}_${perfil}_${user.uid}`;
+    } else {
+      // Padrão: isolar por usuário
+      docKey = `${k}_${user.uid}`;
+    }
+
     const ref = doc(db, "localstorage", docKey);
     
-    // Incluir UID no documento (OBRIGATÓRIO para as regras)
+    // Incluir UID no documento (OBRIGATÓRIO para as regras de segurança)
     // Normalizar dados de TRs antes de enviar ao Firebase e adicionar updatedAt.
     let valueToSave = v;
     if (k === 'sistema_trs') {
@@ -300,8 +312,17 @@ localStorage.removeItem = function(k) {
   const user = auth.currentUser;
   
   if (!isApplyingRemote && user && KEYS.includes(k)) {
-    // Usar chave composta com UID do usuário
-    const docKey = `${k}_${user.uid}`;
+    let docKey;
+    // 🔧 Compartilhado entre requisitante e comprador: usar documento global
+    if (k === 'propostas_para_requisitante' || k === 'pareceres_requisitante') {
+      docKey = k;
+    } else if (k === 'sistema_trs') {
+      const userEmail = user.email || '';
+      const perfil = userEmail.includes('suprimentos') ? 'comprador' : 'requisitante';
+      docKey = `${k}_${perfil}_${user.uid}`;
+    } else {
+      docKey = `${k}_${user.uid}`;
+    }
     const ref = doc(db, "localstorage", docKey);
     
     setDoc(ref, { 
