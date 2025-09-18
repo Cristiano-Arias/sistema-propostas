@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Atualizado para integração com Firestore -->
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -2665,7 +2666,7 @@
             const tipoParecer = document.getElementById(`tipoParecer_${liberacaoId}`).value;
             const analiseTecnica = document.getElementById(`analiseTecnica_${liberacaoId}`).value;
 
-            // Salvar parecer
+            // Salvar parecer localmente
             const pareceres = JSON.parse(localStorage.getItem('pareceres_tecnicos') || '[]');
             const novoParecer = {
                 id: 'parecer_' + Date.now(),
@@ -2680,6 +2681,32 @@
 
             pareceres.push(novoParecer);
             localStorage.setItem('pareceres_tecnicos', JSON.stringify(pareceres));
+
+            // 🔥 Salvar o parecer técnico no Firestore para compartilhamento entre módulos
+            try {
+                if (window.FirebaseFirestore && typeof window.FirebaseFirestore.salvarParecerTecnico === 'function') {
+                    // Recuperar a liberação para obter o processoId
+                    const propostasLiberadasTemp = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
+                    const liberacaoTemp = propostasLiberadasTemp.find(pl => pl.id === liberacaoId) || {};
+                    const processoId = liberacaoTemp.processoId || null;
+                    const parecerFirestore = {
+                        processoId: processoId,
+                        propostaId: propostaId,
+                        protocolo: propostaId,
+                        tipo: tipoParecer,
+                        analise: analiseTecnica,
+                        emissorUid: usuarioAtual.usuarioId,
+                        emissorPerfil: 'REQUISITANTE',
+                        dataEmissao: novoParecer.dataEmissao
+                    };
+                    // Salvar sem aguardar para não bloquear a interface
+                    window.FirebaseFirestore.salvarParecerTecnico(parecerFirestore).catch((e) => {
+                        console.warn('⚠️ Erro ao salvar parecer no Firestore:', e);
+                    });
+                }
+            } catch (firestoreError) {
+                console.warn('⚠️ Não foi possível preparar o parecer para o Firestore:', firestoreError);
+            }
 
             // Atualizar status da liberação
             const propostasLiberadas = JSON.parse(localStorage.getItem('propostas_liberadas_parecer') || '[]');
@@ -2718,5 +2745,7 @@
             <script src="js/api-client.js"></script>
             <script src="js/integration.js"></script>
             <script src="js/integracao-modulos.js"></script>
+            <!-- Carrega módulo Firestore para salvar pareceres técnicos -->
+            <script type="module" src="js/firebase-firestore.js"></script>
 </body>
 </html>
