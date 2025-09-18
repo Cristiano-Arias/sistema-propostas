@@ -105,8 +105,12 @@ if (key === 'propostas_para_requisitante' || key === 'pareceres_requisitante') {
     getDoc(ref).then((snap) => {
       if (snap.exists()) {
         const data = snap.data() || {};
-        // Verificar se o documento pertence ao usuário
-        if (data.uid === user.uid && typeof data.value !== "undefined") {
+        // Para chaves globais (propostas_para_requisitante e pareceres_requisitante),
+        // não restringir pelo UID: qualquer valor deve ser aplicado. Para outras
+        // chaves, verificar se o documento pertence ao usuário atual.
+        const isGlobalKey = (key === 'propostas_para_requisitante' || key === 'pareceres_requisitante');
+        const apply = isGlobalKey ? (typeof data.value !== 'undefined') : (data.uid === user.uid && typeof data.value !== 'undefined');
+        if (apply) {
           try { 
             isApplyingRemote = true; 
             localStorage.setItem(key, data.value); 
@@ -128,8 +132,10 @@ if (key === 'propostas_para_requisitante' || key === 'pareceres_requisitante') {
       if (!snap.exists()) return;
       
       const data = snap.data() || {};
-      // Verificar se o documento pertence ao usuário
-      if (data.uid === user.uid && typeof data.value !== "undefined") {
+      // Determinar se a chave é global para não restringir pelo UID
+      const isGlobalKey = (key === 'propostas_para_requisitante' || key === 'pareceres_requisitante');
+      const apply = isGlobalKey ? (typeof data.value !== 'undefined') : (data.uid === user.uid && typeof data.value !== 'undefined');
+      if (apply) {
         try { 
           isApplyingRemote = true; 
           let valueToStore = data.value;
